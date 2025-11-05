@@ -150,7 +150,7 @@ namespace pto{
             }
         } else if constexpr (std::is_same<typename TileDataD::DType, float>::value &&
                              std::is_same<typename TileDataS::DType, half>::value) {  // half to fp32
-            vconv_f162fp32(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+            vconv_f162f32(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
         } else if constexpr (std::is_same<typename TileDataD::DType, int32_t>::value &&
                              std::is_same<typename TileDataS::DType, half>::value) {  // half to int32
             switch (static_cast<RoundMode>(mode)) {
@@ -213,6 +213,9 @@ namespace pto{
                 case RoundMode::CAST_TRUNC:
                     vconv_f162s8z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                     break;
+                case RoundMode::CAST_NONE:
+                    vconv_f162s8(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                    break;
                 default:
                     vconv_f162s8r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                     break;
@@ -234,6 +237,9 @@ namespace pto{
                     break;
                 case RoundMode::CAST_TRUNC:
                     vconv_f162u8z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                    break;
+                case RoundMode::CAST_NONE:
+                    vconv_f162u8(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                     break;
                 default:
                     vconv_f162u8r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
@@ -283,6 +289,9 @@ namespace pto{
                 case RoundMode::CAST_TRUNC:
                     vconv_bf162s32z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                     break;
+                case RoundMode::CAST_NONE:
+                    vconv_bf162s32(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                    break;
                 default:
                     vconv_bf162s32r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                     break;
@@ -318,6 +327,9 @@ namespace pto{
                 case RoundMode::CAST_TRUNC:
                     vconv_s162f16z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                     break;
+                case RoundMode::CAST_NONE:
+                    vconv_s162f16(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                    break;
                 default:
                     vconv_s162f16r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                     break;
@@ -339,6 +351,9 @@ namespace pto{
                     break;
                 case RoundMode::CAST_TRUNC:
                     vconv_s322f32z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                    break;
+                case RoundMode::CAST_NONE:
+                    vconv_s322f32(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                     break;
                 default:
                     vconv_s322f32r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
@@ -433,7 +448,7 @@ namespace pto{
             if (numLoop) {
                 for (int j = 0; j < numLoop; j++) {
                     GenCastCall<TileDataD, TileDataS>(dstPtr + j * DS * REPEAT_MAX,
-                        srcPtr + i * SS * REPEAT_MAX,
+                        srcPtr + j * SS * REPEAT_MAX,
                         (uint8_t)REPEAT_MAX,
                         mode,
                         1,
@@ -466,7 +481,7 @@ namespace pto{
             repeatWidth == sizeof(typename TileDataD::DType)
             ? BLOCK_MAX_PER_REPEAT
             : (BLOCK_MAX_PER_REPEAT / sizeof(typename TileDataS::DType) * sizeof(typename TileDataD::DType));
-        unsigned dstRepeatStride = 
+        unsigned srcRepeatStride = 
             repeatWidth == sizeof(typename TileDataS::DType)
             ? BLOCK_MAX_PER_REPEAT
             : (BLOCK_MAX_PER_REPEAT / sizeof(typename TileDataD::DType) * sizeof(typename TileDataS::DType));
