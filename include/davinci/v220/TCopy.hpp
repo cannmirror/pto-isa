@@ -12,8 +12,8 @@ namespace pto{
         if (validRow ==0 || validCol == 0) {
             return;
         }
-        using T = typename TileDataSrc::TileDType;
-        using U = typename TileDataDst::TileDType;
+        using T = typename TileDataSrc::DType;
+        using U = typename TileDataDst::DType;
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
         __ubuf__ U *dstPtr = (__ubuf__ U *)__cce_get_tile_ptr(dst);
 
@@ -68,7 +68,7 @@ namespace pto{
                     srcRepeatSize);
             }
         } else if constexpr (sizeof(T) == 1) {
-            uint64_t mask = validCol / 2;
+            uint64_t mask = validCol >> 1;
             uint64_t num_tail = validCol % 2;
             uint16_t srcRepeatSize = CeilDivision(srcStride, blockSizeElem);
             uint16_t dstRepeatSize = CeilDivision(dstStride, blockSizeElem);
@@ -97,20 +97,20 @@ namespace pto{
                 set_flag(PIPE_V, PIPE_S, EVENT_ID7);
                 wait_flag(PIPE_V, PIPE_S, EVENT_ID7);
                 for (unsigned i = 0; i < validRow; ++i) {
-                    dstPtr[i * dstStride + num_tail - 1] = srcPtr[i * dstStride + num_tail - 1];
+                    dstPtr[i * dstStride + num_tail - 1] = srcPtr[i * srcStride + num_tail - 1];
                 }
                 set_flag(PIPE_S, PIPE_V, EVENT_ID7);
                 wait_flag(PIPE_S, PIPE_V, EVENT_ID7);
             }
         } else {
-            static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TCOPY: Invalid data type");
+            static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TCOPY: Invalid data type.");
         }
         set_mask_norm();  // restore to norm mode
-        set_vector_mask(-1, -1);  // end of deep copy
+        set_vector_mask(-1, -1);
     }  // end of tf
 
-    template <typename TileDataDst, typename TileDataSrc, TCopyMode copyMode>
-    __aicore__ PTO_INLINE void TCOPY(TileDataDst &dst, TileDataSrc &src) {
+    template <typename TileDataDst, typename TileDataSrc>
+    __aicore__ PTO_INLINE void TCOPY_IMPL(TileDataDst &dst, TileDataSrc &src) {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc::DType);
         constexpr unsigned srcStride = TileDataSrc::RowStride;
         constexpr unsigned dstStride = TileDataDst::RowStride;
@@ -122,7 +122,8 @@ namespace pto{
         uint64_t validRow = (validSrcRow < validDstRow) ? validSrcRow : validDstRow;
         uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
 
-        TCopy<TileDataDst, TileDataSrc, copyMode, blockSizeElem, srcStride, dstStride>(dst.data(), src.data(), validRow, validCol);
+        TCopy<TileDataDst, TileDataSrc, blockSizeElem, srcStride, dstStride>(
+            dst.data(), src.data(), validRow, validCol);
     }
 }
 #endif
