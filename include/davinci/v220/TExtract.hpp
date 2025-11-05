@@ -5,16 +5,16 @@ namespace pto {
     template <typename DstTileData, typename SrcTileData, bool Transpose>
     __tf__ __aicore__ void TExtractToA(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
         uint16_t indexRow, uint16_t indexCol) {
-        using SrcType = typename SrcTileData::TileDType;
-        using DstType = typename DstTileData::TileDType;
+        using SrcType = typename SrcTileData::DType;
+        using DstType = typename DstTileData::DType;
         constexpr int32_t srcRow = SrcTileData::Rows;
         constexpr int32_t srcCol = SrcTileData::Cols;
         constexpr int32_t dstRow = DstTileData::Rows;
         constexpr int32_t dstCol = DstTileData::Cols;
         constexpr const int LOG2_BLOCK_BYTE_SIZE = 5;  // 2^5 = 32
         constexpr const int LOG2_BLOCK_LEN = 4;  // 2^4 = 16
-        __cubf__ SrcType *srcAddr = (__cubf__ SrcType *)(src);
-        __cubf__ SrcType *srcAddrP = srcAddr;
+        __cbuf__ SrcType *srcAddr = (__cbuf__ SrcType *)(src);
+        __cbuf__ SrcType *srcAddrP = srcAddr;
         __ca__ DstType *dstAddr = (__ca__ DstType *)(dst);
         __ca__ DstType *dstAddrP = dstAddr;
 
@@ -34,7 +34,7 @@ namespace pto {
             static_assert((srcRow % 16) == 0, "srcRow must be aligned to 16");
             static_assert((srcCol % (sizeof(SrcType) == 1 ? 32 : sizeof(SrcType) == 2 ? 16 : 8)) == 0, "srcCol must be aligned to C0Size");
             static_assert((dstRow % 16) == 0, "dstRow must be aligned to 16");
-            static_assert((dstCol % (sizeof(SrcType) == 1 ? 32 : sizeof(SrcType) == 2 ? 16 : 8)) == 0, "dstCol must be aligned to C0Size");
+            static_assert((dstCol % (sizeof(DstType) == 1 ? 32 : sizeof(DstType) == 2 ? 16 : 8)) == 0, "dstCol must be aligned to C0Size");
             // 计算源矩阵、目标矩阵行列中512B小分型矩阵的个数
             uint16_t srcColNum = (srcCol * sizeof(SrcType)) >> LOG2_BLOCK_BYTE_SIZE;
             uint16_t srcRowNum = srcRow >> LOG2_BLOCK_LEN;
@@ -64,8 +64,8 @@ namespace pto {
             // L1->L0A:load_cbuf_to_ca_transpose
             static_assert((srcRow % (sizeof(SrcType) == 1 ? 32 : sizeof(SrcType) == 2 ? 16 : 16)) == 0, "srcRow must be aligned to 16");
             static_assert((srcCol % (sizeof(SrcType) == 1 ? 32 : sizeof(SrcType) == 2 ? 16 : 16)) == 0, "srcCol must be aligned to C0Size");
-            static_assert((dstRow % (sizeof(SrcType) == 1 ? 32 : sizeof(SrcType) == 2 ? 16 : 16)) == 0, "dstRow must be aligned to 16");
-            static_assert((dstCol % (sizeof(SrcType) == 1 ? 32 : sizeof(SrcType) == 2 ? 16 : 16)) == 0, "dstCol must be aligned to C0Size");
+            static_assert((dstRow % (sizeof(DstType) == 1 ? 32 : sizeof(DstType) == 2 ? 16 : 16)) == 0, "dstRow must be aligned to 16");
+            static_assert((dstCol % (sizeof(DstType) == 1 ? 32 : sizeof(DstType) == 2 ? 16 : 16)) == 0, "dstCol must be aligned to C0Size");
             if constexpr (sizeof(SrcType) == 1 || sizeof(SrcType) == 2) {
                 // 方块矩阵的512B小分型矩阵个数
                 constexpr uint16_t fractNum = (sizeof(SrcType) == 1) ? 2u : 1u;
@@ -92,7 +92,7 @@ namespace pto {
                     dstGap = 0;
                     dstFracGap = dstColNum - 1;
                     for (int i = 0; i < dstRowNum; i++) {
-                        startIdx = startIdx0 + i * dstColNum;
+                        startIdx = startIdx0 + i * srcColNum;
                         dstAddrP = dstAddr + i * dstColNum * blockNum * fractNum;
                         load_cbuf_to_ca_transpose(dstAddrP, srcAddrP, startIdx, repeatTimes, srcStride, dstGap, false, dstFracGap);
                     }
@@ -100,7 +100,7 @@ namespace pto {
             } else {
                 // b32
                 uint16_t stepK = dstRow, stepM = dstCol;
-                uint16_t posK = indexRow, posM,= indexCol;
+                uint16_t posK = indexRow, posM = indexCol;
                 uint8_t Wk = 1, Hk = 1, strideW = 1, strideH = 1;
                 uint8_t dilationW = 1, dilationH = 1;
                 bool filterW = false, filterH = false, transpose = true, fmatrixCtrl = false;
@@ -117,8 +117,8 @@ namespace pto {
     template <typename DstTileData, typename SrcTileData, bool Transpose>
     __tf__ __aicore__ void TExtractToB(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
         uint16_t indexRow, uint16_t indexCol) {
-        using SrcType = typename SrcTileData::TileDType;
-        using DstType = typename DstTileData::TileDType;
+        using SrcType = typename SrcTileData::DType;
+        using DstType = typename DstTileData::DType;
         constexpr int32_t srcRow = SrcTileData::Rows;
         constexpr int32_t srcCol = SrcTileData::Cols;
         constexpr int32_t dstRow = DstTileData::Rows;
@@ -126,8 +126,8 @@ namespace pto {
 
         __cbuf__ SrcType *srcAddr = (__cbuf__ SrcType *)(src);
         __cbuf__ SrcType *srcAddrP = srcAddr;
-        __cbuf__ DstType *dstAddr = (__cbuf__ DstType *)(dst);
-        __cbuf__ DstType *dstAddrP = dstAddr;
+        __cb__ DstType *dstAddr = (__cb__ DstType *)(dst);
+        __cb__ DstType *dstAddrP = dstAddr;
 
         uint8_t repeatTimes = 0;
         uint16_t srcStride = 0;
@@ -174,21 +174,21 @@ namespace pto {
                       "TEXTRACT: SrcTile Invalid Fractal.");
         if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
             if constexpr (DstTileData::Loc == Location::Left) {
-                static_assert((DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor),
+                static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor,
                               "TEXTRACT: Invalid Fractal.");
                 TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol);
             } else {
-                static_assert((DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor),
+                static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
                               "TEXTRACT: Invalid Fractal.");
                 TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol);
             }
         } else {
             if constexpr (DstTileData::Loc == Location::Left) {
-                static_assert((DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor),
+                static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor,
                               "TEXTRACT: Invalid Fractal.");
                 TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
             } else {
-                static_assert((DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor),
+                static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
                               "TEXTRACT: Invalid Fractal.");
                 TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
             }
