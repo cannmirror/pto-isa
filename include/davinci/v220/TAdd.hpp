@@ -9,12 +9,14 @@ namespace pto {
     __tf__ __aicore__ void TAdd(typename TileData::TileDType __out__ dst,
                                 typename TileData::TileDType __in__ src0,
                                 typename TileData::TileDType __in__ src1,
-                                unsigned numRepeatPerLine,
-                                unsigned numRemainPerLine,
-                                unsigned validRow) {
+                                unsigned validRow,
+                                unsigned validCol) {
         __ubuf__ typename TileData::DType *dstPtr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileData::DType *src0Ptr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileData::DType *src1Ptr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src1);
+        
+        unsigned numRepeatPerLine = validCol / elementsPerRepeat;
+        unsigned numRemainPerLine = validCol % elementsPerRepeat;
 
         if (numRepeatPerLine > 0) {
             unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
@@ -65,7 +67,7 @@ namespace pto {
             }
             if (remainAfterLoop) {
                 if (strideOverFlag) {
-                    for (uint64_t j = 0; j < REPEAT_MAX; j++) {
+                    for (uint64_t j = 0; j < remainAfterLoop; j++) {
                         vadd(dstPtr + numLoop * REPEAT_MAX * stride + j * stride,
                              src0Ptr + numLoop * REPEAT_MAX * stride + j * stride,
                              src1Ptr + numLoop * REPEAT_MAX * stride + j * stride,
@@ -94,13 +96,12 @@ namespace pto {
                       "TADD: Invalid data type");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-        unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat;
-        unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
         constexpr unsigned stride = TileData::RowStride;
         unsigned validRow = dst.GetValidRow();
+        unsigned validCol = dst.GetValidCol();
 
         TAdd<TileData, elementsPerRepeat, blockSizeElem, stride>(dst.data(), src0.data(), src1.data(),
-                                                                 numRepeatPerLine, numRemainPerLine, validRow);
+                                                                 validRow, validCol);
     }
 }
 #endif
