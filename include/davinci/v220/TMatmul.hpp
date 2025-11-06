@@ -1,7 +1,7 @@
 #ifndef TMATMUL_HPP
 #define TMATMUL_HPP
 
-namespace pto{
+namespace pto {
     template <typename TileAcc, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
     __tf__ __aicore__ void TMatmul(typename TileAcc::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
         typename TileRight::TileDType __in__ bMatrix, uint16_t m, uint16_t k, uint16_t n)
