@@ -49,11 +49,11 @@ def gen_golden_data(case_name, param):
     with open("golden_output.bin", 'wb') as f:
         for value, index in sorted_pairs:
             if test_type == np.float32:
-                # pack the float32 value and the index as a 21-bit unsigned integer
+                # pack the float32 value and the index as a 32-bit unsigned integer
                 packed_data = struct.pack('fI', float(value), ctypes.c_uint32(index).value)
                 f.write(packed_data)
             elif test_type == np.float16:
-                packed_data = struct.pack('e xxI', float(value), ctypes.c_uint32(index).value)
+                packed_data = struct.pack('e xxI', value, ctypes.c_uint32(index).value)
                 f.write(packed_data)
 
 
@@ -64,7 +64,7 @@ class tsort32Params:
         self.cols = cols
 
 if __name__ == "__main__":
-
+    # 用例名称
     case_name_list = [
         "TSort32Test.case1",
         "TSort32Test.case2",

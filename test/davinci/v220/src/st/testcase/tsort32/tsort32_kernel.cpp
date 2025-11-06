@@ -30,16 +30,15 @@ __aicore__ void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, 
     using OutStridDim5 = pto::Stride<1, 1, 1, TYPE_COEF * 2 * COLS_, 1>;
     using OutGlobalData = GlobalTensor<T, OutShapeDim5, OutStridDim5>;
 
-    using SrcTileData = Tile<Location::Vec, T, ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
+    using SrcTileData = Tile<Location::Vec, T,    ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
     using IdxTileData = Tile<Location::Vec, uint32_t, ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
-    using DstTileData = Tile<Location::Vec, T, ROWS_, TYPE_COEF * 2 * COLS_, BLayout::RowMajor>;
-    using TmpTileData = Tile<Location::Vec, T, 1, ALIGN_C, BLayout::RowMajor>;
+    using DstTileData = Tile<Location::Vec, T,    ROWS_, TYPE_COEF * 2 * COLS_, BLayout::RowMajor>;
+    using TmpTileData = Tile<Location::Vec, T,    1, ALIGN_C, BLayout::RowMajor>;
 
     SrcTileData srcTile(VALID_R_, VALID_C);
     IdxTileData idxTile(VALID_R_, ALIGN_C);
     DstTileData dstTile;
     TmpTileData tmpTile;
-
     TASSIGN(srcTile, 0x0);
     TASSIGN(idxTile, 0x4000);
     TASSIGN(dstTile, 0x8000);
@@ -60,15 +59,14 @@ __aicore__ void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, 
 
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-
     TSTORE(dstGlobal, dstTile);
+
     pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
-
 }
 
 extern "C" __global__ __aicore__ void launchTSORT32_1(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
-    __gm__ uint64_t *tmp)
+        __gm__ uint64_t *tmp)
 {
     constexpr uint32_t ROWS = 2;
     constexpr uint32_t COLS = 32;
@@ -76,21 +74,22 @@ extern "C" __global__ __aicore__ void launchTSORT32_1(__gm__ uint64_t *out, __gm
     constexpr uint32_t VALID_C = 32;
     constexpr uint32_t ALIGN_C = (VALID_C + 31 - 1) / 32 * 32;
     runTSORT32<float, ROWS, COLS, VALID_R, VALID_C, ALIGN_C>(
-        reinterpret_cast<__gm__ float *>(out),
-        reinterpret_cast<__gm__ float *>(src), idx, reinterpret_cast<__gm__ float *>(tmp));
+            reinterpret_cast<__gm__ float *>(out),
+            reinterpret_cast<__gm__ float *>(src), idx, reinterpret_cast<__gm__ float *>(tmp));
 }
 
 extern "C" __global__ __aicore__ void launchTSORT32_2(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
-    __gm__ uint64_t *tmp)
+        __gm__ uint64_t *tmp)
 {
     constexpr uint32_t ROWS = 4;
     constexpr uint32_t COLS = 64;
     constexpr uint32_t VALID_R = 4;
     constexpr uint32_t VALID_C = 64;
     constexpr uint32_t ALIGN_C = (VALID_C + 31 - 1) / 32 * 32;
+    
     runTSORT32<half, ROWS, COLS, VALID_R, VALID_C, ALIGN_C>(
-        reinterpret_cast<__gm__ half *>(out),
-        reinterpret_cast<__gm__ half *>(src), idx, reinterpret_cast<__gm__ half *>(tmp));
+                reinterpret_cast<__gm__ half *>(out),
+                reinterpret_cast<__gm__ half *>(src), idx, reinterpret_cast<__gm__ half *>(tmp));
 }
 
 template <int32_t testKey>

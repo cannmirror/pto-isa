@@ -11,7 +11,7 @@ def gen_golden_data(case_name, param):
     test_type = param.test_type
     rows = param.rows
     cols = param.cols
-    input_arr = np.random.uniform(low=-1, high = 1, size=(rows, cols)).astype(test_type)
+    input_arr = np.random.uniform(low = -1, high = 1, size=(rows, cols)).astype(test_type)
     input_arr.tofile("input_arr.bin")
     idx = np.arange(rows * cols).astype(np.uint32)
     idx.tofile("input_idx.bin")
@@ -27,22 +27,22 @@ def gen_golden_data(case_name, param):
         pad_value = np.finfo(test_type).min
         input_reshaped_padded = np.pad(
             input_reshaped,
-            pad_width = ((0, 0), (0, 32 - cols)),
+            pad_width=((0, 0), (0, 32 - cols)),
             mode='constant',
             constant_values=pad_value
-        )
+            )
         input_reshaped = input_reshaped_padded
 
     if cols > 32:
         reshape_val = cols
     # sort each group of 32 elements based on input values in descending order
     sorted_indices = np.argsort(-input_reshaped, axis=1)
-    sorted_input = np.take_along_axis(input_reshaped, sorted_indices, axis=1)
-    sorted_idx = np.take_along_axis(idx_reshaped, sorted_indices, axis=1)
+    sorted_input   = np.take_along_axis(input_reshaped, sorted_indices, axis=1)
+    sorted_idx     = np.take_along_axis(idx_reshaped,   sorted_indices, axis=1)
     sorted_input = sorted_input.reshape(rows, reshape_val)
     sorted_idx = sorted_idx.reshape(rows, reshape_val)
     flat_input = sorted_input.flatten().astype(test_type)
-    flat_idx   = sorted_idx.flatten()
+    flat_idx = sorted_idx.flatten()
     # create pairs of (value, index)
     sorted_pairs = zip(flat_input, flat_idx)
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     case_params_list = [
         tsort32Params(np.float32, 2, 32),
-        tsort32Params(np.float16, 4, 64)
+        tsort32Params(np.float16, 4, 64),
     ]
 
     for i, case_name in enumerate(case_name_list):
