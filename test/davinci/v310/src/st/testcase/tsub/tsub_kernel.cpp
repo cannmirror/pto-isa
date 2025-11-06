@@ -1,0 +1,53 @@
+#include <common/tile_tensor_impl.hpp>
+#include <common/pto_tile.hpp>
+#include <common/constants.hpp>
+#include "acl/acl.h"
+
+using namespace pto;
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+__global__ __aicore__ void runTSUB( __gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1){
+    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
+    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    TileData src0Tile(kTRows_, kTCols_);
+    TileData src1Tile(kTRows_, kTCols_);
+    TileData dstTile(kTRows_, kTCols_);
+    TASSIGN(src0Tile, 0x0 + 0x400 * block_idx);
+    TASSIGN(src1Tile, 0x4000 + 0x400 * block_idx);
+    TASSIGN(dstTile, 0x8000 + 0x400 * block_idx);
+
+    int offset = (block_idx / 4) * (64 * 16) + (block_idx % 4) * 16;
+    GlobalData src0Global(src0 + offset);
+    GlobalData src1Global(src1 + offset);
+    GlobalData dstGlobal(out + offset);
+
+    TLOAD(src0Tile, src0Global);
+    TLOAD(src1Tile, src1Global);
+
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    TSUB(dstTile, src0Tile, src1Tile);
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    TSTORE(dstGlobal, dstTile);
+    out = dstGlobal.data();
+}
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void LaunchTSub(T *out, T *src0, T *src1, void *stream)
+{
+    if constexpr (std::is_same_v<T, aclFloat16> )
+        runTSUB<half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>((half*)(out),
+                                                                                (half*)(src0),
+                                                                                (half*)(src1));
+    else
+        runTSUB<T, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>  (out, src0, src1);                                                                        
+}   
+
+template void LaunchTSub<float, 64, 64, 64, 64>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTSub<int32_t, 32, 32, 32, 32>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTSub<aclFloat16, 16, 256, 16, 256>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTSub<int16_t, 128, 32, 128, 32>(int16_t *out, int16_t *src0, int16_t *src1, void *stream);
+
