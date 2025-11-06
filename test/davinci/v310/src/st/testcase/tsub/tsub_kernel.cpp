@@ -6,7 +6,7 @@
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-__global__ __aicore__ void runTSUB( __gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1){
+__global__ __aicore__ void runTSUB( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
@@ -25,7 +25,6 @@ __global__ __aicore__ void runTSUB( __gm__ T __out__ *out, __gm__ T __in__ *src0
 
     TLOAD(src0Tile, src0Global);
     TLOAD(src1Tile, src1Global);
-
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     TSUB(dstTile, src0Tile, src1Tile);
@@ -38,13 +37,15 @@ __global__ __aicore__ void runTSUB( __gm__ T __out__ *out, __gm__ T __in__ *src0
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void LaunchTSub(T *out, T *src0, T *src1, void *stream)
 {
-    if constexpr (std::is_same_v<T, aclFloat16> )
+    if constexpr ( std::is_same_v<T, aclFloat16> )
         runTSUB<half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>((half*)(out),
-                                                                                (half*)(src0),
-                                                                                (half*)(src1));
-    else
-        runTSUB<T, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>  (out, src0, src1);                                                                        
-}   
+                                                                                  (half*)(src0),
+                                                                                  (half*)(src1));
+    else 
+        runTSUB<T, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(out, src0, src1);
+}
+
+
 
 template void LaunchTSub<float, 64, 64, 64, 64>(float *out, float *src0, float *src1, void *stream);
 template void LaunchTSub<int32_t, 32, 32, 32, 32>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
