@@ -30,8 +30,8 @@ TEST_F(TMATMULTest, case1)
     uint32_t N = 64;
     uint32_t K = 128;
 
-    size_t aFileSize = M * K * sizeof(uint16_t); // uint16_t represent half
-    size_t bFileSize = K * N * sizeof(uint16_t); // uint16_t represent half
+    size_t aFileSize = M * K * sizeof(uint16_t);  // uint16_t represent half
+    size_t bFileSize = K * N * sizeof(uint16_t);  // uint16_t represent half
     size_t cFileSize = M * N * sizeof(float);
 
     aclInit(nullptr);
@@ -75,11 +75,11 @@ TEST_F(TMATMULTest, case1)
 
     std::vector<float> golden(cFileSize);
     std::vector<float> devFinal(cFileSize);
-
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
+
     EXPECT_TRUE(ret);
 }
 
@@ -95,7 +95,6 @@ TEST_F(TMATMULTest, case2)
 
     uint8_t *dstHost, *src0Host, *src1Host;
     uint8_t *dstDevice, *src0Device, *src1Device;
-
     aclInit(nullptr);
     aclrtSetDevice(0);
     aclrtStream stream;
@@ -147,8 +146,8 @@ TEST_F(TMATMULTest, case3)
     uint32_t N = 63;
     uint32_t K = 128;
 
-    size_t aFileSize = M * K * sizeof(uint16_t); // uint16_t represent half
-    size_t bFileSize = K * N * sizeof(uint16_t); // uint16_t represent half
+    size_t aFileSize = M * K * sizeof(uint16_t);  // uint16_t represent half
+    size_t bFileSize = K * N * sizeof(uint16_t);  // uint16_t represent half
     size_t cFileSize = M * N * sizeof(float);
 
     aclInit(nullptr);

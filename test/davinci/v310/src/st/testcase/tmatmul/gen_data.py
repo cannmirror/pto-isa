@@ -13,9 +13,9 @@ fp8_e5m2 = ml_dtypes.float8_e5m2
 
 np.random.seed(19)
 
-def check(x, n):
+def check(x,n):
     if len(x) < n:
-        x = '0' * (n - len(x)) + x
+        x = '0' * (n-len(x)) + x
     elif len(x) > n:
         x = x[1:]
     return x
@@ -68,14 +68,14 @@ def HF8(input):
         if s == '1':
             f1 = -1
         f2 = 0
-        input = (1 + (m1 * 4 + m2 * 2 + m3) / 8) * 2 ** f2 * f1
+        input = (1 + (m1 * 4 + m2 * 2 + m3)/8) * 2 ** f2 * f1
         return input
     elif d == '001':
         if s == '1':
             f1 = -1
         if e == '1':
             f2 = -1
-        input = (1 + (m1 * 4 + m2 * 2 + m3) / 8) * 2 ** f2 * f1
+        input = (1 + (m1 * 4 + m2 * 2 + m3)/8) * 2 ** f2 * f1
         return input
     elif d == '01':
         if s == '1':
@@ -84,7 +84,7 @@ def HF8(input):
         e2 = int(input[4])
         if e1 == 1:
             f2 = -1
-        input = (1 + (m1 * 4 + m2 * 2 + m3) / 8) * 2 ** (f2 * (2 + e2)) * f1
+        input = (1 + (m1 * 4 + m2 * 2 + m3)/8) * 2 ** (f2 * (2 + e2)) * f1
         return input
     elif d == '10':
         if s == '1':
@@ -94,7 +94,7 @@ def HF8(input):
         e3 = int(input[5])
         if e1 == 1:
             f2 = -1
-        input = (1 + (m2 * 2 + m3) / 4) * 2 ** (f2 * (4 + e2 * 2 + e3)) * f1
+        input = (1 + (m2 * 2 + m3)/4) * 2 ** (f2 * (4 + e2 * 2 + e3)) * f1
         return input
     elif d == '11':
         if s == '1':
@@ -119,7 +119,8 @@ def gen_golden_data(case_name, param):
     dst_type = param.ctype
     bias_type = param.bias_type
 
-    m, k, n, is_bias, is_atrans, is_btrans = param.m, param.k, param.n, param.is_bias, False, False 
+    m, k, n, is_bias, is_atrans, is_btrans = param.m, param.k, param.n, param.is_bias, False, False
+
     x1_gm = np.random.randint(1, 5, [m, k]).astype(a_type)
     x2_gm = np.random.randint(1, 5, [k, n]).astype(b_type)
     bias_gm = np.random.randint(1, 10, [n, ]).astype(bias_type)
@@ -142,15 +143,15 @@ def gen_golden_data(case_name, param):
         for i in range(s1_len):
             temp = bin(s1[i])
             temp = temp.split('b')[1]
-            temp = check(temp, 8)
+            temp = check(temp,8)
             re1[i] = HF8(temp)
-        s1 = cast(re1, 'fp32')
+        s1 = cast(re1,'fp32')
         for i in range(s2_len):
             temp = bin(s2[i])
             temp = temp.split('b')[1]
-            temp = check(temp, 8)
-            re2[i] = HF8(temp)            
-        s2 = cast(re2, 'fp32')
+            temp = check(temp,8)
+            re2[i] = HF8(temp)
+        s2 = cast(re2,'fp32')
         x1_gm = s1.reshape(x1_gm.shape)
         x2_gm = s2.reshape(x2_gm.shape)
 
@@ -164,7 +165,7 @@ def gen_golden_data(case_name, param):
 
 
 class tmatmulParams:
-    def __init__(self, atype, btype, ctype, m, k, n, is_bias, bias_type=None):
+    def __init__(self, atype, btype, ctype, m, k, n, is_bias, bias_type = None):
         self.atype = atype
         self.btype = btype
         self.ctype = ctype
@@ -172,7 +173,7 @@ class tmatmulParams:
         self.k = k
         self.n = n 
         self.is_bias = is_bias
-        if bias_type:
+        if (bias_type):
             self.bias_type = bias_type
         else:
             self.bias_type = ctype
@@ -226,13 +227,13 @@ if __name__ == "__main__":
         tmatmulParams(fp8_e4m3fn, fp8_e5m2, np.float32, 128, 128, 64, True),
         tmatmulParams(fp8_e5m2, fp8_e4m3fn, np.float32, 128, 128, 64, True),
         tmatmulParams(fp8_e5m2, fp8_e5m2, np.float32, 128, 128, 64, True),
-        tmatmulParams(np.uint8, np.uint8, np.float32, 128, 128, 64, True),     
+        tmatmulParams(np.uint8, np.uint8, np.float32, 128, 128, 64, True),
     ]
 
-    for i, case_name  in enumerate(case_name_list):
+    for i, case_name in enumerate(case_name_list):
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
         gen_golden_data(case_name, case_params_list[i])
-        os.chdir(original_dir)    
+        os.chdir(original_dir)

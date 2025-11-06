@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 # coding=utf-8
 
-
 import os
+
 import numpy as np
 np.random.seed(19)
 
@@ -10,7 +10,7 @@ def gen_golden_data(case_name, param):
     src_type = param.atype
     dst_type = param.ctype
 
-    m, k, n, is_bias, is_atrans, is_btrans = param.m, param.k, param.n, False, False, False 
+    m, k, n, is_bias, is_atrans, is_btrans = param.m, param.k, param.n, False, False, False
 
     x1_gm = np.random.randint(1, 5, [m, k]).astype(src_type)
     x2_gm = np.random.randint(1, 5, [k, n]).astype(src_type)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         tmatmulParams(np.float16, np.float16, np.float32, 127, 128, 63),
     ]
 
-    for i, case_name  in enumerate(case_name_list):
+    for i, case_name in enumerate(case_name_list):
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()

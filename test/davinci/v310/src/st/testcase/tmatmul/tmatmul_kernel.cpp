@@ -7,7 +7,7 @@ using namespace pto;
 constexpr uint16_t BLOCK_CUBE_M_N = 16;
 constexpr uint16_t BLOCK_ALIGN_BYTE = 32;
 template <typename T>
-__aicore__ inline T CeilAlign(T num_1, T num_2) {
+__aicore__ inline  T CeilAlign(T num_1, T num_2) {
     if (num_2 == 0) {
         return 0;
     }
@@ -15,7 +15,7 @@ __aicore__ inline T CeilAlign(T num_1, T num_2) {
 }
 
 template <typename T>
-__aicore__ inline T CeilDiv(T num_1, T num_2) {
+__aicore__ inline  T CeilDiv(T num_1, T num_2) {
     if (num_2 == 0) {
         return 0;
     }
@@ -29,33 +29,33 @@ __aicore__ inline unsigned CalcLinearOffset(unsigned GmShape1, unsigned Offset0,
 
 /*
  * brief: dynamic l1 copy in nd2nz functions
-*/
+ */
 template <typename GMT, typename L1T>
-__aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned TShape0, unsigned TShape1, unsigned GmShape0, 
-    unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1, int reserved) {
+__aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned TShape0, unsigned TShape1, unsigned GmShape0,
+    unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1, int reserved) { // ND2NZ
     src += CalcLinearOffset(GmShape1, GmOffset0, GmOffset1);
     uint16_t nValue = TShape0;
     uint16_t dValue = TShape1;
     uint16_t srcDValue = GmShape1;
-    uint16_t dstNzC0Stride = CeilAlign<uint16_t>(GmShape0, BLOCK_CUBE_M_N);    
+    uint16_t dstNzC0Stride = CeilAlign<uint16_t>(GmShape0, BLOCK_CUBE_M_N);
 
     constexpr uint16_t ndNum = 1;
-    constexpr uint16_t srcNdMatrixStride = 0;   // 源操作数相邻ND矩阵起始地址间偏移
+    constexpr uint16_t srcNdMatrixStride = 0;   // 源操作数相邻ND矩阵起始地址间的偏移
     constexpr uint16_t dstNzNStride = 1;        // 目的NZ矩阵中，来自源操作数同一行的多行数据相邻行起始地址间的偏移
     constexpr uint16_t dstNzMatrixStride = 1;   // 目的NZ矩阵中，相邻NZ矩阵起始地址间的偏移
 
     auto c0Size = 32 / sizeof(GMT);
     uint64_t loop1SrcStride = srcDValue * sizeof(GMT);
-    uint64_t loop4SrcStride = srcNdMatrixStride * sizeof(GMT);
-
-    uint16_t loop2DstStride = dstNzNStride; // loop2_dst_stride = dst_nz_n_stride
-    uint16_t loop3DstStride = dstNzC0Stride; // loop3_dst_stride = dst_nz_c0_stride
+    uint64_t loop4SrcStride = srcNdMatrixStride * sizeof(GMT); //
+    
+    uint16_t loop2DstStride = dstNzNStride;  // loop2_dst_stride = dst_nz_n_stride
+    uint16_t loop3DstStride = dstNzC0Stride; // loop3_dst_stride = dst_nz_c0_Stride
     // loop4_dst_stride: dst_nz_matrix_stride * size_of_dst_type / c0_size
     uint16_t loop4DstStride =
         static_cast<uint16_t>(dstNzMatrixStride * sizeof(GMT) / c0Size);
-    uint64_t mte2NzPara = static_cast<uint64_t>(loop4DstStride) << 48;  // mte2_nz_para[63:48]
-    mte2NzPara |= static_cast<uint64_t>(loop3DstStride) << 32;          // mte2_nz_para[47:32]
-    mte2NzPara |= static_cast<uint64_t>(loop2DstStride) << 16;          // mte2_nz_para[31:16]
+    uint64_t mte2NzPara = static_cast<uint64_t>(loop4DstStride) << 48; // mte2_nz_para[63:48]
+    mte2NzPara |= static_cast<uint64_t>(loop3DstStride) << 32;         // mte2_nz_para[47:32]
+    mte2NzPara |= static_cast<uint64_t>(loop2DstStride) << 16;         // mte2_nz_para[31:16]
     mte2NzPara |= static_cast<uint64_t>(ndNum);             // mte2_nz_para[15:0]
     set_mte2_nz_para(mte2NzPara);   // cce: store parameters for nd2nz DMA instructions
 
@@ -64,7 +64,7 @@ __aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned 
 }
 
 template <typename T>
-__aicore__ inline void DynL1CopyInND(__cbuf__ t *dst, __gm__ T *src, unsigned TShape)
+__aicore__ inline void DynL1CopyInND(__cbuf__ T *dst, __gm__ T *src, unsigned TShape)
 {
     uint16_t burstLen = TShape * sizeof(T);
     copy_gm_to_cbuf_align_v2(dst, src, 0, 1, burstLen, 0, 0, 0, 0, 0, 0);
@@ -105,7 +105,6 @@ __aicore__ inline void DynL1ToL0B(__cb__ T *dst, __cbuf__ T *src, unsigned dstK,
     load_cbuf_to_cb(dst, src, 0, 0, mStep, kStep, srcStride, dstStride, 1);
 }
 
-// Nz2Zz
 template <typename T, typename B>
 __aicore__ inline void DynL1ToBt(uint64_t dst, __cbuf__ B *src, unsigned len) {
     constexpr uint16_t blockCubeK = BLOCK_ALIGN_BYTE / sizeof(B);
@@ -122,7 +121,7 @@ __aicore__ inline void DynL1ToBt(uint64_t dst, __cbuf__ B *src, unsigned len) {
 }
 
 template <typename GMT, typename L0CT, unsigned TShape0, unsigned TShape1, unsigned oriTShape0, unsigned oriTShape1>
-__aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src,  unsigned GmShape0, unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1, int uf) { // nz2nd
+__aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src,  unsigned GmShape0, unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1, int uf) { // NZ2ND
     uint16_t MSize = oriTShape0 < (GmShape0 - GmOffset0) ? oriTShape0 :(GmShape0 - GmOffset0);
     uint16_t NSize = TShape1 < (GmShape1 - GmOffset1) ? TShape1 :(GmShape1 - GmOffset1);
     uint32_t dstStride_dst_D = GmShape1;
@@ -146,7 +145,6 @@ __aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src,  unsigned G
             QuantPRE = QuantMode_t::NoQuant;
         }
     }
-
     uint64_t config = (static_cast<uint64_t>(dst_nd_stride) << 32) | (static_cast<uint64_t>(src_nd_stride) << 16) |
                         (static_cast<uint64_t>(ndNum));
     set_loop3_para(config);
@@ -208,6 +206,7 @@ __aicore__ inline void runTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1,
     if constexpr(is_bias) {
         DynL1CopyInND<B>(srcBiasAddr, src2, N);
     }
+    
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
@@ -310,13 +309,13 @@ __aicore__ inline void runTMATMUL_SPLIT_K(__gm__ T *out, __gm__ U *src0, __gm__ 
             if constexpr(is_bias) {
                 TMATMUL_BIAS(cTile, aTile, bTile, biasTile);
             } else {
-                TMATMUL(cTIle, aTile, bTile);
+                TMATMUL(cTile, aTile, bTile);
             }
         } else {
             TMATMUL_ACC(cTile, cTile, aTile, bTile); // L0C不清空
-        }       
+        }
         set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
-        wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);        
+        wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
     }
 
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
@@ -454,43 +453,42 @@ extern "C" __global__ __aicore__ void launchTMATMUL_10(__gm__ uint8_t *out, __gm
 template <int32_t tilingKey>
 void launchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
 {
-    if constexpr(tilingKey == 1) {
+    if constexpr (tilingKey == 1) {
         launchTMATMUL_1<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 2) {
+    } else if constexpr (tilingKey == 2) {
         launchTMATMUL_2<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 3) {
+    } else if constexpr (tilingKey == 3) {
         launchTMATMUL_3<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 4) {
+    } else if constexpr (tilingKey == 4) {
         launchTMATMUL_4<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 5) {
+    } else if constexpr (tilingKey == 5) {
         launchTMATMUL_5<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 6) {
+    } else if constexpr (tilingKey == 6) {
         launchTMATMUL_6<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 7) {
+    } else if constexpr (tilingKey == 7) {
         launchTMATMUL_7<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 8) {
+    } else if constexpr (tilingKey == 8) {
         launchTMATMUL_8<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 9) {
+    } else if constexpr (tilingKey == 9) {
         launchTMATMUL_9<<<1, nullptr, stream>>>(out, src0, src1);
-    } else if constexpr(tilingKey == 10) {
+    } else if constexpr (tilingKey == 10) {
         launchTMATMUL_10<<<1, nullptr, stream>>>(out, src0, src1);
     }
 }
 
-template void launchTMATMUL<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<2>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<5>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<6>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<7>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<8>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<9>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-template void launchTMATMUL<10>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
-
+template void launchTMATMUL<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<2>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<5>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<6>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<7>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<8>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<9>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMATMUL<10>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_1(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -503,7 +501,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_1(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_2(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -516,7 +514,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_2(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_3(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -530,7 +528,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_3(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_4(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -544,7 +542,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_4(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_5(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 127;
     constexpr uint32_t N = 63;
@@ -558,7 +556,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_5(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_6(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -574,7 +572,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_6(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_7(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -587,7 +585,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_7(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_8(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -600,7 +598,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_8(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_9(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -613,7 +611,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_9(__gm__ uint8_t *out, _
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_10(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -626,7 +624,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_10(__gm__ uint8_t *out, 
 }
 
 extern "C" __global__ __aicore__ void launchTMATMULBIAS_11(__gm__ uint8_t *out, __gm__ uint8_t *src0,
-         __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+        __gm__ uint8_t *src1, __gm__ uint8_t *src2)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -639,7 +637,7 @@ extern "C" __global__ __aicore__ void launchTMATMULBIAS_11(__gm__ uint8_t *out, 
 }
 
 template <int32_t tilingKey>
-void launchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1,  uint8_t *src2, void *stream)
+void launchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream)
 {
     if constexpr (tilingKey == 1) {
         launchTMATMULBIAS_1<<<1, nullptr, stream>>>(out, src0, src1, src2);
@@ -666,14 +664,14 @@ void launchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1,  uint8_t *src
     }
 }
 
-template void launchTMATMULBIAS<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<2>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<5>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<6>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<7>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<8>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<9>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<10>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
-template void launchTMATMULBIAS<11>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream); 
+template void launchTMATMULBIAS<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<2>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<5>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<6>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<7>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<8>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<9>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<10>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMATMULBIAS<11>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
