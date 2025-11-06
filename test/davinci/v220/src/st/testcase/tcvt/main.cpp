@@ -13,18 +13,16 @@ void launchTCVT5(int16_t *out, int *src, void *stream);
 void launchTCVT6(float *out, int *src, void *stream);
 void launchTCVT7(float *out, int16_t *src, void *stream);
 
-class TCVTTest : public testing::Test
-{
+
+class TCVTTest : public testing::Test {
 protected:
     void SetUp() override
     {}
-
     void TearDown() override
     {}
 };
 
-std::string GetGoldenDir()
-{
+std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -57,7 +55,6 @@ TEST_F(TCVTTest, case1)
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-
     launchTCVT1(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
@@ -81,6 +78,7 @@ TEST_F(TCVTTest, case1)
     ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp<int>(golden, devFinal, 0.001f);
+
     EXPECT_TRUE(ret);
 }
 
@@ -98,7 +96,7 @@ TEST_F(TCVTTest, case2)
     aclrtCreateStream(&stream);
 
     float *dstHost, *dstDevice;
-    int   *srcHost, *srcDevice;
+    int *srcHost, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
     aclrtMallocHost((void **)(&srcHost), srcFileSize);
@@ -109,7 +107,6 @@ TEST_F(TCVTTest, case2)
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-
     launchTCVT2(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
@@ -133,6 +130,7 @@ TEST_F(TCVTTest, case2)
     ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
+
     EXPECT_TRUE(ret);
 }
 
@@ -161,7 +159,6 @@ TEST_F(TCVTTest, case3)
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-
     launchTCVT3(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
@@ -185,8 +182,10 @@ TEST_F(TCVTTest, case3)
     ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp<int16_t>(golden, devFinal, 0.001f);
+
     EXPECT_TRUE(ret);
 }
+
 
 TEST_F(TCVTTest, case4)
 {
@@ -201,7 +200,7 @@ TEST_F(TCVTTest, case4)
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    int   *dstHost, *dstDevice;
+    int *dstHost, *dstDevice;
     float *srcHost, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
@@ -213,7 +212,6 @@ TEST_F(TCVTTest, case4)
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-
     launchTCVT4(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
@@ -237,6 +235,7 @@ TEST_F(TCVTTest, case4)
     ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp<int>(golden, devFinal, 0.001f);
+
     EXPECT_TRUE(ret);
 }
 
@@ -254,7 +253,7 @@ TEST_F(TCVTTest, case5)
     aclrtCreateStream(&stream);
 
     int16_t *dstHost, *dstDevice;
-    int     *srcHost, *srcDevice;
+    int *srcHost, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
     aclrtMallocHost((void **)(&srcHost), srcFileSize);
@@ -265,7 +264,6 @@ TEST_F(TCVTTest, case5)
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-
     launchTCVT5(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
@@ -289,6 +287,7 @@ TEST_F(TCVTTest, case5)
     ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp<int16_t>(golden, devFinal, 0.001f);
+
     EXPECT_TRUE(ret);
 }
 
@@ -306,7 +305,7 @@ TEST_F(TCVTTest, case6)
     aclrtCreateStream(&stream);
 
     float *dstHost, *dstDevice;
-    int   *srcHost, *srcDevice;
+    int *srcHost, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
     aclrtMallocHost((void **)(&srcHost), srcFileSize);
@@ -317,7 +316,6 @@ TEST_F(TCVTTest, case6)
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-
     launchTCVT6(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
@@ -341,6 +339,7 @@ TEST_F(TCVTTest, case6)
     ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp<float>(golden, devFinal, 0.001f);
+
     EXPECT_TRUE(ret);
 }
 
@@ -357,7 +356,7 @@ TEST_F(TCVTTest, case7)
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    float   *dstHost, *dstDevice;
+    float *dstHost, *dstDevice;
     int16_t *srcHost, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
@@ -369,7 +368,6 @@ TEST_F(TCVTTest, case7)
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-
     launchTCVT7(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
@@ -393,5 +391,6 @@ TEST_F(TCVTTest, case7)
     ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp<float>(golden, devFinal, 0.001f);
+
     EXPECT_TRUE(ret);
 }
