@@ -39,7 +39,6 @@ print_error() {
 build_ut() {
   echo $dotted_line
   echo "Start to build ut"
-  cd pto-tile-lib
   source ${ASCEND_ENV_PATH}/setenv.bash
   python3 test/script/run_st.py -r sim -v a3 -t tmatmul -g TMATMULTest.case1
 }
