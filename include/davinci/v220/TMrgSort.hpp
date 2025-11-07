@@ -17,7 +17,7 @@ namespace pto
         uint16_t mrgSortList3;
     };
     
-    __aicore__ PTO_INLINE void GetExhaustedDat(uint16_t &mrgSortList0, uint16_t &mrgSortList1,
+    __aicore__ PTO_INLINE void GetExhaustedData(uint16_t &mrgSortList0, uint16_t &mrgSortList1,
                                                uint16_t &mrgSortList2, uint16_t &mrgSortList3)
     {
         int64_t mrgSortResult = get_vms4_sr();
@@ -26,13 +26,13 @@ namespace pto
         mrgSortList0 = static_cast<uint64_t>(mrgSortResult) & resMask;
         constexpr uint64_t sortList1Bit = 16;
         // VMS4_SR[31:16], number of finished region proposals in list1
-        mrgSortList1 = (static_cast<uint64_t>(mrgSortResult >> sortList1Bit)) & resMask;
+        mrgSortList1 = (static_cast<uint64_t>(mrgSortResult) >> sortList1Bit) & resMask;
         constexpr uint64_t sortList2Bit = 32;
         // VMS4_SR[47:32], number of finished region proposals in list2
-        mrgSortList2 = (static_cast<uint64_t>(mrgSortResult >> sortList2Bit)) & resMask;
+        mrgSortList2 = (static_cast<uint64_t>(mrgSortResult) >> sortList2Bit) & resMask;
         constexpr uint64_t sortList3Bit = 48;
         // VMS4_SR[63:48], number of finished region proposals in list3
-        mrgSortList3 = (static_cast<uint64_t>(mrgSortResult >> sortList3Bit)) & resMask;
+        mrgSortList3 = (static_cast<uint64_t>(mrgSortResult) >> sortList3Bit) & resMask;
     }
 
     template <typename DstTileData, typename TmpTileData,
@@ -270,7 +270,7 @@ namespace pto
         uint32_t dstCol = dst.GetValidCol();
         uint32_t srcCol = src.GetValidCol();
         uint32_t validRow = dst.GetValidRow();
-        // 一个struct是8字节
+        // 一个strcut是8字节
         uint32_t numStrcutures = blockLen * sizeof(typename SrcTileData::DType) / STRUCTSIZE;
         uint8_t repeatTimes = srcCol / (blockLen * 4);
         TMrgsort<DstTileData, SrcTileData>(dst.data(), src.data(), numStrcutures, repeatTimes);
