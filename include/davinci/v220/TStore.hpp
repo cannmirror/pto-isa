@@ -1,5 +1,5 @@
-#ifndef TSTORE_GPP
-#define TSTORE_GPP
+#ifndef TSTORE_HPP
+#define TSTORE_HPP
 
 namespace pto {
     template <typename GlobalData, typename TileData>
