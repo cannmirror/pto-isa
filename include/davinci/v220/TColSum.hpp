@@ -29,7 +29,7 @@ namespace pto {
             if (numRepeatPerLine > 0) {
                 set_mask_count();
                 set_vector_mask(0, elementsPerLine);
-                for (int i = 0; i < validRow / 2; i++) {
+                for (uint32_t i = 0; i < validRow / 2; i++) {
                     vadd(tmpPtr + i * dupSrcStride, srcPtr + 2 * i * dupSrcStride,
                          srcPtr + (2 * i + 1) * dupSrcStride, 0, 1, 1, 1, 8, 8, 8);
                     pipe_barrier(PIPE_V);
@@ -66,7 +66,7 @@ namespace pto {
                 if (numRepeatPerLine > 0) {
                     set_mask_count();
                     set_vector_mask(0, elementsPerLine);
-                    for (int i = 0; i < cnt / 2; i++) {
+                    for (uint32_t i = 0; i < cnt / 2; i++) {
                         vadd(tmpPtr + i * dupSrcStride, tmpPtr + 2 * i * dupSrcStride,
                              tmpPtr + (2 * i + 1) * dupSrcStride, 0, 1, 1, 1, 8, 8, 8);
                         pipe_barrier(PIPE_V);
@@ -89,13 +89,13 @@ namespace pto {
             copy_ubuf_to_ubuf(dstPtr, tmpPtr, 0, 1, lenBurst, 0, 0);
             pipe_barrier(PIPE_V);
         } else {
-            copy_ubuf_to_ubuf(dstPtr, tmpPtr, 0, 1, lenBurst, 0, 0);
+            copy_ubuf_to_ubuf(dstPtr, srcPtr, 0, 1, lenBurst, 0, 0);
             pipe_barrier(PIPE_V);
 
             if (numRepeatPerLine > 0) {
                 set_mask_count();
                 set_vector_mask(0, elementsPerLine);
-                for (int i = 1; i < validRow; i++) {
+                for (uint32_t i = 1; i < validRow; i++) {
                     vadd(dstPtr, dstPtr, srcPtr + i * dupSrcStride, 0, 1, 1, 1, 8, 8, 8);
                     pipe_barrier(PIPE_V);
                 }
@@ -108,7 +108,7 @@ namespace pto {
 
             if (numRemainPerLine) {
                 SetContinuousMask(numRemainPerLine);
-                for (int i = 0; i < validRow; i++) {
+                for (uint32_t i = 1; i < validRow; i++) {
                     vadd(dstPtr, dstPtr, srcPtr + i * dupSrcStride, 1, 1, 1, 1, 8, 8, 8);
                     pipe_barrier(PIPE_V);
                 }
