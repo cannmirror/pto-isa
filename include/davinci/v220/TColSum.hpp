@@ -121,7 +121,7 @@ namespace pto {
     __aicore__ PTO_INLINE void TCOLSUM(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp, bool IsBinary) {
         static_assert((sizeof(typename TileDataSrc::DType) == 2) || (sizeof(typename TileDataSrc::DType) == 4),
                       "Data type must be 16/32");
-        static_assert(TileDataSrc::Loc == pto::Loaction::Vec, "Src location must be Vec!");
+        static_assert(TileDataSrc::Loc == pto::Location::Vec, "Src location must be Vec!");
         static_assert((TileDataSrc::layout == pto::Layout::ND) &&
                       (TileDataSrc::isRowMajor && (TileDataSrc::SFractal == SLayout::NoneBox)) &&
                       (TileDataDst::layout == pto::Layout::ND) &&
