@@ -13,7 +13,7 @@ namespace pto {
         static_assert((sizeof(typename DstTileData::DType) == 2) || (sizeof(typename DstTileData::DType) == 4),
                       "expect b16/b32");
         static_assert((sizeof(typename Src1TileData::DType) == 4),
-                      "expect b16/b32");
+                      "expect b32");
         static_assert((std::is_same<typename DstTileData::DType, typename Src0TileData::DType>::value),
                       "expect same size for indice and dst");
     }
@@ -60,16 +60,16 @@ namespace pto {
             pipe_barrier(PIPE_V);
             vmins((__ubuf__ int32_t*) (dstPtr),
                   (__ubuf__ int32_t*) (dstPtr),
-                  (int32_t)0x0002ffe0, 1, 1, 1, 8, 8);  // Limit addresses for gathering by 0x2ffe0 value as A3 has only 192kb (0x30000) to avoid VECTOR_CORE_EXCEPTION
+                  (int32_t)0x0002ffe0, 1, 1, 1, 8, 8);
             pipe_barrier(PIPE_V);
-            vgather((__ubuf__ uint16_t*) (dstPtr), (__ubuf__ uint16_t*) (dstPtr), (uintptr_t)src0Ptr, 8, 1);
+            vgather((__ubuf__ uint16_t*) (dstPtr), (__ubuf__ uint32_t*) (dstPtr), (uintptr_t)src0Ptr, 8, 1);
             set_mask_norm();
             set_vector_mask(-1, -1);
         }
     }
 
     template <typename TileDataD, typename TileDataS0, typename TileDataS1, unsigned TShape0, unsigned TShape1>
-    __tf__ __aicore__ void TGather2D(typename TileDataD::TileDType __out__ dst,
+    __tf__ __aicore__ void TGather2D(typename TileDataS0::TileDType __out__ dst,
                                 typename TileDataS0::TileDType __in__ src0,
                                 typename TileDataS1::TileDType __in__ src1,
                                 typename TileDataS1::TileDType __in__ tmp,
@@ -103,7 +103,7 @@ namespace pto {
             }
             pipe_barrier(PIPE_V);
             set_vector_mask(0, TShape0 * validCol);
-            vmuls((__ubuf__ int32_t*) (dstPtr), (__ubuf__ int32_t*) (src1Ptr), sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
+            vmuls((__ubuf__ int32_t*) (dstPtr), (__ubuf__ int32_t*) (dstPtr), sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
             pipe_barrier(PIPE_V);
             vmins((__ubuf__ int32_t*) (dstPtr),
                   (__ubuf__ int32_t*) (dstPtr),
@@ -120,21 +120,21 @@ namespace pto {
                 vmuls((__ubuf__ int32_t*) (dstPtr + i * TShape1),
                       (__ubuf__ int32_t*) (src1Ptr + i * TShape1),
                       sizeof(typename TileDataD::DType),
-                      1, 1, 1, 8, 8, 8);
+                      1, 1, 1, 8, 8);
             }
             pipe_barrier(PIPE_V);
             for (int i = 0; i < TShape0; ++i) {
                 vmins((__ubuf__ int32_t*) (dstPtr + i * TShape1),
                       (__ubuf__ int32_t*) (dstPtr + i * TShape1),
                       (int32_t)0x0002ffe0,
-                      1, 1, 1, 8, 8, 8);
+                      1, 1, 1, 8, 8);
             }
             pipe_barrier(PIPE_V);
             for (int i = 0; i < TShape0; ++i) {
-                vmins((__ubuf__ uint32_t*) (dstPtr + i * TShape1),
-                      (__ubuf__ uint32_t*) (dstPtr + i * TShape1),
-                      (uintptr_t)src0Ptr + i * src0Shape1 * sizeof(typename TileDataD::DType),
-                      8, 1);
+                vgather((__ubuf__ uint32_t*) (dstPtr + i * TShape1),
+                        (__ubuf__ uint32_t*) (dstPtr + i * TShape1),
+                        (uintptr_t)src0Ptr + i * src0Shape1 * sizeof(typename TileDataD::DType),
+                        8, 1);
             }
             set_mask_norm();
             set_vector_mask(-1, -1);
@@ -172,12 +172,12 @@ namespace pto {
     enum class MaskPattern : uint8_t
     {
         // 以下1~7与指令VREDUCEv2的pattern mode保持一致
-        P0101 = 1,  // 1: 01010101...0101 # 每个repeat内每两个元素去第一个元素
-        P1010 = 2,  // 2: 10101010...1010 # 每个repeat内每两个元素去第二个元素
-        P0001 = 3,  // 3: 00010001...0001 # 每个repeat内每四个元素去第一个元素
-        P0010 = 4,  // 4: 00100010...0010 # 每个repeat内每四个元素去第二个元素
-        P0100 = 5,  // 5: 01000100...0100 # 每个repeat内每四个元素去第三个元素
-        P1000 = 6,  // 6: 10001000...1000 # 每个repeat内每四个元素去第四个元素
+        P0101 = 1,  // 1: 01010101...0101 # 每个repeat内每两个元素取第一个元素
+        P1010 = 2,  // 2: 10101010...1010 # 每个repeat内每两个元素取第二个元素
+        P0001 = 3,  // 3: 00010001...0001 # 每个repeat内每四个元素取第一个元素
+        P0010 = 4,  // 4: 00100010...0010 # 每个repeat内每四个元素取第二个元素
+        P0100 = 5,  // 5: 01000100...0100 # 每个repeat内每四个元素取第三个元素
+        P1000 = 6,  // 6: 10001000...1000 # 每个repeat内每四个元素取第四个元素
         P1111 = 7,  // 7: 11111111...1111 # 每个repeat内取全部元素
     };
 
