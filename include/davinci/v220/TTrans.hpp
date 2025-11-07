@@ -73,7 +73,7 @@ namespace pto {
                 }
             }
         } else if constexpr (sizeOf(T) == 1) {
-            // num_subtile_y can reach REPEAT_MAX = 255 in b8 case
+            // num_subtile_y couldn't reach REPEAT_MAX = 255 in b8 case
             // 1 subtile = 32 * 32B = 1KB, UB = 192KB, so UB can contain 192 subtiles at most
             uint64_t srcUb[16] = {0};
             uint64_t dstUb[16] = {0};
@@ -137,7 +137,7 @@ namespace pto {
             // vcopy(...) doesn't support b8 data type pointers. So in rare case of odd num_tail we should additionally use
             // scalar copy from src to dst for the last dst column
             if (num_tail % 2) {
-                // The sync is necessray for scalar copy to be after all vector ops
+                // The sync is necessary for scalar copy to be after all vector ops
                 set_flag(PIPE_V, PIPE_S, EVENT_ID7);
                 wait_flag(PIPE_V, PIPE_S, EVENT_ID7);
                 for (unsigned i = 0; i < num_row; ++i) {
@@ -195,31 +195,31 @@ namespace pto {
 
         constexpr uint16_t blockElemSize = BLOCK_BYTE_SIZE / sizeof(T);
         constexpr uint16_t tmpStride = sizeof(T) == 1 ? 32 : 16;
-        // Here we decrement tmpSubtileMax to make sure the copying within TMP UB buffer (8KB)
-        // and tmpRowMax within repeatTimes limit (255)
+        // Here we decrement tmpSubtilesMax to make sure the copying within TMP UB buffer (8KB)
+        // and tmpRowsMax within repeatTimes limit (255)
         constexpr uint16_t tmpSubtilesMax = TMP_UB_SIZE / BLOCK_BYTE_SIZE / tmpStride - 1;  // 8KB/32B/tmpStride-1
-        constexpr uint16_t tmpRowMax = tmpSubtilesMax * blockElemSize;
-        static_assert(tmpRowMax <= REPEAT_MAX);
+        constexpr uint16_t tmpRowsMax = tmpSubtilesMax * blockElemSize;
+        static_assert(tmpRowsMax <= REPEAT_MAX);
 
         __ubuf__ T *tmpPtr = (__ubuf__ T *)(TMP_UB_OFFSET);  // 8KB, start from 184KB, UB:192KB=184+8KB
         const unsigned full_iter_num = num_subtile_x / tmpSubtilesMax;
         for (unsigned iter = 0; iter < full_iter_num; ++iter) {
-            transpose_full_subtiles<T, tmpStride, srcStride>(tmpPtr, (srcPtr + iter * tmpRowMax), tmpSubtilesMax, 1);
+            transpose_full_subtiles<T, tmpStride, srcStride>(tmpPtr, (srcPtr + iter * tmpRowsMax), tmpSubtilesMax, 1);
             pipe_barrier(PIPE_V);
-            copy_row_with_max<T, dstStride, tmpStride>((dstPtr + full_iter_num * tmpRowMax * dstStride), tmpPtr, tmpRowMax, num_tail_y);
+            copy_rows_with_mask<T, dstStride, tmpStride>((dstPtr + iter * tmpRowMax * dstStride), tmpPtr, tmpRowMax, num_tail_y);
             pipe_barrier(PIPE_V);
         }
 
-        if (const uint16_t tmpSubtilesTail = num_subtile_x % tmpSubtilesMax) {
+        if (const unsigned tmpSubtilesTail = num_subtile_x % tmpSubtilesMax) {
             transpose_full_subtiles<T, tmpStride, srcStride>(tmpPtr, (srcPtr + full_iter_num * tmpSubtilesMax * blockElemSize), tmpSubtilesTail, 1);
             pipe_barrier(PIPE_V);
-            copy_row_with_max<T, dstStride, tmpStride>((dstPtr + full_iter_num * tmpRowMax * dstStride), tmpPtr, tmpSubtilesTail * blockElemSize, num_tail_y);
+            copy_rows_with_mask<T, dstStride, tmpStride>((dstPtr + full_iter_num * tmpRowsMax * dstStride), tmpPtr, tmpSubtilesTail * blockElemSize, num_tail_y);
             pipe_barrier(PIPE_V);
         }
     }
 
     template <typename T, unsigned dstStride, unsigned srcStride>
-    __aicore__ PTO_INLINE void transpose_xy_tail_subtiles(
+    __aicore__ PTO_INLINE void transpose_xy_tail_subtile(
         __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned num_tail_x, unsigned num_tail_y)
     {
         if (num_tail_x ==0 || num_tail_y == 0) {
@@ -231,11 +231,11 @@ namespace pto {
         __ubuf__ T *tmpPtr = (__ubuf__ T *)(TMP_UB_OFFSET);  // 8KB, start from 184KB, UB:192KB=184+8KB
         transpose_full_subtiles<T, tmpStride, srcStride>(tmpPtr, srcPtr, 1, 1);
         pipe_barrier(PIPE_V);
-        copy_row_with_max<T, dstStride, tmpStride>(dstPtr, tmpPtr, num_tail_x, num_tail_y);
+        copy_rows_with_mask<T, dstStride, tmpStride>(dstPtr, tmpPtr, num_tail_x, num_tail_y);
         pipe_barrier(PIPE_V);
     }
 
-    template <typename TielData, unsigned dstStride, unsigned srcStride>
+    template <typename TileData, unsigned dstStride, unsigned srcStride>
     __tf__ __aicore__ PTO_INLINE void TTrans(typename TileData::TileDType __out__ dst,
                                 typename TileData::TileDType __in__ src,
                                 unsigned validRow,
@@ -273,7 +273,7 @@ namespace pto {
             const unsigned num_full_subtile_x = validCol / blockElemSize;
             const unsigned num_tail_x = validCol % blockElemSize;
             const unsigned num_full_subtile_y = (sizeof(T) == 1) ? validRow / 32 : validRow / 16;
-            const unsigned num_tail_y = (sizeof(T) == 1) ? validRow / 32 : validRow / 16;
+            const unsigned num_tail_y = (sizeof(T) == 1) ? validRow % 32 : validRow % 16;
             
             transpose_full_subtiles<T, dstStride, srcStride>(
                 dstPtr,
@@ -296,8 +296,8 @@ namespace pto {
             transpose_xy_tail_subtiles<T, dstStride, srcStride>(
                 dstPtr + (validCol - num_tail_x) * dstStride + (validRow - num_tail_y),
                 srcPtr + (validRow - num_tail_y) * srcStride + (validCol - num_tail_x),
-                num_full_subtile_x,
-                num_full_subtile_y);
+                num_tail_x,
+                num_tail_y);
         }
     }
 
