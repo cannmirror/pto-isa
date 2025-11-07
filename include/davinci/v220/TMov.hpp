@@ -8,7 +8,7 @@ namespace pto
     __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
         static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
             "The shape of src needs to be the same as that of dst.");
-        if constexpr (DstTileData::SFractal == SrcFractal::SFractal) {
+        if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
             if constexpr (DstTileData::Loc == Location::Left) {
                 TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
             } else {
