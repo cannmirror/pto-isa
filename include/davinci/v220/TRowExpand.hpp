@@ -2,17 +2,17 @@
 #define TROWEXPAND_HPP
 
 #include "common/constants.hpp"
-#include "common/utils.hpp"
+#include "utils.hpp"
 
 namespace pto {
     __aicore__ PTO_INLINE uint16_t DupB8ToB16(uint8_t value) {
         auto u16 = static_cast<uint16_t>(value);
-        return u16 + (u16 * 0x100);  // 相当于 extend | (extend << 8)
+        return u16 + (u16 * 0x100);  // 相当于 extended | (extended << 8)
     }
 
     __aicore__ PTO_INLINE uint16_t DupB8ToB16(int8_t value) {
-        auto u8 = static_cast<uint8_t>(value);
-        return DupB8ToB16(u8);
+        auto ub8 = static_cast<uint8_t>(value);
+        return DupB8ToB16(ub8);
     }
 
     template<typename T>
@@ -60,12 +60,13 @@ namespace pto {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / DTypeSize;
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / DTypeSize;
         unsigned dupValidCol = 
-            (validCol * sizeof(TileDataDst::DType) + DTypeSize - 1) / DTypeSize;
+            (validCol * sizeof(typename TileDataDst::DType) + DTypeSize - 1) / DTypeSize;
         unsigned numRepeatPerLine = dupValidCol / elementsPerRepeat;
         unsigned numRemainPerLine = dupValidCol % elementsPerRepeat;
         unsigned numBlockPerLine =
             (srcstride * DTypeSize + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE;
-        constexpr unsigned dupStride = trait.DupDstStride(numBlockPerLine * blockSizeElem);
+        unsigned dupSrcStride = numBlockPerLine * blockSizeElem;
+        constexpr unsigned dupStride = trait.DupDstStride(dupSrcStride);
 
         if (numRepeatPerLine > 0) {
             set_mask_count();
@@ -74,7 +75,7 @@ namespace pto {
                 set_flag(PIPE_V, PIPE_S, EVENT_ID0);
                 wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
                 typename TileDataSrc::DType tempValue =
-                    (typename TileDataSrc::DType)(*(srcPtr + i * dupStride));
+                    (typename TileDataSrc::DType)(*(srcPtr + i * dupSrcStride));
                 DupType dupValue = trait.DupValue(tempValue);
                 set_flag(PIPE_S, PIPE_V, EVENT_ID0);
                 wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
@@ -92,7 +93,7 @@ namespace pto {
                 set_flag(PIPE_V, PIPE_S, EVENT_ID0);
                 wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
                 typename TileDataSrc::DType tempValue =
-                    (typename TileDataSrc::DType)(*(srcPtr + i * dupStride));
+                    (typename TileDataSrc::DType)(*(srcPtr + i * srcstride));
                 DupType dupValue = trait.DupValue(tempValue);
                 set_flag(PIPE_S, PIPE_V, EVENT_ID0);
                 wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
@@ -106,7 +107,7 @@ namespace pto {
     __aicore__ PTO_INLINE void TROWEXPAND_IMPL(TileDataDst &dst, TileDataSrc &src) {
         static_assert((sizeof(typename TileDataSrc::DType) == 1) || (sizeof(typename TileDataSrc::DType) == 2) ||
                       (sizeof(typename TileDataSrc::DType) == 4), "Data type must be b8/16/32");
-        static_assert(TileDataSrc::Loc == pto::Loaction::Vec, "Src location must be Vec!");
+        static_assert(TileDataSrc::Loc == pto::Location::Vec, "Src location must be Vec!");
         static_assert((TileDataSrc::layout == pto::Layout::ND) &&
                       (TileDataSrc::isRowMajor && (TileDataSrc::SFractal == SLayout::NoneBox)) &&
                       (TileDataDst::layout == pto::Layout::ND) &&
