@@ -14,7 +14,7 @@ namespace pto {
         __ca__ AType *a = (__ca__ AType *)(aMatrix);
         __cb__ BType *b = (__cb__ BType *)(bMatrix);
 
-        bool kDirectionAlign = false;  // only for f322f32
+        bool kDirectionAlign = false;  // only fot f322f32
         if constexpr ((std::is_same<AType, float>::value) && (std::is_same<CType, float>::value)) {
             if constexpr(TileLeft::isRowMajor && TileLeft::SFractal == SLayout::ColMajor) {  // zn A transpose
                 kDirectionAlign = true;
@@ -24,7 +24,7 @@ namespace pto {
         // Indicates the Cmatrix source, 1: the C matrix is in bias table buffer, 0: the C matrix is in L0C
         uint8_t unitFlag = 0;  // unit flag control bits
 
-        mad(c, a, b, m, k, n, unitFlag, KDirectionAlign, camatrixSource, CmatrixInitVal);
+        mad(c, a, b, m, k, n, unitFlag, KDirectionAlign, cmatrixSource, CmatrixInitVal);
     }
 
     template <typename TileAcc, typename TileLeft, typename TileRight>
@@ -36,8 +36,8 @@ namespace pto {
                       ((std::is_same<typename TileAcc::DType, float>::value) && (std::is_same<typename TileLeft::DType, bfloat16_t>::value) && (std::is_same<typename TileRight::DType, bfloat16_t>::value)),
                       "The data type is not supported.");
         constexpr uint16_t m = TileAcc::Rows;
-        constexpr uint16_t k = TileAcc::Cols;
-        constexpr uint16_t n = TileLeft::Cols;
+        constexpr uint16_t n = TileAcc::Cols;
+        constexpr uint16_t k = TileLeft::Cols;
         constexpr size_t leftSize = (m * k) * sizeof(typename TileLeft::DType);
         constexpr size_t rightSize = (k * n) * sizeof(typename TileRight::DType);
         constexpr size_t accSize =(m * n) * sizeof(typename TileAcc::DType);
