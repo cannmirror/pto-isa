@@ -84,7 +84,7 @@ namespace pto {
             unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
             for (int i = 0; i < validRow; i++) {
                 if (numLoop) {
-                    for (uint64_t j = 0; j < numLoop; j++) {
+                    for (int j = 0; j < numLoop; j++) {
                         vadd(dstPtr + i * dstStride + j * REPEAT_MAX * elementsPerRepeat,
                              src0Ptr + i * src0Stride + j * REPEAT_MAX * elementsPerRepeat,
                              src1Ptr + i * src1Stride + j * REPEAT_MAX * elementsPerRepeat,
@@ -114,7 +114,7 @@ namespace pto {
             if (numLoop) {
                 for (int i = 0; i < numLoop; i++) {
                     if (strideOverFlag) {
-                        for (unsigned j = 0; j < REPEAT_MAX; j++) {
+                        for (uint64_t j = 0; j < REPEAT_MAX; j++) {
                             vadd(dstPtr + i * REPEAT_MAX * dstStride + j * dstStride,
                                  src0Ptr + i * REPEAT_MAX * src0Stride + j * src0Stride,
                                  src1Ptr + i * REPEAT_MAX * src1Stride + j * src1Stride,
@@ -131,7 +131,7 @@ namespace pto {
             }
             if (remainAfterLoop) {
                 if (strideOverFlag) {
-                    for (uint64_t j = 0; j < remainAfterLoop; j++) {
+                    for (unsigned j = 0; j < remainAfterLoop; j++) {
                         vadd(dstPtr + numLoop * REPEAT_MAX * dstStride + j * dstStride,
                              src0Ptr + numLoop * REPEAT_MAX * src0Stride + j * src0Stride,
                              src1Ptr + numLoop * REPEAT_MAX * src1Stride + j * src1Stride,
