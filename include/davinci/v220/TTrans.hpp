@@ -206,7 +206,7 @@ namespace pto {
         for (unsigned iter = 0; iter < full_iter_num; ++iter) {
             transpose_full_subtiles<T, tmpStride, srcStride>(tmpPtr, (srcPtr + iter * tmpRowsMax), tmpSubtilesMax, 1);
             pipe_barrier(PIPE_V);
-            copy_rows_with_mask<T, dstStride, tmpStride>((dstPtr + iter * tmpRowMax * dstStride), tmpPtr, tmpRowMax, num_tail_y);
+            copy_rows_with_mask<T, dstStride, tmpStride>((dstPtr + iter * tmpRowsMax * dstStride), tmpPtr, tmpRowMax, num_tail_y);
             pipe_barrier(PIPE_V);
         }
 
@@ -293,7 +293,7 @@ namespace pto {
                 num_full_subtile_x,
                 num_tail_y);
 
-            transpose_xy_tail_subtiles<T, dstStride, srcStride>(
+            transpose_xy_tail_subtile<T, dstStride, srcStride>(
                 dstPtr + (validCol - num_tail_x) * dstStride + (validRow - num_tail_y),
                 srcPtr + (validRow - num_tail_y) * srcStride + (validCol - num_tail_x),
                 num_tail_x,
