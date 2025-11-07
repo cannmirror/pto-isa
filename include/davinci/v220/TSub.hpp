@@ -66,7 +66,7 @@ namespace pto {
             }
             if (remainAfterLoop) {
                 if (strideOverFlag) {
-                    for (uint64_t j = 0; j < remainAfterLoop; j++) {
+                    for (unsigned j = 0; j < remainAfterLoop; j++) {
                         vsub(dstPtr + numLoop * REPEAT_MAX * stride + j * stride,
                              src0Ptr + numLoop * REPEAT_MAX * stride + j * stride,
                              src1Ptr + numLoop * REPEAT_MAX * stride + j * stride,
@@ -92,7 +92,7 @@ namespace pto {
         constexpr unsigned stride = TileData::RowStride;
         unsigned validRow = dst.GetValidRow();
 
-        TAdd<TileData, elementsPerRepeat, blockSizeElem, stride>(dst.data(), src0.data(), src1.data(),
+        TSub<TileData, elementsPerRepeat, blockSizeElem, stride>(dst.data(), src0.data(), src1.data(),
                                                                 numRepeatPerLine, numRemainPerLine, validRow);
     }
 }
