@@ -66,7 +66,7 @@ namespace pto {
         unsigned numBlockPerLine =
             (srcstride * DTypeSize + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE;
         unsigned dupSrcStride = numBlockPerLine * blockSizeElem;
-        constexpr unsigned dupStride = trait.DupDstStride(dupSrcStride);
+        constexpr unsigned dupStride = trait.DupDstStride(dststride);
 
         if (numRepeatPerLine > 0) {
             set_mask_count();
@@ -106,7 +106,7 @@ namespace pto {
     template <typename TileDataDst, typename TileDataSrc>
     __aicore__ PTO_INLINE void TROWEXPAND_IMPL(TileDataDst &dst, TileDataSrc &src) {
         static_assert((sizeof(typename TileDataSrc::DType) == 1) || (sizeof(typename TileDataSrc::DType) == 2) ||
-                      (sizeof(typename TileDataSrc::DType) == 4), "Data type must be b8/16/32");
+                      (sizeof(typename TileDataSrc::DType) == 4), "Data type must be b8/b16/b32");
         static_assert(TileDataSrc::Loc == pto::Location::Vec, "Src location must be Vec!");
         static_assert((TileDataSrc::layout == pto::Layout::ND) &&
                       (TileDataSrc::isRowMajor && (TileDataSrc::SFractal == SLayout::NoneBox)) &&
