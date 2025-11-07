@@ -17,8 +17,8 @@ namespace pto
         uint16_t mrgSortList3;
     };
     
-    __aicore__ PTO_INLINE void GetExhaustedDat(uint16_t mrgSortList0, uint16_t mrgSortList1,
-                                               uint16_t mrgSortList2, uint16_t mrgSortList3)
+    __aicore__ PTO_INLINE void GetExhaustedDat(uint16_t &mrgSortList0, uint16_t &mrgSortList1,
+                                               uint16_t &mrgSortList2, uint16_t &mrgSortList3)
     {
         int64_t mrgSortResult = get_vms4_sr();
         constexpr uint64_t resMask = 0xFFFF;
@@ -26,13 +26,13 @@ namespace pto
         mrgSortList0 = static_cast<uint64_t>(mrgSortResult) & resMask;
         constexpr uint64_t sortList1Bit = 16;
         // VMS4_SR[31:16], number of finished region proposals in list1
-        mrgSortList1 = static_cast<uint64_t>(mrgSortResult >> sortList1Bit) & resMask;
-        constexpr uint64_t sortList2Bit = 33;
+        mrgSortList1 = (static_cast<uint64_t>(mrgSortResult >> sortList1Bit)) & resMask;
+        constexpr uint64_t sortList2Bit = 32;
         // VMS4_SR[47:32], number of finished region proposals in list2
-        mrgSortList2 = static_cast<uint64_t>(mrgSortResult >> sortList2Bit) & resMask;
+        mrgSortList2 = (static_cast<uint64_t>(mrgSortResult >> sortList2Bit)) & resMask;
         constexpr uint64_t sortList3Bit = 48;
         // VMS4_SR[63:48], number of finished region proposals in list3
-        mrgSortList3 = static_cast<uint64_t>(mrgSortResult >> sortList3Bit) & resMask;
+        mrgSortList3 = (static_cast<uint64_t>(mrgSortResult >> sortList3Bit)) & resMask;
     }
 
     template <typename DstTileData, typename TmpTileData,
@@ -41,9 +41,9 @@ namespace pto
     __tf__ __aicore__ void TMrgsort(typename DstTileData::TileDType __out__ dst,
                                     typename TmpTileData::TileDType __out__ tmp,
                                     typename Src0TileData::TileDType __in__ src0,
-                                    typename Src0TileData::TileDType __in__ src1,
-                                    typename Src0TileData::TileDType __in__ src2,
-                                    typename Src0TileData::TileDType __in__ src3,
+                                    typename Src1TileData::TileDType __in__ src1,
+                                    typename Src2TileData::TileDType __in__ src2,
+                                    typename Src3TileData::TileDType __in__ src3,
                                     unsigned dstCol,
                                     uint16_t &mrgSortList0, uint16_t &mrgSortList1,
                                     uint16_t &mrgSortList2, uint16_t &mrgSortList3,
@@ -63,12 +63,12 @@ namespace pto
         if constexpr (listNum == 2) {
             uint64_t config = 0;
             config |= uint64_t(1);  // Xt[7:0]: repeat time
-            config |= (uint64_t(0x0011) << 8);  // Xt[11:8]: 4-bit mask signal
+            config |= (uint64_t(0b0011) << 8);  // Xt[11:8]: 4-bit mask signal
             if constexpr (exhausted == TRUE) {
                 config |= (uint64_t(0b1) << 12);  // Xt[12]: 1-enable input list exhausted suspension
             }
             if constexpr (exhausted == FALSE) {
-                config |= (uint64_t(0b0) << 12);  // Xt[12]: 0-enable input list exhausted suspension
+                config |= (uint64_t(0b0) << 12);  // Xt[12]: 0-disable input list exhausted suspension
             }
             
             // 每次计算的数据
@@ -83,12 +83,12 @@ namespace pto
         if constexpr (listNum == 3) {
             uint64_t config = 0;
             config |= uint64_t(1);  // Xt[7:0]: repeat time
-            config |= (uint64_t(0x0111) << 8);  // Xt[11:8]: 4-bit mask signal
+            config |= (uint64_t(0b0111) << 8);  // Xt[11:8]: 4-bit mask signal
             if constexpr (exhausted == TRUE) {
                 config |= (uint64_t(0b1) << 12);  // Xt[12]: 1-enable input list exhausted suspension
             }
             if constexpr (exhausted == FALSE) {
-                config |= (uint64_t(0b0) << 12);  // Xt[12]: 0-enable input list exhausted suspension
+                config |= (uint64_t(0b0) << 12);  // Xt[12]: 0-disable input list exhausted suspension
             }
             
             // 每次计算的数据
@@ -104,12 +104,12 @@ namespace pto
         if constexpr (listNum == 4) {
             uint64_t config = 0;
             config |= uint64_t(1);  // Xt[7:0]: repeat time
-            config |= (uint64_t(0x1111) << 8);  // Xt[11:8]: 4-bit mask signal
+            config |= (uint64_t(0b1111) << 8);  // Xt[11:8]: 4-bit mask signal
             if constexpr (exhausted == TRUE) {
                 config |= (uint64_t(0b1) << 12);  // Xt[12]: 1-enable input list exhausted suspension
             }
             if constexpr (exhausted == FALSE) {
-                config |= (uint64_t(0b0) << 12);  // Xt[12]: 0-enable input list exhausted suspension
+                config |= (uint64_t(0b0) << 12);  // Xt[12]: 0-disable input list exhausted suspension
             }
             
             // 每次计算的数据
@@ -143,7 +143,7 @@ namespace pto
         __ubuf__ typename SrcTileData::DType *srcPtr = (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src);
 
         uint64_t config = 0;
-        config |= uint64_t(repeatTime);  // Xt[7:0]: repeat time
+        config |= uint64_t(repeatTimes);  // Xt[7:0]: repeat time
         config |= (uint64_t(0b1111) << 8);  // Xt[11:8]: 4-bit mask signal
         config |= (uint64_t(0b0) << 12);  // Xt[12]: 1-enable input list exhausted suspension
 
@@ -156,7 +156,7 @@ namespace pto
 
         unsigned offset = numStrcutures * STRUCTSIZE / sizeof(typename DstTileData::DType);
 
-        __ubuf__ typename DstTileData::DType *addr_array[4] = {(__ubuf__ typename SrcTileData::DType *)(srcPtr),
+        __ubuf__ typename SrcTileData::DType *addr_array[4] = {(__ubuf__ typename SrcTileData::DType *)(srcPtr),
             (__ubuf__ typename SrcTileData::DType *)(srcPtr + offset), (__ubuf__ typename SrcTileData::DType *)(srcPtr + 2 * offset),
             (__ubuf__ typename SrcTileData::DType *)(srcPtr + offset * 3)};
         vmrgsort4(dstPtr, addr_array, count, config);
@@ -168,7 +168,7 @@ namespace pto
         constexpr unsigned totalSrcCols = Src0TileData::Cols +
                                           (listNum >= 2 ? Src1TileData::Cols : 0) +
                                           (listNum >= 3 ? Src2TileData::Cols : 0) +
-                                          (listNum >= 4 ? Src3TileData::Cols : 0);
+                                          (listNum == 4 ? Src3TileData::Cols : 0);
 
         // tmpCols在 listNum == 1 时为0，否则等于totalSrcCols
         constexpr unsigned tmpCols = (listNum == 1) ? 0 : totalSrcCols;
@@ -208,7 +208,7 @@ namespace pto
 
     template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
               typename Src2TileData, typename Src3TileData, bool exhausted>
-    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecuteNumList &executedNumList, TmpTileData &tmp,
+    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
                                         Src0TileData &src0, Src1TileData &src1,
                                         Src2TileData &src2, Src3TileData &src3) {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src3TileData>();
@@ -228,7 +228,7 @@ namespace pto
 
     template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
               typename Src2TileData, bool exhausted>
-    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecuteNumList &executedNumList, TmpTileData &tmp,
+    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
                                         Src0TileData &src0, Src1TileData &src1,
                                         Src2TileData &src2) {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src0TileData>();
@@ -247,7 +247,7 @@ namespace pto
 
     template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
               bool exhausted>
-    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecuteNumList &executedNumList, TmpTileData &tmp,
+    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
                                         Src0TileData &src0, Src1TileData &src1) {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src0TileData, Src0TileData>();
         CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src0TileData, Src0TileData, 2>();
@@ -264,16 +264,16 @@ namespace pto
 
     // blockLen大小包含值+索引，比如32个值+索引：blockLen=64
     template <typename DstTileData, typename SrcTileData>
-    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, SrcTileData &src0, uint32_t blockLen) {
+    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t blockLen) {
         CheckStatic<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData>();
         CheckOverMemory<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData, 1>();
-        unsigned dstCol = dst.GetValidCol();
-        unsigned srcCol = src.GetValidCol();
-        unsigned validRow = dst.GetValidRow();
+        uint32_t dstCol = dst.GetValidCol();
+        uint32_t srcCol = src.GetValidCol();
+        uint32_t validRow = dst.GetValidRow();
         // 一个struct是8字节
-        uint32_t numStructures = blockLen * sizeof(typename SrcTileData::DType) / STRUCTSIZE;
+        uint32_t numStrcutures = blockLen * sizeof(typename SrcTileData::DType) / STRUCTSIZE;
         uint8_t repeatTimes = srcCol / (blockLen * 4);
-        TMrgsort<DstTileData, SrcTileData>(dst.data(), src.data(), numStructures, repeatTimes);
+        TMrgsort<DstTileData, SrcTileData>(dst.data(), src.data(), numStrcutures, repeatTimes);
     }
 
     template <typename Src0TileData, typename Src1TileData, typename Src2TileData, typename Src3TileData>
