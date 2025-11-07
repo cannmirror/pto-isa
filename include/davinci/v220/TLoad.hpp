@@ -120,11 +120,11 @@ namespace pto {
     }
 
     template <typename TileData, typename GlobalData>
-    __tf__ aicore void TLoad(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
+    __tf__ __aicore__ void TLoad(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
         int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
         int gStride3, int gStride4, int validRow, int validCol)
     {
-        constexpr uint32_t blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::TileDType);
+        constexpr uint32_t blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
         __ubuf__ typename TileData::DType *dstAddr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
         typename GlobalData::DType *srcAddr = src;
 
@@ -133,7 +133,7 @@ namespace pto {
             uint16_t nBurst = gShape3;
             uint16_t lenBurst = validCol * sizeof(typename TileData::DType);
             uint64_t gmGapValue = (gStride3 - gShape4) * sizeof(typename TileData::DType);
-            // assert(gmGapValue > 0xffffffffUL, "TLOAD: Gap > 32bit is not supported in A2/A3");  /* FIXME runtime assert function */
+            // assert(gmGapValue > 0xffffffffULL, "TLOAD: Gap > 32bit is not supported in A2/A3");  /* FIXME runtime assert function */
             uint32_t gmGap = (uint32_t) gmGapValue;
             uint32_t ubGapElement = (TileData::Cols - validCol);
             uint32_t ubGap = ubGapElement / blockSizeElem;
@@ -142,7 +142,7 @@ namespace pto {
                 ubPad = ubGapElement % blockSizeElem;
                 set_mov_pad_val(getPadValue<TileData>());
             }
-            typename Global::DType *srcAddrP = srcAddr;
+            typename GlobalData::DType *srcAddrP = srcAddr;
             __ubuf__ typename TileData::DType *dstAddrP = dstAddr;
 
             int64_t dstStride2 = gShape3 * TileData::Cols;
@@ -165,7 +165,7 @@ namespace pto {
             uint16_t nBurst = gShape4;
             uint16_t lenBurst = validRow * sizeof(typename TileData::DType);
             uint64_t gmGapValue = (gStride4 - gShape3) * sizeof(typename TileData::DType);
-            // assert(gmGapValue > 0xffffffffUL, "TLOAD: Gap > 32bit is not supported in A2/A3");  /* FIXME runtime assert function */
+            // assert(gmGapValue > 0xffffffffULL, "TLOAD: Gap > 32bit is not supported in A2/A3");  /* FIXME runtime assert function */
             uint32_t gmGap = (uint32_t) gmGapValue;
             uint32_t ubGapElement = (TileData::Rows - gShape3);
             uint32_t ubGap = ubGapElement / blockSizeElem;
@@ -174,7 +174,7 @@ namespace pto {
                 ubPad = ubGapElement % blockSizeElem;
                 set_mov_pad_val(getPadValue<TileData>());
             }
-            typename Global::DType *srcAddrP = srcAddr;
+            typename GlobalData::DType *srcAddrP = srcAddr;
             __ubuf__ typename TileData::DType *dstAddrP = dstAddr;
 
             int64_t dstStride2 = gShape4 * TileData::Rows;
@@ -218,7 +218,7 @@ namespace pto {
     {
         static_assert((sizeof(typename TileData::DType) == 1) || (sizeof(typename TileData::DType) == 2) ||
                       (sizeof(typename TileData::DType) == 4), "Data type must be b8/16/32");
-        static_assert(TileData::Loc == pto::Loaction::Vec, "Dst location must be Vec!");
+        static_assert(TileData::Loc == pto::Location::Vec, "Dst location must be Vec!");
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
                       "Source dtype must be same with dst dtype");
         static_assert(((GlobalData::layout == pto::Layout::ND) &&
