@@ -40,7 +40,7 @@ namespace pto {
     }
 
     template <typename GlobalData, typename TileData>
-    __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ *src,
+    __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
         int gStride3, int gStride4, int validRow, int validCol)
     {
@@ -103,7 +103,7 @@ namespace pto {
             }
         }
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
-        // 小分型有gShape3 * gShape4表示
+        // 小分型由gShape3 * gShape4表示
         constexpr uint32_t c0_size = 32;
         uint16_t nBurst = gShape1;
         uint32_t lenBurst = validRow * c0_size;
@@ -126,7 +126,7 @@ namespace pto {
     {
         static_assert((sizeof(typename TileData::DType) == 1) || (sizeof(typename TileData::DType) == 2) ||
                       (sizeof(typename TileData::DType) == 4), "Data type must be b8/16/32");
-        static_assert(TileData::Loc == pto::Loaction::Vec, "Source location only support Vec!");
+        static_assert(TileData::Loc == pto::Location::Vec, "Source location only support Vec!");
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
                       "Source dtype must be same with dst dtype!");
         static_assert(((GlobalData::layout == pto::Layout::ND) &&
