@@ -36,7 +36,7 @@ namespace pto {
 
         auto loopNum = repeatNumPerRow / REPEAT_MAX;
         auto tailRepeatNum = repeatNumPerRow % REPEAT_MAX;
-        for (int32_t i = 0; i < vaildRow; i++) {
+        for (int32_t i = 0; i < validRow; i++) {
             for (int32_t j = 0; j < loopNum; j++) {
                 vbitsort(dstPtr + i * dstStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE,
                     srcPtr + i * srcStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE,
@@ -173,8 +173,8 @@ namespace pto {
         CheckStatic<DstTileData, SrcTileData, IdxTileData>();
         unsigned validRow = dst.GetValidRow();
         unsigned repeatNumPerRow = src.GetValidCol() / TSORT32_BLOCK_SIZE;
-        constexpr unsigned byteSize = sizeof(typename DstTileData::DTtype);
-        constexpr unsigned idxByteSize = sizeof(typename SrcTileData::DTtype);
+        constexpr unsigned byteSize = sizeof(typename DstTileData::DType);
+        constexpr unsigned idxByteSize = sizeof(typename SrcTileData::DType);
         constexpr unsigned dstStride =
             ((DstTileData::RowStride * byteSize + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE) / byteSize;
         constexpr unsigned srcStride = 
@@ -188,7 +188,7 @@ namespace pto {
             unsigned srcTailPerRow = src.GetValidCol() % TSORT32_BLOCK_SIZE;
             unsigned srcTailRepeatNum = ((src.GetValidCol() + TSORT32_BLOCK_SIZE - 1) / TSORT32_BLOCK_SIZE) % REPEAT_MAX;
             TSort32Impl<DstTileData, SrcTileData, IdxTileData, TmpTileData, dstStride, srcStride>
-                (dst.data(), src.data(), idx.data(), validRow, repeatNumPerRow, idxStride,
+                (dst.data(), src.data(), idx.data(), tmp.data(), validRow, repeatNumPerRow, idxStride,
                 srcShapeBytesPerRow, srcTailPerRow, srcTailRepeatNum);
         } else {
             TSort32Impl<DstTileData, SrcTileData, IdxTileData, dstStride, srcStride>
