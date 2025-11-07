@@ -1,5 +1,5 @@
-#ifndef TPARTADD_HPP
-#define TPARTADD_HPP
+#ifndef TPATIALADD_HPP
+#define TPATIALADD_HPP
 
 #include "common/constants.hpp"
 #include "common/utils.hpp"
@@ -75,13 +75,13 @@ namespace pto {
     template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
         unsigned blockSizeElem, unsigned dstStride, unsigned src0Stride, unsigned src1Stride>
     __aicore__ PTO_INLINE void TPartAddInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
-        uint64_t validRow, uint64_t validCol) {
+        unsigned validRow, unsigned validCol) {
         unsigned numRepeatPerLine = validCol / elementsPerRepeat;
         unsigned numRemainPerLine = validCol % elementsPerRepeat;
 
         if (numRepeatPerLine > 0) {
-            unsigned numLoop = validRow / REPEAT_MAX;
-            unsigned remainAfterLoop = validRow % REPEAT_MAX;
+            unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
+            unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
             for (int i = 0; i < validRow; i++) {
                 if (numLoop) {
                     for (uint64_t j = 0; j < numLoop; j++) {
@@ -114,7 +114,7 @@ namespace pto {
             if (numLoop) {
                 for (int i = 0; i < numLoop; i++) {
                     if (strideOverFlag) {
-                        for (uint64_t j = 0; j < REPEAT_MAX; j++) {
+                        for (unsigned j = 0; j < REPEAT_MAX; j++) {
                             vadd(dstPtr + i * REPEAT_MAX * dstStride + j * dstStride,
                                  src0Ptr + i * REPEAT_MAX * src0Stride + j * src0Stride,
                                  src1Ptr + i * REPEAT_MAX * src1Stride + j * src1Stride,
@@ -182,7 +182,7 @@ namespace pto {
                     dstRowStride, src0RowStride, dstRowStride>(
                     dstPtr, src0Ptr, dstPtr, src0ValidRow, src0ValidCol);
             }
-        } else if (condSrc0RowLtDst && condSrc1EqDst) {  // src0Col < dstCol
+        } else if (condSrc0RowLtDst && condSrc1EqDst) {  // src0Row < dstRow
             if (src0ValidRow != 0) {
                 TPartAddInstr<T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
                     dstRowStride, src0RowStride, src1RowStride>(
@@ -191,7 +191,7 @@ namespace pto {
             }
             TPartCopyInstr<T, TileDataDst, TileDataSrc1, blockSizeElem, dstRowStride, src1RowStride>(
                 dstPtr, src1Ptr, src1ValidRow, dstValidCol, src0ValidRow);    
-        } else if (condSrc1ColLtDst && condSrc0EqDst) {  // src0Col < dstCol
+        } else if (condSrc1ColLtDst && condSrc0EqDst) {  // src1Col < dstCol
             TPartCopyInstr<T, TileDataDst, TileDataSrc0, blockSizeElem, dstRowStride, src0RowStride>(
                 dstPtr, src0Ptr, src0ValidRow, dstValidCol, 0);
             if (src1ValidCol != 0) {
@@ -200,7 +200,7 @@ namespace pto {
                     dstRowStride, src1RowStride, dstRowStride>(
                     dstPtr, src1Ptr, dstPtr, src1ValidRow, src1ValidCol);
             }
-        } else if (condSrc1RowLtDst && condSrc0EqDst) {  // src0Col < dstCol
+        } else if (condSrc1RowLtDst && condSrc0EqDst) {  // src1Row < dstRow
             if (src1ValidRow != 0) {
                 TPartAddInstr<T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
                     dstRowStride, src0RowStride, src1RowStride>(
@@ -217,7 +217,7 @@ namespace pto {
     {
         static_assert(std::is_same<typename TileDataDst::DType, typename TileDataSrc0::DType>::value &&
                       std::is_same<typename TileDataDst::DType, typename TileDataSrc1::DType>::value,
-                      "TPARTADD: src and dst type is different!");
+                      "TPARTADD: src and dst data type is different!");
         static_assert((std::is_same<typename TileDataDst::DType, int32_t>::value) ||
                       (std::is_same<typename TileDataDst::DType, int>::value) ||
                       (std::is_same<typename TileDataDst::DType, int16_t>::value) ||
