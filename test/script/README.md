@@ -7,7 +7,7 @@
 - options:
     -h                 show this help message and exit
     -lib               TileOP库的根目录， case: /xx/PTOTileLib/
-    -src               需要编译的目录（递归的），case: /xx/PTOTileLib/test/tileop_api/src
+    -src               需要编译的目录（递归的），case: /xx/PTOTileLib/test/tileop_api/src/
                        默认等于lib
     -m                 test model: cmp or run, default cmp
     -lc                linx clang++ path, case: /xx/linx_blockisa_llvm/bin/clang++
