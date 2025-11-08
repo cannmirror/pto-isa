@@ -157,9 +157,9 @@ def main():
     parser.add_argument("-g", "--gtest_filter", required=False, help="可选 需要执行的具体case名")
 
     args = parser.parse_args()
-    default_soc_version = "Ascned910B1"
+    default_soc_version = "Ascend910B1"
     if args.soc_version == "a5":
-        default_soc_version = "Ascned910_9599"
+        default_soc_version = "Ascend910_9599"
     default_cases = "all"
     if args.gtest_filter != None:
         default_cases = args.gtest_filter

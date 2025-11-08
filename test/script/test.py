@@ -252,7 +252,7 @@ class Compile_Host:
 
         return self.elf_dir
     
-    def readying(self, BenchMart_dir):
+    def readying(self, BenchMark_dir):
         
         # mkdir elf dir
         if os.path.exists(self.elf_dir):
@@ -261,7 +261,7 @@ class Compile_Host:
         else:
             os.mkdir(self.elf_dir)
 
-        include_dir = os.path.join(BenchMart_dir, "include")
+        include_dir = os.path.join(BenchMark_dir, "include")
 
         return include_dir
     
@@ -780,7 +780,7 @@ class Check_Gfrun:
 
         outCsv_name = "gfrun_test.csv"
         self.Check.out_result(
-            outCsv_name, test_lis, check_cmps, check_runs, check_checknums
+            outCsv_name, test_lists, check_cmps, check_runs, check_checknums
         )
 
 

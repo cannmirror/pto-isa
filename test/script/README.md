@@ -29,13 +29,13 @@ run: 编译 + 运行
 ## 使用实例
 
 - 编译 cpu_sim版本
-python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/testop_api/src -hc /xx/llvm-15.0.4/bin/clang++
+python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/tileop_api/src -hc /xx/llvm-15.0.4/bin/clang++
 
 - 编译 jcore版本
-python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/testop_api/src -lc /xx/linx_blockisa_llvm/bin/clang++
+python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/tileop_api/src -lc /xx/linx_blockisa_llvm/bin/clang++
 
 - 编译 + 运行 cpu_sim版本
-python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/testop_api/src -hc /xx/llvm-15.0.4/bin/clang++ -m run
+python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/tileop_api/src -hc /xx/llvm-15.0.4/bin/clang++ -m run
 
 - 编译 + 运行 + 功能验证 jcore版本
-python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/testop_api/src -lc /xx/linx_blockisa_llvm/bin/clang++ -hc /xx/llvm-15.0.4/bin/clang++ -qemu /xx/qemu-linx -m run
+python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/tileop_api/src -lc /xx/linx_blockisa_llvm/bin/clang++ -hc /xx/llvm-15.0.4/bin/clang++ -qemu /xx/qemu-linx -m run
