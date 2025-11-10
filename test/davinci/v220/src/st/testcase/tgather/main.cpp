@@ -36,7 +36,7 @@ void test_gather() {
     aclrtCreateStream(&stream);
 
     size_t size = ROW * COL * sizeof(T);
-    uint8_t *dstHost, &src0Host;
+    uint8_t *dstHost, *src0Host;
     uint8_t *dstDevice, *src0Device;
 
     aclrtMallocHost((void **)(&dstHost), size);
@@ -97,9 +97,9 @@ TEST_F(TGATHERTest, case1_float_P0100)
     test_gather<float, FP0100, FLOAT_P0100_ROW, FLOAT_P0100_COL>();
 }
 
-TEST_F(TGATHERTest, case1_float_P10000)
+TEST_F(TGATHERTest, case1_float_P1000)
 {
-    test_gather<float, FP10000, FLOAT_P10000_ROW, FLOAT_P10000_COL>();
+    test_gather<float, FP1000, FLOAT_P1000_ROW, FLOAT_P1000_COL>();
 }
 
 TEST_F(TGATHERTest, case1_float_P1111)
@@ -132,9 +132,9 @@ TEST_F(TGATHERTest, case1_half_P0100)
     test_gather<uint16_t, HP0100, HALF_P0100_ROW, HALF_P0100_COL>();
 }
 
-TEST_F(TGATHERTest, case1_half_P10000)
+TEST_F(TGATHERTest, case1_half_P1000)
 {
-    test_gather<uint16_t, HP10000, HALF_P10000_ROW, HALF_P10000_COL>();
+    test_gather<uint16_t, HP1000, HALF_P1000_ROW, HALF_P1000_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P1111)
@@ -152,19 +152,19 @@ TEST_F(TGATHERTest, case1_U16_P1010)
     test_gather<uint16_t, U16P1010, HALF_P1010_ROW, HALF_P1010_COL>();
 }
 
-TEST_F(TGATHERTest, case1_U16_P0001)
+TEST_F(TGATHERTest, case1_I16_P0001)
 {
-    test_gather<uint16_t, U16P0001, HALF_P0001_ROW, HALF_P0001_COL>();
+    test_gather<uint16_t, I16P0001, HALF_P0001_ROW, HALF_P0001_COL>();
 }
 
-TEST_F(TGATHERTest, case1_U16_P0010)
+TEST_F(TGATHERTest, case1_I16_P0010)
 {
-    test_gather<uint16_t, U16P0010, HALF_P0010_ROW, HALF_P0010_COL>();
+    test_gather<uint16_t, I16P0010, HALF_P0010_ROW, HALF_P0010_COL>();
 }
 
 TEST_F(TGATHERTest, case1_U32_P0100)
 {
-    test_gather<uint16_t, U32P0100, HALF_P0100_ROW, HALF_P0100_COL>();
+    test_gather<uint32_t, U32P0100, FLOAT_P0100_ROW, FLOAT_P0100_COL>();
 }
 
 TEST_F(TGATHERTest, case1_I32_P1000)

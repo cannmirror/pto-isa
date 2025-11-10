@@ -7,13 +7,13 @@ import numpy as np
 np.random.seed(19)
 
 def gen_golden_data(case_name, param):
-    src_dtype = param.srctype
-    dst_dtype = param.dsttype
+    src_dtype = param.src_dtype
+    dst_dtype = param.dst_dtype
 
     H, W = [param.tile_row, param.tile_col]
     h_valid, w_valid = [param.valid_row, param.valid_col]
     src = np.random.randint(1, 10, size=[H, W]).astype(src_dtype)
-    golden = src.transpose(1, 0).astype(dst_dtype)
+    golden = src.transpose((1, 0)).astype(dst_dtype)
     output = np.zeros([W, H]).astype(dst_dtype)
     for h in range(H):
         for w in range(W):
@@ -21,12 +21,13 @@ def gen_golden_data(case_name, param):
                 golden[w][h] = output[w][h]
 
     src.tofile("input.bin")
+    golden.tofile("golden.bin")
     return output, src, golden
 
 class TTRANSParams:
     def __init__(self, src_dtype, dst_dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
-        self.srctype = src_dtype
-        self.dsttype = dst_dtype
+        self.src_dtype = src_dtype
+        self.src_dtype = dst_dtype
         self.global_row = global_row
         self.global_col = global_col
         self.tile_row = tile_row
@@ -34,7 +35,7 @@ class TTRANSParams:
         self.valid_row = valid_row
         self.valid_col = valid_col
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     case_name_list = [
         "TTRANSTest.case1_float_16_8_16_8_param",
         "TTRANSTest.case2_half_16_16_16_16_param",
@@ -55,7 +56,7 @@ if __name__ == '__main__':
 
     for i, case_name in enumerate(case_name_list):
         if not os.path.exists(case_name):
-            os.mkdir(case_name)
+            os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
         gen_golden_data(case_name, case_params_list[i])
