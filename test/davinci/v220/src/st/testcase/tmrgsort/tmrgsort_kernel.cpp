@@ -13,16 +13,16 @@ using namespace pto;
 #define EXHAUSTED 1
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kTCols_src1, int kTCols_src2, int kTCols_src3, int TOPK, int LISTNUM>
-__aicore__ void runTMrgsort( __gm__ T __out__, __gm__ T __in__ *src0, __gm__ T __in__ *src1,
+__aicore__ void runTMrgsort( __gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1,
                                         __gm__ T __in__ *src2, __gm__ T __in__ *src3) {
-    using DynShapDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using GlobalData = GlobalTensor<T, DynShapDim5, DynStridDim5>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using TileData = Tile<Location::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
     using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using DstDynStrideDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStrideDim5>;
-    using TmpGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStrideDim5>;
+    using DstDynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
+    using TmpGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
     using DstTileData = Tile<Location::Vec, T, 1, TOPK, BLayout::RowMajor, -1, -1>;
     using TmpTileData = Tile<Location::Vec, T, 1, kTCols_*LISTNUM, BLayout::RowMajor, -1, -1>;
     TileData src0Tile(1, kTCols_);
@@ -87,16 +87,16 @@ __aicore__ void runTMrgsort( __gm__ T __out__, __gm__ T __in__ *src0, __gm__ T _
 }
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kTCols_src1, int kTCols_src2, int kTCols_src3, int TOPK, int LISTNUM>
-__aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, __gm__ T __in__ *src1,
+__aicore__ void runTMrgsortExhausted( __gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1,
                                         __gm__ T __in__ *src2, __gm__ T __in__ *src3) {
-    using DynShapDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using GlobalData = GlobalTensor<T, DynShapDim5, DynStridDim5>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using TileData = Tile<Location::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
     using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using DstDynStrideDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStrideDim5>;
-    using TmpGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStrideDim5>;
+    using DstDynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
+    using TmpGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
     using DstTileData = Tile<Location::Vec, T, 1, TOPK, BLayout::RowMajor, -1, -1>;
     using TmpTileData = Tile<Location::Vec, T, 1, kTCols_*LISTNUM, BLayout::RowMajor, -1, -1>;
     TileData src0Tile(1, kTCols_);
@@ -131,7 +131,7 @@ __aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, _
             TLOAD(src3Tile, src30Global);
             set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, TileData, TileData, 0>
+            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, TileData, TileData, EXHAUSTED>
                 (dstTile, executedNumList, tmpTile, src0Tile, src1Tile, src2Tile, src3Tile);
         }
         // 3
@@ -141,7 +141,7 @@ __aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, _
             TLOAD(src2Tile, src20Global);
             set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, TileData, 0>
+            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, TileData, EXHAUSTED>
                 (dstTile, executedNumList, tmpTile, src0Tile, src1Tile, src2Tile);
         }
         // 2
@@ -150,7 +150,7 @@ __aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, _
             TLOAD(src1Tile, src10Global);
             set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, 0>
+            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, EXHAUSTED>
                 (dstTile, executedNumList, tmpTile, src0Tile, src1Tile);
         }
         set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
@@ -167,14 +167,14 @@ __aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, _
         int offset2 = kTCols_;
         int offset3 = kTCols_;
         if (EXHAUSTED) {
-            int numELem = 8 / sizeof(T); // 2 for float; 4 for half;
+            int numElem = 8 / sizeof(T); // 2 for float; 4 for half;
             curTotal = executedNumList.mrgSortList0 + executedNumList.mrgSortList1 + 
               executedNumList.mrgSortList2 + executedNumList.mrgSortList3;
-            curTotal = curTotal * numELem;
-            offset0 = executedNumList.mrgSortList0 * numELem;
-            offset1 = executedNumList.mrgSortList1 * numELem;
-            offset2 = executedNumList.mrgSortList2 * numELem;
-            offset3 = executedNumList.mrgSortList3 * numELem;
+            curTotal = curTotal * numElem;
+            offset0 = executedNumList.mrgSortList0 * numElem;
+            offset1 = executedNumList.mrgSortList1 * numElem;
+            offset2 = executedNumList.mrgSortList2 * numElem;
+            offset3 = executedNumList.mrgSortList3 * numElem;
         }
         GlobalData src0Global(src0 + dataOffset + offset0);
         GlobalData src1Global(src1 + dataOffset + offset1);
@@ -191,7 +191,7 @@ __aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, _
             TLOAD(src3Tile, src3Global);
             set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, TileData, TileData, 0>
+            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, TileData, TileData, EXHAUSTED>
                 (dstTile, executedNumList, tmpTile, src0Tile, src1Tile, src2Tile, src3Tile);
         }
         // 3
@@ -201,7 +201,7 @@ __aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, _
             TLOAD(src2Tile, src2Global);
             set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, TileData, 0>
+            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, TileData, EXHAUSTED>
                 (dstTile, executedNumList, tmpTile, src0Tile, src1Tile, src2Tile);
         }
         // 2
@@ -210,12 +210,12 @@ __aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, _
             TLOAD(src1Tile, src1Global);
             set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, 0>
+            TMRGSORT<DstTileData, TmpTileData, TileData, TileData, EXHAUSTED>
                 (dstTile, executedNumList, tmpTile, src0Tile, src1Tile);
         }
         set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
         wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-        TSTORE(dst0Global, dstTile);
+        TSTORE(dstGlobal, dstTile);
         //pipe_barrier(PIPE_V);
         set_flag(PIPE_MTE3, PIPE_MTE2, EVENT_ID0);
         wait_flag(PIPE_MTE3, PIPE_MTE2, EVENT_ID0);
@@ -225,18 +225,18 @@ __aicore__ void runTMrgsortExhausted( __gm__ T __out__, __gm__ T __in__ *src0, _
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 __aicore__ inline void runTMrgsort_single(__gm__ T __out__ *out, __gm__ T __in__ *src0) {
-    using DynShapDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using GlobalData = GlobalTensor<T, DynShapDim5, DynStridDim5>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using TileData = Tile<Location::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
 
     using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using DstDynStrideDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStrideDim5>;
+    using DstDynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
     using DstTileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
 
-    TileData src0Tile(kGRows_, kTCols_);
-    DstTileData dstTile(kGRows_, kTCols_);
+    TileData src0Tile(kGRows_, kGCols_);
+    DstTileData dstTile(kGRows_, kGCols_);
     TASSIGN(src0Tile, 0x0);
     TASSIGN(dstTile, 0xF000);
 
@@ -260,17 +260,17 @@ __aicore__ inline void runTMrgsort_single(__gm__ T __out__ *out, __gm__ T __in__
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int topk, int totalNum>
 __aicore__ inline void runTMrgsort_topk(__gm__ T __out__ *out, __gm__ T __in__ *src) {
-    using DynShapDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using GlobalData = GlobalTensor<T, DynShapDim5, DynStridDim5>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
 
     using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, topk>;
-    using DstDynStrideDim5 = pto::Stride<1, 1, 1, topk, 1>;
-    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStrideDim5>;
+    using DstDynStridDim5 = pto::Stride<1, 1, 1, topk, 1>;
+    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
     using TmpDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using TmpDynStrideDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using TmpGlobalData = GlobalTensor<T, TmpDynShapeDim5, TmpDynStrideDim5>;
+    using TmpDynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using TmpGlobalData = GlobalTensor<T, TmpDynShapeDim5, TmpDynStridDim5>;
     using DstTileData = Tile<Location::Vec, T, kTRows_, topk, BLayout::RowMajor, -1, -1>;
     using TmpTileData = Tile<Location::Vec, T, 1, kGCols_, BLayout::RowMajor, -1, -1>;
 
@@ -307,7 +307,7 @@ __aicore__ inline void runTMrgsort_topk(__gm__ T __out__ *out, __gm__ T __in__ *
         int32_t tmpInner = totalNum;
         for (int32_t i = blockLen; i >= 64; i /= 4) {
             int32_t count;
-            for (count = 0; count < tmpInner / 2; count++) {
+            for (count = 0; count < tmpInner / i; count++) {
                 mrgArray[arrayCount++] = i;
             }
             tmpInner -= count * i;
@@ -315,7 +315,7 @@ __aicore__ inline void runTMrgsort_topk(__gm__ T __out__ *out, __gm__ T __in__ *
         uint16_t mrgSortedLen = 0;
         GlobalData srcGlobal(src);
         MrgSortExecutedNumList executedNumList;
-        for (int32_t i = 0; i < arrayCount; ++i) {
+        for (int32_t i = 0; i < arrayCount - 1; ++i) {
             TLOAD(srcTile, srcGlobal);
             using Src0TileData = Tile<Location::Vec, T, kTRows_, totalNum, BLayout::RowMajor, -1, -1>;
             using Src1TileData = Tile<Location::Vec, T, kTRows_, totalNum, BLayout::RowMajor, -1, -1>;
@@ -358,7 +358,7 @@ __aicore__ inline void runTMrgsort_topk(__gm__ T __out__ *out, __gm__ T __in__ *
     }
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_multi_1(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
+extern "C" __global__ __aicore__ void launchTMRGSORT_multi_1(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
 {   constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 128;
     constexpr uint32_t SRC0COL = 128;
@@ -370,7 +370,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_multi_1(__gm__ float *out,
     runTMrgsort<float, ROW, COL * LISTMUM, ROW, SRC0COL, SRC1COL, SRC2COL, SRC3COL, TOPK, LISTMUM>(out, src0, src1, src2, src3);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_multi_2(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
+extern "C" __global__ __aicore__ void launchTMRGSORT_multi_2(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
 {   constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 128;
     constexpr uint32_t SRC0COL = 128;
@@ -386,7 +386,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_multi_2(__gm__ float *out,
                                                                                         reinterpret_cast<__gm__ half *>(src3));
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_multi_3(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
+extern "C" __global__ __aicore__ void launchTMRGSORT_multi_3(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
 {   constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 128;
     constexpr uint32_t SRC0COL = 128;
@@ -398,7 +398,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_multi_3(__gm__ float *out,
     runTMrgsort<float, ROW, COL * LISTMUM, ROW, SRC0COL, SRC1COL, SRC2COL, SRC3COL, TOPK, LISTMUM>(out, src0, src1, src2, src3);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_multi_4(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
+extern "C" __global__ __aicore__ void launchTMRGSORT_multi_4(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
 {   constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 128;
     constexpr uint32_t SRC0COL = 128;
@@ -410,7 +410,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_multi_4(__gm__ float *out,
     runTMrgsort<float, ROW, COL * LISTMUM, ROW, SRC0COL, SRC1COL, SRC2COL, SRC3COL, TOPK, LISTMUM>(out, src0, src1, src2, src3);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_multi_exhausted_1(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
+extern "C" __global__ __aicore__ void launchTMRGSORT_multi_exhausted_1(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
 {   constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 64;
     constexpr uint32_t SRC0COL = 64;
@@ -422,7 +422,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_multi_exhausted_1(__gm__ f
     runTMrgsortExhausted<float, ROW, COL * LISTMUM, ROW, SRC0COL, SRC1COL, SRC2COL, SRC3COL, TOPK, LISTMUM>(out, src0, src1, src2, src3);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_multi_exhausted_2(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
+extern "C" __global__ __aicore__ void launchTMRGSORT_multi_exhausted_2(__gm__ float *out, __gm__ float *src0, __gm__ float *src1, __gm__ float *src2, __gm__ float *src3)
 {   constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 256;
     constexpr uint32_t SRC0COL = 256;
@@ -438,35 +438,35 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_multi_exhausted_2(__gm__ f
                                                                                         reinterpret_cast<__gm__ half *>(src3));
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_single_1(__gm__ float *out, __gm__ float *src0)
+extern "C" __global__ __aicore__ void launchTMRGSORT_single_1(__gm__ float *out, __gm__ float *src0)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 256;
     runTMrgsort_single<float, ROW, COL, ROW, COL>(out, src0);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_single_2(__gm__ float *out, __gm__ float *src0)
+extern "C" __global__ __aicore__ void launchTMRGSORT_single_2(__gm__ float *out, __gm__ float *src0)
 {   
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 320;
     runTMrgsort_single<float, ROW, COL, ROW, COL>(out, src0);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_single_3(__gm__ float *out, __gm__ float *src0)
+extern "C" __global__ __aicore__ void launchTMRGSORT_single_3(__gm__ float *out, __gm__ float *src0)
 {   
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 512;
     runTMrgsort_single<float, ROW, COL, ROW, COL>(out, src0);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_single_4(__gm__ float *out, __gm__ float *src0)
+extern "C" __global__ __aicore__ void launchTMRGSORT_single_4(__gm__ float *out, __gm__ float *src0)
 {   
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 640;
     runTMrgsort_single<float, ROW, COL, ROW, COL>(out, src0);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_single_5(__gm__ float *out, __gm__ float *src0)
+extern "C" __global__ __aicore__ void launchTMRGSORT_single_5(__gm__ float *out, __gm__ float *src0)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 256;
@@ -474,7 +474,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_single_5(__gm__ float *out
         reinterpret_cast<__gm__ half *>(src0));
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_single_6(__gm__ float *out, __gm__ float *src0)
+extern "C" __global__ __aicore__ void launchTMRGSORT_single_6(__gm__ float *out, __gm__ float *src0)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 320;
@@ -482,7 +482,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_single_6(__gm__ float *out
         reinterpret_cast<__gm__ half *>(src0));
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_single_7(__gm__ float *out, __gm__ float *src0)
+extern "C" __global__ __aicore__ void launchTMRGSORT_single_7(__gm__ float *out, __gm__ float *src0)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 512;
@@ -490,7 +490,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_single_7(__gm__ float *out
         reinterpret_cast<__gm__ half *>(src0));
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_single_8(__gm__ float *out, __gm__ float *src0)
+extern "C" __global__ __aicore__ void launchTMRGSORT_single_8(__gm__ float *out, __gm__ float *src0)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 640;
@@ -498,7 +498,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_single_8(__gm__ float *out
         reinterpret_cast<__gm__ half *>(src0));
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_topk_1(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ __aicore__ void launchTMRGSORT_topk_1(__gm__ float *out, __gm__ float *src)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 2048;
@@ -507,7 +507,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_topk_1(__gm__ float *out, 
     runTMrgsort_topk<float, ROW, COL, ROW, COL, TOPK, TOTAL_NUM>(out, src);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_topk_2(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ __aicore__ void launchTMRGSORT_topk_2(__gm__ float *out, __gm__ float *src)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 2048;
@@ -516,7 +516,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_topk_2(__gm__ float *out, 
     runTMrgsort_topk<float, ROW, COL, ROW, COL, TOPK, TOTAL_NUM>(out, src);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_topk_3(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ __aicore__ void launchTMRGSORT_topk_3(__gm__ float *out, __gm__ float *src)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 1280;
@@ -525,7 +525,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_topk_3(__gm__ float *out, 
     runTMrgsort_topk<float, ROW, COL, ROW, COL, TOPK, TOTAL_NUM>(out, src);
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_topk_4(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ __aicore__ void launchTMRGSORT_topk_4(__gm__ float *out, __gm__ float *src)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 2048;
@@ -535,7 +535,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_topk_4(__gm__ float *out, 
         reinterpret_cast<__gm__ half *>(src));
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_topk_5(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ __aicore__ void launchTMRGSORT_topk_5(__gm__ float *out, __gm__ float *src)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 2048;
@@ -545,7 +545,7 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_topk_5(__gm__ float *out, 
         reinterpret_cast<__gm__ half *>(src));
 }
 
-extern "C" __global__ __aricore__ void launchTMRGSORT_topk_6(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ __aicore__ void launchTMRGSORT_topk_6(__gm__ float *out, __gm__ float *src)
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 1280;
@@ -557,63 +557,63 @@ extern "C" __global__ __aricore__ void launchTMRGSORT_topk_6(__gm__ float *out, 
 
 template <int32_t tilingKey>
 void launchTMRGSORT_multi_demo(float *out, float *src0, float *src1, float *src2, float *src3, void* stream) {
-    if (constexpr(tilingKey == 1)){
-        launchTMRGSORT_multi_1<<<1, nullptr, 0, stream>>>(out, src0, src1, src2, src3);
+    if (constexpr(tilingKey == 1){
+        launchTMRGSORT_multi_1<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
     } else if constexpr(tilingKey == 2){ 
-        launchTMRGSORT_multi_2<<<1, nullptr, 0, stream>>>(out, src0, src1, src2, src3);
+        launchTMRGSORT_multi_2<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
     } else if constexpr(tilingKey == 3){ 
-        launchTMRGSORT_multi_3<<<1, nullptr, 0, stream>>>(out, src0, src1, src2, src3);
+        launchTMRGSORT_multi_3<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
     } else if constexpr(tilingKey == 4){ 
-        launchTMRGSORT_multi_4<<<1, nullptr, 0, stream>>>(out, src0, src1, src2, src3);
+        launchTMRGSORT_multi_4<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
     }
 }
 
 template <int32_t tilingKey>
-void launchTMRGSORT_demo_multi_exhausted(float *out, float *src0, float *src1, float *src2, float *src3, void* stream) {
-    if (constexpr(tilingKey == 1)){
-        launchTMRGSORT_multi_exhausted_1<<<1, nullptr, 0, stream>>>(out, src0, src1, src2, src3);
+void launchTMrgsort_demo_multi_exhausted(float *out, float *src0, float *src1, float *src2, float *src3, void* stream) {
+    if (constexpr(tilingKey == 1){
+        launchTMRGSORT_multi_exhausted_1<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
     } else if constexpr(tilingKey == 2){ 
-        launchTMRGSORT_multi_exhausted_2<<<1, nullptr, 0, stream>>>(out, src0, src1, src2, src3);
+        launchTMRGSORT_multi_exhausted_2<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
     }
 }
 
 template <int32_t tilingKey>
 void launchTMRGSORT_single_demo(float *out, float *src0, void* stream) 
 {
-    if (constexpr(tilingKey == 1)){
-        launchTMRGSORT_single_1<<<1, nullptr, 0, stream>>>(out, src0);
+    if (constexpr(tilingKey == 1){
+        launchTMRGSORT_single_1<<<1, nullptr, stream>>>(out, src0);
     } else if constexpr(tilingKey == 2){ 
-        launchTMRGSORT_single_2<<<1, nullptr, 0, stream>>>(out, src0);
+        launchTMRGSORT_single_2<<<1, nullptr, stream>>>(out, src0);
     } else if constexpr(tilingKey == 3){ 
-        launchTMRGSORT_single_3<<<1, nullptr, 0, stream>>>(out, src0);
+        launchTMRGSORT_single_3<<<1, nullptr, stream>>>(out, src0);
     } else if constexpr(tilingKey == 4){ 
-        launchTMRGSORT_single_4<<<1, nullptr, 0, stream>>>(out, src0);
+        launchTMRGSORT_single_4<<<1, nullptr, stream>>>(out, src0);
     } else if constexpr(tilingKey == 5){ 
-        launchTMRGSORT_single_5<<<1, nullptr, 0, stream>>>(out, src0);
+        launchTMRGSORT_single_5<<<1, nullptr, stream>>>(out, src0);
     } else if constexpr(tilingKey == 6){ 
-        launchTMRGSORT_single_6<<<1, nullptr, 0, stream>>>(out, src0);
+        launchTMRGSORT_single_6<<<1, nullptr, stream>>>(out, src0);
     } else if constexpr(tilingKey == 7){ 
-        launchTMRGSORT_single_7<<<1, nullptr, 0, stream>>>(out, src0);
+        launchTMRGSORT_single_7<<<1, nullptr, stream>>>(out, src0);
     } else if constexpr(tilingKey == 8){ 
-        launchTMRGSORT_single_8<<<1, nullptr, 0, stream>>>(out, src0);
+        launchTMRGSORT_single_8<<<1, nullptr, stream>>>(out, src0);
     }
 }
 
 template <int32_t tilingKey>
 void launchTMRGSORT_topk_demo(float *out, float *src, void* stream) 
 {
-    if (constexpr(tilingKey == 1)){
-        launchTMRGSORT_topk_1<<<1, nullptr, 0, stream>>>(out, src);
+    if (constexpr(tilingKey == 1){
+        launchTMRGSORT_topk_1<<<1, nullptr, stream>>>(out, src);
     } else if constexpr(tilingKey == 2){ 
-        launchTMRGSORT_topk_2<<<1, nullptr, 0, stream>>>(out, src);
+        launchTMRGSORT_topk_2<<<1, nullptr, stream>>>(out, src);
     } else if constexpr(tilingKey == 3){ 
-        launchTMRGSORT_topk_3<<<1, nullptr, 0, stream>>>(out, src);
+        launchTMRGSORT_topk_3<<<1, nullptr, stream>>>(out, src);
     } else if constexpr(tilingKey == 4){ 
-        launchTMRGSORT_topk_4<<<1, nullptr, 0, stream>>>(out, src);
+        launchTMRGSORT_topk_4<<<1, nullptr, stream>>>(out, src);
     } else if constexpr(tilingKey == 5){ 
-        launchTMRGSORT_topk_5<<<1, nullptr, 0, stream>>>(out, src);
+        launchTMRGSORT_topk_5<<<1, nullptr, stream>>>(out, src);
     } else if constexpr(tilingKey == 6){ 
-        launchTMRGSORT_topk_6<<<1, nullptr, 0, stream>>>(out, src);
+        launchTMRGSORT_topk_6<<<1, nullptr, stream>>>(out, src);
     }
 }
 
@@ -621,8 +621,8 @@ template void launchTMRGSORT_multi_demo<1>(float *out, float *src0, float *src1,
 template void launchTMRGSORT_multi_demo<2>(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
 template void launchTMRGSORT_multi_demo<3>(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
 template void launchTMRGSORT_multi_demo<4>(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
-template void launchTMRGSORT_demo_multi_exhausted<1>(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
-template void launchTMRGSORT_demo_multi_exhausted<2>(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
+template void launchTMrgsort_demo_multi_exhausted<1>(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
+template void launchTMrgsort_demo_multi_exhausted<2>(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
 template void launchTMRGSORT_single_demo<1>(float *out, float *src0, void* stream);
 template void launchTMRGSORT_single_demo<2>(float *out, float *src0, void* stream);
 template void launchTMRGSORT_single_demo<3>(float *out, float *src0, void* stream);

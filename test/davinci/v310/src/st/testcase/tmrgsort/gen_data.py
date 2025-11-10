@@ -20,7 +20,7 @@ def gen_golden_data(case_name, param):
         param.src0_col // 2, # 假设需要除以2
         param.src1_col // 2,
         param.src2_col // 2,
-        param.src3_col // 2,
+        param.src3_col // 2
     ]
 
     # 初始化空的列表来存储所有数据
@@ -51,7 +51,7 @@ def gen_golden_data(case_name, param):
         flat_idx = sorted_idx.flatten()
         # Create pairs of (value, index)
         sorted_pairs = zip(flat_input, flat_idx)
-        with open("input0.bin", "wb") as f:
+        with open("input0.bin", 'wb') as f:
             for value, index in sorted_pairs:
                 if src_type == np.float32:
                     # Packe the float32 value and the indx as a 32-bit unsigned integer
@@ -81,7 +81,7 @@ def gen_golden_data(case_name, param):
             filename = f"input{i}.bin"
 
             # 写入bin文件
-            with open(filename, "wb") as f:
+            with open(filename, 'wb') as f:
                 for value, index in sorted_pairs_i:
                     if src_type == np.float32:
                         packed_data = struct.pack('fI', float(value), ctypes.c_uint32(index).value)
@@ -134,7 +134,7 @@ def gen_golden_data(case_name, param):
             write(sorted_pairs_global, src_type)
     
 def write(sorted_pairs_global, src_type):
-    with open("golden.bin", "wb") as f:
+    with open("golden.bin", 'wb') as f:
         for value, index in sorted_pairs_global:
             if src_type == np.float32:
                 packed_data = struct.pack('fI', float(value), ctypes.c_uint32(index).value)
@@ -151,9 +151,9 @@ def write(sorted_pairs_global, src_type):
 
 
 class tmrgsortParams:
-    def __init__(self, data_type, rows, src0_col, src1_col, src2_col, src3_col, input_num, topk):
-        self.data_type = data_type
-        self.row = rows
+    def __init__(self, datatype, row, src0_col, src1_col, src2_col, src3_col, input_num, topk):
+        self.datatype = datatype
+        self.row = row
         self.src0_col = src0_col
         self.src1_col = src1_col
         self.src2_col = src2_col
@@ -161,7 +161,7 @@ class tmrgsortParams:
         self.input_num = input_num
         self.topk = topk
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 用例名称
     case_name_list = [
         "TMRGSORTTest.case_multi1",
@@ -183,7 +183,7 @@ if __name__ == '__main__':
         "TMRGSORTTest.case_topk3",
         "TMRGSORTTest.case_topk4",
         "TMRGSORTTest.case_topk5",
-        "TMRGSORTTest.case_topk6"
+        "TMRGSORTTest.case_topk6",
         # 此名称需要和 TEST_F(TMATMULTest, case1)定义的名称一致
     ]
 
@@ -215,9 +215,9 @@ if __name__ == '__main__':
         tmrgsortParams(np.float16, 1, 1280, 0, 0, 0, 1, 512), # 64*4 64*4 64*4 64*4 64*4 single排序 ==> 64*16 64*4 multi排序,topk=512
     ]
 
-    for i, case_name in enumerate(case_params_list):
+    for i, case_name in enumerate(case_name_list):
         if not os.path.exists(case_name):
-            os.mkdir(case_name)
+            os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
 

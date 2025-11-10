@@ -4,10 +4,10 @@ using namespace std;
 using namespace PtoTestCommon;
 
 
-void launchTGATHER1D_demo_float(float *out, float *src0, int32_t *src1, aclrtStream stream);
-void launchTGATHER1D_demo_int32(int32_t *out, int32_t *src0, int32_t *src1, aclrtStream stream);
-void launchTGATHER1D_demo_half(int16_t  *out, int16_t *src0, int32_t *src1, aclrtStream stream);
-void launchTGATHER1D_demo_int16(int16_t *out, int16_t *src0, int32_t *src1, aclrtStream stream);
+void launchTGATHER_demo_float(float *out, float *src0, int32_t *src1, aclrtStream stream);
+void launchTGATHER_demo_int32(int32_t *out, int32_t *src0, int32_t *src1, aclrtStream stream);
+void launchTGATHER_demo_half(int16_t  *out, int16_t *src0, int16_t *src1, aclrtStream stream);
+void launchTGATHER_demo_int16(int16_t *out, int16_t *src0, int16_t *src1, aclrtStream stream);
 
 class TGATHERTest : public testing::Test {
 protected:

@@ -6,9 +6,9 @@ using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 __aicore__ PTO_INLINE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols) {
-    using DynshapeSrc = pto::Shape<-1, -1, -1, -1, -1>;
+    using DynShapeSrc = pto::Shape<-1, -1, -1, -1, -1>;
     using DynStrideSrc = pto::Stride<-1, -1, -1, -1, -1>;
-    using GlobalDataSrc = GlobalTensor<T, DynshapeSrc, DynStrideSrc>;
+    using GlobalDataSrc = GlobalTensor<T, DynShapeSrc, DynStrideSrc>;
 
     using DynShapeDst = pto::Shape<-1, -1, -1, -1, -1>;
     using DynStrideDst = pto::Stride<-1, -1, -1, -1, -1>;
@@ -28,101 +28,101 @@ __aicore__ PTO_INLINE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src
     TASSIGN(srcTile, 0x0);
     TASSIGN(dstTile, alignedSrcTileSize);
 
-    GlobalDataSrc srcGlobal(src, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride<1, 1, 1, kGCols_, kGRows_>);
-    GlobalDataDst dstGlobal(out, pto::Shape(1, 1, 1, vCols, vRows), pto::Stride<1, 1, 1, kGRows_, kGCols_>);
+    GlobalDataSrc srcGlobal(src, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride(1, 1, 1, kGCols_, kGRows_));
+    GlobalDataDst dstGlobal(out, pto::Shape(1, 1, 1, vCols, vRows), pto::Stride(1, 1, 1, kGRows_, kGCols_));
 
     TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     TTRANS(dstTile, srcTile);
-    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0)
-    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0)
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);
 }
 
 extern "C" __global__ __aicore__ void launchTTRANS_1(__gm__ uint8_t *out, __gm__ uint8_t *src)
 {
-    constexpr int kG_ROWS    = 16;
-    constexpr int kG_COLS    = 8;
-    constexpr int kT_ROWS    = 16;
-    constexpr int kT_COLS    = 8;
+    constexpr int KG_ROWS    = 16;
+    constexpr int KG_COLS    = 8;
+    constexpr int KT_ROWS    = 16;
+    constexpr int KT_COLS    = 8;
     constexpr int VALID_ROWS = 16;
     constexpr int VALID_COLS = 8;
     typedef float IN_DTYPE;
 
-    runTTRANS<IN_DTYPE, kG_ROWS, kG_COLS, kT_ROWS, kT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
+    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
                                                             reinterpret_cast<__gm__ IN_DTYPE*>(src), 
                                                             VALID_ROWS, VALID_COLS);
 }
 
 extern "C" __global__ __aicore__ void launchTTRANS_2(__gm__ uint8_t *out, __gm__ uint8_t *src)
 {
-    constexpr int kG_ROWS    = 16;
-    constexpr int kG_COLS    = 16;
-    constexpr int kT_ROWS    = 16;
-    constexpr int kT_COLS    = 16;
+    constexpr int KG_ROWS    = 16;
+    constexpr int KG_COLS    = 16;
+    constexpr int KT_ROWS    = 16;
+    constexpr int KT_COLS    = 16;
     constexpr int VALID_ROWS = 16;
     constexpr int VALID_COLS = 16;
 
     typedef half IN_DTYPE;
-    runTTRANS<IN_DTYPE, kG_ROWS, kG_COLS, kT_ROWS, kT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
+    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
                                                             reinterpret_cast<__gm__ IN_DTYPE*>(src), 
                                                             VALID_ROWS, VALID_COLS);
 }
 
 extern "C" __global__ __aicore__ void launchTTRANS_3(__gm__ uint8_t *out, __gm__ uint8_t *src)
 {
-    constexpr int kG_ROWS    = 32;
-    constexpr int kG_COLS    = 32;
-    constexpr int kT_ROWS    = 32;
-    constexpr int kT_COLS    = 32;
+    constexpr int KG_ROWS    = 32;
+    constexpr int KG_COLS    = 32;
+    constexpr int KT_ROWS    = 32;
+    constexpr int KT_COLS    = 32;
     constexpr int VALID_ROWS = 32;
     constexpr int VALID_COLS = 32;
     typedef int8_t IN_DTYPE;
-    runTTRANS<IN_DTYPE, kG_ROWS, kG_COLS, kT_ROWS, kT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
+    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
                                                             reinterpret_cast<__gm__ IN_DTYPE*>(src), 
                                                             VALID_ROWS, VALID_COLS);
 }
 
 extern "C" __global__ __aicore__ void launchTTRANS_11(__gm__ uint8_t *out, __gm__ uint8_t *src)
 {
-    constexpr int kG_ROWS    = 32;
-    constexpr int kG_COLS    = 16;
-    constexpr int kT_ROWS    = 32;
-    constexpr int kT_COLS    = 16;
+    constexpr int KG_ROWS    = 32;
+    constexpr int KG_COLS    = 16;
+    constexpr int KT_ROWS    = 32;
+    constexpr int KT_COLS    = 16;
     constexpr int VALID_ROWS = 31;
     constexpr int VALID_COLS = 15;
 
     typedef float IN_DTYPE;
-    runTTRANS<IN_DTYPE, kG_ROWS, kG_COLS, kT_ROWS, kT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
+    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
                                                             reinterpret_cast<__gm__ IN_DTYPE*>(src), 
                                                             VALID_ROWS, VALID_COLS);
 }
 
 extern "C" __global__ __aicore__ void launchTTRANS_12(__gm__ uint8_t *out, __gm__ uint8_t *src)
 {
-    constexpr int kG_ROWS    = 32;
-    constexpr int kG_COLS    = 32;
-    constexpr int kT_ROWS    = 32;
-    constexpr int kT_COLS    = 33;
+    constexpr int KG_ROWS    = 32;
+    constexpr int KG_COLS    = 32;
+    constexpr int KT_ROWS    = 32;
+    constexpr int KT_COLS    = 33;
     constexpr int VALID_ROWS = 31;
     constexpr int VALID_COLS = 31;
     typedef half IN_DTYPE;
-    runTTRANS<IN_DTYPE, kG_ROWS, kG_COLS, kT_ROWS, kT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
+    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
                                                             reinterpret_cast<__gm__ IN_DTYPE*>(src), 
                                                             VALID_ROWS, VALID_COLS);
 }
 
 extern "C" __global__ __aicore__ void launchTTRANS_13(__gm__ uint8_t *out, __gm__ uint8_t *src)
 {
-    constexpr int kG_ROWS    = 64;
-    constexpr int kG_COLS    = 64;
-    constexpr int kT_ROWS    = 64;
-    constexpr int kT_COLS    = 64;
+    constexpr int KG_ROWS    = 64;
+    constexpr int KG_COLS    = 64;
+    constexpr int KT_ROWS    = 64;
+    constexpr int KT_COLS    = 64;
     constexpr int VALID_ROWS = 22;
     constexpr int VALID_COLS = 63;
     typedef int8_t IN_DTYPE;
-    runTTRANS<IN_DTYPE, kG_ROWS, kG_COLS, kT_ROWS, kT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
+    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
                                                             reinterpret_cast<__gm__ IN_DTYPE*>(src), 
                                                             VALID_ROWS, VALID_COLS);
 }

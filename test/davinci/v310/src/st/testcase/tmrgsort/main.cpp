@@ -55,14 +55,14 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
     DataType *src0Host = nullptr, *src1Host = nullptr, *src2Host = nullptr, *src3Host = nullptr;
     DataType *src0Device = nullptr, *src1Device = nullptr, *src2Device = nullptr, *src3Device = nullptr;
 
-    aclrtMallocHost((void **)&dstHost, outputFileSize);
+    aclrtMallocHost((void **)(&dstHost), outputFileSize);
     aclrtMalloc((void**)(&dstDevice), outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     switch (listNum) {
     case 2:
-        std::cout << "Processing case 2: listNume = 2" << std::endl;
-        aclrtMallocHost((void **)&src0Host, inputFileSize);
-        aclrtMallocHost((void **)&src1Host, inputFileSize);
+        std::cout << "Processing case 2: listNum = 2" << std::endl;
+        aclrtMallocHost((void **)(&src0Host), inputFileSize);
+        aclrtMallocHost((void **)(&src1Host), inputFileSize);
 
         aclrtMalloc((void**)(&src0Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
         aclrtMalloc((void**)(&src1Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
@@ -73,8 +73,8 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
         srcDeviceList.push_back(src0Device);
         srcDeviceList.push_back(src1Device);
 
-        ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize)
-        ReadFile(GetGoldenDir() + "/input1.bin", inputFileSize, src1Host, inputFileSize)
+        ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
+        ReadFile(GetGoldenDir() + "/input1.bin", inputFileSize, src1Host, inputFileSize);
 
         aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
@@ -82,7 +82,7 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
         launchTMRGSORT_multi_demo<tilingKey>(dstDevice, src0Device, src1Device, nullptr, nullptr, stream);
         break;
     case 3:
-        std::cout << "Processing case 2: listNume = 3" << std::endl;
+        std::cout << "Processing case 2: listNum = 3" << std::endl;
         aclrtMallocHost((void**)(&src0Host), inputFileSize);
         aclrtMallocHost((void**)(&src1Host), inputFileSize);
         aclrtMallocHost((void**)(&src2Host), inputFileSize);
@@ -98,9 +98,9 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
         srcDeviceList.push_back(src1Device);
         srcDeviceList.push_back(src2Device);
 
-        ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize)
-        ReadFile(GetGoldenDir() + "/input1.bin", inputFileSize, src1Host, inputFileSize)
-        ReadFile(GetGoldenDir() + "/input2.bin", inputFileSize, src2Host, inputFileSize)
+        ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
+        ReadFile(GetGoldenDir() + "/input1.bin", inputFileSize, src1Host, inputFileSize);
+        ReadFile(GetGoldenDir() + "/input2.bin", inputFileSize, src2Host, inputFileSize);
 
         aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
@@ -109,16 +109,16 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
         launchTMRGSORT_multi_demo<tilingKey>(dstDevice, src0Device, src1Device, src2Device, nullptr, stream);
         break;
     case 4:
-        std::cout << "Processing case 2: listNume = 4" << std::endl;
+        std::cout << "Processing case 2: listNum = 4" << std::endl;
         aclrtMallocHost((void**)(&src0Host), inputFileSize);
         aclrtMallocHost((void**)(&src1Host), inputFileSize);
         aclrtMallocHost((void**)(&src2Host), inputFileSize);
         aclrtMallocHost((void**)(&src3Host), inputFileSize);
 
-        aclrtMalloc((void**)(&src0Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src1Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src2Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src3Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src1Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src2Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src3Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
         srcHostList.push_back(src0Host);
         srcHostList.push_back(src1Host);
@@ -174,14 +174,14 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
     }
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
-    aclrtFinalize();
+    aclFinalize();
 
     std::vector<float> golden(outputFileSize);
     std::vector<float> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
-    bool ret = ResultCompare(golden, devFinal, 0.001f);
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
 }
@@ -207,14 +207,14 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
     DataType *src0Host = nullptr, *src1Host = nullptr, *src2Host = nullptr, *src3Host = nullptr;
     DataType *src0Device = nullptr, *src1Device = nullptr, *src2Device = nullptr, *src3Device = nullptr;
 
-    aclrtMallocHost((void **)&dstHost, outputFileSize);
+    aclrtMallocHost((void **)(&dstHost), outputFileSize);
     aclrtMalloc((void**)(&dstDevice), outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     switch (listNum) {
     case 2:
 
-        aclrtMallocHost((void **)&src0Host, inputFileSize);
-        aclrtMallocHost((void **)&src1Host, inputFileSize);
+        aclrtMallocHost((void **)(&src0Host), inputFileSize);
+        aclrtMallocHost((void **)(&src1Host), inputFileSize);
 
         aclrtMalloc((void**)(&src0Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
         aclrtMalloc((void**)(&src1Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
@@ -252,20 +252,20 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
         aclrtMallocHost((void**)(&src2Host), inputFileSize);
         aclrtMallocHost((void**)(&src3Host), inputFileSize);
 
-        aclrtMalloc((void**)(&src0Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src1Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src2Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src3Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src1Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src2Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src3Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
         ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
         ReadFile(GetGoldenDir() + "/input1.bin", inputFileSize, src1Host, inputFileSize);
         ReadFile(GetGoldenDir() + "/input2.bin", inputFileSize, src2Host, inputFileSize);
         ReadFile(GetGoldenDir() + "/input3.bin", inputFileSize, src3Host, inputFileSize);
 
-        aclrtMemcpy(src3Device, inputFileSize, src3Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src2Device, inputFileSize, src2Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+        aclrtMemcpy(src3Device, inputFileSize, src3Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
         launchTMrgsort_demo_multi_exhausted<tilingKey>(dstDevice, src0Device, src1Device, src2Device, src3Device, stream);
         break;
@@ -303,20 +303,20 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
 
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
-    aclrtFinalize();
+    aclFinalize();
 
     std::vector<float> golden(outputFileSize);
     std::vector<float> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
-    bool ret = ResultCompare(golden, devFinal, 0.001f);
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
 }
 
 template <int32_t tilingKey>
-void tmrgsort_single(uint16_t row, uint16_t col) {
+void tmrgsort_single(uint32_t row, uint32_t col) {
     size_t inputFileSize = row * col * sizeof(DataType);
     size_t outputFileSize = row * col * sizeof(DataType);
 
@@ -329,11 +329,11 @@ void tmrgsort_single(uint16_t row, uint16_t col) {
     DataType *dstHost, *src0Host;
     DataType *dstDevice, *src0Device;
 
-    aclrtMallocHost((void**)&dstHost, outputFileSize);
-    aclrtMallocHost((void**)&src0Host, inputFileSize);
+    aclrtMallocHost((void**)(&dstHost), outputFileSize);
+    aclrtMallocHost((void**)(&src0Host), inputFileSize);
 
-    aclrtMalloc((void**)(&dstDevice), outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void**)(&src0Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void**)&dstDevice, outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void**)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
 
@@ -345,28 +345,28 @@ void tmrgsort_single(uint16_t row, uint16_t col) {
 
     WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
 
-    aclrtFree(src0Device);
     aclrtFree(dstDevice);
+    aclrtFree(src0Device);
     
-    aclrtFreeHost(src0Host);
     aclrtFreeHost(dstHost);
+    aclrtFreeHost(src0Host);
     
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
-    aclrtFinalize();
+    aclFinalize();
 
     std::vector<float> golden(outputFileSize);
     std::vector<float> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
-    bool ret = ResultCompare(golden, devFinal, 0.001f);
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
 }
 
 template <int32_t tilingKey>
-void tmrgsort_topk(uint16_t row, uint16_t col) {
+void tmrgsort_topk(uint32_t row, uint32_t col) {
         size_t inputFileSize = row * col * sizeof(DataType);
     size_t outputFileSize = row * col * sizeof(DataType);
 
@@ -379,11 +379,11 @@ void tmrgsort_topk(uint16_t row, uint16_t col) {
     DataType *dstHost, *src0Host;
     DataType *dstDevice, *src0Device;
 
-    aclrtMallocHost((void**)&dstHost, outputFileSize);
-    aclrtMallocHost((void**)&src0Host, inputFileSize);
+    aclrtMallocHost((void**)(&dstHost), outputFileSize);
+    aclrtMallocHost((void**)(&src0Host), inputFileSize);
 
-    aclrtMalloc((void**)(&dstDevice), outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void**)(&src0Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void**)&dstDevice, outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void**)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
 
@@ -395,11 +395,11 @@ void tmrgsort_topk(uint16_t row, uint16_t col) {
 
     WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
 
-    aclrtFree(src0Device);
     aclrtFree(dstDevice);
+    aclrtFree(src0Device);
     
-    aclrtFreeHost(src0Host);
     aclrtFreeHost(dstHost);
+    aclrtFreeHost(src0Host);
     
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
@@ -410,7 +410,7 @@ void tmrgsort_topk(uint16_t row, uint16_t col) {
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
-    bool ret = ResultCompare(golden, devFinal, 0.001f);
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
 }

@@ -23,8 +23,8 @@ def gen_golden_data(case_name, param):
     src1_row = param.src1_row
     src1_col = param.src1_col
 
-    src_data = np.random.randint(-20, 20, (src0_row*src0_col).astype(src0_type))
-    indices = np.random.randint(0, src0_row*src0_col, src1_row*src1_col).astype(src1_type)
+    src_data = np.random.randint(-20, 20, (src0_row*src0_col)).astype(src0_type)
+    indices = np.random.randint(0, src0_row*src0_col, (src1_row*src1_col)).astype(src1_type)
     golden = Gather(src_data, indices)
 
     src_data.tofile("./src0.bin")
@@ -41,7 +41,7 @@ class tgatherParams:
         self.src1_row = src1_row
         self.src1_col = src1_col
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     case_name_list = [
         "TGATHERTest.case1_float",
         "TGATHERTest.case2_int32",
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     for i, case_name in enumerate(case_name_list):
         if not os.path.exists(case_name):
-            os.mkdir(case_name)
+            os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
         gen_golden_data(case_name, case_params_list[i])
