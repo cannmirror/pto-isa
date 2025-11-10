@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<block name="OpsMath" copy_type="delivery" src_path="" dst_path="" install_path="" install_own="$username:$usergroup" install_mod="550" install_type="run;devel">
+    <dir_info install_mod="550">
+        <path value="$(TARGET_ENV)/lib64"/>
+    </dir_info>
+    <file_info value="opapi_math_lib" copy_type="delivery" src_path="build/"
+        dst_path="built-in/op_impl/ai_core/tbe/op_api/lib/linux/$(ARCH)/"
+        install_path="ops_math/built-in/op_impl/ai_core/tbe/op_api/lib/linux/$(ARCH)/" install_mod="555">
+        <file value="libopapi_math.so"
+            file_type="shared"
+            install_softlink="$(TARGET_ENV)/lib64/libopapi_math.so"
+            pkg_inner_softlink="ops_math:lib64/libopapi_math.so"/>
+    </file_info>
+    <file_info value="opgraph_math_lib" copy_type="delivery" src_path="build/"
+        dst_path="built-in/op_graph/lib/linux/$(ARCH)/"
+        install_path="ops_math/built-in/op_graph/lib/linux/$(ARCH)/" install_mod="555">
+        <file value="libopgraph_math.so"
+            file_type="shared"
+            install_softlink="$(TARGET_ENV)/lib64/libopgraph_math.so"/>
+    </file_info>
+    <file_info value="ophost_math_lib" copy_type="delivery" src_path="build/"
+        dst_path="built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/$(ARCH)/"
+        install_path="ops_math/built-in/op_impl/ai_core/tbe/op_host/lib/linux/$(ARCH)/" install_mod="555">
+        <file value="libophost_math.so"
+            file_type="shared"
+            install_softlink="$(TARGET_ENV)/lib64/libophost_math.so"/>
+    </file_info>
+    <file_info value="ops_common_math_lib" copy_type="delivery" src_path="build/"
+        dst_path="lib/"
+        install_path="ops_math/$(TARGET_ENV)/lib64" install_mod="555">
+        <file value="libcommon_math.so"
+            file_type="shared"
+            install_softlink="$(TARGET_ENV)/lib64/libcommon_math.so"/>
+    </file_info>
+</block>

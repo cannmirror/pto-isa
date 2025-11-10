@@ -36,16 +36,62 @@ print_error() {
   echo
 }
 
-build_ut() {
+checkopts() {
+  ENABLE_SIMPLE_ST=FALSE
+  ENABLE_BUILD_ALL=FALSE
+  ENABLE_RUN_EXAMPLE=FALSE
+  EXAMPLE_NAME=""
+  EXAMPLE_MODE=""
+  PLATFORM_MODE=""
+  INST_NAME=""
+
+  if [[ "$1" == "--run_example" ]]; then
+    ENABLE_RUN_EXAMPLE=TRUE
+    INST_NAME="$2"
+    EXAMPLE_NAME="$3"
+    EXAMPLE_MODE="$4"
+    PLATFORM_MODE="$5"
+  elif [ "$1" == "--run_all" ]; then
+    ENABLE_BUILD_ALL=TRUE
+  elif [ "$1" == "--run_simple" ]; then
+    ENABLE_SIMPLE_ST=TRUE
+  fi
+}
+
+run_simple_st() {
   echo $dotted_line
-  echo "Start to build ut"
+  echo "Start to run simple st"
   source ${ASCEND_ENV_PATH}/setenv.bash
-  python3 test/script/run_st.py -r sim -v a3 -t tmatmul -g TMATMULTest.case1
+  python3 test/script/run_st.py -r npu -v a3 -t textract
+}
+
+run_all_st() {
+  echo $dotted_line
+  echo "Start to run all st"
+  source ${ASCEND_ENV_PATH}/setenv.bash
+  python3 test/script/run_st.py -r sim -v a3 -t textract
+}
+
+run_example() {
+  echo $dotted_line
+  echo "Start to run example"
+  source ${ASCEND_ENV_PATH}/setenv.bash
+  python3 test/script/run_st.py -r $PLATFORM_MODE -v $EXAMPLE_MODE -t $INST_NAME -g $$EXAMPLE_NAME
 }
 
 main() {
-  build_ut
+  checkopts "$@"
+  if [ "$ENABLE_SIMPLE_ST" == "TRUE" ]; then
+      run_simple_st
+  fi
+  if [ "$ENABLE_BUILD_ALL" == "TRUE" ]; then
+      run_all_st
+  fi
+  if [ "$ENABLE_RUN_EXAMPLE" == "TRUE" ]; then
+      run_example
+  fi
 }
 
 set -o pipefail
 main "$@" | gawk '{print strftime("[%Y-%m-%d %H:%M:%S]"), $0}'
+}
