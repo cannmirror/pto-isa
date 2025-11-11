@@ -44,7 +44,7 @@ namespace pto {
                     }
                 }
             }
-        } else if constexpr (sizeOf(T) == 2) {
+        } else if constexpr (sizeof(T) == 2) {
             // num_subtile_y can reach REPEAT_MAX = 255 in b16 case
             // 1 subtile = 16 * 32B = 0.5KB, UB = 192KB, so UB can contain 384 subtiles at most
             uint64_t srcUb[16] = {0};
@@ -72,7 +72,7 @@ namespace pto {
                     }
                 }
             }
-        } else if constexpr (sizeOf(T) == 1) {
+        } else if constexpr (sizeof(T) == 1) {
             // num_subtile_y couldn't reach REPEAT_MAX = 255 in b8 case
             // 1 subtile = 32 * 32B = 1KB, UB = 192KB, so UB can contain 192 subtiles at most
             uint64_t srcUb[16] = {0};
@@ -107,7 +107,7 @@ namespace pto {
                 }
             }
         }  else {
-            static_assert(sizeOf(T) == 4 || sizeOf(T) == 2 || sizeOf(T) == 1, "TTRANS: Invalid data type.");
+            static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TTRANS: Invalid data type.");
         }
     }
 
@@ -147,7 +147,7 @@ namespace pto {
                 wait_flag(PIPE_S, PIPE_V, EVENT_ID7);
             }
         } else {
-            static_assert(sizeOf(T) == 4 || sizeOf(T) == 2 || sizeOf(T) == 1, "TTRANS: Invalid data type.");
+            static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TTRANS: Invalid data type.");
         }
     }
 
@@ -163,7 +163,7 @@ namespace pto {
         constexpr uint16_t tmpStride = TMP_UB_SIZE / BLOCK_BYTE_SIZE / sizeof(T);  // 8KB/32B/sizeof(T) elements
         constexpr uint16_t fullBurst = tmpStride / blockElemSize;
         constexpr uint16_t dstFullGap = (uint16_t)(dstStride / blockElemSize) - fullBurst;
-        constexpr uint16_t tmpSubtilesMax = sizeOf(T) == 1 ? tmpStride / 32 : tmpStride / 16;
+        constexpr uint16_t tmpSubtilesMax = sizeof(T) == 1 ? tmpStride / 32 : tmpStride / 16;
 
         __ubuf__ T *tmpPtr = (__ubuf__ T *)(TMP_UB_OFFSET);  // 8KB, start from 184KB, UB:192KB=184+8KB
         const unsigned full_iter_num = num_subtile_y / tmpSubtilesMax;
