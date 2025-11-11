@@ -28,7 +28,7 @@ namespace pto {
     }
 
     template <typename TileAcc, typename TileLeft, typename TileRight>
-    __aicore__ PTO_INLINE void CheckStatic() 
+    __aicore__ PTO_INLINE void Checkstatic() 
     {
         static_assert(((std::is_same<typename TileAcc::DType, int32_t>::value) && (std::is_same<typename TileLeft::DType, int8_t>::value) && (std::is_same<typename TileRight::DType, int8_t>::value)) ||
                       ((std::is_same<typename TileAcc::DType, float>::value) && (std::is_same<typename TileLeft::DType, half>::value) && (std::is_same<typename TileRight::DType, half>::value)) ||
