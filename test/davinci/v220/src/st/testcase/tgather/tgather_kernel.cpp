@@ -296,7 +296,7 @@ inline __aicore__ void runTGather1D(__gm__ Tsrc0 __out__ *out, __gm__ Tsrc0 __in
     out = dstGlobal.data();
 }
 
-extern "C" __global__ __aicore__ void test_tgather1D_float(__gm__ float *out, __gm__ float *src0, __gm__ float *src1) {
+extern "C" __global__ __aicore__ void test_tgather1D_float(__gm__ float *out, __gm__ float *src0, __gm__ int32_t *src1) {
     runTGather1D<float, int32_t, 32, 1024, 16, 64, 32, 1024>(out, src0, src1);
 }
 

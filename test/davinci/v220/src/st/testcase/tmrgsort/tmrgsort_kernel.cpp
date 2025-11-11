@@ -228,7 +228,7 @@ __aicore__ inline void runTMrgsort_single(__gm__ T __out__ *out, __gm__ T __in__
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
 
     using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DstDynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
@@ -557,7 +557,7 @@ extern "C" __global__ __aicore__ void launchTMRGSORT_topk_6(__gm__ float *out, _
 
 template <int32_t tilingKey>
 void launchTMRGSORT_multi_demo(float *out, float *src0, float *src1, float *src2, float *src3, void* stream) {
-    if (constexpr(tilingKey == 1){
+    if constexpr(tilingKey == 1){
         launchTMRGSORT_multi_1<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
     } else if constexpr(tilingKey == 2){ 
         launchTMRGSORT_multi_2<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
@@ -570,7 +570,7 @@ void launchTMRGSORT_multi_demo(float *out, float *src0, float *src1, float *src2
 
 template <int32_t tilingKey>
 void launchTMrgsort_demo_multi_exhausted(float *out, float *src0, float *src1, float *src2, float *src3, void* stream) {
-    if (constexpr(tilingKey == 1){
+    if constexpr(tilingKey == 1){
         launchTMRGSORT_multi_exhausted_1<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
     } else if constexpr(tilingKey == 2){ 
         launchTMRGSORT_multi_exhausted_2<<<1, nullptr, stream>>>(out, src0, src1, src2, src3);
@@ -580,7 +580,7 @@ void launchTMrgsort_demo_multi_exhausted(float *out, float *src0, float *src1, f
 template <int32_t tilingKey>
 void launchTMRGSORT_single_demo(float *out, float *src0, void* stream) 
 {
-    if (constexpr(tilingKey == 1){
+    if constexpr(tilingKey == 1){
         launchTMRGSORT_single_1<<<1, nullptr, stream>>>(out, src0);
     } else if constexpr(tilingKey == 2){ 
         launchTMRGSORT_single_2<<<1, nullptr, stream>>>(out, src0);
@@ -602,7 +602,7 @@ void launchTMRGSORT_single_demo(float *out, float *src0, void* stream)
 template <int32_t tilingKey>
 void launchTMRGSORT_topk_demo(float *out, float *src, void* stream) 
 {
-    if (constexpr(tilingKey == 1){
+    if constexpr(tilingKey == 1){
         launchTMRGSORT_topk_1<<<1, nullptr, stream>>>(out, src);
     } else if constexpr(tilingKey == 2){ 
         launchTMRGSORT_topk_2<<<1, nullptr, stream>>>(out, src);

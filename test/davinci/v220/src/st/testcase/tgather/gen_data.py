@@ -93,19 +93,19 @@ def gen_golden_data(param: TGatherParamsBase):
         x1_gm.tofile("./x1_gm.bin")
         res = np.zeros((row, col))
         if pattern == P0101 :
-            res = x1_gm[:, 0::2]
+          res = x1_gm[:, 0::2]
         elif pattern == P1010 :
-            res = x1_gm[:, 1::2]
+          res = x1_gm[:, 1::2]
         elif pattern == P0001 :
-            res = x1_gm[:, 0::4]
+          res = x1_gm[:, 0::4]
         elif pattern == P0010 :
-            res = x1_gm[:, 1::4]
+          res = x1_gm[:, 1::4]
         elif pattern == P0100 :
-            res = x1_gm[:, 2::4]
+          res = x1_gm[:, 2::4]
         elif pattern == P1000 :
-            res = x1_gm[:, 3::4]
+          res = x1_gm[:, 3::4]
         elif pattern == P1111 :
-            res = x1_gm[:, :]
+          res = x1_gm[:, :]
         
         if pattern == 255 and src_type == np.half:
             newarray = x1_gm.reshape(row, col // 4, 4)

@@ -115,10 +115,10 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
         aclrtMallocHost((void**)(&src2Host), inputFileSize);
         aclrtMallocHost((void**)(&src3Host), inputFileSize);
 
-        aclrtMalloc((void**)(&src0Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src1Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src2Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        aclrtMalloc((void**)(&src3Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src1Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src2Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        aclrtMalloc((void**)&src3Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
         srcHostList.push_back(src0Host);
         srcHostList.push_back(src1Host);
@@ -332,8 +332,8 @@ void tmrgsort_single(uint32_t row, uint32_t col) {
     aclrtMallocHost((void**)(&dstHost), outputFileSize);
     aclrtMallocHost((void**)(&src0Host), inputFileSize);
 
-    aclrtMalloc((void**)(&dstDevice), outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void**)(&src0Device), inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void**)&dstDevice, outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void**)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
 
@@ -395,15 +395,15 @@ void tmrgsort_topk(uint32_t row, uint32_t col) {
 
     WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
 
-    aclrtFree(src0Device);
     aclrtFree(dstDevice);
+    aclrtFree(src0Device);
     
-    aclrtFreeHost(src0Host);
     aclrtFreeHost(dstHost);
+    aclrtFreeHost(src0Host);
     
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
-    aclrtFinalize();
+    aclFinalize();
 
     std::vector<float> golden(outputFileSize);
     std::vector<float> devFinal(outputFileSize);
