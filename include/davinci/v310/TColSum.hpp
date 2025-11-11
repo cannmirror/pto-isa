@@ -7,7 +7,7 @@
 
 namespace pto {
     template <typename T, typename TileDataOut, typename TileDataIn, unsigned nElmPerRepeat>
-    __tf__ __aicore__ void TColSum(typename TileDataOut::TileDType __out__ dstData,
+    __tf__ __aicore__ PTO_INLINE void TColSum(typename TileDataOut::TileDType __out__ dstData,
         typename TileDataIn::TileDType __in__ srcData, uint16_t validRow, int validCol, uint16_t repeatTimes) {
         
         __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
@@ -40,7 +40,7 @@ namespace pto {
     }
 
     template <typename TileDataOut, typename TileDataIn>
-    __aicore__ void TCOLSUM(TileDataOut &dst, TileDataIn &src) {
+    __aicore__ PTO_INLINE void TCOLSUM_IMPL(TileDataOut &dst, TileDataIn &src) {
         using T = typename TileDataIn::DType;
         constexpr bool isTargetType =
             std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, int8_t> ||

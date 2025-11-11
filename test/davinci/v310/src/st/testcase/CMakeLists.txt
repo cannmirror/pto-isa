@@ -68,6 +68,7 @@ set(ALL_TESTCASES
     tstore
     textract
     trowsum
+    tcolsum
     tsort32
     trowexpand
     tgather

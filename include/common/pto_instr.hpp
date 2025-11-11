@@ -145,6 +145,11 @@ __PTO_INSTR__ void TROWSUM(TileDataOut &dst, TileDataIn &src,
   MAP_INSTR_IMPL(TROWSUM, dst, src, tmp)
 }
 
+template <typename TileDataOut, typename TileDataIn>
+__PTO_INSTR__ void TCOLSUM(TileDataOut &dst, TileDataIn &src) {
+  MAP_INSTR_IMPL(TCOLSUM, dst, src)
+}
+
 template <typename TileDataDst, typename TileDataSrc>
 __PTO_INSTR__ void TTRANS(TileDataDst &dst, TileDataSrc &src) {
   MAP_INSTR_IMPL(TTRANS, dst, src)

@@ -118,7 +118,7 @@ namespace pto {
     }
 
     template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
-    __aicore__ PTO_INLINE void TCOLSUM(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp, bool IsBinary) {
+    __aicore__ PTO_INLINE void TCOLSUM_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp, bool IsBinary) {
         static_assert((sizeof(typename TileDataSrc::DType) == 2) || (sizeof(typename TileDataSrc::DType) == 4),
                       "Data type must be 16/32");
         static_assert(TileDataSrc::Loc == pto::Location::Vec, "Src location must be Vec!");
