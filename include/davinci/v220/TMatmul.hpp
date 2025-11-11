@@ -2,7 +2,7 @@
 #define TMATMUL_HPP
 
 namespace pto {
-    template <typename TileAcc, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
+    template <typename TileAcc, typename TileLeft, typename TileRight, bool cmatrixSource, bool CmatrixInitVal>
     __tf__ __aicore__ void TMatmul(typename TileAcc::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
         typename TileRight::TileDType __in__ bMatrix, uint16_t m, uint16_t k, uint16_t n)
     {
@@ -24,7 +24,7 @@ namespace pto {
         // Indicates the Cmatrix source, 1: the C matrix is in bias table buffer, 0: the C matrix is in L0C
         uint8_t unitFlag = 0;  // unit flag control bits
 
-        mad(c, a, b, m, k, n, unitFlag, KDirectionAlign, cmatrixSource, CmatrixInitVal);
+        mad(c, a, b, m, k, n, unitFlag, kDirectionAlign, cmatrixSource, CmatrixInitVal);
     }
 
     template <typename TileAcc, typename TileLeft, typename TileRight>
