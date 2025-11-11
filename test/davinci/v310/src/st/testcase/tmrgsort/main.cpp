@@ -403,7 +403,7 @@ void tmrgsort_topk(uint32_t row, uint32_t col) {
     
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
-    aclrtFinalize();
+    aclFinalize();
 
     std::vector<float> golden(outputFileSize);
     std::vector<float> devFinal(outputFileSize);

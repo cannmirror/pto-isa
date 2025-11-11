@@ -27,9 +27,9 @@ def gen_golden_data(case_name, param):
 class TTRANSParams:
     def __init__(self, src_dtype, dst_dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
         self.src_dtype = src_dtype
-        self.src_dtype = dst_dtype
-        self.global_row = global_row
-        self.global_col = global_col
+        self.dst_dtype = dst_dtype
+        self.gloal_row = global_row
+        self.gloal_col = global_col
         self.tile_row = tile_row
         self.tile_col = tile_col
         self.valid_row = valid_row
