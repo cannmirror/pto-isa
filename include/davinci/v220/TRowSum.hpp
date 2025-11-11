@@ -153,7 +153,7 @@ __tf__ __aicore__ PTO_INLINE void TRowSum(typename TileDataOut::TileDType __out_
                 pipe_barrier(PIPE_V);
             }
         }
-        VaddByMode<T, false, TileDataTmp::Cols, dstRepeatStride, tmpRepeatStride,
+        VcaddByMode<T, false, TileDataTmp::Cols, dstRepeatStride, tmpRepeatStride,
             nElemPerRepeat>(dstP, tmpP, repeatTimes);
         pipe_barrier(PIPE_V);
 
