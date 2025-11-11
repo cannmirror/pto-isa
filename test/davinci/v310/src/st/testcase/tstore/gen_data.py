@@ -5,8 +5,8 @@ import os
 import struct
 import ctypes
 import numpy as np
-
 np.random.seed(19)
+
 
 def gen_golden_data(case_name, gInfo):
     data_type = gInfo.datatype
@@ -20,24 +20,24 @@ def gen_golden_data(case_name, gInfo):
     gWholeShape2 = gInfo.gWholeShape2
     gWholeShape3 = gInfo.gWholeShape3
     gWholeShape4 = gInfo.gWholeShape4
-
     if gInfo.format == "ND" or gInfo.format == "NZ":
         input_arr = np.random.randint(-5, 5, size=(gWholeShape0, gWholeShape1,
                                     gWholeShape2, gWholeShape3, gWholeShape4)).astype(data_type)
         output_arr = np.zeros(shape=(gWholeShape0, gWholeShape1,
                             gWholeShape2, gWholeShape3, gWholeShape4), dtype=data_type)
-        output_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape3, 0: gShape4] \ 
-                    = input_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape3, 0: gShape4]
+        output_arr[0:gShape0, 0:gShape1, 0:gShape2, 0:gShape3, 0:gShape4] \
+                    = input_arr[0:gShape0, 0:gShape1, 0:gShape2, 0:gShape3, 0:gShape4]
     elif gInfo.format == "DN":
         input_arr = np.random.randint(-5, 5, size=(gWholeShape0, gWholeShape1,
                             gWholeShape2, gWholeShape4, gWholeShape3)).astype(data_type)
         output_arr = np.zeros(shape=(gWholeShape0, gWholeShape1,
                             gWholeShape2, gWholeShape4, gWholeShape3), dtype=data_type)
-        output_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape4, 0: gShape3] \ 
-                    = input_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape4, 0: gShape3]
+        output_arr[0:gShape0, 0:gShape1, 0:gShape2, 0:gShape4, 0:gShape3] \
+                    = input_arr[0:gShape0, 0:gShape1, 0:gShape2, 0:gShape4, 0:gShape3]
 
     input_arr.tofile("./input.bin")
     output_arr.tofile("./golden.bin")
+
 
 class GlobalTensorInfo:
     def __init__(self, datatype, format, gShape0, gShape1, gShape2, gShape3, gShape4,
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         "TStoreTest.case6",
         "TStoreTest.case7",
         "TStoreTest.case8",
-        "TStoreTest.case9",
+        "TStoreTest.case9"
     ]
 
     case_params_list = [
@@ -79,10 +79,10 @@ if __name__ == "__main__":
         GlobalTensorInfo(np.int8, "DN", 2, 3, 7, 47, 13, 2, 3, 7, 55, 29),
         GlobalTensorInfo(np.float32, "NZ", 1, 1, 1, 16, 8, 1, 1, 2, 16, 8),
         GlobalTensorInfo(np.int16, "NZ", 2, 2, 2, 16, 16, 5, 3, 3, 16, 16),
-        GlobalTensorInfo(np.uint8, "NZ", 1, 2, 1, 16, 32, 2, 4, 2, 16, 32),
+        GlobalTensorInfo(np.uint8, "NZ", 1, 2, 1, 16, 32, 2, 4, 2, 16, 32)
     ]
 
-    for i, case_name  in enumerate(case_name_list):
+    for i, case_name in enumerate(case_name_list):
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()
