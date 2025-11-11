@@ -8,6 +8,7 @@
 
 namespace pto
 {
+
 #define B16_REPEAT_MAX 65535
 
 template <typename T, bool cntModeEn, int cols, uint32_t dstRepeatStride, uint32_t srcRepeatStride,
@@ -50,16 +51,16 @@ __aicore__ PTO_INLINE void VaddByMode(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf_
 template <typename T, typename TileDataOut, typename TileDataIn, typename TileDataTmp, uint8_t nElemPerRepeat,
     uint32_t dstRepeatStride, uint32_t srcRepeatStride, uint32_t tmpRepeatStride>
 __tf__ __aicore__ PTO_INLINE void TRowSum(typename TileDataOut::TileDType __out__ dstData,
-                                    typename TileDataIn::TileDType __in__ srcData,
-                                    typename TileDataTmp::TileDType __in__ tmpData, int validCol, int validRow) {
+                                          typename TileDataIn::TileDType __in__ srcData,
+                                          typename TileDataTmp::TileDType __in__ tmpData, int validCol, int validRow) {
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
     __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
     __ubuf__ T *tmp = (__ubuf__ T *)__cce_get_tile_ptr(tmpData);
 
-    int srcRepeatPerRow = validCol / nElemPerRepeat;  // src一行满足repeat个数
-    int remain = validCol % nElemPerRepeat;  // src一行repeat之后剩余多少元素
+    int srcRepeatPerRow = validCol / nElemPerRepeat;    // src一行满足repeat个数
+    int remain = validCol % nElemPerRepeat;             // src一行repeat之后剩余多少元素
 
-    // 需要处理的行若超过uint8，则拆分为多次循环
+    // 需要处理的行若超过uint8, 则拆分为多次进行循环
     int rowRepeatTimes = validRow / REPEAT_MAX;
     unsigned repeatTimes;
     __ubuf__ T *dstP = dst;
@@ -90,25 +91,25 @@ __tf__ __aicore__ PTO_INLINE void TRowSum(typename TileDataOut::TileDType __out_
     }
 
     if (validCol < 2 * nElemPerRepeat) {
-        // 解决ccec编译检查问题；如果删除会导致“copy_ubuf_to_ubuf"编译错误，提醒第七个参数的范围必须是[0, 65535]
+        // 解决 ccec 编译检查问题； 如果删除会导致“copy_ubuf_to_ubuf”编译错误，提醒第七个参数的范围必须是[0, 65535]
         if constexpr (tmpRepeatStride < BLOCK_MAX_PER_REPEAT) {
             return;
         }
         // 将满足一次repeat部分copy到dst
-        copy_ubuf_to_ubuf(tmp, src, 0, validRow,BLOCK_MAX_PER_REPEAT, srcRepeatStride - BLOCK_MAX_PER_REPEAT,
+        copy_ubuf_to_ubuf(tmp, src, 0, validRow, BLOCK_MAX_PER_REPEAT, srcRepeatStride - BLOCK_MAX_PER_REPEAT,
             tmpRepeatStride - BLOCK_MAX_PER_REPEAT);
         pipe_barrier(PIPE_V);
     }
 
     int i;
-    // 二分Add，将每行相邻的两个repeat相加存入tmp
+    // 二分Add, 将每行相邻的两个repeat相加存入tmp
     for (i = 0; i < srcRepeatPerRow / 2; i++) {
         VaddByMode<T, true, TileDataTmp::Cols, TileDataIn::Cols, TileDataIn::Cols,
             tmpRepeatStride, srcRepeatStride, srcRepeatStride, nElemPerRepeat>(tmp + i * nElemPerRepeat,
             src + (i * 2) * nElemPerRepeat, src + (i * 2 + 1) * nElemPerRepeat, validRow);
         pipe_barrier(PIPE_V);
     }
-    // 若repeat为奇数，则将最后的repeat加入tmp
+    // 若repeat为奇数, 则将最后的repeat加入tmp
     if (srcRepeatPerRow != 1 && srcRepeatPerRow % 2 == 1) {
         VaddByMode<T, true, TileDataTmp::Cols, TileDataTmp::Cols, TileDataIn::Cols,
             tmpRepeatStride, tmpRepeatStride, srcRepeatStride, nElemPerRepeat>(tmp, tmp,
@@ -123,7 +124,7 @@ __tf__ __aicore__ PTO_INLINE void TRowSum(typename TileDataOut::TileDType __out_
         repeatTimes = rowRepeatTimes == 0 ? (validRow % REPEAT_MAX) : REPEAT_MAX;
         curLen = srcRepeatPerRow;
 
-        // 若存在剩余为奇数，则将最后的repeat加入tmp
+        // 若存在剩余为奇数, 则将最后的repeat加入tmp
         if (remain > 0) {
             // 将remain加入temp
             repeatOffset = curLen == 1 ? 0 : (curLen / 2 - 1);
@@ -167,8 +168,11 @@ __tf__ __aicore__ PTO_INLINE void TRowSum(typename TileDataOut::TileDType __out_
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
 __aicore__ PTO_INLINE void TROWSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp) {
     using T = typename TileDataIn::DType;
-    int validCol = src.GetValidCol(); // 8
-    int validRow = src.GetValidRow(); // 128
+    constexpr bool isTargetType = std::is_same_v<T, half> || std::is_same_v<T, float>;
+    static_assert(isTargetType, "The input data type is not supported by this instruction.");
+
+    int validCol = src.GetValidCol();
+    int validRow = src.GetValidRow();
     constexpr uint8_t nElemPerBlock = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr uint8_t nElemPerRepeat = REPEAT_BYTE / sizeof(T);
     constexpr uint32_t dstRepeatStride = TileDataOut::Cols;
