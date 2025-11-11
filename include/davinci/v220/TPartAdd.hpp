@@ -151,7 +151,7 @@ namespace pto {
 
     template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
               unsigned blockSizeElem, unsigned dstRowStride, unsigned src0RowStride, unsigned src1RowStride>
-    __tf__ __aicore__ PTO_INLINE void TPartAdd(typename TileDataDst::TileDType __out__ dst,
+    __tf__ __aicore__ PTO_INLINE void TPARTADD(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned src0ValidRow,
         unsigned src0ValidCol, unsigned src1ValidRow, unsigned src1ValidCol, unsigned dstValidRow, unsigned dstValidCol)
     {

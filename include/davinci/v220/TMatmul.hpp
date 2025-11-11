@@ -53,7 +53,7 @@ namespace pto {
     template <typename TileAcc, typename TileLeft, typename TileRight>
     __aicore__ PTO_INLINE void TMATMUL_IMPL(TileAcc &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
     {
-        CheckStatic<TileAcc, TileLeft, TileRight>();
+        Checkstatic<TileAcc, TileLeft, TileRight>();
         // CmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0: use the real number in C matrix
         uint16_t m = aMatrix.GetValidRow();
         uint16_t k = aMatrix.GetValidCol();
@@ -64,7 +64,7 @@ namespace pto {
     template <typename TileAcc, typename TileLeft, typename TileRight>
     __aicore__ PTO_INLINE void TMATMUL_ACC_IMPL(TileAcc &cOutMatrix, TileAcc &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
     {
-        CheckStatic<TileAcc, TileLeft, TileRight>();
+        Checkstatic<TileAcc, TileLeft, TileRight>();
         // CmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0: use the real number in C matrix
         uint16_t m = aMatrix.GetValidRow();
         uint16_t k = aMatrix.GetValidCol();
@@ -75,7 +75,7 @@ namespace pto {
     template <typename TileAcc, typename TileLeft, typename TileRight, typename TileBias>
     __aicore__ PTO_INLINE void TMATMUL_BIAS_IMPL(TileAcc &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasMatrix)
     {
-        CheckStatic<TileAcc, TileLeft, TileRight>();
+        Checkstatic<TileAcc, TileLeft, TileRight>();
         using CType = typename TileAcc::DType;
         using BiasType = typename TileBias::DType;
         constexpr bool isBiasValid = std::is_same_v<CType, BiasType>;
