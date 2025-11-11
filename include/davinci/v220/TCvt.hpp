@@ -5,7 +5,7 @@
 
 namespace pto{
     template <typename TileDataD, typename TileDataS>
-    __tf__ __aicore__ void GenCastCall(__ubuf__ typename TileDataD::DType *dst, __ubuf__ typename TileDataS::DType *src,
+    __aicore__ void GenCastCall(__ubuf__ typename TileDataD::DType *dst, __ubuf__ typename TileDataS::DType *src,
         uint8_t repeatNum, RoundMode mode, uint16_t dstBlockStride, uint16_t srcBlockStride, uint16_t dstRepeatStride,
         uint16_t srcRepeatStride)
     {

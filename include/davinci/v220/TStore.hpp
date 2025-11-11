@@ -75,49 +75,49 @@ namespace pto {
                     }
                 }
             }
-        }
         // 处理DN格式数据
-    } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
-        uint16_t nBurst = gShape4;
-        uint32_t lenBurst = validRow * sizeof(typename TileData::DType);
-        uint32_t gmGap = (gStride4 - gShape3) * sizeof(typename TileData::DType);
-        uint32_t ubGap = (TileData::Rows - gShape3) / blockSize;
+        } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
+            uint16_t nBurst = gShape4;
+            uint32_t lenBurst = validRow * sizeof(typename TileData::DType);
+            uint32_t gmGap = (gStride4 - gShape3) * sizeof(typename TileData::DType);
+            uint32_t ubGap = (TileData::Rows - gShape3) / blockSize;
 
-        typename GlobalData::DType *dstGlobalAddr = dstAddr;
-        __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+            typename GlobalData::DType *dstGlobalAddr = dstAddr;
+            __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
 
-        int64_t srcStride2 = TileData::Rows * gShape4;
-        int64_t srcStride1 = gShape2 * srcStride2;
-        int64_t srcStride0 = gShape1 * srcStride1;
-        for (uint32_t i = 0; i < gShape0; i++) {
-            int64_t srcAddr0 = i * srcStride0;
-            int64_t dstAddr0 = i * gStride0;
-            for (uint32_t j = 0; j < gShape1; j++) {
-                int64_t srcAddr1 = j * srcStride1;
-                int64_t dstAddr1 = j * gStride1;
-                for (uint32_t k = 0; k < gShape2; k++) {
-                    dstGlobalAddr = dstAddr + dstAddr0 + dstAddr1 + k * gStride2;
-                    srcTileAddr = srcAddr + srcAddr0 + srcAddr1 + k * srcStride2;
-                    TStoreInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);
+            int64_t srcStride2 = TileData::Rows * gShape4;
+            int64_t srcStride1 = gShape2 * srcStride2;
+            int64_t srcStride0 = gShape1 * srcStride1;
+            for (uint32_t i = 0; i < gShape0; i++) {
+                int64_t srcAddr0 = i * srcStride0;
+                int64_t dstAddr0 = i * gStride0;
+                for (uint32_t j = 0; j < gShape1; j++) {
+                    int64_t srcAddr1 = j * srcStride1;
+                    int64_t dstAddr1 = j * gStride1;
+                    for (uint32_t k = 0; k < gShape2; k++) {
+                        dstGlobalAddr = dstAddr + dstAddr0 + dstAddr1 + k * gStride2;
+                        srcTileAddr = srcAddr + srcAddr0 + srcAddr1 + k * srcStride2;
+                        TStoreInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);
+                    }
                 }
             }
-        }
-    } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
-        // 小分型由gShape3 * gShape4表示
-        constexpr uint32_t c0_size = 32;
-        uint16_t nBurst = gShape1;
-        uint32_t lenBurst = validRow * c0_size;
-        uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType);
-        uint32_t ubGap = TileData::Rows - validRow;
+        } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
+            // 小分型由gShape3 * gShape4表示
+            constexpr uint32_t c0_size = 32;
+            uint16_t nBurst = gShape1;
+            uint32_t lenBurst = validRow * c0_size;
+            uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType);
+            uint32_t ubGap = TileData::Rows - validRow;
 
-        typename GlobalData::DType *dstGlobalAddr = dstAddr;
-        __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+            typename GlobalData::DType *dstGlobalAddr = dstAddr;
+            __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
 
-        int64_t tileStride = gShape1 * gShape2 * TileData::Rows * gShape4;
-        for (uint32_t i = 0; i < gShape0; i++) {
-            dstGlobalAddr = dstAddr +  i * gStride0;
-            srcTileAddr = srcAddr + i * tileStride;
-            TStoreInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);   
+            int64_t tileStride = gShape1 * gShape2 * TileData::Rows * gShape4;
+            for (uint32_t i = 0; i < gShape0; i++) {
+                dstGlobalAddr = dstAddr +  i * gStride0;
+                srcTileAddr = srcAddr + i * tileStride;
+                TStoreInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);   
+            }
         }
     }
 
