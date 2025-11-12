@@ -4,8 +4,8 @@
         <product_name>cann</product_name>
         <func_name>pto-tile-lib</func_name>
         <suffix>run</suffix>
-        <install_script>pto_tile_lib/script/install.sh</install_script>
-        <help>pto_tile_lib/script/help.info</help>
+        <install_script>pto_tile_lib/scripts/install.sh</install_script>
+        <help>pto_tile_lib/scripts/help.info</help>
         <version>package/pto_tile_lib/version.xml</version>
         <cleanup>pto_tile_lib/script/cleanup.sh</cleanup>
         <parallel>true</parallel>
@@ -25,14 +25,12 @@
         <file value="bin" entity="true"/>
         <file value="version.info" dst_path="."/>
     </file_info>
+    <file_info copy_type="source" src_path="" dst_path="pto_tile_lib/include/" install_path="$(TARGET_ENV)/include/pto/" install_type="all">
+        <file value="common" install_mod="550" entity="true"/>
+        <file value="davinci" install_mod="550" entity="true"/>
+    </file_info>
     <block_info dependtree="false" dst_path="pto_tile_lib" block_conf_path="ascend">
         <block name="EngineeringCommon"/>
         <block name="EngineeringFiles"/>
     </block_info>
-    <dir_info value="pto_tile_lib" install_path="pto_tile_lib" install_type="all">
-        <path value="pto_tile_lib/script" install_mod="555"/>
-        <path value="pto_tile_lib/bin" install_mod="555"/>
-        <path value="pto_tile_lib/lib64" install_mod="555"/>
-        <path value="pto_tile_lib/include" install_mod="555"/>
-    </dir_info>
 </config>
