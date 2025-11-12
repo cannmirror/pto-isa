@@ -1,1 +1,0 @@
-pto_vec_st(tadd)
