@@ -127,11 +127,15 @@ namespace pto {
                       (TileDataDst::layout == pto::Layout::ND) &&
                       (TileDataDst::isRowMajor && (TileDataDst::SFractal == SLayout::NoneBox)),
                       "Src and dst layout must be ND!");
-        
+
         constexpr unsigned dststride = TileDataDst::RowStride;
         constexpr unsigned srcstride = TileDataSrc::RowStride;
         unsigned validRow = src.GetValidRow();
         unsigned validCol = src.GetValidCol();
+        if (validCol == 0 || validRow == 0) {
+            return;
+        }
+
         TColSum<typename TileDataSrc::DType, TileDataDst, TileDataSrc, TileDataTmp, dststride,
                 srcstride>(dst.data(), src.data(), tmp.data(), validRow, validCol, IsBinary);
     }
