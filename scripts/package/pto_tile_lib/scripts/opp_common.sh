@@ -27,9 +27,9 @@ getdate() {
 logandprint() {
   is_error_level=$(echo $1 | grep -E 'ERROR|WARN|INFO')
   if [ "${is_quiet}" != "y" ] || [ "${is_error_level}" != "" ]; then
-    echo "[OpsMath] [$(getdate)] ""$1"
+    echo "[pto-tile-lib] [$(getdate)] ""$1"
   fi
-  echo "[OpsMath] [$(getdate)] ""$1" >>"${_INSTALL_LOG_FILE}"
+  echo "[pto-tile-lib] [$(getdate)] ""$1" >>"${_INSTALL_LOG_FILE}"
 }
 
 # create opapi soft link

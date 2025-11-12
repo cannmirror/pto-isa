@@ -28,8 +28,6 @@
     <block_info dependtree="false" dst_path="pto_tile_lib" block_conf_path="ascend">
         <block name="EngineeringCommon"/>
         <block name="EngineeringFiles"/>
-        <block name="OpsMath"/>
-        <block name="OpsMathInc"/>
     </block_info>
     <dir_info value="pto_tile_lib" install_path="pto_tile_lib" install_type="all">
         <path value="pto_tile_lib/script" install_mod="555"/>

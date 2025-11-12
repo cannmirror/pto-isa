@@ -26,7 +26,7 @@ OPP_COMMON_FILE="${CURR_PATH}/opp_common.sh"
 . "${OPP_COMMON_FILE}"
 
 ARCH_INFO=$(uname -m)
-OPP_PLATFORM_DIR=ops_math
+OPP_PLATFORM_DIR=pto_tile_lib
 OPP_PLATFORM_UPPER=$(echo "${OPP_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 FILELIST_FILE="${CURR_PATH}/filelist.csv"
 COMMON_PARSER_FILE="${CURR_PATH}/install_common_parser.sh"
@@ -133,7 +133,7 @@ check_installed_type() {
 }
 
 unsetenv() {
-  logandprint "[INFO]: Unset the environment path [ export ASCEND_OPS_MATH_PATH=${relative_path_val}/${OPP_PLATFORM_DIR}]."
+  logandprint "[INFO]: Unset the environment path [ export ASCEND_PTO_TILE_LIB_PATH=${relative_path_val}/${OPP_PLATFORM_DIR}]."
   if [ "${IS_DOCKER_INSTALL}" = y ]; then
     UNINSTALL_OPTION="--docker-root=${DOCKER_ROOT}"
   else
@@ -223,8 +223,8 @@ remote_all_soft_link() {
     chmod u+w "${lib_dir}" 2>/dev/null
   fi
 
-  local ops_math_lib_files="opapi_math opgraph_math ophost_math common_math"
-  for lib_name in ${ops_math_lib_files}; do
+  local pto_tile_lib_lib_files="opapi_math opgraph_math ophost_math common_math"
+  for lib_name in ${pto_tile_lib_lib_files}; do
     local so_name=${lib_dir}/lib${lib_name}.so
     remove_softlink "${so_name}"
   done

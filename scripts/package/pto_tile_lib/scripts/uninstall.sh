@@ -27,7 +27,7 @@ logandprint() {
     if [ "${is_quiet}" != "y" ] || [ "${is_error_level}" != "" ]; then
         echo "[OpsMath] [$(getdate)] ""$1"
     fi
-    echo "[OpsMath] [$(getdate)] ""$1" >> "${_INSTALL_LOG_FILE}"
+    echo "[pto_tile_lib] [$(getdate)] ""$1" >> "${_INSTALL_LOG_FILE}"
 }
 
 if [ "$(id -u)" != "0" ]; then
@@ -55,7 +55,7 @@ install_shell="${_CURR_PATH}/install.sh"
 
 # shell exist check
 if [ ! -f "${install_shell}" ]; then
-    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};OpsMath module is not installed or some ops_math source files are lost.\
+    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};OpsMath module is not installed or some pto_tile_lib source files are lost.\
 If there are any residual files, please manually remove those files."
     exit 1
 fi
