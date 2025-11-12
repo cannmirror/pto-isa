@@ -62,14 +62,14 @@ run_simple_st() {
   echo $dotted_line
   echo "Start to run simple st"
   source ${ASCEND_ENV_PATH}/setenv.bash
-  python3 test/script/run_st.py -r npu -v a3 -t textract
+  python3 test/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
 }
 
 run_all_st() {
   echo $dotted_line
   echo "Start to run all st"
   source ${ASCEND_ENV_PATH}/setenv.bash
-  python3 test/script/run_st.py -r sim -v a3 -t textract
+  python3 test/script/run_st.py -r sim -v a3 -t tmatmul -g TMATMULTest.case1
 }
 
 run_example() {
@@ -94,4 +94,3 @@ main() {
 
 set -o pipefail
 main "$@" | gawk '{print strftime("[%Y-%m-%d %H:%M:%S]"), $0}'
-}
