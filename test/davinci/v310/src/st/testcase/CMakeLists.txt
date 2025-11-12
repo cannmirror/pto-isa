@@ -74,6 +74,7 @@ set(ALL_TESTCASES
     tgather
     tcvt
     tsub
+    tadd
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
