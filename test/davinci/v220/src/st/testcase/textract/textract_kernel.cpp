@@ -292,7 +292,7 @@ __aicore__ inline void runTEXTRACTUNALIGNDYNAMIC(__gm__ T *out, __gm__ U *src0, 
 }
 
 template <typename T, typename U, typename S, int M, int K, int N, uint16_t indexRow, uint16_t indexCol, bool isAtranspose, bool isBtranspose>
-__aicore__ inline void runTEXTMOVDYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, int m, int k, int n) {
+__aicore__ inline void runTMOVDYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, int m, int k, int n) {
 
     // static shape
     using DynShape1Dim5 = pto::Shape<1, 1, 1, M, K>;

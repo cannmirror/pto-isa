@@ -73,6 +73,7 @@ tstore
 tcopy
 trowexpand
 tcvt
+tadd
 tsub
 )
 
