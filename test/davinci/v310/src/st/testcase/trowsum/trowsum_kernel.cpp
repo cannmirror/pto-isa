@@ -38,12 +38,12 @@ __aicore__ PTO_INLINE void runTRowsum_single(__gm__ T __out__ *out, __gm__ T __i
 
 extern "C" __global__ __aicore__ void launchTROWSUM_float(__gm__ float *out, __gm__ float *src0)
 {
-    runTRowum_single<float, 16, 16, 16, 16>(out, src0, nullptr);
+    runTRowsum_single<float, 16, 16, 16, 16>(out, src0, nullptr);
 }
 
 extern "C" __global__ __aicore__ void launchTROWSUM_half(__gm__ uint16_t *out, __gm__ uint16_t *src0)
 {
-    runTRowum_single<uint16_t, 16, 16, 16, 16>(out, src0, nullptr);
+    runTRowsum_single<uint16_t, 16, 16, 16, 16>(out, src0, nullptr);
 }
 
 void launchTROWSUM_demo_float(float *out, float *src0, aclrtStream stream){
