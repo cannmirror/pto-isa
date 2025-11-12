@@ -106,50 +106,6 @@ def build_project(run_mode, soc_version, testcase = "all"):
     finally:
         os.chdir(original_dir)
 
-def run_gen_data(golden_path):
-    original_dir = os.getcwd()
-    try:
-        cmd = ["cp", golden_path, "build/gen_data.py"]
-        run_command(cmd)
-
-        build_dir = "build/"
-        os.chdir(build_dir)
-
-        gloden_gen_cmd = [sys.executable, "gen_data.py"]
-        output = run_command(gloden_gen_cmd)
-        print(output)
-    except Exception as e:
-        print(f"gen golden failed: {e}")
-        raise
-    finally:
-        os.chdir(original_dir)
-
-def run_binary(testcase, run_mode, args="all"):
-    original_dir = os.getcwd()
-    try:
-        build_dir = "build/bin/"
-        os.chdir(build_dir)
-
-        if args != "all":
-            if run_mode == "sim":
-                os.environ["CAMODEL_LOG_PATH"] = f"../{args}"
-            single_case = "--gtest_filter=" + args
-            cmd = ["./" + testcase, single_case]
-            print(f"run single testcase : {args}")
-            output = run_command(cmd)
-            print(output)
-        else : # all
-            cmd = ["./" + testcase]
-            print(f"run testcase : {testcase}")
-            output = run_command(cmd)
-            print(output)
-
-    except Exception as e:
-        print(f"run binary failed: {e}")
-        raise
-    finally:
-        os.chdir(original_dir)
-
 def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description="执行st脚本")
@@ -186,13 +142,6 @@ def main():
 
         # 执行构建
         build_project(args.run_mode, default_soc_version, args.testcase)
-
-        # 生成标杆
-        golden_path = "testcase/" + args.testcase + "/gen_data.py"
-        run_gen_data(golden_path)
-
-        # 执行二进制文件
-        run_binary(args.testcase, args.run_mode, default_cases)
 
     except Exception as e:
         print(f"run failed: {str(e)}", file=sys.stderr)

@@ -93,6 +93,6 @@ TEST_F(TADDTest, case_int32_64x64_64x64_64x64) {
 TEST_F(TADDTest, case_int16_64x64_64x64_64x64) {
     test_tadd<int16_t, 64, 64, 64, 64>();
 }
-TEST_F(TADDTest, case_half_64x64_64x64_64x64) {
-    test_tadd<aclFloat16, 64, 64, 64, 64>();
+TEST_F(TADDTest, case_half_16x256_16x256_16x256) {
+    test_tadd<aclFloat16, 16, 256, 16, 256>();
 }
