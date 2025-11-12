@@ -36,10 +36,19 @@ void test_gather() {
     aclrtCreateStream(&stream);
 
     size_t size = ROW * COL * sizeof(T);
+    size_t dstSize = 0;
+    if constexpr (PATTERN == HP1111 || PATTERN == FP1111 || PATTERN == I32P1111) {
+        dstSize = size;
+    } else if constexpr (PATTERN == HP0101 || PATTERN == HP1010||
+      PATTERN == FP0101 || PATTERN == FP1010 || PATTERN == U16P0101 || PATTERN ==  U16P1010) {
+        dstSize = size/2;
+    } else {
+        dstSize = size/4;
+    }
     uint8_t *dstHost, *src0Host;
     uint8_t *dstDevice, *src0Device;
 
-    aclrtMallocHost((void **)(&dstHost), size);
+    aclrtMallocHost((void **)(&dstHost), dstSize);
     aclrtMallocHost((void **)(&src0Host), size);
     aclrtMalloc((void **)&dstDevice, size, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&src0Device, size, ACL_MEM_MALLOC_HUGE_FIRST);
@@ -50,9 +59,9 @@ void test_gather() {
     launchTGATHER_demo<PATTERN>(dstDevice, src0Device, stream);
 
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, size, dstDevice, size, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, dstSize, dstDevice, dstSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, size);
+    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, dstSize);
 
     aclrtFree(dstDevice);
     aclrtFree(src0Device);
@@ -62,10 +71,10 @@ void test_gather() {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(size);
-    std::vector<float> devFinal(size);
-    ReadFile(GetGoldenDir() + "/golden.bin", size, golden.data(), size);
-    ReadFile(GetGoldenDir() + "/output_z.bin", size, devFinal.data(), size);
+    std::vector<float> golden(dstSize);
+    std::vector<float> devFinal(dstSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", dstSize, golden.data(), dstSize);
+    ReadFile(GetGoldenDir() + "/output_z.bin", dstSize, devFinal.data(), dstSize);
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
 

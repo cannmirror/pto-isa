@@ -111,11 +111,10 @@ __PTO_INSTR__ void TGATHER(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1) {
   MAP_INSTR_IMPL(TGATHER, dst, src0, src1)
 }
 
-// TODO: uncomment if MaskPattern TGATHER supported for v310
-// template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
-// __PTO_INSTR__ void TGATHER(DstTileData &dst, SrcTileData &src) {
-//   TGATHER_IMPL<DstTileData, SrcTileData, maskPattern>(dst, src);
-// }
+template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
+__PTO_INSTR__ void TGATHER(DstTileData &dst, SrcTileData &src) {
+  TGATHER_IMPL<DstTileData, SrcTileData, maskPattern>(dst, src);
+}
 
 // TODO: uncomment if TCOPY supported for v310
 // template <typename TileDataDst, typename TileDataSrc, TCopyMode copyMode>

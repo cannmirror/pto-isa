@@ -107,15 +107,7 @@ def gen_golden_data(param: TGatherParamsBase):
         elif pattern == P1111 :
           res = x1_gm[:, :]
         
-        if pattern == 255 and src_type == np.half:
-            newarray = x1_gm.reshape(row, col // 4, 4)
-            selected = newarray[:, :, 2:4]
-            res = selected.reshape(-1)
-
-        res_flat = res.flatten()
-        pad_length = max(0, row*col - len(res_flat))
-        pad_res = np.pad(res_flat, (0, pad_length), 'constant', constant_values=0)
-        golden = pad_res.reshape(row, col)
+        golden = res.flatten()
 
         x1_gm.tofile("./x1_gm.bin")
         golden.tofile("./golden.bin")

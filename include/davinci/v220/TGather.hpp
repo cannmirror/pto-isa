@@ -167,20 +167,6 @@ namespace pto {
         TGather2D<TileDataD, TileDataS0, TileDataS1, TShape0, TShape1>(dst.data(), src0.data(), src1.data(), tmp.data(), src0Shape1, dstShape1, validCol, validRow, axis);
     }
 
-    // 01-bits patterns are read from right to left.
-    // Right bits are low bits, corresponding to low index positions of data.
-    enum class MaskPattern : uint8_t
-    {
-        // 以下1~7与指令VREDUCEv2的pattern mode保持一致
-        P0101 = 1,  // 1: 01010101...0101 # 每个repeat内每两个元素取第一个元素
-        P1010 = 2,  // 2: 10101010...1010 # 每个repeat内每两个元素取第二个元素
-        P0001 = 3,  // 3: 00010001...0001 # 每个repeat内每四个元素取第一个元素
-        P0010 = 4,  // 4: 00100010...0010 # 每个repeat内每四个元素取第二个元素
-        P0100 = 5,  // 5: 01000100...0100 # 每个repeat内每四个元素取第三个元素
-        P1000 = 6,  // 6: 10001000...1000 # 每个repeat内每四个元素取第四个元素
-        P1111 = 7,  // 7: 11111111...1111 # 每个repeat内取全部元素
-    };
-
     template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
     __tf__ __aicore__ void TGather(typename DstTileData::TileDType __out__ dst,
                                    typename SrcTileData::TileDType __in__ src,
@@ -202,12 +188,18 @@ namespace pto {
     }
 
     template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
-    __aicore__ void TGATHER(DstTileData &dst, SrcTileData &src)
+    __aicore__ PTO_INLINE void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
     {
         // Todo: add more static_asserts
         using T = typename SrcTileData::DType;
-        static_assert(sizeof(T) == 2 || sizeof(T) == 4, "src element type must be 16 or 32-bit wide");
-
+        static_assert(sizeof(T) == 2 || sizeof(T) == 4, 
+            "TGATHER: src element type must be 16 or 32-bit wide");
+        static_assert((DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec),
+            "TGATHER: expect vec location");
+        static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor),
+            "TGATHER: expect row major");
+        static_assert((sizeof(typename DstTileData::DType) == sizeof(T)),
+            "TGATHER: expect same type size for dst and src");
         TGather<DstTileData, SrcTileData, maskPattern>(dst.data(), src.data(), src.GetValidRow(), src.GetValidCol());
     }
 }
