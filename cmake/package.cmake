@@ -13,47 +13,6 @@
 # download makeself package
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/third_party/makeself-fetch.cmake)
 
-function(pack_custom)
-  message(STATUS "System processor: ${CMAKE_SYSTEM_PROCESSOR}")
-  if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-      message(STATUS "Detected architecture: x86_64")
-      set(ARCH x86_64)
-  elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64|arm")
-      message(STATUS "Detected architecture: ARM64")
-      set(ARCH aarch64)
-  else ()
-      message(WARNING "Unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
-  endif ()
-  set(PACK_CUSTOM_NAME "cann-pto-tile-lib-${VENDOR_NAME}_linux-${ARCH}")
-  set(PATH_NAME "${VENDOR_NAME}_math")
-  npu_op_package(${PACK_CUSTOM_NAME}
-    TYPE RUN
-    CONFIG
-      ENABLE_SOURCE_PACKAGE True
-      ENABLE_BINARY_PACKAGE True
-      INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/
-      VENDOR_NAME ${PATH_NAME}
-      ENABLE_DEFAULT_PACKAGE_NAME_RULE False
-  )
-
-  npu_op_package_add(${PACK_CUSTOM_NAME}
-    LIBRARY
-      cust_opapi
-  )
-  if (TARGET cust_proto)
-    npu_op_package_add(${PACK_CUSTOM_NAME}
-        LIBRARY
-        cust_proto
-    )
-  endif()
-  if (TARGET cust_opmaster)
-    npu_op_package_add(${PACK_CUSTOM_NAME}
-        LIBRARY
-        cust_opmaster
-    )
-  endif()
-endfunction()
-
 function(pack_built_in)
   #### built-in package ####
   message(STATUS "System processor: ${CMAKE_SYSTEM_PROCESSOR}")
