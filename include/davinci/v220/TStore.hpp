@@ -112,7 +112,7 @@ __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename 
         typename GlobalData::DType *dstGlobalAddr = dstAddr;
         __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
 
-        int64_t tileStride = gShape1 * gShape2 * TileData::Rows * gShape4;
+        int64_t tileStride = TileData::Rows * gShape1 * gShape4;
         for (uint32_t i = 0; i < gShape0; i++) {
             dstGlobalAddr = dstAddr +  i * gStride0;
             srcTileAddr = srcAddr + i * tileStride;
