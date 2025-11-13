@@ -43,7 +43,19 @@ if [ "$1" = "dailyBuild" ]; then
   # A3
 
   # A5
-
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case1
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case2
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case3
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case4
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case5
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case6
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case7
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case8
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case9
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case10
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case11
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case12
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case13
   # TEXTRACT
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case1_half_0_1_param
@@ -61,15 +73,22 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case43_dynamic_int8_0_1_param
   python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case44_dynamic_half_1_1_param
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case1
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case2
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case3
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case4
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case5
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case6
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case7
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case8
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case9
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case1
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case2
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case3
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case4
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case5
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case6
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case7
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case8
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case9
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case10
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case11
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case12
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case13
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case14
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case15
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case16
 
   # TMRGSORT
   # A3
