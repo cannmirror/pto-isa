@@ -104,8 +104,8 @@ namespace pto
     template <typename TileData, typename GlobalData>
     __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src) {
         static_assert((sizeof(typename TileData::DType) == 1) || (sizeof(typename TileData::DType) == 2) ||
-                          (sizeof(typename TileData::DType) == 4),
-            "Data type must be b8/b16/b32");
+                          (sizeof(typename TileData::DType) == 4) || (sizeof(typename TileData::DType) == 8),
+            "Data type must be b8/b16/b32/b64");
         static_assert(TileData::Loc == pto::Location::Vec, "Source location only suport Vec!");
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
             "Source dtype must be same with dst dtype!");

@@ -6,8 +6,10 @@ namespace pto {
 template <typename TileData>
 __aicore__ constexpr auto getPadValue()
 {
-    if constexpr ( std::is_same<typename TileData::DType, float>::value )
-    {
+    if constexpr (std::is_same<typename TileData::DType, int64_t>::value ||
+                  std::is_same<typename TileData::DType, uint64_t>::value) {
+        return uint32_t(0);
+    } else if constexpr (std::is_same<typename TileData::DType, float>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
@@ -15,19 +17,15 @@ __aicore__ constexpr auto getPadValue()
             case PadValue::Min: return uint32_t (0xff800000UL);				
             case PadValue::Max: return uint32_t (0x7f800000UL);
         }
-    }
-    else if constexpr ( std::is_same<typename TileData::DType, int32_t>::value )
-    {
+    } else if constexpr (std::is_same<typename TileData::DType, int32_t>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
             case PadValue::Zero: return uint32_t (0);
             case PadValue::Min: return uint32_t (0xffffffffUL);				
             case PadValue::Max: return uint32_t (0x7fffffffUL);
-        }			
-    }		
-    else if constexpr ( std::is_same<typename TileData::DType, uint32_t>::value )
-    {
+        }
+    } else if constexpr (std::is_same<typename TileData::DType, uint32_t>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
@@ -35,70 +33,57 @@ __aicore__ constexpr auto getPadValue()
             case PadValue::Min: return uint32_t (0);
             case PadValue::Max: return uint32_t (0xffffffffUL);
 
-        }			
-    }		
-    else if constexpr ( std::is_same<typename TileData::DType, bfloat16_t>::value )
-    {
+        }
+    } else if constexpr (std::is_same<typename TileData::DType, bfloat16_t>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
             case PadValue::Zero: return uint16_t (0);
             case PadValue::Min: return uint16_t (0xff80);
             case PadValue::Max: return uint16_t (0x7f80);
-        }			
-    }		
-    else if constexpr ( std::is_same<typename TileData::DType, half>::value )
-    {
+        }
+    } else if constexpr (std::is_same<typename TileData::DType, half>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
             case PadValue::Zero: return uint16_t (0);
             case PadValue::Min: return uint16_t (0xfc00);				
             case PadValue::Max: return uint16_t (0x7c00);
-        }			
-    }
-    else if constexpr ( std::is_same<typename TileData::DType, int16_t>::value )
-    {
+        }
+    } else if constexpr (std::is_same<typename TileData::DType, int16_t>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
             case PadValue::Zero: return uint16_t (0);
             case PadValue::Min: return uint16_t (0xffff);		
             case PadValue::Max: return uint16_t (0x7fff);
-        }			
-    }		
-    else if constexpr ( std::is_same<typename TileData::DType, uint16_t>::value )
-    {
+        }
+    } else if constexpr (std::is_same<typename TileData::DType, uint16_t>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
             case PadValue::Zero: 
             case PadValue::Min: return uint16_t (0);
             case PadValue::Max: return uint16_t (0xffff);
-        }			
-    }	
-    else if constexpr ( std::is_same<typename TileData::DType, int8_t>::value )
-    {
+        }
+    } else if constexpr (std::is_same<typename TileData::DType, int8_t>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
             case PadValue::Zero: return uint8_t (0);
             case PadValue::Min: return uint8_t (0xff);		
             case PadValue::Max: return uint8_t (0x7f);
-        }			
-    }		
-    else if constexpr ( std::is_same<typename TileData::DType, uint8_t>::value )
-    {
+        }
+    } else if constexpr (std::is_same<typename TileData::DType, uint8_t>::value) {
         switch (TileData::PadVal)
         {
             case PadValue::Null: 
             case PadValue::Zero: 
             case PadValue::Min: return uint8_t (0);
             case PadValue::Max: return uint8_t (0xff);
-        }			
-    }
-    else {
-            static_assert(sizeof(TileData::DType)<0, "TLOAD: Unsupported DType for PadValue!");
+        }
+    } else {
+        static_assert(sizeof(TileData::DType) < 0, "TLOAD: Unsupported DType for PadValue!");
     }
 }
 
@@ -243,6 +228,7 @@ __aicore__ PTO_INLINE void TLoadCubeCheck()
     if constexpr ((GlobalData::layout == pto::Layout::ND || GlobalData::layout == pto::Layout::DN) &&
                   (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor))) {
         static_assert(TileData::SFractalSize == 512, "TileData SFractalSize must be 512 of NZ format in L1");
+        static_assert(sizeof(typename TileData::DType) != 8, "DType not support b64 in ND2NZ or DN2NZ");
         // globaltensor only support 2 dim
         static_assert(
             GlobalData::staticShape[0] == 1 && GlobalData::staticShape[1] == 1 && GlobalData::staticShape[2] == 1,
@@ -269,20 +255,31 @@ __aicore__ PTO_INLINE void TLoadCubeInstr(typename TileData::TileDType dst, type
     }
 }
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadCubeInstr(typename TileData::TileDType dst, typename GlobalData::DType *src,
-    uint32_t nBurst, uint32_t lenBurst, uint64_t srcStride, uint32_t dstStride, uint32_t padCount)
+__aicore__ PTO_INLINE void TLoadCubeInstr(typename TileData::TileDType dst, typename GlobalData::DType* src,
+                                          uint32_t nBurst, uint32_t lenBurst, uint64_t srcStride, uint32_t dstStride,
+                                          uint32_t padCount)
 {
-    copy_gm_to_cbuf_align_v2(dst,
-        src,
-        0 /*sid*/,
-        nBurst,
-        lenBurst,
-        0 /*left padding count*/,
-        padCount /*right padding count*/,
-        false /*data select bit*/,
-        0 /*l2 cache ctl*/,
-        srcStride,
-        dstStride);
+    if constexpr (sizeof(typename TileData::DType) == 1) {
+        copy_gm_to_cbuf_align_v2(reinterpret_cast<__cbuf__ uint8_t*>(dst), reinterpret_cast<__gm__ uint8_t*>(src),
+                                 0 /*sid*/, nBurst, lenBurst, 0 /*left padding count*/,
+                                 padCount /*right padding count*/, true /*data select bit*/, 0 /*l2 cache ctl*/,
+                                 srcStride, dstStride);
+    } else if constexpr (sizeof(typename TileData::DType) == 2) {
+        copy_gm_to_cbuf_align_v2(reinterpret_cast<__cbuf__ uint16_t*>(dst), reinterpret_cast<__gm__ uint16_t*>(src),
+                                 0 /*sid*/, nBurst, lenBurst, 0 /*left padding count*/,
+                                 padCount /*right padding count*/, true /*data select bit*/, 0 /*l2 cache ctl*/,
+                                 srcStride, dstStride);
+    } else if constexpr (sizeof(typename TileData::DType) == 4) {
+        copy_gm_to_cbuf_align_v2(reinterpret_cast<__cbuf__ uint32_t*>(dst), reinterpret_cast<__gm__ uint32_t*>(src),
+                                 0 /*sid*/, nBurst, lenBurst, 0 /*left padding count*/,
+                                 padCount /*right padding count*/, true /*data select bit*/, 0 /*l2 cache ctl*/,
+                                 srcStride, dstStride);
+    } else if constexpr (sizeof(typename TileData::DType) == 8) {
+        copy_gm_to_cbuf_align_v2(reinterpret_cast<__cbuf__ uint32_t*>(dst), reinterpret_cast<__gm__ uint32_t*>(src),
+                                 0 /*sid*/, nBurst, lenBurst, 0 /*left padding count*/,
+                                 padCount * 2 /*right padding count*/, true /*data select bit*/, 0 /*l2 cache ctl*/,
+                                 srcStride, dstStride);
+    }
 }
 
 template <typename TileData, typename GlobalData>
@@ -416,9 +413,13 @@ template <typename TileData, typename GlobalData>
 __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
 {
     static_assert((sizeof(typename TileData::DType) == 1) || (sizeof(typename TileData::DType) == 2) ||
-                      (sizeof(typename TileData::DType) == 4),
-        "Data type must be b8/b16/b32");
-
+                      (sizeof(typename TileData::DType) == 4) || (sizeof(typename TileData::DType) == 8),
+        "Data type must be b8/b16/b32/b64");
+    if constexpr (std::is_same<typename TileData::DType, int64_t>::value ||
+                  std::is_same<typename TileData::DType, uint64_t>::value) {
+        static_assert(TileData::PadVal == PadValue::Null || TileData::PadVal == PadValue::Zero,
+                      "TileData::PadVal only support Null or Zero in B64 mode");
+    }
     static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
         "Source dtype must be same with dst dtype!");
 

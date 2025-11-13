@@ -404,3 +404,8 @@ template void launchTLOADMIX<uint16_t, 4, 1, 10, 8, 16, 16, 1, 11, 9, 16, 16, 12
     uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void launchTLOADMIX<int8_t, 4, 1, 8, 4, 16, 32, 1, 9, 4, 16, 32, 80, 256>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+
+template void launchTLOADMIX<int64_t, 2, 1, 1, 1, 59, 119, 1, 1, 1, 59, 124, 59, 120>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTLOADMIX<uint64_t, 2, 1, 2, 1, 64, 128, 1, 3, 4, 128, 128, 128, 128>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
