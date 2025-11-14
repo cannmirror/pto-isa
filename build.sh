@@ -61,26 +61,29 @@ checkopts() {
 run_simple_st() {
   echo $dotted_line
   echo "Start to run simple st"
-  source ${ASCEND_ENV_PATH}/setenv.bash
-  python3 test/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
+  chmod +x run_pipeline.sh
+  ./run_pipeline.sh
+  echo "execute samples success"
 }
 
 run_all_st() {
   echo $dotted_line
   echo "Start to run all st"
-  source ${ASCEND_ENV_PATH}/setenv.bash
-  python3 test/script/run_st.py -r sim -v a3 -t tmatmul -g TMATMULTest.case1
+  chmod +x run_st.sh
+  ./run_st.sh dailyBuild
+  echo "execute samples success"
 }
 
 run_example() {
   echo $dotted_line
   echo "Start to run example"
-  source ${ASCEND_ENV_PATH}/setenv.bash
   python3 test/script/run_st.py -r $PLATFORM_MODE -v $EXAMPLE_MODE -t $INST_NAME -g $$EXAMPLE_NAME
+  echo "execute samples success"
 }
 
 main() {
   checkopts "$@"
+  ulimit -n 65535
   if [ "$ENABLE_SIMPLE_ST" == "TRUE" ]; then
       run_simple_st
   fi

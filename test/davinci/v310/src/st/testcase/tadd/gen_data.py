@@ -64,8 +64,8 @@ if __name__ == "__main__":
     case_params_list = [
         taddParams(np.float32, 64, 64, 64, 64, 64, 64),
         taddParams(np.int32, 64, 64, 64, 64, 64, 64),
-        taddParams(np.float16, 64, 64, 64, 64, 64, 64),
         taddParams(np.int16, 64, 64, 64, 64, 64, 64),
+        taddParams(np.float16, 16, 256, 16, 256, 16, 256),
     ]
 
     for i, param in enumerate(case_params_list):
