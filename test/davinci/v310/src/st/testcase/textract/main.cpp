@@ -8,6 +8,8 @@ using namespace PtoTestCommon;
 template <int32_t tilingKey>
 void launchTEXTRACT(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
+template <int32_t tilingKey>
+void launchTMOV(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 class TEXTRACTTest : public testing::Test {
 protected:
     void SetUp() override
@@ -24,17 +26,14 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-TEST_F(TEXTRACTTest, case1)
+template <int32_t key, typename T, typename U, typename S>
+void textract_test(uint32_t M, uint32_t K, uint32_t N, uint16_t indexM, uint16_t indexK, uint16_t indexN)
 {
-    uint32_t M = 32;
-    uint32_t K = 96;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 0;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(uint16_t);
-    size_t bFileSize = K * N * sizeof(uint16_t);
-    size_t cFileSize = M1 * N * sizeof(float);
+    uint32_t mValid = M - indexM;
+    uint32_t nValid = N - indexN;
+    size_t aFileSize = M * K * sizeof(U);
+    size_t bFileSize = K * N * sizeof(U);
+    size_t cFileSize = mValid * nValid * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -57,7 +56,7 @@ TEST_F(TEXTRACTTest, case1)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<1>(dstDevice, src0Device, src1Device, stream);
+    launchTEXTRACT<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -75,450 +74,117 @@ TEST_F(TEXTRACTTest, case1)
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
+    std::vector<T> golden(cFileSize);
+    std::vector<T> devFinal(cFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
+}
+
+TEST_F(TEXTRACTTest, case1)
+{
+    textract_test<1, float, uint16_t, uint16_t>(32, 96, 64, 0, 0, 0);
 }
 
 TEST_F(TEXTRACTTest, case2)
 {
-    uint32_t M = 128;
-    uint32_t K = 48;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 0;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(float);
-    size_t bFileSize = K * N * sizeof(float);
-    size_t cFileSize = M1 * N * sizeof(float);
-
-    uint8_t *dstHost, *src0Host, *src1Host;
-    uint8_t *dstDevice, *src0Device, *src1Device;
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    aclrtMallocHost((void **)(&dstHost), cFileSize);
-    aclrtMallocHost((void **)(&src0Host), aFileSize);
-    aclrtMallocHost((void **)(&src1Host), bFileSize);
-
-    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
-
-    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<2>(dstDevice, src0Device, src1Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<int32_t> golden(cFileSize);
-    std::vector<int32_t> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
-
-    bool ret = ResultCmp<int32_t>(golden, devFinal, 0.001f);
-    EXPECT_TRUE(ret);
+    textract_test<2, float, float, float>(128, 48, 64, 0, 0, 0);
 }
 
 TEST_F(TEXTRACTTest, case3)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 0;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(int8_t);
-    size_t bFileSize = K * N * sizeof(int8_t);
-    size_t cFileSize = M1 * N * sizeof(int32_t);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host, *src1Host;
-    uint8_t *dstDevice, *src0Device, *src1Device;
-
-    aclrtMallocHost((void **)(&dstHost), cFileSize);
-    aclrtMallocHost((void **)(&src0Host), aFileSize);
-    aclrtMallocHost((void **)(&src1Host), bFileSize);
-
-    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
-
-    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<3>(dstDevice, src0Device, src1Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
-
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    textract_test<3, int32_t, int8_t, int8_t>(128, 128, 64, 0, 0, 0);
 }
 
 TEST_F(TEXTRACTTest, case4)
 {
-    uint32_t M = 64;
-    uint32_t K = 96;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 32;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(uint16_t);
-    size_t bFileSize = K * N * sizeof(uint16_t);
-    size_t cFileSize = M1 * N * sizeof(float);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host, *src1Host;
-    uint8_t *dstDevice, *src0Device, *src1Device;
-
-    aclrtMallocHost((void **)(&dstHost), cFileSize);
-    aclrtMallocHost((void **)(&src0Host), aFileSize);
-    aclrtMallocHost((void **)(&src1Host), bFileSize);
-
-    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
-
-    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<4>(dstDevice, src0Device, src1Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
-
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    textract_test<4, float, uint16_t, uint16_t>(64, 96, 64, 32, 16, 16);
 }
 
 TEST_F(TEXTRACTTest, case5)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 32;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(float);
-    size_t bFileSize = K * N * sizeof(float);
-    size_t cFileSize = M1 * N * sizeof(float);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host, *src1Host;
-    uint8_t *dstDevice, *src0Device, *src1Device;
-
-    aclrtMallocHost((void **)(&dstHost), cFileSize);
-    aclrtMallocHost((void **)(&src0Host), aFileSize);
-    aclrtMallocHost((void **)(&src1Host), bFileSize);
-
-    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
-
-    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<5>(dstDevice, src0Device, src1Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
-
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    textract_test<5, float, float, float>(64, 128, 64, 32, 32, 16);
 }
 
 TEST_F(TEXTRACTTest, case6)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 32;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(int8_t);
-    size_t bFileSize = K * N * sizeof(int8_t);
-    size_t cFileSize = M1 * N * sizeof(int32_t);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host, *src1Host;
-    uint8_t *dstDevice, *src0Device, *src1Device;
-
-    aclrtMallocHost((void **)(&dstHost), cFileSize);
-    aclrtMallocHost((void **)(&src0Host), aFileSize);
-    aclrtMallocHost((void **)(&src1Host), bFileSize);
-
-    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
-
-    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<6>(dstDevice, src0Device, src1Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
-
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    textract_test<6, int32_t, int8_t, int8_t>(128, 128, 64, 32, 64, 32);
 }
 
 TEST_F(TEXTRACTTest, case7)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 0;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(uint16_t);
-    size_t bFileSize = K * N * sizeof(uint16_t);
-    size_t cFileSize = M1 * N * sizeof(float);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host, *src1Host;
-    uint8_t *dstDevice, *src0Device, *src1Device;
-
-    aclrtMallocHost((void **)(&dstHost), cFileSize);
-    aclrtMallocHost((void **)(&src0Host), aFileSize);
-    aclrtMallocHost((void **)(&src1Host), bFileSize);
-
-    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
-
-    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<7>(dstDevice, src0Device, src1Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
-
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    textract_test<7, float, uint16_t, uint16_t>(64, 128, 64, 0, 64, 0);
 }
 
 TEST_F(TEXTRACTTest, case8)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 0;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(float);
-    size_t bFileSize = K * N * sizeof(float);
-    size_t cFileSize = M1 * N * sizeof(float);
-
-    uint8_t *dstHost, *src0Host, *src1Host;
-    uint8_t *dstDevice, *src0Device, *src1Device;
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    aclrtMallocHost((void **)(&dstHost), cFileSize);
-    aclrtMallocHost((void **)(&src0Host), aFileSize);
-    aclrtMallocHost((void **)(&src1Host), bFileSize);
-
-    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
-
-    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<8>(dstDevice, src0Device, src1Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<int32_t> golden(cFileSize);
-    std::vector<int32_t> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
-
-    bool ret = ResultCmp<int32_t>(golden, devFinal, 0.001f);
-    EXPECT_TRUE(ret);
+    textract_test<8, float, float, float>(64, 64, 128, 0, 0, 32);
 }
 
 TEST_F(TEXTRACTTest, case9)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
-    constexpr uint16_t indexRow = 0;
-    constexpr uint16_t indexCol = 0;
-    uint32_t M1 = M-indexRow;
-    size_t aFileSize = M * K * sizeof(int8_t);
-    size_t bFileSize = K * N * sizeof(int8_t);
-    size_t cFileSize = M1 * N * sizeof(int32_t);
+    textract_test<9, int32_t, int8_t, int8_t>(128, 64, 128, 32, 0, 0);
+}
+
+TEST_F(TEXTRACTTest, case10)
+{
+    textract_test<10, float, uint16_t, uint16_t>(64, 128, 64, 16, 0, 0);
+}
+
+TEST_F(TEXTRACTTest, case11)
+{
+    textract_test<11, float, int8_t, int8_t>(64, 128, 64, 0, 32, 0);
+}
+
+TEST_F(TEXTRACTTest, case12)
+{
+    textract_test<12, float, int8_t, int8_t>(64, 128, 64, 0, 0, 32);
+}
+
+TEST_F(TEXTRACTTest, case13)
+{
+    textract_test<13, float, int8_t, int8_t>(64, 128, 64, 0, 32, 0);
+}
+
+TEST_F(TEXTRACTTest, case14)
+{
+    textract_test<14, float, int8_t, int8_t>(64, 96, 32, 32, 0, 0);
+}
+
+TEST_F(TEXTRACTTest, case15)
+{
+    textract_test<15, float, uint16_t, uint16_t>(64, 48, 96, 16, 16, 0);
+}
+
+TEST_F(TEXTRACTTest, case16)
+{
+    textract_test<16, float, float, float>(32, 96, 48, 0, 32, 16);
+}
+
+class TMOVTest : public testing::Test {
+protected:
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
+};
+
+template <int32_t key, typename T, typename U, typename S>
+void tmov_test(uint32_t M, uint32_t K, uint32_t N, uint32_t targetM = 0, uint32_t targetK = 0, uint32_t targetN = 0)
+{
+    if (targetM == 0) targetM = M;
+    if (targetN == 0) targetN = N;
+    if (targetK == 0) targetK = K;
+    if (targetM < M || targetN < N || targetK < K) {
+        printf("Error: targetM targetN targetK should large than M N K");
+        return;
+    }
+    size_t aFileSize = targetM * targetK * sizeof(U);
+    size_t bFileSize = targetK * targetN * sizeof(U);
+    size_t cFileSize = M * N * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -541,7 +207,7 @@ TEST_F(TEXTRACTTest, case9)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTEXTRACT<9>(dstDevice, src0Device, src1Device, stream);
+    launchTMOV<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -559,12 +225,77 @@ TEST_F(TEXTRACTTest, case9)
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
+    std::vector<T> golden(cFileSize);
+    std::vector<T> devFinal(cFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
+}
+
+TEST_F(TMOVTest, case1)
+{
+    tmov_test<1, float, uint16_t, uint16_t>(32, 96, 64);
+}
+
+TEST_F(TMOVTest, case2)
+{
+    tmov_test<2, float, float, float>(128, 48, 64);
+}
+
+TEST_F(TMOVTest, case3)
+{
+    tmov_test<3, int32_t, int8_t, int8_t>(128, 128, 64);
+}
+
+TEST_F(TMOVTest, case4)
+{
+    tmov_test<4, float, uint16_t, uint16_t>(64, 128, 64);
+}
+
+TEST_F(TMOVTest, case5)
+{
+    tmov_test<5, float, int8_t, int8_t>(64, 96, 64);
+}
+
+TEST_F(TMOVTest, case6)
+{
+    tmov_test<6, float, int8_t, int8_t>(64, 128, 64);
+}
+
+TEST_F(TMOVTest, case7)
+{
+    tmov_test<7, float, int8_t, int8_t>(128, 128, 64);
+}
+
+TEST_F(TMOVTest, case8)
+{
+    tmov_test<8, float, int8_t, int8_t>(64, 96, 64);
+}
+
+TEST_F(TMOVTest, case9)
+{
+    tmov_test<9, float, uint16_t, uint16_t>(64, 128, 64);
+}
+
+TEST_F(TMOVTest, case10)
+{
+    tmov_test<10, float, float, float>(64, 128, 64);
+}
+
+TEST_F(TMOVTest, case11)
+{
+    tmov_test<11, int32_t, int8_t, int8_t>(65, 40, 66, 96, 64, 96);
+}
+
+TEST_F(TMOVTest, case12)
+{
+    tmov_test<12, float, uint16_t, uint16_t>(65, 40, 66, 80, 48, 80);
+}
+
+TEST_F(TMOVTest, case13)
+{
+    tmov_test<13, float, float, float>(65, 40, 66, 80, 48, 80);
 }
