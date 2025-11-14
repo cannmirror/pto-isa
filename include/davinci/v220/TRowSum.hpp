@@ -91,8 +91,8 @@ __tf__ __aicore__ PTO_INLINE void TRowSum(typename TileDataOut::TileDType __out_
     }
 
     if (validCol < 2 * nElemPerRepeat) {
-        // 解决 ccec 编译检查问题； 如果删除会导致“copy_ubuf_to_ubuf”编译错误，提醒第七个参数的范围必须是[0, 65535]
-        if constexpr (tmpRepeatStride < BLOCK_MAX_PER_REPEAT) {
+        // 解决 ccec 编译检查问题； 如果删除会导致copy_ubuf_to_ubuf编译错误，提醒第六、七个参数的范围必须是[0, 65535]
+        if constexpr ((srcRepeatStride < BLOCK_MAX_PER_REPEAT) || (tmpRepeatStride < BLOCK_MAX_PER_REPEAT)) {
             return;
         }
         // 将满足一次repeat部分copy到dst
@@ -173,6 +173,9 @@ __aicore__ PTO_INLINE void TROWSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileD
 
     int validCol = src.GetValidCol();
     int validRow = src.GetValidRow();
+    if (validCol == 0 || validRow == 0) {
+        return;
+    }
     constexpr uint8_t nElemPerBlock = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr uint8_t nElemPerRepeat = REPEAT_BYTE / sizeof(T);
     constexpr uint32_t dstRepeatStride = TileDataOut::Cols;

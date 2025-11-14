@@ -73,7 +73,9 @@ tstore
 tcopy
 trowexpand
 tcvt
+tadd
 tsub
+tload_gm2mat
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

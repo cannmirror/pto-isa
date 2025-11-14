@@ -13,17 +13,17 @@
 set param_mult_ver $argv[1]
 set REAL_SHELL_PATH (realpath (command -v $argv[0]))
 set CANN_PATH (cd (dirname $REAL_SHELL_PATH)/../../ && pwd)
-if test -d "$CANN_PATH/ops_math" -a test -d "$CANN_PATH/../latest"
+if test -d "$CANN_PATH/include/pto" -a test -d "$CANN_PATH/../latest"
     set INSATLL_PATH (cd (dirname $REAL_SHELL_PATH)/../../../ && pwd)
-    if test -L "$INSATLL_PATH/latest/ops_math"
-        set _ASCEND_OPS_MATH_PATH (cd $CANN_PATH/ops_math && pwd)
+    if test -L "$INSATLL_PATH/latest/include/pto"
+        set _ASCEND_PTO_TILE_LIB_PATH (cd $CANN_PATH/include/pto && pwd)
         if test "$param_mult_ver" = "multi_version"
-            set _ASCEND_OPS_MATH_PATH (cd $INSATLL_PATH/latest/ops_math && pwd)
+            set _ASCEND_PTO_TILE_LIB_PATH (cd $INSATLL_PATH/latest/include/pto && pwd)
         end
     end
-elseif test -d "$CANN_PATH/ops_math"
-    set _ASCEND_OPS_MATH_PATH (cd $CANN_PATH/ops_math && pwd)
+elseif test -d "$CANN_PATH/include/pto"
+    set _ASCEND_PTO_TILE_LIB_PATH (cd $CANN_PATH/include/pto && pwd)
 end
 
-set -x ASCEND_OPS_MATH_PATH $_ASCEND_OPS_MATH_PATH
+set -x ASCEND_PTO_TILE_LIB_PATH $_ASCEND_PTO_TILE_LIB_PATH
 

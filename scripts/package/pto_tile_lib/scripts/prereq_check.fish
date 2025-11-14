@@ -13,7 +13,7 @@
 set ILE_NOT_EXIST "0x0080"
 
 set cur_date (date +"%Y-%m-%d %H:%M:%S")
-echo "[OpsMath][$cur_date][INFO]: Start pre installation check of ops_math module."
+echo "[pto_tile_lib][$cur_date][INFO]: Start pre installation check of pto_tile_lib module."
 which python3 >/dev/null
 if test ! $status -eq 0
     set cur_date (date +"%Y-%m-%d %H:%M:%S")

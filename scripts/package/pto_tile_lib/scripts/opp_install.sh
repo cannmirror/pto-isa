@@ -31,7 +31,7 @@ SCENE_FILE="${CURR_PATH}/../scene.info"
 ASCEND_INSTALL_INFO="ascend_install.info"
 
 ARCH_INFO=$(uname -m)
-OPP_PLATFORM_DIR=ops_math
+OPP_PLATFORM_DIR=pto_tile_lib
 OPP_PLATFORM_UPPER=$(echo "${OPP_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 
 TARGET_INSTALL_PATH=""
@@ -203,7 +203,7 @@ get_install_path() {
 }
 
 setenv() {
-  logandprint "[INFO]: Set the environment path [ export ASCEND_OPS_MATH_PATH=${relative_path_val}/${OPP_PLATFORM_DIR} ]."
+  logandprint "[INFO]: Set the environment path [ export ASCEND_PTO_TILE_LIB_PATH=${relative_path_val}/${OPP_PLATFORM_DIR} ]."
   if [ "${IS_DOCKER_INSTALL}" = y ]; then
     INSTALL_OPTION="--docker-root=${DOCKER_ROOT}"
   else
@@ -761,7 +761,7 @@ main() {
   if [ "${IS_SETENV}" != "y" ]; then
     logandprint "[INFO]: Using requirements: when opp module install finished or \
  before you run the opp module, execute the command \
- [ export ASCEND_OPS_MATH_PATH=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR} ] to set the environment path."
+ [ export ASCEND_PTO_TILE_LIB_PATH=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR} ] to set the environment path."
   fi
 
   logandprint "[INFO]: Opp package installed successfully! The new version takes effect immediately."
