@@ -13,7 +13,7 @@
 set FILE_NOT_EXIST="0x0080"
 
 set cur_date=`date +"%Y-%m-%d %H:%M:%S"`
-echo "[OpsMath][${cur_date}][INFO]: Start pre installation check of ops_math module."
+echo "[pto_tile_lib][${cur_date}][INFO]: Start pre installation check of pto_tile_lib module."
 python3 --version >/dev/null 2>&1
 if ($status != "0") then
 set cur_date=`date +"%Y-%m-%d %H:%M:%S"`

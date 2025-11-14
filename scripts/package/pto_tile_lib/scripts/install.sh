@@ -19,7 +19,7 @@ OPP_COMPATIBILITY_CEHCK_ERR_DES="OppMath compatibility check error."
 PERM_DENIED="0x0093"
 PERM_DENIED_DES="Permission denied."
 
-OPP_PLATFORM_DIR=ops_math
+OPP_PLATFORM_DIR=pto_tile_lib
 OPP_PLATFORM_UPPER=$(echo "${OPP_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 CURR_OPERATE_USER="$(id -nu 2>/dev/null)"
 CURR_OPERATE_GROUP="$(id -ng 2>/dev/null)"

@@ -13,28 +13,17 @@
 param_mult_ver=$1
 REAL_SHELL_PATH=`realpath ${BASH_SOURCE[0]}`
 CANN_PATH=$(cd $(dirname ${REAL_SHELL_PATH})/../../ && pwd)
-if [ -d "${CANN_PATH}/ops_math" ] && [ -d "${CANN_PATH}/../latest" ]; then
+if [ -d "${CANN_PATH}/include/pto" ] && [ -d "${CANN_PATH}/../latest" ]; then
     INSATLL_PATH=$(cd $(dirname ${REAL_SHELL_PATH})/../../../ && pwd)
-    if [ -L "${INSATLL_PATH}/latest/ops_math" ]; then
-        _ASCEND_OPS_MATH_PATH=`cd ${CANN_PATH}/ops_math && pwd`
+    if [ -L "${INSATLL_PATH}/latest/include/pto" ]; then
+        _ASCEND_PTO_TILE_LIB_PATH=`cd ${CANN_PATH}/include/pto && pwd`
         if [ "$param_mult_ver" = "multi_version" ]; then
-            _ASCEND_OPS_MATH_PATH=`cd ${INSATLL_PATH}/latest/ops_math && pwd`
+            _ASCEND_PTO_TILE_LIB_PATH=`cd ${INSATLL_PATH}/latest/include/pto && pwd`
         fi
     fi
-elif [ -d "${CANN_PATH}/ops_math" ]; then
-    _ASCEND_OPS_MATH_PATH=`cd ${CANN_PATH}/ops_math && pwd`
+elif [ -d "${CANN_PATH}/include/pto" ]; then
+    _ASCEND_PTO_TILE_LIB_PATH=`cd ${CANN_PATH}/include/pto && pwd`
 fi  
 
-export ASCEND_OPS_MATH_PATH=${_ASCEND_OPS_MATH_PATH}
-
-library_path="${_ASCEND_OPS_MATH_PATH}/lib64"
-ld_library_path="${LD_LIBRARY_PATH}"
-num=$(echo ":${ld_library_path}:" | grep ":${library_path}:" | wc -l)
-if [ "${num}" -eq 0 ]; then
-    if [ "-${ld_library_path}" = "-" ]; then
-        export LD_LIBRARY_PATH="${library_path}"
-    else
-        export LD_LIBRARY_PATH="${library_path}:${ld_library_path}"
-    fi
-fi
+export ASCEND_PTO_TILE_LIB_PATH=${_ASCEND_PTO_TILE_LIB_PATH}
 

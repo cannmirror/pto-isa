@@ -100,6 +100,14 @@ function(pack_built_in)
       DESTINATION pto_tile_lib/bin
   )
 
+  set(pto_source ${CMAKE_SOURCE_DIR}/include)
+  install(DIRECTORY ${pto_source}/
+      DESTINATION pto_tile_lib/include
+      FILE_PERMISSIONS
+      OWNER_READ OWNER_WRITE
+      GROUP_READ GROUP_EXECUTE
+  )
+
   string(FIND "${ASCEND_COMPUTE_UNIT}" ";" SEMICOLON_INDEX)
   if (SEMICOLON_INDEX GREATER -1)
       # 截取分号前的字串

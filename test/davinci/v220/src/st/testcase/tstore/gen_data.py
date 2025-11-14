@@ -26,14 +26,14 @@ def gen_golden_data(case_name, gInfo):
                                     gWholeShape2, gWholeShape3, gWholeShape4)).astype(data_type)
         output_arr = np.zeros(shape=(gWholeShape0, gWholeShape1,
                             gWholeShape2, gWholeShape3, gWholeShape4), dtype=data_type)
-        output_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape3, 0: gShape4] \ 
+        output_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape3, 0: gShape4] \
                     = input_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape3, 0: gShape4]
     elif gInfo.format == "DN":
         input_arr = np.random.randint(-5, 5, size=(gWholeShape0, gWholeShape1,
                             gWholeShape2, gWholeShape4, gWholeShape3)).astype(data_type)
         output_arr = np.zeros(shape=(gWholeShape0, gWholeShape1,
                             gWholeShape2, gWholeShape4, gWholeShape3), dtype=data_type)
-        output_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape4, 0: gShape3] \ 
+        output_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape4, 0: gShape3] \
                     = input_arr[0:gShape0, 0: gShape1, 0: gShape2, 0: gShape4, 0: gShape3]
 
     input_arr.tofile("./input.bin")
@@ -54,7 +54,6 @@ class GlobalTensorInfo:
         self.gWholeShape2 = gWholeShape2
         self.gWholeShape3 = gWholeShape3
         self.gWholeShape4 = gWholeShape4
-        
 
 if __name__ == "__main__":
     # 用例名称
