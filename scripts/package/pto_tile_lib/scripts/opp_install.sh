@@ -224,7 +224,7 @@ create_file_softlink() {
 
   local relative_file_path=$(realpath -s --relative-to="${base_dir}" "${src_file}")
   # 创建软连接
-  createsoftlink "${relative_file_path}" "${dst_file}"
+ # createsoftlink "${relative_file_path}" "${dst_file}"
 }
 
 # 创建单个目录的软连接，链接目录级别
@@ -242,7 +242,7 @@ create_dir_softlink() {
   # 获取相对路径
   relative_dir_path=$(realpath -s --relative-to="${base_dir}" "${src_dir}")
   # 创建软连接
-  createsoftlink "${relative_dir_path}" "${dst_dir}"
+ # createsoftlink "${relative_dir_path}" "${dst_dir}"
 }
 
 # 创建目录下子目录的软连接，链接子目录级别
@@ -263,7 +263,7 @@ create_softlink_for_dirs() {
     # 计算目录相对路径
     local relative_dir_path=$(realpath -s --relative-to="${dst_dir}" "${src_dir_path}")
     # 创建软连接
-    createsoftlink "${relative_dir_path}" "${dst_dir_path}"
+ #   createsoftlink "${relative_dir_path}" "${dst_dir_path}"
   done
 }
 
@@ -290,7 +290,7 @@ create_softlink_for_files() {
     # 获取相对路径
     local relative_file_path=$(realpath --relative-to="${dst_dir}" "${src_file_path}")
     # 创建软连接
-    createsoftlink "${relative_file_path}" "${dst_file_path}"
+  #  createsoftlink "${relative_file_path}" "${dst_file_path}"
   done
 }
 
@@ -308,10 +308,7 @@ create_softlink_for_files_and_dirs() {
   find "${src_dir}" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' src_dir_path; do
     local base_dir=$(basename ${src_dir_path})
     local dst_dir_path="${dst_dir}/${base_dir}"
-    create_softlink_for_files_and_dirs ${src_dir_path} ${dst_dir_path}
   done
-
-  create_softlink_for_files ${src_dir} ${dst_dir}
 }
 
 #create softlink for TARGET_MOULDE_DIR include
@@ -325,10 +322,6 @@ create_module_include_softlink() {
     fi
   fi
   comm_create_dir "${dst_path}" "${CREATE_DIR_PERM}" "${TARGET_USERNAME}:${TARGET_USERGROUP}" "${IS_FOR_ALL}"
-
-  local aclnnop_src_dir=${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop
-  local aclnnop_dst_dir=${TARGET_MOULDE_DIR}/include/aclnnop
-  create_softlink_for_files_and_dirs "${aclnnop_src_dir}" "${aclnnop_dst_dir}"
 
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null
@@ -346,19 +339,6 @@ create_arch_lib_softlink() {
     fi
   fi
 
-  local ophost_math_lib_src_path=${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${ARCH_INFO}/libophost_math.so
-  local ophost_math_lib_dst_path=${dst_lib_path}/libophost_math.so
-  create_file_softlink "${ophost_math_lib_src_path}" "${ophost_math_lib_dst_path}"
-  local opapi_math_lib_src_path=${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/op_api/lib/linux/${ARCH_INFO}/libopapi_math.so
-  local opapi_math_lib_dst_path=${dst_lib_path}/libopapi_math.so
-  create_file_softlink "${opapi_math_lib_src_path}" "${opapi_math_lib_dst_path}"
-  local opgraph_math_lib_src_path=${TARGET_MOULDE_DIR}/built-in/op_graph/lib/linux/${ARCH_INFO}/libopgraph_math.so
-  local opgraph_math_lib_dst_path=${dst_lib_path}/libopgraph_math.so
-  create_file_softlink "${opgraph_math_lib_src_path}" "${opgraph_math_lib_dst_path}"
-  local common_math_lib_src_path=${TARGET_MOULDE_DIR}/${ARCH_INFO}-linux/lib64/libcommon_math.so
-  local common_math_lib_dst_path=${dst_lib_path}/libcommon_math.so
-  create_file_softlink "${common_math_lib_src_path}" "${common_math_lib_dst_path}"
-
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_lib_path} 2>/dev/null
   fi
@@ -371,9 +351,6 @@ create_arch_lib_softlink() {
       chmod u+w "${dst_inc_path}" 2>/dev/null
     fi
   fi
-  local aclnnop_src_dir=${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop
-  local aclnnop_dst_dir=${TARGET_INSTALL_PATH}/latest/${ARCH_INFO}-linux/include/aclnnop
-  create_softlink_for_files_and_dirs "${aclnnop_src_dir}" "${aclnnop_dst_dir}"
 
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_inc_path} 2>/dev/null
@@ -390,14 +367,6 @@ create_opgraph_softlink() {
     fi
   fi
   comm_create_dir "${dst_path}" "${CREATE_DIR_PERM}" "${TARGET_USERNAME}:${TARGET_USERGROUP}" "${IS_FOR_ALL}"
-
-  local opgraph_math_lib_src_path=${TARGET_MOULDE_DIR}/built-in/op_graph/lib/linux/${ARCH_INFO}/libopgraph_math.so
-  local opgraph_math_lib_dst_path=${dst_path}/lib/linux/${ARCH_INFO}/libopgraph_math.so
-  create_file_softlink "${opgraph_math_lib_src_path}" "${opgraph_math_lib_dst_path}"
-
-  local opgraph_math_src_path=${TARGET_VERSION_DIR}/${OPP_PLATFORM_DIR}/built-in/op_graph/inc/ops_proto_math.h
-  local opgraph_math_dst_path=${dst_path}/inc/ops_proto_math.h
-  create_file_softlink ${opgraph_math_src_path} ${opgraph_math_dst_path}
 
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null
@@ -426,8 +395,8 @@ create_tbe_kernel_softlink() {
     local kernel_dst_dir_math=${dst_path}/${dir}/${OPP_PLATFORM_DIR}
     local kernel_dst_dir=${dst_path}/${dir}
     if [[ ${dir} =~ ascend* ]]; then
-      create_softlink_for_dirs "${kernel_src_dir}" "${kernel_dst_dir}"
-      create_dir_softlink "${kernel_src_dir}" "${kernel_dst_dir_math}"
+      echo ""
+      #create_softlink_for_dirs "${kernel_src_dir}" "${kernel_dst_dir}"
     else
       local kernel_socs=$(ls ${kernel_src_dir})
       for soc in ${kernel_socs}; do
@@ -436,9 +405,6 @@ create_tbe_kernel_softlink() {
         local json_files_src_path=${kernel_src_path}/${dir}/${soc}
         local json_files_dst_path=${dst_path}/${dir}/${soc}/
         local json_files_dst_path_math=${dst_path}/${dir}/${soc}/${OPP_PLATFORM_DIR}
-
-        create_softlink_for_files "${json_files_src_path}" "${json_files_dst_path}" "binary_info_config.json"
-        create_dir_softlink "${json_files_src_path}" "${json_files_dst_path_math}"
 
         local binary_json_src_path=${json_files_src_path}/binary_info_config.json
         local binary_json_dst_path=${json_files_dst_path}/binary_info_config.json
@@ -480,15 +446,12 @@ create_tbe_impl_softlink() {
   fi
 
   local impl_src=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/impl
-  create_dir_softlink ${impl_src} ${dst_path}/${OPP_PLATFORM_DIR}
 
   ascendc_src_dir=${impl_src}/ascendc
   ascendc_dst_dir=${dst_path}/ascendc
-  create_softlink_for_dirs "${ascendc_src_dir}" "${ascendc_dst_dir}"
 
   dynamic_src_dir=${impl_src}/dynamic
   dynamic_dst_dir=${dst_path}/dynamic
-  create_softlink_for_files "${dynamic_src_dir}" "${dynamic_dst_dir}"
 
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null
@@ -505,18 +468,6 @@ create_tbe_softlink() {
     fi
   fi
   comm_create_dir "${dst_path}" "${CREATE_DIR_PERM}" "${TARGET_USERNAME}:${TARGET_USERGROUP}" "${IS_FOR_ALL}"
-
-  local opapi_math_lib_src_path=${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/op_api/lib/linux/${ARCH_INFO}/libopapi_math.so
-  local opapi_math_lib_dst_path=${dst_path}/op_api/lib/linux/${ARCH_INFO}/libopapi_math.so
-  create_file_softlink ${opapi_math_lib_src_path} ${opapi_math_lib_dst_path}
-
-  local ophost_math_lib_src_path=${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/op_host/lib/linux/${ARCH_INFO}/libophost_math.so
-  local ophost_math_lib_dst_path=${dst_path}/op_host/lib/linux/${ARCH_INFO}/libophost_math.so
-  create_file_softlink ${ophost_math_lib_src_path} ${ophost_math_lib_dst_path}
-
-  config_src_dir=${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/config
-  config_dst_dir=${dst_path}/config
-  create_softlink_for_files_and_dirs ${config_src_dir} ${config_dst_dir}
 
   create_tbe_impl_softlink
 
@@ -560,10 +511,6 @@ create_latest_lib_softlink() {
   fi
   comm_create_dir "${dst_path}" "${CREATE_DIR_PERM}" "${TARGET_USERNAME}:${TARGET_USERGROUP}" "${IS_FOR_ALL}"
 
-  local opapi_math_lib_src_path=${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/op_api/lib/linux/${ARCH_INFO}/libopapi_math.so
-  local opapi_math_lib_dst_path=${dst_path}/libopapi_math.so
-  create_file_softlink "${opapi_math_lib_src_path}" "${opapi_math_lib_dst_path}"
-
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null
   fi
@@ -584,8 +531,6 @@ create_latest_include_softlink() {
   local opp_aclnnop_src_dir=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop
   local opp_aclnnop_dst_dir=${dst_path}/aclnnop
   local opp_aclnnop_dst_dir_math=${dst_path}/aclnnop/${OPP_PLATFORM_DIR}
-  create_softlink_for_files_and_dirs "${opp_aclnnop_src_dir}" "${opp_aclnnop_dst_dir}"
-  create_softlink_for_files_and_dirs "${opp_aclnnop_src_dir}" "${opp_aclnnop_dst_dir_math}"
 
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null
@@ -626,10 +571,6 @@ create_arch_include_softlink() {
     fi
   fi
   comm_create_dir "${dst_path}" "${CREATE_DIR_PERM}" "${TARGET_USERNAME}:${TARGET_USERGROUP}" "${IS_FOR_ALL}"
-
-  local aclnn_kernels_src_dir=${TARGET_MOULDE_DIR}/${ARCH_INFO}-linux/include/aclnn_kernels
-  local aclnn_kernels_dst_dir=${dst_path}/aclnn_kernels
-  create_softlink_for_files_and_dirs "${aclnn_kernels_src_dir}" "${aclnn_kernels_dst_dir}"
 
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null

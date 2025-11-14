@@ -33,4 +33,12 @@
         <block name="EngineeringCommon"/>
         <block name="EngineeringFiles"/>
     </block_info>
+    <dir_info value="pto_tile_lib" install_path="" install_mod="550" install_type="all">
+        <path value="$(TARGET_ENV)/include"/>
+        <path value="$(TARGET_ENV)/include/pto"/>
+        <path value="$(TARGET_ENV)/include/pto/common"/>
+        <path value="$(TARGET_ENV)/include/pto/davinci"/>
+        <path value="$(TARGET_ENV)/include/pto/davinci/v220"/>
+        <path value="$(TARGET_ENV)/include/pto/davinci/v310"/>
+    </dir_info>
 </config>
