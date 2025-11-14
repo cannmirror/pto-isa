@@ -517,10 +517,19 @@ struct Tile {
     TileDType data_;
 };
 
+#ifdef __DAV_V220
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileLeft = Tile<Location::Left, Element_, Rows_, Cols_, BLayout::RowMajor,
+                      RowValid_, ColValid_, SLayout::RowMajor, 512>;
+#endif
+
+#ifdef __DAV_V310
 template <typename Element_, const int Rows_, const int Cols_,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_>
 using TileLeft = Tile<Location::Left, Element_, Rows_, Cols_, BLayout::ColMajor,
                       RowValid_, ColValid_, SLayout::RowMajor, 512>;
+#endif
 
 template <typename Element_, const int Rows_, const int Cols_,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_>
