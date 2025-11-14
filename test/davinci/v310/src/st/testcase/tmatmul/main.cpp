@@ -19,7 +19,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -94,7 +95,7 @@ TEST_F(TMATMULTest, case1)
 
 TEST_F(TMATMULTest, case2)
 {
-    uint32_t M = 128; 
+    uint32_t M = 128;
     uint32_t N = 64;
     uint32_t K = 127;
 
@@ -214,7 +215,7 @@ void tmatmul_bias_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src2Device, biasFileSize, src2Host, biasFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    
+
     launchTMATMULBIAS<key>(dstDevice, src0Device, src1Device, src2Device, stream);
 
     aclrtSynchronizeStream(stream);
@@ -256,7 +257,7 @@ TEST_F(TMATMULBIASTest, case1)
 
 TEST_F(TMATMULBIASTest, case2)
 {
-    uint32_t M = 128; 
+    uint32_t M = 128;
     uint32_t N = 64;
     uint32_t K = 128;
 
