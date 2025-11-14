@@ -64,6 +64,7 @@ set(ALL_TESTCASES
 tmatmul
 trowsum
 textract
+tmov
 tload
 ttrans
 tmrgsort

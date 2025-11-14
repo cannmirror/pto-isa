@@ -2,42 +2,126 @@
 #define TMOV_HPP
 #include "TExtract.hpp"
 
-namespace pto
+namespace pto {
+template <typename DstTileData, typename SrcTileData>
+__tf__ __aicore__ void TMovToBt(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src)
 {
-    template <typename DstTileData, typename SrcTileData>
-    __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
-        static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
-            "TMov: The shape of src needs to be the same as that of dst.");
-        static_assert(std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value,
-            "TMov: Destination and Source tile data types must be the same.");   
-        static_assert(std::is_same<typename DstTileData::DType, int8_t>::value ||
-            std::is_same<typename DstTileData::DType, half>::value ||
-            std::is_same<typename DstTileData::DType, bfloat16_t>::value ||
-            std::is_same<typename DstTileData::DType, float>::value
-            , "TMov: Invalid data type."); 
+    using SrcType = typename SrcTileData::DType;
+    using DstType = typename DstTileData::DType;
+    constexpr int32_t srcRow = SrcTileData::Rows;
+    constexpr int32_t srcCol = SrcTileData::Cols;
+    constexpr const int BURST_LEN_UNIT = 64;
+    __cbuf__ SrcType* srcAddrP = (__cbuf__ SrcType*)(src);
+    uint64_t dstAddrP = (uint64_t)dst;
+
+    uint16_t convControl = 0;
+    constexpr uint16_t burstLen = srcRow * srcCol * sizeof(SrcType) / BURST_LEN_UNIT;
+
+    if constexpr (std::is_same_v<SrcType, half> && std::is_same_v<DstType, float>) {
+        convControl = 1;
+    }
+    copy_cbuf_to_bt(dstAddrP, srcAddrP, convControl, (uint16_t)1, burstLen, (uint16_t)0, (uint16_t)0);
+}
+
+template <typename DstTileData, typename SrcTileData>
+__tf__ __aicore__ void TMovToFb(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src)
+{
+    using SrcType = typename SrcTileData::DType;
+    using DstType = typename DstTileData::DType;
+    constexpr int32_t srcRow = SrcTileData::Rows;
+    constexpr int32_t srcCol = SrcTileData::Cols;
+    constexpr const int BURST_LEN_UNIT = 128;
+    constexpr const int RELU_BIT = 16;
+    __cbuf__ SrcType* srcAddrP = (__cbuf__ SrcType*)(src);
+    __fbuf__ DstType* dstAddr = (__fbuf__ DstType*)(dst);
+    constexpr bool isRelu = 0;
+    __fbuf__ DstType* dstAddrP = (__fbuf__ DstType*)(dstAddr || (isRelu << RELU_BIT));
+
+    constexpr uint16_t burstLen = srcRow * srcCol * sizeof(SrcType) / BURST_LEN_UNIT;
+    copy_cbuf_to_fbuf(dstAddrP, srcAddrP, (uint16_t)1, burstLen, (uint16_t)0, (uint16_t)0);
+}
+
+template <typename DstTileData, typename SrcTileData>
+__aicore__ PTO_INLINE void TMovCheckValid()
+{
+    using SrcType = typename SrcTileData::DType;
+    using DstType = typename DstTileData::DType;
+    static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
+                  "TMov: The shape of src needs to be the same as that of dst.");
+    static_assert(SrcTileData::Loc == Location::Mat &&
+                      (DstTileData::Loc == Location::Left || DstTileData::Loc == Location::Right ||
+                       DstTileData::Loc == Location::Bias || DstTileData::Loc == Location::Scaling),
+                  "TMov: Invalid Location.");
+    if constexpr (DstTileData::Loc == Location::Left) {
+        static_assert(std::is_same<DstType, SrcType>::value,
+                      "TMov: Destination and Source tile data types must be the same.");
+        static_assert(std::is_same<DstType, int8_t>::value || std::is_same<DstType, half>::value ||
+                          std::is_same<DstType, bfloat16_t>::value || std::is_same<DstType, float>::value,
+                      "TMov: Invalid data type.");
         static_assert((SrcTileData::SFractal == SLayout::ColMajor && SrcTileData::isRowMajor) ||
-                      (SrcTileData::SFractal == SLayout::RowMajor && !SrcTileData::isRowMajor)
-                        , "TMov: SrcTile Invalid Fractal.");
-        if constexpr (DstTileData::Loc == Location::Left) {
-            static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor,
-                        "TMov: LeftTile Invalid Fractal."); 
-            if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-                TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
-            }
-            else {
-                TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
-            }
+                          (SrcTileData::SFractal == SLayout::RowMajor && !SrcTileData::isRowMajor),
+                      "TMov: SrcTile Invalid Fractal.");
+        static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor,
+                      "TMov: LeftTile Invalid Fractal.");
+    } else if constexpr (DstTileData::Loc == Location::Right) {
+        static_assert(std::is_same<DstType, SrcType>::value,
+                      "TMov: Destination and Source tile data types must be the same.");
+        static_assert(std::is_same<DstType, int8_t>::value || std::is_same<DstType, half>::value ||
+                          std::is_same<DstType, bfloat16_t>::value || std::is_same<DstType, float>::value,
+                      "TMov: Invalid data type.");
+        static_assert((SrcTileData::SFractal == SLayout::ColMajor && SrcTileData::isRowMajor) ||
+                          (SrcTileData::SFractal == SLayout::RowMajor && !SrcTileData::isRowMajor),
+                      "TMov: SrcTile Invalid Fractal.");
+        static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
+                      "TMov: RightTile Invalid Fractal.");
+    } else if constexpr (DstTileData::Loc == Location::Bias) {
+        // check dataType
+        if constexpr (std::is_same<SrcType, int32_t>::value || std::is_same<SrcType, float>::value) {
+            static_assert(std::is_same<DstType, SrcType>::value,
+                          "TMov: Destination and Source tile data types must be the same.");
+        } else if constexpr (std::is_same<SrcType, half>::value) {
+            static_assert(std::is_same<DstType, float>::value,
+                          "TMov: When Source tile data types is half, dst tile data types must be float");
         }
-        else {
-            static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
-                        "TMov: RightTile Invalid Fractal.");   
-            if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-                TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);   
-            }  
-            else {
-                TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
-            }                   
-        }
+        // check shape
+        static_assert(SrcTileData::Rows == 1, "TMov: When Location is Bias, row must be 1");
+        // check alignment
+        static_assert(SrcTileData::Cols * sizeof(SrcType) % 64 == 0,
+                      "TMov: When Location is Bias, col * sizeof(srcDType) must be aligned to 64");
+    } else if constexpr (DstTileData::Loc == Location::Scaling) {
+        // check dataType
+        static_assert(std::is_same<DstType, SrcType>::value,
+                      "TMov: Destination and Source tile data types must be the same.");
+        static_assert(std::is_same<DstType, uint64_t>::value, "TMov: Invalid data type.");
+        // check shape
+        static_assert(SrcTileData::Rows == 1, "TMov: When Location is Scaling, row must be 1");
+        // check alignment
+        static_assert(SrcTileData::Cols * sizeof(SrcType) % 128 == 0,
+                      "TMov: When Location is Scaling, col * sizeof(srcType) must be aligned to 128");
     }
 }
-#endif  // TMOV_HPP
+
+template <typename DstTileData, typename SrcTileData>
+__aicore__ void TMOV_IMPL(DstTileData& dst, SrcTileData& src)
+{
+    TMovCheckValid<DstTileData, SrcTileData>();
+    if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Left) {
+        if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+            TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
+        } else {
+            TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
+        }
+    } else if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Right) {
+        if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+            TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
+        } else {
+            TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
+        }
+    } else if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Bias) {
+        TMovToBt<DstTileData, SrcTileData>(dst.data(), src.data());
+    } else if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Scaling) {
+        TMovToFb<DstTileData, SrcTileData>(dst.data(), src.data());
+    }
+}
+}  // namespace pto
+#endif  //TMOV_HPP
