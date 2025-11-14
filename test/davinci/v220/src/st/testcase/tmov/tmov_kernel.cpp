@@ -362,7 +362,6 @@ __global__ __aicore__ void TMOV2ScalingKernel(__gm__ cType* out, __gm__ aType* s
     DynGM2L1NZ2NZ<aType>(srcAAddr, src0, M, K);
     DynGM2L1NZ2NZ<bType>(srcBAddr, src1, K, N);
     DynGM2L1NZ2NZ<uint64_t>(srcFbAddr, src2, 1, N);
-    // pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
@@ -497,8 +496,8 @@ __global__ __aicore__ void TMOV2NdDyncmicKernel(__gm__ cType* out, __gm__ aType*
     /*************************************GM->L1(ND2NZ)****************************************/
     DynGM2L1ND2NZ<AType>(srcAAddr, src0, M, K);
     DynGM2L1ND2NZ<BType>(srcBAddr, src1, K, N);
-    DynGM2L1ND2NZ<biasInputType>(srcBiasAddr, src2, 1, N, 1);
-    DynGM2L1ND2NZ<scalingType>(srcScalingAddr, src3, 1, N, 0, 1);
+    DynGM2L1NZ2NZ<biasInputType>(srcBiasAddr, src2, 1, alignBiasN);
+    DynGM2L1NZ2NZ<scalingType>(srcScalingAddr, src3, 1, alignScalingN);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
