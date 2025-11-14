@@ -36,5 +36,12 @@ enum class TCopyMode : uint8_t{
     SHALLOW_COPY = 0,
     DEEP_COPY = 1,
 };
+
+enum class L0cToUBMode : uint8_t{
+    SingleModeUB0 = 0,
+    SingleModeUB1 = 1,
+    DualModeSplitM = 2,
+    DualModeSplitN = 3,
+};
 }
 #endif
