@@ -177,3 +177,12 @@ TEST_F(TLOADMIXTest, 1_8_4_16_32_1_9_4_16_32_80_256_int8_t_NZ2NZ)
 {
     TLOADMIXFUNC<int8_t, 4, 1, 8, 4, 16, 32, 1, 9, 4, 16, 32, 80, 256>();
 }
+
+TEST_F(TLOADMIXTest, 1_1_1_59_119_1_1_1_59_124_59_120_int64_t_ND2ND)
+{
+    TLOADMIXFUNC<int64_t, 2, 1, 1, 1, 59, 119, 1, 1, 1, 59, 124, 59, 120>();
+}
+TEST_F(TLOADMIXTest, 1_2_1_64_128_1_3_4_128_128_128_128_uint64_t_ND2ND)
+{
+    TLOADMIXFUNC<uint64_t, 2, 1, 2, 1, 64, 128, 1, 3, 4, 128, 128, 128, 128>();
+}
