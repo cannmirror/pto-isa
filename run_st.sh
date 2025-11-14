@@ -46,20 +46,30 @@ if [ "$1" = "dailyBuild" ]; then
 
   # TEXTRACT
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case1_half_0_1_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTest.case1_half_0_1_param
   python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case2_int8_0_1_param
   python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case3_float_0_1_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case11_half_0_1_16_32_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case12_int8_0_1_48_64_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case13_float_0_1_32_48_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case21_half_1_1_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case22_int8_1_1_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case31_half_1_1_96_64_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case32_int8_1_1_32_32_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case41_dynamic_half_0_1_16_32_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case42_dynamic_int8_1_1_32_32_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case43_dynamic_int8_0_1_param
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case44_dynamic_half_1_1_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case4_bfloat16_0_1_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case11_half_0_1_16_16_32_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case12_int8_0_1_48_32_64_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case13_float_0_1_32_16_48_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case14_bfloat16_0_1_32_32_16_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case21_half_1_0_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case22_int8_1_0_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case23_float_1_0_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case24_bfloat16_1_0_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case31_half_1_0_96_0_64_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case32_int8_1_0_32_0_32_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case33_float_1_0_32_0_16_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case34_bfloat16_1_0_32_0_48_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case41_float_1_0_65_66_40_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case42_int8_1_0_65_66_40_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case43_half_1_0_65_66_40_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case44_bfloat16_1_0_65_66_40_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case51_dynamic_half_0_1_16_0_32_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case52_dynamic_int8_1_1_32_0_32_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case53_dynamic_int8_0_1_param
+  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTEST.case54_dynamic_half_1_1_param
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case1
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTEST.case2
