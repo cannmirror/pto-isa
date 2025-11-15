@@ -318,6 +318,7 @@ if __name__ == "__main__":
         "TMOVTest.case13_scaling_static_float_int8_0_1_0_1_0_param",
         # copy_l1_bias + copy_l1_fb + ndInput + dynamic + unalign
         "TMOVTest.case14_scaling_dynamic_int32_int8_0_1_1_1_0_param",
+        "TMOVTest.case15_scaling_dynamic_int32_int8_0_1_1_1_0_param",
     ]
 
     case_params_list = [
@@ -335,6 +336,7 @@ if __name__ == "__main__":
         tmovParams(np.float16, np.float16, np.float32, np.float32, np.int8, 64, 32, 80, 0, 1, 0, 1, 0),#case13
         # copy_l1_bias + copy_l1_fb + ndInput + dynamic + unalign
         tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, 60, 17, 80, 0, 1, 1, 1, 0, 1),#case14
+        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, 15, 10, 30, 0, 1, 1, 1, 0, 1),#case15
     ]
 
     for i, case_name in enumerate(case_name_list):
