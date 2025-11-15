@@ -1,6 +1,6 @@
 #!/usr/bin/python3
+# coding=utf-8
 
-coding=utf-8
 import os
 import struct
 import ctypes
@@ -21,13 +21,13 @@ def gen_golden_data(case_name, param):
     golden.tofile('golden.bin')
 
 class TColSum:
-    def init(self, data_type, col, src_row, srcValidRow):
+    def __init__(self, data_type, col, src_row, srcValidRow):
         self.data_type = data_type
         self.col = col
         self.src_row = src_row
         self.srcValidRow = srcValidRow
 
-if __name__ == "main":
+if __name__ == "__main__":
 
     case_name_list = [
         "TCOLSUMTest.case1",

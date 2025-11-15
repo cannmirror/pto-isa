@@ -138,9 +138,7 @@ namespace pto {
         static_assert((sizeof(typename TileDataSrc::DType) == 2) || (sizeof(typename TileDataSrc::DType) == 4),
                       "Data type must be 16/32");
         static_assert(TileDataSrc::Loc == pto::Location::Vec, "Src location must be Vec!");
-        static_assert((TileDataSrc::layout == pto::Layout::ND) &&
-                      (TileDataSrc::isRowMajor && (TileDataSrc::SFractal == SLayout::NoneBox)) &&
-                      (TileDataDst::layout == pto::Layout::ND) &&
+        static_assert((TileDataSrc::isRowMajor && (TileDataSrc::SFractal == SLayout::NoneBox)) &&
                       (TileDataDst::isRowMajor && (TileDataDst::SFractal == SLayout::NoneBox)),
                       "Src and dst layout must be ND!");
         if ((IsBinary && tmp.data() == nullptr) || src.GetValidRow() == 0 || src.GetValidCol() == 0) {

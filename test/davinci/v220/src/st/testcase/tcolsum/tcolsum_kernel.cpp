@@ -41,7 +41,7 @@ __global__ __aicore__ void runTCOLSUM(__gm__ T __out__ *out, __gm__ T __in__ *sr
 }
 
 template <typename T, int cols, int src_row, int src_validRow, bool IsBinary>
-void launchTCOLSUM(T *out, T src, void stream)
+void launchTCOLSUM(T *out, T *src, void *stream)
 {
     cout << "launchTCOLSUM start!" << endl;
 
