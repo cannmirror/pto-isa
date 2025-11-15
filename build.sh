@@ -63,6 +63,7 @@ run_simple_st() {
   echo "Start to run simple st"
   chmod +x run_pipeline.sh
   ./run_pipeline.sh
+  ./run_st.sh run_simple
   echo "execute samples success"
 }
 

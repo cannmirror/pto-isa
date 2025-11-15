@@ -7,7 +7,7 @@ using namespace pto;
 template <typename T>
 __aicore__ inline void DynGM2L1(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0, unsigned TShape1)
 {
-    uint16_t lenBurst = TShape0 * TShape1 * sizeof(T);
+    uint32_t lenBurst = TShape0 * TShape1 * sizeof(T);
     copy_gm_to_cbuf_align_v2(dst, src, 0, 1, lenBurst, 0, 0, 0, 0, 0, 0);
 }
 

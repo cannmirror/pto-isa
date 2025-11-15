@@ -20,43 +20,6 @@ def run_command(command, cwd=None, check=True):
         print(f"run command failed with return code {e.returncode}")
         raise
 
-def set_env_variables(run_mode, soc_version):
-    if run_mode == "sim":
-        ld_lib_path = os.environ.get("LD_LIBRARY_PATH", "")
-        if ld_lib_path:
-            filtered_paths = [
-                path for path in ld_lib_path.split(':')
-                if '/runtime/lib64' not in path
-            ]
-            new_ld_lib = ':'.join(filtered_paths)
-            os.environ["LD_LIBRARY_PATH"] = new_ld_lib
-
-        ascend_home = os.environ.get("ASCEND_HOME_PATH")
-        if not ascend_home:
-            raise EnvironmentError("ASCEND_HOME_PATH is not set")
-        
-        os.environ["LD_LIBRARY_PATH"] = f"{ascend_home}/runtime/lib64/stub:{os.environ.get('LD_LIBRARY_PATH', '')}"
-
-        setenv_path = os.path.join(ascend_home, "bin", "setenv.bash")
-        if os.path.exists(setenv_path):
-            print(f"run env shell: {setenv_path}")
-            result = subprocess.run(
-                f"source {setenv_path} && env",
-                shell=True,
-                executable="/bin/bash",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            for line in result.stdout.splitlines():
-                if '=' in line:
-                    key, value = line.split('=', 1)
-                    os.environ[key] = value
-        else:
-            print(f"warning: not found {setenv_path}")
-
-        simulator_lib_path = os.path.join(ascend_home, "tools", "simulator", soc_version, "lib")
-        os.environ["LD_LIBRARY_PATH"] = f"{simulator_lib_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
 
 def build_project(run_mode, soc_version, testcase = "all"):
     original_dir = os.getcwd()
@@ -136,9 +99,6 @@ def main():
 
         print(f"target_dir: {target_dir}")
         os.chdir(target_dir)
-
-        # 设置环境变量
-        set_env_variables(args.run_mode, default_soc_version)
 
         # 执行构建
         build_project(args.run_mode, default_soc_version, args.testcase)
