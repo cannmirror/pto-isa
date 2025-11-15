@@ -144,8 +144,9 @@ __PTO_INSTR__ void TROWSUM(TileDataOut &dst, TileDataIn &src,
   MAP_INSTR_IMPL(TROWSUM, dst, src, tmp)
 }
 
-template <typename TileDataOut, typename TileDataIn>
-__PTO_INSTR__ void TCOLSUM(TileDataOut &dst, TileDataIn &src) {
+template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
+__PTO_INSTR__ void TCOLSUM(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp,
+                           bool IsBinary) {
   MAP_INSTR_IMPL(TCOLSUM, dst, src)
 }
 

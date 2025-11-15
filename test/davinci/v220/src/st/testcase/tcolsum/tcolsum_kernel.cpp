@@ -1,99 +1,80 @@
 #include <common/pto_tileop.hpp>
 #include <common/constants.hpp>
-#include <acl/acl.h>
+#include
 
 using namespace std;
 using namespace pto;
 
-template <typename T, int row, int vaildRow, int srcCol, int srcVaildCol, int dstCol>
-__aicore__ PTO_INLINE void runTRowSum(__gm__ T __out__ *out, __gm__ T __in__ *src) {
-    using DynDim2Shape  = Shape<1, 1, 1, -1, -1>;
+template <typename T, int cols, int src_row, int src_validRow, bool IsBinary>
+__global__ __aicore__ void runTCOLSUM(__gm__ T __out__ *out, __gm__ T __in__ *src) {
+    using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
-    GlobalData srcGlobal(src, DynDim2Shape(vaildRow, srcVaildCol), DynDim2Stride(row, srcCol));
-    GlobalData dstGlobal(out, DynDim2Shape(vaildRow, dstCol), DynDim2Stride(row, dstCol));
+    GlobalData srcGlobal(src, DynDim2Shape(src_row, cols), DynDim2Stride(src_row, cols));
+    GlobalData dstGlobal(out, DynDim2Shape(1, cols), DynDim2Stride(1, cols));
 
-    using srcTileData = Tile<Location::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
-    using dstTileData = Tile<Location::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
-    srcTileData srcTile(vaildRow, srcVaildCol);
-    srcTileData tmpTile(vaildRow, srcVaildCol);
-    dstTileData dstTile(vaildRow, dstCol);
+    using srcTileData = Tile<Location::Vec, T, src_row, cols, BLayout::RowMajor, -1, -1>;
+    using tmpTileData = Tile<Location::Vec, T, src_row, cols, BLayout::RowMajor, -1, -1>;
+    using dstTileData = Tile<Location::Vec, T, 1, cols, BLayout::RowMajor, -1, -1>;
+    srcTileData srcTile(src_validRow, cols);
+    tmpTileData tmpTile(src_validRow / 2, cols);
+    dstTileData dstTile(1, cols);
     TASSIGN(srcTile, 0x0);
-    TASSIGN(tmpTile, 0x14000);
-    TASSIGN(dstTile, 0x28000);
+    TASSIGN(dstTile, 0x14000);
+    TASSIGN(tmpTile, 0x28000);
+
+    // 清除脏数据
+    TLOAD(dstTile, dstGlobal);
 
     // 搬运数据
     TLOAD(srcTile, srcGlobal);
 
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    TROWSUM(dstTile, srcTile, tmpTile);
+    TCOLSUM(dstTile, srcTile, tmpTile, IsBinary);
+
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);
     out = dstGlobal.data();
+
 }
 
-extern "C" __global__ __aicore__ void launchTROWSUMCase1(__gm__ float *out, __gm__ float *src)
+template <typename T, int cols, int src_row, int src_validRow, bool IsBinary>
+void launchTCOLSUM(T *out, T src, void stream)
 {
-    runTRowSum<float, 127, 127, 64, 63, 1>(out, src);
-}
-extern "C" __global__ __aicore__ void launchTROWSUMCase2(__gm__ float *out, __gm__ float *src)
-{
-    runTRowSum<float, 63, 63, 64, 64, 1>(out, src);
-}
-extern "C" __global__ __aicore__ void launchTROWSUMCase3(__gm__ float *out, __gm__ float *src)
-{
-    runTRowSum<float, 31, 31, 128, 127, 1>(out, src);
-}
-extern "C" __global__ __aicore__ void launchTROWSUMCase4(__gm__ float *out, __gm__ float *src)
-{
-    runTRowSum<float, 15, 15, 192, 192, 1>(out, src);
-}
-extern "C" __global__ __aicore__ void launchTROWSUMCase5(__gm__ float *out, __gm__ float *src)
-{
-    runTRowSum<float, 7, 7, 448, 447, 1>(out, src);
-}
-extern "C" __global__ __aicore__ void launchTROWSUMCase6(__gm__ half *out, __gm__ half *src)
-{
-    runTRowSum<half, 256, 256, 16, 15, 1>(out, src);
+    cout << "launchTCOLSUM start!" << endl;
+
+    runTCOLSUM<T, cols, src_row, src_validRow, IsBinary><<<1, nullptr, stream>>>(out, src);
+
+    cout << "launchTCOLSUM end!" << endl;
+
 }
 
-template <uint32_t caseId>
-void launchTROWSUMTestCase(void *out, void *src, aclrtStream stream) {
-    switch (caseId) {
-        case 1: {
-            launchTROWSUMCase1<<<1, nullptr, stream>>>((float *)out, (float *)src);
-            break;
-        }
-        case 2: {
-            launchTROWSUMCase2<<<1, nullptr, stream>>>((float *)out, (float *)src);
-            break;
-        }
-        case 3: {
-            launchTROWSUMCase3<<<1, nullptr, stream>>>((float *)out, (float *)src);
-            break;
-        }
-        case 4: {
-            launchTROWSUMCase4<<<1, nullptr, stream>>>((float *)out, (float *)src);
-            break;
-        }
-        case 5: {
-            launchTROWSUMCase5<<<1, nullptr, stream>>>((float *)out, (float *)src);
-            break;
-        }
-        case 6: {
-            launchTROWSUMCase6<<<1, nullptr, stream>>>((half *)out, (half *)src);
-            break;
-        }
-        default: {
-        }
-    }
-}
+template void launchTCOLSUM<int16_t, 16, 16, 8, false>(int16_t *out, int16_t *src, void *stream);
+template void launchTCOLSUM<int32_t, 16, 16, 8, false>(int32_t *out, int32_t *src, void *stream);
+template void launchTCOLSUM<float, 16, 16, 8, false>(float *out, float *src, void *stream);
+template void launchTCOLSUM<int16_t, 128, 16, 8, false>(int16_t *out, int16_t *src, void *stream);
+template void launchTCOLSUM<int32_t, 64, 16, 8, false>(int32_t *out, int32_t *src, void *stream);
+template void launchTCOLSUM<float, 64, 16, 8, false>(float *out, float *src, void *stream);
+template void launchTCOLSUM<int16_t, 512, 16, 8, false>(int16_t *out, int16_t *src, void *stream);
+template void launchTCOLSUM<int32_t, 256, 16, 8, false>(int32_t *out, int32_t *src, void *stream);
+template void launchTCOLSUM<float, 256, 16, 8, false>(float *out, float *src, void *stream);
+template void launchTCOLSUM<int16_t, 512, 16, 7, false>(int16_t *out, int16_t *src, void *stream);
+template void launchTCOLSUM<int32_t, 256, 32, 31, false>(int32_t *out, int32_t *src, void *stream);
+template void launchTCOLSUM<float, 256, 32, 31, false>(float *out, float *src, void *stream);
+template void launchTCOLSUM<float, 256, 16, 1, false>(float *out, float *src, void *stream);
 
-template void launchTROWSUMTestCase<1>(void *out, void *src, aclrtStream stream);
-template void launchTROWSUMTestCase<2>(void *out, void *src, aclrtStream stream);
-template void launchTROWSUMTestCase<3>(void *out, void *src, aclrtStream stream);
-template void launchTROWSUMTestCase<4>(void *out, void *src, aclrtStream stream);
-template void launchTROWSUMTestCase<5>(void *out, void *src, aclrtStream stream);
-template void launchTROWSUMTestCase<6>(void *out, void *src, aclrtStream stream);
+template void launchTCOLSUM<int16_t, 16, 16, 8, true>(int16_t *out, int16_t *src, void *stream);
+template void launchTCOLSUM<int32_t, 16, 16, 8, true>(int32_t *out, int32_t *src, void *stream);
+template void launchTCOLSUM<float, 16, 16, 8, true>(float *out, float *src, void *stream);
+template void launchTCOLSUM<int16_t, 128, 16, 8, true>(int16_t *out, int16_t *src, void *stream);
+template void launchTCOLSUM<int32_t, 64, 16, 8, true>(int32_t *out, int32_t *src, void *stream);
+template void launchTCOLSUM<float, 64, 16, 8, true>(float *out, float *src, void *stream);
+template void launchTCOLSUM<int16_t, 512, 16, 8, true>(int16_t *out, int16_t *src, void *stream);
+template void launchTCOLSUM<int32_t, 256, 16, 8, true>(int32_t *out, int32_t *src, void *stream);
+template void launchTCOLSUM<float, 256, 16, 8, true>(float *out, float *src, void *stream);
+template void launchTCOLSUM<int16_t, 512, 16, 7, true>(int16_t *out, int16_t *src, void *stream);
+template void launchTCOLSUM<int32_t, 256, 32, 31, true>(int32_t *out, int32_t *src, void *stream);
+template void launchTCOLSUM<float, 256, 32, 31, true>(float *out, float *src, void *stream);
+template void launchTCOLSUM<float, 256, 16, 1, true>(float *out, float *src, void *stream);
