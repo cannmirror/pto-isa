@@ -162,3 +162,8 @@ TEST_F(TMOVTest, case14_scaling_dynamic_int32_int8_0_1_1_1_0_param)
 {
     test_tmov<int8_t, int8_t, int32_t, int32_t, int8_t, uint64_t, 60, 17, 80, 0, 1, 1, 1, 0, 1, 1>();
 }
+
+TEST_F(TMOVTest, case15_scaling_dynamic_int32_int8_0_1_1_1_0_param)
+{
+    test_tmov<int8_t, int8_t, int32_t, int32_t, int8_t, uint64_t, 15, 10, 30, 0, 1, 1, 1, 0, 1, 1>();
+}

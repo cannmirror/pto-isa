@@ -36,15 +36,7 @@ __aicore__ inline void DynGM2L1ND2NZ(__cbuf__ T* dst, __gm__ T* src, unsigned TS
     constexpr uint16_t ndNum = 1;
     constexpr uint16_t srcNdMatrixStride = 0;
     constexpr uint16_t dstNzNStride = 1;
-    constexpr uint16_t dstNzMatrixStride = 1;
-
-    if (isBias == 1) {
-        dstNzC0Stride = 1;
-    }
-
-    if (isScaling == 1) {
-        dstNzC0Stride = 1;
-    }
+    constexpr uint16_t dstNzMatrixStride = 0;
 
     if constexpr (std::is_same<T, int8_t>::value) {
         copy_gm_to_cbuf_multi_nd2nz_b8((__cbuf__ T*)dst, (__gm__ T*)src, 0 /*sid*/, ndNum, nValue, dValue,
@@ -362,7 +354,6 @@ __global__ __aicore__ void TMOV2ScalingKernel(__gm__ cType* out, __gm__ aType* s
     DynGM2L1NZ2NZ<aType>(srcAAddr, src0, M, K);
     DynGM2L1NZ2NZ<bType>(srcBAddr, src1, K, N);
     DynGM2L1NZ2NZ<uint64_t>(srcFbAddr, src2, 1, N);
-    // pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
@@ -496,9 +487,9 @@ __global__ __aicore__ void TMOV2NdDyncmicKernel(__gm__ cType* out, __gm__ aType*
 
     /*************************************GM->L1(ND2NZ)****************************************/
     DynGM2L1ND2NZ<AType>(srcAAddr, src0, M, K);
-    DynGM2L1ND2NZ<BType>(srcBAddr, src1, K, N);
-    DynGM2L1ND2NZ<biasInputType>(srcBiasAddr, src2, 1, N, 1);
-    DynGM2L1ND2NZ<scalingType>(srcScalingAddr, src3, 1, N, 0, 1);
+    DynGM2L1ND2NZ<BType>(srcBAddr, src1, N, K);
+    DynGM2L1NZ2NZ<biasInputType>(srcBiasAddr, src2, 1, alignBiasN);
+    DynGM2L1NZ2NZ<scalingType>(srcScalingAddr, src3, 1, alignScalingN);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
@@ -514,7 +505,7 @@ __global__ __aicore__ void TMOV2NdDyncmicKernel(__gm__ cType* out, __gm__ aType*
     // mad(c, a, b, m, k, n, unitFlag, kDirectionAlign, cmatrixSource, CmatrixInitVal);
     // Indicates the C matrix source, 1: the C matrix is in bias table buffer, 0: the C matrix is in L0C
     // CmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0：use the real number in C matrix
-    mad(c, a, b, M, K, N, false, false, true, true);
+    mad(c, a, b, M, K, N, false, false, true, false);
 
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
@@ -608,4 +599,6 @@ template void LaunchTMOV<uint16_t, uint16_t, float, float, int8_t, uint64_t, 64,
     int8_t* out, uint16_t* src0, uint16_t* src1, float* src2, uint64_t* src3, void* stream);
 
 template void LaunchTMOV<int8_t, int8_t, int32_t, int32_t, int8_t, uint64_t, 60, 17, 80, 0, 1, 1, 1, 0, 1, 1>(
+    int8_t* out, int8_t* src0, int8_t* src1, int32_t* src2, uint64_t* src3, void* stream);
+template void LaunchTMOV<int8_t, int8_t, int32_t, int32_t, int8_t, uint64_t, 15, 10, 30, 0, 1, 1, 1, 0, 1, 1>(
     int8_t* out, int8_t* src0, int8_t* src1, int32_t* src2, uint64_t* src3, void* stream);
