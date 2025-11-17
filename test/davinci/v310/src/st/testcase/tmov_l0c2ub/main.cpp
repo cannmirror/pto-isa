@@ -134,3 +134,48 @@ TEST_F(TMOVTest, case_nd_6)
 
     tmov_l0c2ub_test<uint16_t, uint16_t, uint16_t, 6>(M, K, N);
 }
+
+TEST_F(TMOVTest, case_nz2nz_1)
+{
+    uint32_t M = 16;
+    uint32_t K = 16;
+    uint32_t N = 16;
+
+    tmov_l0c2ub_test<uint32_t, uint16_t, uint16_t, 7>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_2)
+{
+    uint32_t M = 128;
+    uint32_t K = 128;
+    uint32_t N = 64;
+
+    tmov_l0c2ub_test<uint32_t, uint16_t, uint16_t, 8>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_3)
+{
+    uint32_t M = 128;
+    uint32_t K = 128;
+    uint32_t N = 64;
+
+    tmov_l0c2ub_test<uint16_t, uint16_t, uint16_t, 9>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_4)
+{
+    uint32_t M = 128;
+    uint32_t K = 128;
+    uint32_t N = 64;
+
+    tmov_l0c2ub_test<uint32_t, uint16_t, uint16_t, 10>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_5)
+{
+    uint32_t M = 128;
+    uint32_t K = 128;
+    uint32_t N = 64;
+
+    tmov_l0c2ub_test<uint32_t, uint32_t, uint32_t, 11>(M, K, N);
+}
