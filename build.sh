@@ -61,8 +61,8 @@ checkopts() {
 run_simple_st() {
   echo $dotted_line
   echo "Start to run simple st"
-  chmod +x run_pipeline.sh
-  ./run_pipeline.sh
+  cat /usr/local/Ascend/latest/compiler/version.info
+  chmod +x run_st.sh
   ./run_st.sh run_simple
   echo "execute samples success"
 }
