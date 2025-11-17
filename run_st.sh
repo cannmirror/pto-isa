@@ -48,6 +48,19 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case11
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case12
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case13
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic6
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic7
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic8
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe5
   # TEXTRACT
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t textract

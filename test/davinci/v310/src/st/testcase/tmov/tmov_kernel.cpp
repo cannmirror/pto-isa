@@ -33,18 +33,18 @@ __aicore__ inline void DynGM2L1(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0
     if (std::is_same<T, uint64_t>::value) {
         __cbuf__ uint32_t *dstTmp = reinterpret_cast<__cbuf__ uint32_t *>(dst);
         __gm__ uint32_t *srcTmp = reinterpret_cast<__gm__ uint32_t *>(src);
-        copy_gm_to_cbuf_align_v2(dstTmp, srcTmp, 0, nBurst, lenBurst, 0, 0, 0, 0, 0, 0);
+        copy_gm_to_cbuf_align_v2(dstTmp, srcTmp, 0, nBurst, lenBurst, 0, 0, false, 0, 0, 0);
     } else {
-        copy_gm_to_cbuf_align_v2(dst, src, 0, nBurst, lenBurst, 0, 0, 0, 0, 0, 0);
+        copy_gm_to_cbuf_align_v2(dst, src, 0, nBurst, lenBurst, 0, 0, false, 0, 0, 0);
     }
-} 
+}
 
 /*
  * brief: dynamic l1 copy in nd2nz functions
  */
 template <typename GMT, typename L1T>
-__aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned TShape0, unsigned TShape1, 
-                                   unsigned GmShape0, unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1, 
+__aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned TShape0, unsigned TShape1,
+                                   unsigned GmShape0, unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1,
                                    int reserved)
 { // ND2NZ
     uint16_t nValue = TShape0;
@@ -61,7 +61,7 @@ __aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned 
     auto c0Size = 32 / sizeof(GMT);
     uint64_t loop1SrcStride = srcDValue * sizeof(GMT);
     uint64_t loop4SrcStride = srcNdMatrixStride * sizeof(GMT); //
-    
+
     uint16_t loop2DstStride = dstNzNStride;  // loop2_dst_stride = dst_nz_n_stride
     uint16_t loop3DstStride = dstNzC0Stride; // loop3_dst_stride = dst_nz_c0_Stride
     // loop4_dst_stride: dst_nz_matrix_stride * size_of_dst_type / c0_size
@@ -78,7 +78,7 @@ __aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned 
 
 // Nz2Zz
 template <typename T, unsigned Offset0, unsigned Offset1>
-__aicore__ inline void DynL1ToL0A(__ca__ T *dst, __cbuf__ T *src, unsigned dstM, unsigned dstK, unsigned srcM, 
+__aicore__ inline void DynL1ToL0A(__ca__ T *dst, __cbuf__ T *src, unsigned dstM, unsigned dstK, unsigned srcM,
                                   unsigned srcK)
 {
     constexpr uint16_t blockCubeK = BLOCK_ALIGN_BYTE / sizeof(T);
@@ -98,8 +98,8 @@ __aicore__ inline void DynL1ToL0A(__ca__ T *dst, __cbuf__ T *src, unsigned dstM,
 
 // Nz2Zn
 template <typename T, unsigned Offset0, unsigned Offset1>
-__aicore__ inline void DynL1ToL0B(__cb__ T *dst, __cbuf__ T *src, unsigned dstK, unsigned dstN, unsigned srcK, 
-                                  unsigned srcN) 
+__aicore__ inline void DynL1ToL0B(__cb__ T *dst, __cbuf__ T *src, unsigned dstK, unsigned dstN, unsigned srcK,
+                                  unsigned srcN)
 {
     auto nBlockSize = 32;
     int64_t frac_num = 32 / sizeof(T);
@@ -117,7 +117,7 @@ __aicore__ inline void DynL1ToL0B(__cb__ T *dst, __cbuf__ T *src, unsigned dstK,
 }
 
 template <typename GMT, typename L0CT, unsigned TShape0, unsigned TShape1, unsigned oriTShape0, unsigned oriTShape1>
-__aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src, unsigned GmShape0, unsigned GmShape1, 
+__aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src, unsigned GmShape0, unsigned GmShape1,
                                   unsigned GmOffset0, unsigned GmOffset1, int uf)
 {  // NZ2ND
     uint16_t MSize = oriTShape0 < (GmShape0 - GmOffset0) ? oriTShape0 : (GmShape0 - GmOffset0);
@@ -161,7 +161,7 @@ __aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src, unsigned Gm
 
 template <typename cType, typename aType, typename bType, typename biasType, int M, int K, int N, int ValidM,
           int ValidK, int ValidN>
-__global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1, 
+__global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1,
                                           __gm__ biasType *src2)
 {
     // static shape
@@ -172,10 +172,10 @@ __global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0,
     using GlobalDataSrc2 = GlobalTensor<biasType, pto::Shape<1, 1, 1, 1, N>, pto::Stride<N, N, N, N, 1>>;
     using GlobalDataOut =
         GlobalTensor<cType, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
-    
+
     constexpr int alignN =
         ((N * sizeof(biasType) + 63) / 64) * 64 / sizeof(biasType); // bias按照64位对齐
-    
+
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataSrc2 src2Global(src2);
@@ -183,7 +183,7 @@ __global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0,
 
     using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::RowMajor, ValidM, ValidK, SLayout::ColMajor, 512>;
     using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, ValidK, ValidN, SLayout::ColMajor, 512>;
-    using TileMatBiasData = Tile<Location::Mat, biasType, 1, alignN, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox, 512>; 
+    using TileMatBiasData = Tile<Location::Mat, biasType, 1, alignN, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox, 512>;
 
     using LeftTile = TileLeft<aType, M, K, ValidM, ValidK>;
     using RightTile = TileRight<bType, K, N, ValidK, ValidN>;
@@ -247,7 +247,7 @@ __global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0,
 
 template <typename cType, typename aType, typename bType, typename biasType, int M, int K, int N, int ValidM,
           int ValidK, int ValidN>
-__global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1, 
+__global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1,
                                                  __gm__ biasType *src2)
 {
     using GlobalDataSrc0 =
@@ -257,10 +257,10 @@ __global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType
     using GlobalDataSrc2 = GlobalTensor<biasType, pto::Shape<1, 1, 1, 1, N>, pto::Stride<N, N, N, N, 1>>;
     using GlobalDataOut =
         GlobalTensor<cType, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
-    
+
     constexpr int alignN =
         ((N * sizeof(biasType) + 63) / 64) * 64 / sizeof(biasType); // bias按照64位对齐
-    
+
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataSrc2 src2Global(src2);
@@ -268,7 +268,7 @@ __global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType
 
     using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
     using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
-    using TileMatBiasData = Tile<Location::Mat, biasType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox, 512>; 
+    using TileMatBiasData = Tile<Location::Mat, biasType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox, 512>;
 
     using LeftTile = TileLeft<aType, M, K, -1, ValidK>;
     using RightTile = TileRight<bType, K, N, ValidK, -1>;
@@ -343,7 +343,7 @@ __global__ __aicore__ void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, _
     using GlobalDataSrc2 = GlobalTensor<fbType, pto::Shape<1, 1, 1, 1, N>, pto::Stride<N, N, N, N, 1>>;
     using GlobalDataOut =
         GlobalTensor<cType, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
-    
+
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataSrc2 src2Global(src2);
@@ -351,7 +351,7 @@ __global__ __aicore__ void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, _
 
     using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::RowMajor, ValidM, ValidK, SLayout::ColMajor, 512>;
     using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, ValidK, ValidN, SLayout::ColMajor, 512>;
-    using TileMatFbData = Tile<Location::Mat, fbType, 1, N, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox>; 
+    using TileMatFbData = Tile<Location::Mat, fbType, 1, N, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox>;
 
     using LeftTile = TileLeft<aType, M, K, ValidM, ValidK>;
     using RightTile = TileRight<bType, K, N, ValidK, ValidN>;
@@ -401,7 +401,7 @@ __global__ __aicore__ void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, _
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
     TMOV(fbTile, fbMatTile);
-    
+
     // [7:0]ReLU_pre address, [15:8]Quant_pre address
     __fbuf__ fbType *quantPreAddr = (__fbuf__ fbType *)(fbTile.data());
     uint64_t config = 0;
