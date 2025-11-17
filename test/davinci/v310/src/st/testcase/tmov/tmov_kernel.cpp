@@ -189,7 +189,7 @@ __global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0,
     using RightTile = TileRight<bType, K, N, ValidK, ValidN>;
     using AccTile = TileAcc<cType, M, N, ValidM, ValidN>;
 
-    using BiasTile = Tile<Location::Bias, biasType, 1, alignN, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox, 512>;
+    using BiasTile = Tile<Location::Bias, cType, 1, alignN, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox, 512>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -214,7 +214,7 @@ __global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0,
 
     __cbuf__ AType *srcAAddr = aMatTile.data();
     __cbuf__ BType *srcBAddr = bMatTile.data();
-    __cbuf__ BiasType *srcBiasAddr = biasMatTile.data();
+    __cbuf__ biasType *srcBiasAddr = biasMatTile.data();
 
     __ca__ AType *a = (__ca__ AType *)(aTile.data());
     __cb__ BType *b = (__cb__ BType *)(bTile.data());
@@ -223,7 +223,7 @@ __global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0,
     /******************************GM->L1(NZ2NZ)*****************************/
     DynL1CopyIn<AType, AType>(srcAAddr, src0, ValidM, ValidK, ValidM, ValidK, 0, 0, 0);
     DynL1CopyIn<BType, BType>(srcBAddr, src1, ValidK, ValidN, ValidK, ValidN, 0, 0, 0);
-    DynGM2L1<BiasType>(srcBiasAddr, src2, 1, alignN);
+    DynGM2L1<biasType>(srcBiasAddr, src2, 1, alignN);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
@@ -274,7 +274,7 @@ __global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType
     using RightTile = TileRight<bType, K, N, ValidK, -1>;
     using AccTile = TileAcc<cType, M, N, ValidM, -1>;
 
-    using BiasTile = Tile<Location::Bias, biasType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox, 512>;
+    using BiasTile = Tile<Location::Bias, cType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox, 512>;
 
     TileMatAData aMatTile(ValidM, ValidK);
     TileMatBData bMatTile(ValidK, ValidN);
@@ -296,10 +296,11 @@ __global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType
     using BType = typename RightTile::DType;
     using CType = typename AccTile::DType;
     using BiasType = typename BiasTile::DType;
+    using BiasMatType = typename TileMatBiasData::DType;
 
     __cbuf__ AType *srcAAddr = aMatTile.data();
     __cbuf__ BType *srcBAddr = bMatTile.data();
-    __cbuf__ BiasType *srcBiasAddr = biasMatTile.data();
+    __cbuf__ BiasMatType *srcBiasAddr = biasMatTile.data();
 
     __ca__ AType *a = (__ca__ AType *)(aTile.data());
     __cb__ BType *b = (__cb__ BType *)(bTile.data());
@@ -308,7 +309,7 @@ __global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType
     /******************************GM->L1(NZ2NZ)*****************************/
     DynL1CopyIn<AType, AType>(srcAAddr, src0, ValidM, ValidK, ValidM, ValidK, 0, 0, 0);
     DynL1CopyIn<BType, BType>(srcBAddr, src1, ValidK, ValidN, ValidK, ValidN, 0, 0, 0);
-    DynGM2L1<BiasType>(srcBiasAddr, src2, 1, alignN);
+    DynGM2L1<BiasMatType>(srcBiasAddr, src2, 1, alignN);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
@@ -330,8 +331,8 @@ __global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType
     out = dstGlobal.data();
 }
 
-template <typename cType, typename aType, typename bType, typename fbType, typename l0cType, int M, int K, int N, int ValidM,
-          int ValidK, int ValidN>
+template <typename cType, typename aType, typename bType, typename fbType, typename l0cType, int M, int K, int N,
+          int ValidM, int ValidK, int ValidN>
 __global__ __aicore__ void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
 {
     // static shape
