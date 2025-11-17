@@ -9,9 +9,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-include(${PROJECT_SOURCE_DIR}/../../../../../cmake/third_party/gtest.cmake)
-include(${PROJECT_SOURCE_DIR}/../../../../../cmake/third_party/json.cmake)
-
 if(NOT DEFINED ENV{ASCEND_HOME_PATH})
     message(FATAL_ERROR "Cannot find ASCEND_HOME_PATH, please run set_env.sh.")
 else()
