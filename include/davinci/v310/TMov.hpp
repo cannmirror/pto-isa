@@ -97,7 +97,19 @@ __tf__ __aicore__ void TMovL0cToUB(typename DstTileData::TileDType __out__ dst,
     constexpr bool subBlockId = (mode == L0cToUBMode::SingleModeUB1);
     constexpr uint8_t dualDstCtl = GetDualDstCtl<DstTileData, SrcTileData, mode>();
     constexpr bool NZ2NDEn = (DstTileData::isRowMajor & DstTileData::SFractal == SLayout::NoneBox);
-    constexpr uint32_t dstStride = DstTileData::Cols;
+
+    constexpr bool channelSplitEnable = (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) &&
+                                        (std::is_same_v<typename DstTileData::DType, float>) &&
+                                        (DstTileData::SFractalSize == 512);
+
+    constexpr uint32_t c0Size = (!channelSplitEnable) &&
+                                (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) &&
+                                (DstTileData::SFractalSize == 1024)
+                                ? 2 * C0_SIZE_BYTE / sizeof(dstType)
+                                : C0_SIZE_BYTE / sizeof(dstType);
+    
+    constexpr uint32_t dstStride = NZ2NDEn ? DstTileData::Cols : (DstTileData::Rows * c0Size);
+
     if constexpr (NZ2NDEn) {
         SetLoop3Para();
     }
@@ -117,7 +129,7 @@ __tf__ __aicore__ void TMovL0cToUB(typename DstTileData::TileDType __out__ dst,
         0,
         QuantPre,
         0,
-        false,
+        channelSplitEnable,
         NZ2NDEn,
         0,
         0,
@@ -164,17 +176,29 @@ __aicore__ PTO_INLINE constexpr QuantMode_t GetQuantPre()
 template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType>
 __aicore__ PTO_INLINE void CheckTMovL0cToUBValid()
 {
-    static_assert((!SrcTileData::isRowMajor & SrcTileData::SFractal == SLayout::RowMajor),
+    static_assert((!SrcTileData::isRowMajor && SrcTileData::SFractal == SLayout::RowMajor),
         "Src fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
     static_assert(((std::is_same<SrcType, float>::value) || (std::is_same<SrcType, int32_t>::value)),
         "Src data type only support float or int32_t.");
-    static_assert(((DstTileData::isRowMajor & DstTileData::SFractal == SLayout::NoneBox) ||
-                    (!DstTileData::isRowMajor & DstTileData::SFractal == SLayout::RowMajor)),
+    static_assert(((DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
+                    (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor)),
         "Only nz2nz and nz2nd are supported Currently.");
-    if constexpr (DstTileData::isRowMajor & DstTileData::SFractal == SLayout::NoneBox) {
+    if constexpr (DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) {
         constexpr uint16_t dstStride = DstTileData::Cols;
-        static_assert(((dstStride * sizeof(DstType) % 32 == 0) && (dstStride > 0)),
+        static_assert(((dstStride * sizeof(DstType) % C0_SIZE_BYTE == 0) && (dstStride > 0)),
             "Dst Tile Cols * sizeof(dstT) must be multiples of 32 and not 0 when nz2nd.");
+    }
+    if constexpr (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) {
+        constexpr bool channelSplitEnable = (std::is_same_v<typename DstTileData::DType, float>) &&
+                                            (DstTileData::SFractalSize == 512);
+        constexpr uint32_t c0Size = (!channelSplitEnable) &&
+                                (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) &&
+                                (DstTileData::SFractalSize == 1024)
+                                ? 2 * C0_SIZE_BYTE / sizeof(DstType)
+                                : C0_SIZE_BYTE / sizeof(DstType);
+        constexpr uint32_t dstStride = DstTileData::Rows * c0Size;
+        static_assert(((dstStride * sizeof(DstType) % C0_SIZE_BYTE == 0) && (dstStride > 0)),
+                    "Dst Tile Cols * sizeof(DstType) must be multiples of 32 and not 0 when nz2nz.");
     }
 }
 

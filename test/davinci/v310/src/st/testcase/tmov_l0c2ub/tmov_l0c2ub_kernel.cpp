@@ -16,7 +16,7 @@ __aicore__ inline T CeilAlign(T num_1, T num_2)
 }
 
 template <typename T>
-__aicore__ inline T CeilDiv(T num_1, T num_2)
+__aicore__ constexpr inline T CeilDiv(T num_1, T num_2)
 {
     if (num_2 == 0) {
         return 0;
@@ -217,6 +217,160 @@ __aicore__ inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     out = dstGlobal.data();
 }
 
+template <Layout LayoutType>
+__aicore__ inline constexpr BLayout GetTileBLayout()
+{
+    if constexpr (LayoutType == Layout::NZ) {
+        return BLayout::ColMajor;
+    } else {
+        return BLayout::RowMajor;
+    }
+}
+
+template <Layout LayoutType>
+__aicore__ inline constexpr SLayout GetTileSLayout()
+{
+    if constexpr (LayoutType == Layout::NZ) {
+        return SLayout::RowMajor;
+    } else {
+        return SLayout::NoneBox;
+    }
+}
+
+template <typename T, typename GlobalData, typename TileData>
+__aicore__ inline void UBCopyOut(GlobalData &dst, TileData &src, int validRow, int rows, int cols)
+{
+
+    constexpr uint32_t c0Size = 64;
+    int gShape0 = dst.GetShape(0);
+    int gShape1 = dst.GetShape(1);
+    int gShape4 = dst.GetShape(4);
+    int gStride0 = dst.GetStride(0);
+    int gStride1 = dst.GetStride(1);
+
+    uint16_t nBurst = gShape1;
+    uint32_t lenBurst = validRow * c0Size;
+    uint64_t burstDstStride = gStride1 * sizeof(typename TileData::DType);
+    uint32_t burstSrcStride = TileData::Rows * c0Size;
+    int64_t tileStride = gShape1 * TileData::Rows * gShape4;
+    typename GlobalData::DType *dstAddr = dst.data();
+    __ubuf__ typename TileData::DType *srcAddr = src.data();
+    typename GlobalData::DType *dstGlobalAddr = dstAddr;
+    __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+    for (uint32_t k = 0; k < gShape0; k++) {
+        dstGlobalAddr = dstAddr + k * gStride0;
+        srcTileAddr = srcAddr + k * tileStride;
+        copy_ubuf_to_gm_align_v2(dstGlobalAddr, srcTileAddr, 0, nBurst, lenBurst, 0, burstDstStride, burstSrcStride);
+    }
+}
+
+template <typename T, typename U, typename S, int M, int K, int N, int ValidM, int ValidK, int ValidN, Layout LayoutType,
+           int SFractalSize, int SubBlockId>
+__aicore__ inline void runTMOV_nz2nz(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
+{
+    constexpr uint16_t sGRows_ = 16;
+    constexpr uint16_t sGCols_ = CeilDiv<uint16_t>(SFractalSize, sGRows_ * sizeof(T));
+    constexpr uint16_t kGRows_ = CeilDiv<uint16_t>(M, sGRows_);
+    constexpr uint16_t kGCols_ = CeilDiv<uint16_t>(N, sGCols_);
+    
+    using DynShapeDim5 = Shape<1, kGCols_, kGRows_, sGRows_, sGCols_>;
+    using DynStrideDim5 = pto::Stride< kGCols_ * kGRows_ * sGCols_ * sGRows_, kGRows_* sGCols_ * sGRows_, sGCols_ * sGRows_, sGCols_, 1>;
+
+    using GlobalDataOut = GlobalTensor<T, DynShapeDim5, DynStrideDim5, LayoutType>;
+    GlobalDataOut dstGlobal(out);
+
+    using TileMatAData =
+        Tile<Location::Mat, U, M, K, BLayout::RowMajor, ValidM, ValidK, SLayout::ColMajor, 512>;
+    using TileMatBData =
+        Tile<Location::Mat, S, K, N, BLayout::ColMajor, ValidK, ValidN, SLayout::RowMajor, 512>;
+
+    using C = CType<U>;
+    using LeftTile = TileLeft<U, M, K, ValidM, ValidK>;
+    using RightTile = TileRight<S, K, N, ValidK, ValidN>;
+    using AccTile = TileAcc<C, M, N, ValidM, ValidN>;
+
+    TileMatAData aMatTile;
+    TileMatBData bMatTile;
+    TASSIGN(aMatTile, 0x0);
+    TASSIGN(bMatTile, 0x10000);
+
+    LeftTile aTile;
+    RightTile bTile;
+    AccTile cTile;
+    TASSIGN(aTile, 0x0);
+    TASSIGN(bTile, 0x0);
+    TASSIGN(cTile, 0x0);
+
+    using AType = typename LeftTile::DType;
+    using BType = typename RightTile::DType;
+    using CType = typename AccTile::DType;
+
+    __cbuf__ AType *srcAAddr = aMatTile.data();
+    __cbuf__ BType *srcBAddr = bMatTile.data();
+
+    __ca__ AType *a = (__ca__ AType *)(aTile.data());
+    __cb__ BType *b = (__cb__ BType *)(bTile.data());
+    __cc__ CType *c = (__cc__ CType *)(cTile.data());
+    uint8_t syncId = 0;
+
+    using DstTileData = Tile<Location::Vec, T, M, N, 
+                            GetTileBLayout<LayoutType>(),
+                            ValidM, ValidN,
+                            GetTileSLayout<LayoutType>(), SFractalSize>;
+    DstTileData dstTileData;
+    TASSIGN(dstTileData, 0x0);
+
+#if defined(__DAV_CUBE__)
+    /*************************************TLOAD****************************************/
+    DynL1CopyIn<U, U>(srcAAddr, src0, ValidM, ValidK, ValidM, ValidK, 0, 0, 0);
+    DynL1CopyIn<S, S>(srcBAddr, src1, ValidK, ValidN, ValidK, ValidN, 0, 0, 0);
+    
+    set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+
+    /**********************************TMOV && TEXTRACT**********************************/
+    DynL1ToL0A<U, 0, 0>(a, srcAAddr, M, K, M, K );
+    DynL1ToL0B<S, 0, 0>(b, srcBAddr, K, N, K, N ); // Nz2Zn [K,N]
+
+    set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+
+    /**********************************TMATMUL**********************************/
+    TMATMUL(cTile, aTile, bTile);
+
+    set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+
+    /**********************************TSTORE**********************************/
+    constexpr uint8_t mode = getMode<SubBlockId, 0>();
+    if (SubBlockId == 0) {
+        TMOV(dstTileData, cTile);
+    } else {
+        TMOV<DstTileData, AccTile, static_cast<L0cToUBMode>(mode)>(dstTileData, cTile);
+    }
+
+    set_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
+    set_intra_block(PIPE_FIX, syncId);
+    set_intra_block(PIPE_FIX, syncId + 16);
+
+#endif
+#if defined(__DAV_VEC__)
+    wait_intra_block(PIPE_MTE3, syncId);
+    int64_t idx = get_block_idx() * get_subblockdim() + get_subblockid();
+
+    if (idx == SubBlockId) {
+        if (SFractalSize == 512){
+            TSTORE(dstGlobal, dstTileData);
+        } else {
+            UBCopyOut<T, GlobalDataOut, DstTileData>(dstGlobal, dstTileData, ValidM, M, N);
+        }
+    }
+
+#endif
+    out = dstGlobal.data();
+}
+
 extern "C" __global__ __aicore__ void launchTMOVL0c2UB_1(
     __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
@@ -295,6 +449,70 @@ extern "C" __global__ __aicore__ void launchTMOVL0c2UB_6(
         reinterpret_cast<__gm__ half *>(src1));
 }
 
+extern "C" __global__ __aicore__ void launchTMOVL0c2UB_7(
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 16;
+    constexpr uint32_t K = 16;
+    constexpr uint32_t N = 16;
+    constexpr uint32_t SFractalSize = 512;
+
+    runTMOV_nz2nz<float, half, half, M, K, N, M, K, N, Layout::NZ, SFractalSize, 0>(reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ half *>(src0),
+        reinterpret_cast<__gm__ half *>(src1));
+}
+extern "C" __global__ __aicore__ void launchTMOVL0c2UB_8(
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 128;
+    constexpr uint32_t K = 128;
+    constexpr uint32_t N = 64;
+    constexpr uint32_t SFractalSize = 512;
+
+    runTMOV_nz2nz<float, half, half, M, K, N, M, K, N, Layout::NZ, SFractalSize, 0>(reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ half *>(src0),
+        reinterpret_cast<__gm__ half *>(src1));
+}
+
+extern "C" __global__ __aicore__ void launchTMOVL0c2UB_9(
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 128;
+    constexpr uint32_t K = 128;
+    constexpr uint32_t N = 64;
+    constexpr uint32_t SFractalSize = 512;
+
+    runTMOV_nz2nz<half, half, half, M, K, N, M, K, N, Layout::NZ, SFractalSize, 0>(reinterpret_cast<__gm__ half *>(out),
+        reinterpret_cast<__gm__ half *>(src0),
+        reinterpret_cast<__gm__ half *>(src1));
+}
+
+extern "C" __global__ __aicore__ void launchTMOVL0c2UB_10(
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 128;
+    constexpr uint32_t K = 128;
+    constexpr uint32_t N = 64;
+    constexpr uint32_t SFractalSize = 1024;
+
+    runTMOV_nz2nz<float, half, half, M, K, N, M, K, N, Layout::NZ, SFractalSize, 0>(reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ half *>(src0),
+        reinterpret_cast<__gm__ half *>(src1));
+}
+
+extern "C" __global__ __aicore__ void launchTMOVL0c2UB_11(
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 128;
+    constexpr uint32_t K = 128;
+    constexpr uint32_t N = 64;
+    constexpr uint32_t SFractalSize = 512;
+
+    runTMOV_nz2nz<float, float, float, M, K, N, M, K, N, Layout::NZ, SFractalSize, 0>(reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ float *>(src0),
+        reinterpret_cast<__gm__ float *>(src1));
+}
+
 template <int32_t tilingKey>
 void launchTMOVL0c2UB(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
 {
@@ -310,6 +528,16 @@ void launchTMOVL0c2UB(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
         launchTMOVL0c2UB_5<<<1, nullptr, stream>>>(out, src0, src1);
     } else if constexpr (tilingKey == 6) {
         launchTMOVL0c2UB_6<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 7) {
+        launchTMOVL0c2UB_7<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 8) {
+        launchTMOVL0c2UB_8<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 9) {
+        launchTMOVL0c2UB_9<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 10) {
+        launchTMOVL0c2UB_10<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 11) {
+        launchTMOVL0c2UB_11<<<1, nullptr, stream>>>(out, src0, src1);
     }
 }
 
@@ -319,3 +547,9 @@ template void launchTMOVL0c2UB<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, vo
 template void launchTMOVL0c2UB<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void launchTMOVL0c2UB<5>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void launchTMOVL0c2UB<6>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+// nz2nz
+template void launchTMOVL0c2UB<7>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVL0c2UB<8>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVL0c2UB<9>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVL0c2UB<10>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVL0c2UB<11>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
