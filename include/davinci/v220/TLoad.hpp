@@ -5,7 +5,17 @@ namespace pto {
 template <typename TileData>
 __aicore__ constexpr auto getPadValue()
 {
-    if constexpr (std::is_same<typename TileData::DType, float>::value) {
+    if constexpr (std::is_same<typename TileData::DType, int64_t>::value ||
+        std::is_same<typename TileData::DType, uint64_t>::value) {
+        switch (TileData::PadVal) {
+            case PadValue::Null:
+            case PadValue::Zero:
+                return uint32_t(0);
+            default:
+                static_assert((TileData::PadVal == PadValue::Null) || (TileData::PadVal == PadValue::Zero),
+                    "TLOAD: only PadNull and PadZero is supported for b8!");
+        }
+    } else if constexpr (std::is_same<typename TileData::DType, float>::value) {
         switch (TileData::PadVal) {
             case PadValue::Null:
             case PadValue::Zero:
@@ -121,6 +131,8 @@ __aicore__ PTO_INLINE void TLoadInstrGm2ub(__ubuf__ typename TileData::DType *ds
         copy_gm_to_ubuf_align_b16(dst, src, 0, nBurst, lenBurst, 0, ubPad, gmGap, ubGap);
     } else if constexpr (sizeof(typename TileData::DType) == 4) {
         copy_gm_to_ubuf_align_b32(dst, src, 0, nBurst, lenBurst, 0, ubPad, gmGap, ubGap);
+    } else if constexpr (sizeof(typename TileData::DType) == 8) {
+        copy_gm_to_ubuf_align_b32(dst, src, 0, nBurst, lenBurst, 0, ubPad * 2, gmGap, ubGap);
     }
 }
 
@@ -388,13 +400,23 @@ __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
         std::is_same_v<typename TileData::DType, int8_t> || std::is_same_v<typename TileData::DType, uint8_t> ||
             std::is_same_v<typename TileData::DType, int16_t> || std::is_same_v<typename TileData::DType, uint16_t> ||
             std::is_same_v<typename TileData::DType, int32_t> || std::is_same_v<typename TileData::DType, uint32_t> ||
+            std::is_same_v<typename TileData::DType, int64_t> || std::is_same_v<typename TileData::DType, uint64_t> ||
             std::is_same_v<typename TileData::DType, half> || std::is_same_v<typename TileData::DType, bfloat16_t> ||
             std::is_same_v<typename TileData::DType, float>,
-        "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/half/bfloat16_t/float!");
+        "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/half/bfloat16_t/float/int64_t/uint64_t/!");
     static_assert(
         TileData::Loc == pto::Location::Vec || TileData::Loc == pto::Location::Mat, "Dst location must be Vec or Mat!");
     static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
         "Source dtype must be same with dst dtype!");
+
+    if constexpr (std::is_same_v<typename TileData::DType, int64_t> ||
+        std::is_same_v<typename TileData::DType, uint64_t>) {
+        static_assert(GlobalData::layout == GetTileLayout<TileData>(),
+            "TLOAD only support ND2ND/DN2DN for b8!");
+        static_assert((GlobalData::layout == pto::Layout::ND) ||
+            (GlobalData::layout == pto::Layout::DN),
+            "TLOAD only support ND2ND/DN2DN for b8!");
+    }
 
     if constexpr (TileData::Loc == pto::Location::Vec) {
         static_assert(GlobalData::layout == GetTileLayout<TileData>(),
@@ -416,7 +438,7 @@ __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
     } else if constexpr (TileData::Loc == pto::Location::Mat) {
         static_assert(GlobalData::layout == GetTileLayout<TileData>() ||
                           (GlobalData::layout == pto::Layout::ND && GetTileLayout<TileData>() == pto::Layout::NZ),
-            "TLOAD(MatTile, GlobalTensor) only support ND2ND/DN2DN/NZ2NZ/NZ2NZ!");
+            "TLOAD(MatTile, GlobalTensor) only support ND2ND/DN2DN/NZ2NZ/ND2NZ!");
         if constexpr (GlobalData::layout == GetTileLayout<TileData>()) {
             TLoadGm2L1<TileData, GlobalData>(dst.data(),
                 src.data(),
