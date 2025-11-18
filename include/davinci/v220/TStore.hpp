@@ -26,7 +26,7 @@ __aicore__ PTO_INLINE void TStoreInstr(typename GlobalData::DType *dst, __ubuf__
             0 /* right padding count */,
             ubGap,
             gmGap);
-    } else if constexpr (sizeof(typename TileData::DType) == 4) {
+    } else if constexpr (sizeof(typename TileData::DType) == 4 || sizeof(typename TileData::DType) == 8) {
         copy_ubuf_to_gm_align_b32(dst,
             src,
             0, /* sid */
@@ -131,9 +131,12 @@ __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src)
                 std::is_same_v<typename TileData::DType, int16_t> ||
                 std::is_same_v<typename TileData::DType, uint16_t> ||
                 std::is_same_v<typename TileData::DType, int32_t> ||
-                std::is_same_v<typename TileData::DType, uint32_t> || std::is_same_v<typename TileData::DType, half> ||
+                std::is_same_v<typename TileData::DType, uint32_t> ||
+                std::is_same_v<typename TileData::DType, int64_t> ||
+                std::is_same_v<typename TileData::DType, uint64_t> ||
+                std::is_same_v<typename TileData::DType, half> ||
                 std::is_same_v<typename TileData::DType, bfloat16_t> || std::is_same_v<typename TileData::DType, float>,
-            "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/half/bfloat16_t/float!");
+            "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/int64_t/uint64_t/half/bfloat16_t/float!");
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
             "Source dtype must be same with dst dtype!");
         static_assert(((GlobalData::layout == pto::Layout::ND) &&
@@ -143,6 +146,15 @@ __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src)
                           ((GlobalData::layout == pto::Layout::NZ) &&
                               (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))),
             "Src and dst layout must be same, only support ND/DN/NZ!");
+        if constexpr (std::is_same_v<typename TileData::DType, int64_t> ||
+            std::is_same_v<typename TileData::DType, uint64_t>) {
+            static_assert(GlobalData::layout == GetTileLayout<TileData>(),
+                "TSTORE(GlobalTensor, VecTile) only support ND2ND/DN2DN for b8!");
+            static_assert((GlobalData::layout == pto::Layout::ND) ||
+                (GlobalData::layout == pto::Layout::DN),
+                "TSTORE(GlobalTensor, VecTile) only support ND2ND/DN2DN for b8!");
+        }
+
         // GlobalTensor为5维数据，Tile为2维数据
         TStore<GlobalData, TileData>(dst.data(),
             src.data(),

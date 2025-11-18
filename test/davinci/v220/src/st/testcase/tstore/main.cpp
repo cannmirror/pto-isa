@@ -129,3 +129,23 @@ TEST_F(TStoreTest, NZ_int8_t_1_2_1_16_32_2_4_2_16_32)
 {
     test_tstore<2, int8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>();
 }
+
+TEST_F(TStoreTest, ND_int64_1_1_1_2_128_1_1_1_2_128)
+{
+    test_tstore<0, int64_t, 1, 1, 1, 2, 128, 1, 1, 1, 2, 128>();
+}
+
+TEST_F(TStoreTest, ND_uint64_t_1_2_1_23_121_3_2_2_35_125)
+{
+    test_tstore<0, uint64_t, 1, 2, 1, 23, 121, 3, 2, 2, 35, 125>();
+}
+
+TEST_F(TStoreTest, DN_int64_1_1_1_4_21_1_1_1_8_32)
+{
+    test_tstore<1, int64_t, 1, 1, 1, 4, 21, 1, 1, 1, 8, 32>();
+}
+
+TEST_F(TStoreTest, DN_uint64_t_3_1_1_1_124_5_1_1_2_128)
+{
+    test_tstore<1, uint64_t, 3, 1, 1, 1, 124, 5, 1, 1, 2, 128>();
+}
