@@ -5,7 +5,7 @@ namespace pto
 {
     template <typename TileData, typename GlobalData>
     __aicore__ PTO_INLINE void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src, 
-    uint16_t nBurst, uint16_t lenBurst, uint64_t burstDstStride, uint32_t burstSrcStride) {
+    uint16_t nBurst, uint32_t lenBurst, uint64_t burstDstStride, uint32_t burstSrcStride) {
         copy_ubuf_to_gm_align_v2(dst, src, 0, nBurst, lenBurst, 0, burstDstStride, burstSrcStride);
     }
 
@@ -92,7 +92,7 @@ namespace pto
                 uint32_t lenBurst = validRow * c0_size;
                 uint64_t burstDstStride = gStride1 * sizeof(typename TileData::DType);
                 uint32_t burstSrcStride = TileData::Rows * c0_size;
-                int64_t tileStride = gShape1 * gShape2 * TileData::Rows * gShape4;
+                int64_t tileStride = gShape1 * TileData::Rows * gShape4;
                 for (uint32_t k = 0; k < gShape0; k++) {
                     dstGlobalAddr = dstAddr + k * gStride0;
                     srcTileAddr = srcAddr + k * tileStride;

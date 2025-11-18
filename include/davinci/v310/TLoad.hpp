@@ -194,7 +194,7 @@ __tf__ __aicore__ PTO_INLINE void TLoad(typename TileData::TileDType __out__ dst
         typename GlobalData::DType *srcAddrP = srcAddr;
         __ubuf__ typename TileData::DType *dstAddrP = dstAddr;
 
-        int64_t tileStride = gShape1 * gShape2 * TileData::Rows * gShape4;
+        int64_t tileStride = gShape1 * TileData::Rows * gShape4;
 		set_loop_size_outtoub(1ULL<<21 | 1ULL);
         for (uint32_t i = 0; i < gShape0; i++) {
             srcAddrP = srcAddr + i * gStride0;
