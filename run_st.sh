@@ -122,6 +122,26 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test2
   python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test3
 
+  # TCOLSUM
+  # A3
+  # python3 test/script/run_st.py -r sim -v a3 -t tcolsum
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test01
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test02
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test03
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test04
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test05
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test11
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test12
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test13
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test14
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test15
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test21
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test22
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test23
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test24
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test25
+
   # TROWEXPAND
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t trowexpand

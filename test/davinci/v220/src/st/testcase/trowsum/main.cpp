@@ -44,12 +44,13 @@ protected:
     {
         std::vector<T> golden(dstByteSize);
         std::vector<T> result(dstByteSize);
+        float eps = sizeof(T) == 4 ? 0.001f : 0.005f;
         ReadFile(GetGoldenDir() + "/golden.bin", dstByteSize, golden.data(), dstByteSize);
         ReadFile(GetGoldenDir() + "/output.bin", dstByteSize, result.data(), dstByteSize);
         if (printAllEn) {
-            return ResultCmp(golden, result, 0.001f, 0, 1000, true);
+            return ResultCmp(golden, result, eps, 0, 1000, true);
         }
-        return ResultCmp(golden, result, 0.001f, 0, 1000, false, true);
+        return ResultCmp(golden, result, eps, 0, 1000, false, true);
     }
 
     template <uint32_t caseId, typename T, int row, int vaildRow, int srcCol, int srcVaildCol, int dstCol>

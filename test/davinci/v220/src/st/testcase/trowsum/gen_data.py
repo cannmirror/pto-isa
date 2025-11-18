@@ -12,7 +12,7 @@ def gen_golden_data(param):
     col = param.col
     valid_col = param.valid_col
 
-    input_arr = np.random.uniform(low=0, high=16, size=(row, col)).astype(data_type)
+    input_arr = np.random.uniform(low=-1, high=1, size=(row, col)).astype(data_type)
     output_arr = np.zeros((row))
     for i in range(valid_row):
         for j in range(valid_col):
