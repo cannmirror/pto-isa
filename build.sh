@@ -17,6 +17,8 @@ export BASE_PATH=$(
 
 export INCLUDE_PATH="${ASCEND_HOME_PATH}/include"
 export ASCEND_ENV_PATH="${ASCEND_HOME_PATH}/bin"
+export BUILD_PATH="${BASE_PATH}/build"
+export BUILD_OUT_PATH="${BASE_PATH}/build_out"
 
 print_success() {
   echo
@@ -40,6 +42,7 @@ checkopts() {
   ENABLE_SIMPLE_ST=FALSE
   ENABLE_BUILD_ALL=FALSE
   ENABLE_RUN_EXAMPLE=FALSE
+  ENABLE_PACKAGE=FALSE
   EXAMPLE_NAME=""
   EXAMPLE_MODE=""
   PLATFORM_MODE=""
@@ -55,6 +58,8 @@ checkopts() {
     ENABLE_BUILD_ALL=TRUE
   elif [ "$1" == "--run_simple" ]; then
     ENABLE_SIMPLE_ST=TRUE
+  elif [ "$1" == "--pkg" ]; then
+    ENABLE_PACKAGE=TRUE
   fi
 }
 
@@ -75,6 +80,29 @@ run_all_st() {
   echo "execute samples success"
 }
 
+clean_build() {
+  if [ -d "${BUILD_PATH}" ]; then
+    rm -rf ${BUILD_PATH}
+  fi
+}
+
+clean_build_out() {
+  if [ -d "${BUILD_OUT_PATH}" ]; then
+    rm -rf ${BUILD_OUT_PATH}
+  fi
+}
+
+build_package() {
+  echo "---------------package start-----------------"
+  clean_build_out
+  mkdir $BUILD_PATH
+  mkdir $BUILD_OUT_PATH
+  cd $BUILD_PATH
+  cmake ..
+  make package
+  echo "---------------package end-----------------"
+}
+
 run_example() {
   echo $dotted_line
   echo "Start to run example"
@@ -93,6 +121,9 @@ main() {
   fi
   if [ "$ENABLE_RUN_EXAMPLE" == "TRUE" ]; then
       run_example
+  fi
+  if [ "$ENABLE_PACKAGE" == "TRUE" ]; then
+    build_package
   fi
 }
 
