@@ -48,6 +48,19 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case11
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case12
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case13
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic6
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic7
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic8
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe5
   # TEXTRACT
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t textract
@@ -108,6 +121,26 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test1
   python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test2
   python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test3
+
+  # TCOLSUM
+  # A3
+  # python3 test/script/run_st.py -r sim -v a3 -t tcolsum
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test01
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test02
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test03
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test04
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test05
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test11
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test12
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test13
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test14
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test15
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test21
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test22
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test23
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test24
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test25
 
   # TROWEXPAND
   # A3
@@ -178,13 +211,13 @@ else
   echo "==================simple build, run one case================="
   # TCVT
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tcvt -g TCVTTest.case1
+  python3 test/script/run_st.py -r npu -v a3 -t tcvt -g TCVTTest.case1
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case1
 
   # TMATMUL
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tmatmul -g TMATMULTest.case1
+  python3 test/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
 
@@ -195,25 +228,25 @@ else
 
   # TEXTRACT
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t textract -g TEXTRACTTest.case1_half_0_1_param
+  python3 test/script/run_st.py -r npu -v a3 -t textract -g TEXTRACTTest.case1_half_0_1_param
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case1
 
   # TMRGSORT
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tmrgsort -g TMRGSORTTest.case_topk1
+  python3 test/script/run_st.py -r npu -v a3 -t tmrgsort -g TMRGSORTTest.case_topk1
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
 
   # TSTORE
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tstore -g TStoreTest.ND_float_1_1_1_2_128_1_1_1_2_128
+  python3 test/script/run_st.py -r npu -v a3 -t tstore -g TStoreTest.ND_float_1_1_1_2_128_1_1_1_2_128
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case1
 
   # TROWSUM
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t trowsum -g TROWSUMTest.case1
+  python3 test/script/run_st.py -r npu -v a3 -t trowsum -g TROWSUMTest.case1
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test1
 
@@ -225,19 +258,19 @@ else
 
   # TGATHER
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tgather -g TGATHERTest.case1_float_P0101
+  python3 test/script/run_st.py -r npu -v a3 -t tgather -g TGATHERTest.case1_float_P0101
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float
 
   # TTRANS
   # A3
-  # python3 test/script/run_st.py -r sim -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8_param
+  # python3 test/script/run_st.py -r npu -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8_param
   #A5
   python3 test/script/run_st.py -r sim -v a5 -t ttrans -g TTRANSTest.case1
 
   # TSORT32
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tsort32 -g TSort32Test.case1
+  python3 test/script/run_st.py -r npu -v a3 -t tsort32 -g TSort32Test.case1
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
 

@@ -22,6 +22,8 @@ constexpr const int BLOCK_LEN = 16;
 
 constexpr const int CUBE_BLOCK_SIZE = 512;
 
+constexpr const int C0_SIZE_BYTE = 32;
+
 enum class RoundMode : uint8_t {
     CAST_NONE = 0,
     CAST_RINT = 1,  // round to nearest, tie to even
@@ -35,6 +37,13 @@ enum class RoundMode : uint8_t {
 enum class TCopyMode : uint8_t{
     SHALLOW_COPY = 0,
     DEEP_COPY = 1,
+};
+
+enum class L0cToUBMode : uint8_t{
+    SingleModeUB0 = 0,
+    SingleModeUB1 = 1,
+    DualModeSplitM = 2,
+    DualModeSplitN = 3,
 };
 }
 #endif

@@ -11,9 +11,13 @@ def gen_golden_data(param):
     valid_row = param.valid_row
     col = param.col
     valid_col = param.valid_col
-
-    input_arr = np.random.uniform(low=0, high=16, size=(row, col)).astype(data_type)
-    output_arr = np.zeros((row))
+    value_max = 1
+    value_min = -1
+    if data_type == np.int8:
+            value_max = 5
+            value_min = -5
+    input_arr = np.random.uniform(low=value_min, high=value_max, size=(row, col)).astype(data_type)
+    output_arr = np.zeros((col))
     for i in range(valid_row):
         for j in range(valid_col):
             output_arr[j] += input_arr[i, j]
@@ -34,7 +38,21 @@ class tcolsumParams:
 
 if __name__ == "__main__":
     case_params_list = [
-        tcolsumParams("TCOLSUMTest.case1", np.float32, 64, 64, 64, 64),
+        tcolsumParams("TCOLSUMTest.case01", np.float32, 1, 1, 256, 255),
+        tcolsumParams("TCOLSUMTest.case02", np.float32, 16, 16, 128, 127),
+        tcolsumParams("TCOLSUMTest.case03", np.float32, 16, 15, 256, 255),
+        tcolsumParams("TCOLSUMTest.case04", np.float32, 64, 63, 128, 127),
+        tcolsumParams("TCOLSUMTest.case05", np.float32, 64, 64, 128, 128),
+        tcolsumParams("TCOLSUMTest.case11", np.float16, 1, 1, 256, 255),
+        tcolsumParams("TCOLSUMTest.case12", np.float16, 16, 16, 128, 127),
+        tcolsumParams("TCOLSUMTest.case13", np.float16, 16, 15, 256, 255),
+        tcolsumParams("TCOLSUMTest.case14", np.float16, 64, 63, 128, 127),
+        tcolsumParams("TCOLSUMTest.case15", np.float16, 64, 64, 128, 128),
+        tcolsumParams("TCOLSUMTest.case21", np.int8, 1, 1, 256, 255),
+        tcolsumParams("TCOLSUMTest.case22", np.int8, 16, 16, 128, 127),
+        tcolsumParams("TCOLSUMTest.case23", np.int8, 16, 15, 256, 255),
+        tcolsumParams("TCOLSUMTest.case24", np.int8, 64, 63, 128, 127),
+        tcolsumParams("TCOLSUMTest.case25", np.int8, 64, 64, 128, 128),
     ]
 
     for i, case in enumerate(case_params_list):

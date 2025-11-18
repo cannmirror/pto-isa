@@ -138,6 +138,11 @@ __PTO_INSTR__ void TMOV(DstTileData &dst, SrcTileData &src) {
   MAP_INSTR_IMPL(TMOV, dst, src)
 }
 
+template <typename DstTileData, typename SrcTileData, L0cToUBMode mode>
+__PTO_INSTR__ void TMOV(DstTileData &dst, SrcTileData &src) {
+  TMOV_IMPL<DstTileData, SrcTileData, mode>(dst, src);
+}
+
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
 __PTO_INSTR__ void TROWSUM(TileDataOut &dst, TileDataIn &src,
                            TileDataTmp &tmp) {
@@ -145,9 +150,8 @@ __PTO_INSTR__ void TROWSUM(TileDataOut &dst, TileDataIn &src,
 }
 
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
-__PTO_INSTR__ void TCOLSUM(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp,
-                           bool IsBinary) {
-  MAP_INSTR_IMPL(TCOLSUM, dst, src)
+__PTO_INSTR__ void TCOLSUM(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, bool isBinary) {
+  MAP_INSTR_IMPL(TCOLSUM, dst, src, tmp, isBinary)
 }
 
 template <typename TileDataDst, typename TileDataSrc>

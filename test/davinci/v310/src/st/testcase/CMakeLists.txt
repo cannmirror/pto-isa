@@ -106,6 +106,8 @@ set(ALL_TESTCASES
     tcvt
     tsub
     tadd
+    tmov
+    tmov_l0c2ub
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
