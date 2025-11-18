@@ -44,12 +44,13 @@ protected:
     {
         std::vector<T> golden(dstByteSize);
         std::vector<T> result(dstByteSize);
+        float eps = sizeof(T) == 4 ? 0.001f : 0.005f;
         ReadFile(GetGoldenDir() + "/golden.bin", dstByteSize, golden.data(), dstByteSize);
         ReadFile(GetGoldenDir() + "/output.bin", dstByteSize, result.data(), dstByteSize);
         if (printAllEn) {
-            return ResultCmp(golden, result, 0.001f, 0, 1000, true);
+            return ResultCmp(golden, result, eps, 0, 1000, true);
         }
-        return ResultCmp(golden, result, 0.001f, 0, 1000, false, true);
+        return ResultCmp(golden, result, eps, 0, 1000, false, true);
     }
 
     template <uint32_t caseId, typename T, int srcRow, int srcValidRow, int dstRow, int col, int validCol>
@@ -80,8 +81,78 @@ protected:
     }
 };
 
-TEST_F(TCOLSUMTest, case1)
+TEST_F(TCOLSUMTest, case01)
 {
-    bool ret = TCOLSUMTestFramework<1, float, 64, 64, 1, 64, 64>();
+    bool ret = TCOLSUMTestFramework<1, float, 1, 1, 1, 256, 255>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case02)
+{
+    bool ret = TCOLSUMTestFramework<2, float, 16, 16, 1, 128, 127>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case03)
+{
+    bool ret = TCOLSUMTestFramework<3, float, 16, 15, 1, 256, 255>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case04)
+{
+    bool ret = TCOLSUMTestFramework<4, float, 64, 63, 1, 128, 127>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case05)
+{
+    bool ret = TCOLSUMTestFramework<5, float, 64, 64, 1, 128, 128>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case11)
+{
+    bool ret = TCOLSUMTestFramework<11, int16_t, 1, 1, 1, 256, 255>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case12)
+{
+    bool ret = TCOLSUMTestFramework<12, int16_t, 16, 16, 1, 128, 127>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case13)
+{
+    bool ret = TCOLSUMTestFramework<13, int16_t, 16, 15, 1, 256, 255>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case14)
+{
+    bool ret = TCOLSUMTestFramework<14, int16_t, 64, 63, 1, 128, 127>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case15)
+{
+    bool ret = TCOLSUMTestFramework<15, int16_t, 64, 64, 1, 128, 128>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case21)
+{
+    bool ret = TCOLSUMTestFramework<21, int8_t, 1, 1, 1, 256, 255>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case22)
+{
+    bool ret = TCOLSUMTestFramework<22, int8_t, 16, 16, 1, 128, 127>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case23)
+{
+    bool ret = TCOLSUMTestFramework<23, int8_t, 16, 15, 1, 256, 255>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case24)
+{
+    bool ret = TCOLSUMTestFramework<24, int8_t, 64, 63, 1, 128, 127>();
+    EXPECT_TRUE(ret);
+}
+TEST_F(TCOLSUMTest, case25)
+{
+    bool ret = TCOLSUMTestFramework<25, int8_t, 64, 64, 1, 128, 128>();
     EXPECT_TRUE(ret);
 }

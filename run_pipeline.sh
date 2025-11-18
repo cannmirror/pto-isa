@@ -18,6 +18,7 @@ python3 test/script/build_st.py -r npu -v a5 -t textract -g TEXTRACTTest.case1
 python3 test/script/build_st.py -r npu -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
 # python3 test/script/build_st.py -r npu -v a5 -t tstore -g TStoreTest.case1
 python3 test/script/build_st.py -r npu -v a5 -t trowsum -g TROWSUMTest.test1
+python3 test/script/build_st.py -r npu -v a5 -t tcolsum -g TCOLSUMTest.test01
 python3 test/script/build_st.py -r npu -v a5 -t trowexpand -g TROWEXPANDTest.case0
 python3 test/script/build_st.py -r npu -v a5 -t tgather -g TGATHERTest.case1_float
 python3 test/script/build_st.py -r npu -v a5 -t ttrans -g TTRANSTest.case1
