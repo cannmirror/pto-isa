@@ -7,7 +7,7 @@ python3 test/script/build_st.py -r npu -v a3 -t textract -g TEXTRACTTest.case1_h
 python3 test/script/build_st.py -r npu -v a3 -t tmov -g TMOVTest.case4_bias_dynamic_half_half_0_1_1_0_0_param
 python3 test/script/build_st.py -r npu -v a3 -t tmov -g TMOVTest.case11_scaling_static_int32_int8_0_1_0_1_0_param
 python3 test/script/build_st.py -r npu -v a3 -t tmrgsort -g TMRGSORTTest.case_topk1
-# python3 test/script/run_st.py -r npu -v a3 -t tstore -g TStoreTest.ND_float_1_1_1_2_128_1_1_1_2_128
+python3 test/script/run_st.py -r npu -v a3 -t tstore -g TStoreTest.ND_int16_t_1_2_1_23_121_3_2_2_35_125
 python3 test/script/build_st.py -r npu -v a3 -t trowsum -g TROWSUMTest.case1
 python3 test/script/build_st.py -r npu -v a3 -t tgather -g TGATHERTest.case1_float_P0101
 python3 test/script/build_st.py -r npu -v a3 -t tsort32 -g TSort32Test.case1

@@ -176,7 +176,9 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case2
 
   # TLOAD
-  # A3&A5
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tload_gm2mat
+  # A5
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_128_128_VT_128_128_BLK1
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_64_VT_256_64_BLK8
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX
@@ -278,6 +280,8 @@ else
   # python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
 
   # TLOAD
-  # A3&A5
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tload_gm2mat -g TLoadGM2L1Test.ND2NZ_bfloat16_t_1_1_1_1_1_1_1_1_1_1
+  # A5
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX
 fi
