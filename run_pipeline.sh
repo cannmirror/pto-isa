@@ -28,3 +28,5 @@ python3 test/script/build_st.py -r npu -v a5 -t tsort32 -g TSort32Test.case1
 python3 test/script/build_st.py -r npu -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX
 python3 test/script/build_st.py -r npu -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
 python3 test/script/build_st.py -r npu -v a5 -t tsub -g TSUBTest.case_float_64x64_64x64_64x64
+python3 test/script/build_st.py -r npu -v a5 -t tmov -g TMOVTest.case_bias_dynamic8
+python3 test/script/build_st.py -r npu -v a5 -t tmov -g TMOVTest.case_fixpipe1
