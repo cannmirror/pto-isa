@@ -129,3 +129,18 @@ TEST_F(TStoreTest, case9)
 {
     test_tstore<2, uint8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>();
 }
+
+TEST_F(TStoreTest, case10)
+{
+    test_tstore<0, int64_t, 1, 1, 2, 16, 16, 2, 2, 2, 16, 16>();
+}
+
+TEST_F(TStoreTest, case11)
+{
+    test_tstore<1, uint64_t, 1, 1, 2, 16, 64, 2, 2, 2, 16, 64>();
+}
+
+TEST_F(TStoreTest, case12)
+{
+    test_tstore<0, int64_t, 1, 1, 2, 39, 47, 2, 2, 2, 43, 50>();
+}
