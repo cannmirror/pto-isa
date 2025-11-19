@@ -33,7 +33,7 @@ if [ "$1" = "dailyBuild" ]; then
 
   # TMOV
   # A3
-
+  python3 test/script/run_st.py -r sim -v a3 -t tmov
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case1
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case2
