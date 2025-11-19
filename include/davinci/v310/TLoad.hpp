@@ -89,10 +89,25 @@ __aicore__ constexpr auto getPadValue()
 
 template <typename TileData, typename GlobalData>
 __aicore__ PTO_INLINE void TLoadInstr(__ubuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
-    uint16_t nBurst, uint16_t lenBurst, uint64_t gmStride, uint32_t ubStride, bool ubPad)
+    uint32_t nBurst, uint32_t lenBurst, uint64_t gmStride, uint32_t ubStride, bool ubPad)
 {
-        copy_gm_to_ubuf_align_v2(dst, src, 0 /*sid*/, nBurst, lenBurst, 
-            0 /*left padding count*/, 0 /*right padding count*/, ubPad /*data select bit*/, 0 /*l2 cache ctl*/, gmStride, ubStride);
+    if constexpr (sizeof(typename TileData::DType) == 1) {
+        copy_gm_to_ubuf_align_v2(reinterpret_cast<__ubuf__ uint8_t*>(dst), reinterpret_cast<__gm__ uint8_t*>(src),
+                                    0 /*sid*/, nBurst, lenBurst, 0 /*left padding count*/, 0 /*right padding count*/,
+                                    ubPad /*data select bit*/, 0 /*l2 cache ctl*/, gmStride, ubStride);
+    } else if constexpr (sizeof(typename TileData::DType) == 2) {
+        copy_gm_to_ubuf_align_v2(reinterpret_cast<__ubuf__ uint16_t*>(dst), reinterpret_cast<__gm__ uint16_t*>(src),
+                                    0 /*sid*/, nBurst, lenBurst, 0 /*left padding count*/, 0 /*right padding count*/,
+                                    ubPad /*data select bit*/, 0 /*l2 cache ctl*/, gmStride, ubStride);
+    } else if constexpr (sizeof(typename TileData::DType) == 4) {
+        copy_gm_to_ubuf_align_v2(reinterpret_cast<__ubuf__ uint32_t*>(dst), reinterpret_cast<__gm__ uint32_t*>(src),
+                                    0 /*sid*/, nBurst, lenBurst, 0 /*left padding count*/, 0 /*right padding count*/,
+                                    ubPad /*data select bit*/, 0 /*l2 cache ctl*/, gmStride, ubStride);
+    } else if constexpr (sizeof(typename TileData::DType) == 8) {
+        copy_gm_to_ubuf_align_v2(reinterpret_cast<__ubuf__ uint32_t*>(dst), reinterpret_cast<__gm__ uint32_t*>(src),
+                                    0 /*sid*/, nBurst, lenBurst, 0 /*left padding count*/, 0 /*right padding count*/,
+                                    ubPad /*data select bit*/, 0 /*l2 cache ctl*/, gmStride, ubStride);
+    }
 }
 
 template <typename TileData, typename GlobalData>
@@ -110,8 +125,8 @@ __tf__ __aicore__ PTO_INLINE void TLoad(typename TileData::TileDType __out__ dst
 	}
     if constexpr (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) 
 	{
-        uint16_t nBurst = gShape3;
-        uint16_t lenBurst = validCol * sizeof(typename TileData::DType);
+        uint32_t nBurst = gShape3;
+        uint32_t lenBurst = validCol * sizeof(typename TileData::DType);
         uint64_t gmStride = gStride3 * sizeof(typename TileData::DType);
         uint32_t ubStride = TileData::Cols * sizeof(typename TileData::DType);
         typename GlobalData::DType *srcAddrP = srcAddr;
@@ -159,8 +174,8 @@ __tf__ __aicore__ PTO_INLINE void TLoad(typename TileData::TileDType __out__ dst
 			}
 		}		
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
-        uint16_t nBurst = gShape4;
-        uint16_t lenBurst = validRow * sizeof(typename TileData::DType);
+        uint32_t nBurst = gShape4;
+        uint32_t lenBurst = validRow * sizeof(typename TileData::DType);
         uint64_t gmGapValue = (gStride4 - gShape3) * sizeof(typename TileData::DType);
         uint64_t gmStride = gStride4 * sizeof(typename TileData::DType);
         uint32_t ubStride = TileData::Rows * sizeof(typename TileData::DType);		
@@ -186,7 +201,7 @@ __tf__ __aicore__ PTO_INLINE void TLoad(typename TileData::TileDType __out__ dst
         }
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
         constexpr uint32_t c0_size = 32;
-        uint16_t nBurst = gShape1;
+        uint32_t nBurst = gShape1;
         uint32_t lenBurst = validRow * c0_size;
         uint64_t gmStride = gStride1 * sizeof(typename TileData::DType);
         uint32_t ubStride = TileData::Rows * c0_size;

@@ -67,7 +67,10 @@ if __name__ == "__main__":
         "TStoreTest.case6",
         "TStoreTest.case7",
         "TStoreTest.case8",
-        "TStoreTest.case9"
+        "TStoreTest.case9",
+        "TStoreTest.case10",
+        "TStoreTest.case11",
+        "TStoreTest.case12",
     ]
 
     case_params_list = [
@@ -79,7 +82,10 @@ if __name__ == "__main__":
         GlobalTensorInfo(np.int8, "DN", 2, 3, 7, 47, 13, 2, 3, 7, 55, 29),
         GlobalTensorInfo(np.float32, "NZ", 1, 1, 1, 16, 8, 1, 1, 2, 16, 8),
         GlobalTensorInfo(np.int16, "NZ", 2, 2, 2, 16, 16, 5, 3, 3, 16, 16),
-        GlobalTensorInfo(np.uint8, "NZ", 1, 2, 1, 16, 32, 2, 4, 2, 16, 32)
+        GlobalTensorInfo(np.uint8, "NZ", 1, 2, 1, 16, 32, 2, 4, 2, 16, 32),
+        GlobalTensorInfo(np.int64, "ND", 1, 1, 2, 16, 16, 2, 2, 2, 16, 16),
+        GlobalTensorInfo(np.uint64, "DN", 1, 1, 2, 16, 64, 2, 2, 2, 16, 64),
+        GlobalTensorInfo(np.int64, "ND", 1, 1, 2, 39, 47, 2, 2, 2, 43, 50),
     ]
 
     for i, case_name in enumerate(case_name_list):
