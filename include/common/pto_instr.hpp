@@ -144,6 +144,16 @@ __PTO_INSTR__ void TMOV(DstTileData &dst, SrcTileData &src) {
   TMOV_IMPL<DstTileData, SrcTileData, mode>(dst, src);
 }
 
+template <typename DstTileData, typename SrcTileData, L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
+__PTO_INSTR__ void TMOV(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar) {
+  TMOV_IMPL<DstTileData, SrcTileData, mode>(dst, src, preQuantScalar);
+}
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
+__PTO_INSTR__ void TMOV(DstTileData &dst, SrcTileData &src, FpTileData &fp) {
+  TMOV_IMPL<DstTileData, SrcTileData, FpTileData, mode>(dst, src, fp);
+}
+
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
 __PTO_INSTR__ void TROWSUM(TileDataOut &dst, TileDataIn &src,
                            TileDataTmp &tmp) {

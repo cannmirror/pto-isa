@@ -157,28 +157,36 @@ __aicore__ PTO_INLINE constexpr void CommonCheck()
                     "TMov: SrcTile Invalid Fractal.");
 }
 
-template <typename DstType, typename SrcType>
-__aicore__ PTO_INLINE constexpr QuantMode_t GetQuantPre()
-{
-    static_assert(std::is_same<SrcType, float>::value, "Src data type only support float.");
-    static_assert(std::is_same<DstType, half>::value || std::is_same<DstType, bfloat16_t>::value ||
-                    std::is_same<DstType, float>::value,
-        "Dst data type not support when src type is float.");
-    if constexpr (std::is_same<DstType, half>::value) {
-        return QuantMode_t::F322F16;
-    } else if constexpr (std::is_same<DstType, bfloat16_t>::value) {
-        return QuantMode_t::F322BF16;
-    }
-    return QuantMode_t::NoQuant;
-}
-
-template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType>
+template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isQuant>
 __aicore__ PTO_INLINE void CheckTMovL0cToUBValid()
 {
+    static_assert((SrcTileData::Loc == Location::Acc), "Source location only support Acc.");
+    static_assert((DstTileData::Loc == Location::Vec), "Destination location only support Vec.");
     static_assert((!SrcTileData::isRowMajor && SrcTileData::SFractal == SLayout::RowMajor),
         "Src fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
     static_assert(((std::is_same<SrcType, float>::value) || (std::is_same<SrcType, int32_t>::value)),
         "Src data type only support float or int32_t.");
+    if constexpr (isQuant) {
+        if constexpr (std::is_same<SrcType, float>::value) {
+            static_assert((std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value) ||
+                              (std::is_same<DstType, hifloat8_t>::value) || (std::is_same<DstType, half>::value) ||
+                              (std::is_same<DstType, bfloat16_t>::value),
+                "The output data type must be restricted to int8_t/uint8_t/hifloat/bfloat8_t/half/bfloat16_t.");
+        } else if constexpr (std::is_same<SrcType, int32_t>::value) {
+            static_assert((std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value) ||
+                              (std::is_same<DstType, half>::value) || (std::is_same<DstType, bfloat16_t>::value),
+                "The output data type must be restricted to int8_t/uint8_t/half/bfloat16_t.");
+        }
+    } else {
+        if constexpr (std::is_same<SrcType, float>::value) {
+            static_assert((std::is_same<DstType, half>::value) || (std::is_same<DstType, bfloat16_t>::value) ||
+                              (std::is_same<DstType, float>::value),
+                "The output data type must be restricted to half/bfloat16_t/float.");
+        } else if constexpr (std::is_same<SrcType, int32_t>::value) {
+            static_assert((std::is_same<DstType, int32_t>::value),
+                "The output data type must be restricted to int32_t.");
+        }
+    }
     static_assert(((DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
                     (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor)),
         "Only nz2nz and nz2nd are supported Currently.");
@@ -232,8 +240,8 @@ __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
         }
     } else if constexpr (SrcTileData::Loc == Location::Acc) {
         if constexpr (DstTileData::Loc == Location::Vec) {
-            CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
-            constexpr QuantMode_t quantPre = GetQuantPre<typename DstTileData::DType, typename SrcTileData::DType>();
+            CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, false>();
+            constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
             uint16_t m = src.GetValidRow();
             uint16_t n = src.GetValidCol();
             TMovL0cToUB<DstTileData, SrcTileData, L0cToUBMode::SingleModeUB0, quantPre>(dst.data(), src.data(), m, n);
@@ -244,15 +252,49 @@ __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 template <typename DstTileData, typename SrcTileData, L0cToUBMode mode>
 __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
-    static_assert(
-        (DstTileData::Loc == Location::Vec && SrcTileData::Loc == Location::Acc), "Only support l0c(Acc) -> ub(Vec)");
-    CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
+    CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, false>();
     static_assert(((mode == L0cToUBMode::SingleModeUB0) || (mode == L0cToUBMode::SingleModeUB1)) ||
                     (std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value),
         "Quant is not support in dual Dst Mode.");
-    constexpr QuantMode_t quantPre = GetQuantPre<typename DstTileData::DType, typename SrcTileData::DType>();
+    constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
     uint16_t m = src.GetValidRow();
     uint16_t n = src.GetValidCol();
+    TMovL0cToUB<DstTileData, SrcTileData, mode, quantPre>(dst.data(), src.data(), m, n);
+}
+
+template <typename DstTileData, typename SrcTileData, L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
+__aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
+{
+    static_assert((mode == L0cToUBMode::SingleModeUB0) || (mode == L0cToUBMode::SingleModeUB1),
+        "Quant is not support in dual Dst Mode.");
+    CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    constexpr QuantMode_t quantPre = GetScalarPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    set_quant_pre(preQuantScalar);
+    uint16_t m = src.GetValidRow();
+    uint16_t n = src.GetValidCol();
+    TMovL0cToUB<DstTileData, SrcTileData, mode, quantPre>(dst.data(), src.data(), m, n);
+}
+
+template <typename FpTileData>
+__tf__ __aicore__ PTO_INLINE void SetFPC(typename FpTileData::TileDType __in__ fp)
+{
+    __fbuf__ typename FpTileData::DType *dstAddrFp = (__fbuf__ typename FpTileData::DType *)__cce_get_tile_ptr(fp);
+    uint64_t deqTensorAddr = ((uint64_t)dstAddrFp >> static_cast<uint64_t>(7)) << 8;
+    set_fpc(deqTensorAddr);
+}
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData,
+    L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
+__aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
+{
+    static_assert((mode == L0cToUBMode::SingleModeUB0) || (mode == L0cToUBMode::SingleModeUB1),
+        "Quant is not support in dual Dst Mode.");
+    CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    static_assert(FpTileData::Loc == Location::Scaling, "Fp only support Scaling.");
+    constexpr QuantMode_t quantPre = GetVectorPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    uint16_t m = src.GetValidRow();
+    uint16_t n = src.GetValidCol();
+    SetFPC<FpTileData>(fp.data());
     TMovL0cToUB<DstTileData, SrcTileData, mode, quantPre>(dst.data(), src.data(), m, n);
 }
 }  // namespace pto
