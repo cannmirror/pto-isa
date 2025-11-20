@@ -100,6 +100,7 @@ set(ALL_TESTCASES
     textract
     trowsum
     tcolsum
+    tcolmax
     tsort32
     trowexpand
     tgather
