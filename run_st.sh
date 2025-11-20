@@ -96,7 +96,26 @@ if [ "$1" = "dailyBuild" ]; then
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tmrgsort
   # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_multi1
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_multi2
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_multi3
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_multi4
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_exhausted1
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_exhausted2
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_single1
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_single2
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_single3
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_single4
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_single5
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_single6
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_single7
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_single8
   python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk2
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk3
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk4
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk5
+  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk6
 
   # TSTORE
   # A3
