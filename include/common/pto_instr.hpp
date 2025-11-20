@@ -1,6 +1,7 @@
 #ifndef PTO_INSTR_HPP
 #define PTO_INSTR_HPP
 
+#include "common/debug.h"
 #include "common/pto_instr_impl.hpp"
 
 #define MAP_INSTR_IMPL(API, ...) API##_IMPL(__VA_ARGS__);
