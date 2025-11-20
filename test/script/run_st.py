@@ -58,7 +58,7 @@ def set_env_variables(run_mode, soc_version):
         simulator_lib_path = os.path.join(ascend_home, "tools", "simulator", soc_version, "lib")
         os.environ["LD_LIBRARY_PATH"] = f"{simulator_lib_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
 
-def build_project(run_mode, soc_version, testcase = "all"):
+def build_project(run_mode, soc_version, testcase = "all", debug_enable = False):
     original_dir = os.getcwd()
     # 清理并创建build目录
     build_dir = "build"
@@ -75,6 +75,8 @@ def build_project(run_mode, soc_version, testcase = "all"):
             f"-DTEST_CASE={testcase}",
             ".."
         ]
+        if debug_enable :
+            cmake_cmd.append("-DDEBUG_MODE=ON")
 
         subprocess.run(
             cmake_cmd,
