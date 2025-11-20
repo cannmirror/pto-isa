@@ -32,7 +32,6 @@ __aicore__ PTO_INLINE void CheckBiasValid()
     static_assert(std::is_same_v<CType, BiasType>, "No supported bias data type");
     static_assert((TileBias::Loc == Location::Bias) && (TileBias::Rows == 1) && (TileBias::isRowMajor),
         "Non-conforming bias fractal");
-    static_assert(TileBias::Cols * sizeof(BiasType) <= 4 * 1024, "Bias addr overflow");
 }
 
 template <typename TileAcc, typename TileLeft, typename TileRight>

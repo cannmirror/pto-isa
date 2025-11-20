@@ -71,6 +71,28 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe3
   python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe4
   python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_6
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_7
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_8
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_4
   # TEXTRACT
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t textract
@@ -263,6 +285,7 @@ else
   python3 test/script/run_st.py -r sim -v a3 -t tmov -g TMOVTest.case14_scaling_dynamic_int32_int8_0_1_1_1_0_param
   # A5
   python3 test/script/run_st.py -r sim -v a3 -t tmov -g TMOVTest.case_bias1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_1
   # TEXTRACT
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t textract -g TEXTRACTTest.case1_half_0_1_param
