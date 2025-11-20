@@ -241,9 +241,9 @@ else
 
   # TMOV
   # A3
-
+  python3 test/script/run_st.py -r sim -v a3 -t tmov -g TMOVTest.case14_scaling_dynamic_int32_int8_0_1_1_1_0_param
   # A5
-
+  python3 test/script/run_st.py -r sim -v a3 -t tmov -g TMOVTest.case_bias1
   # TEXTRACT
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t textract -g TEXTRACTTest.case1_half_0_1_param
