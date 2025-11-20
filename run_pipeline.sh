@@ -22,6 +22,7 @@ python3 test/script/build_st.py -r npu -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2
 # python3 test/script/build_st.py -r npu -v a5 -t tstore -g TStoreTest.case1
 python3 test/script/build_st.py -r npu -v a5 -t trowsum -g TROWSUMTest.test1
 python3 test/script/build_st.py -r npu -v a5 -t tcolsum -g TCOLSUMTest.test01
+python3 test/script/build_st.py -r npu -v a5 -t tcolmax -g TCOLMAXTest.test01
 python3 test/script/build_st.py -r npu -v a5 -t trowexpand -g TROWEXPANDTest.case0
 python3 test/script/build_st.py -r npu -v a5 -t tgather -g TGATHERTest.case1_float
 python3 test/script/build_st.py -r npu -v a5 -t ttrans -g TTRANSTest.case1

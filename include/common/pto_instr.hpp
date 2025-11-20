@@ -165,6 +165,11 @@ __PTO_INSTR__ void TCOLSUM(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, 
   MAP_INSTR_IMPL(TCOLSUM, dst, src, tmp, isBinary)
 }
 
+template <typename TileDataOut, typename TileDataIn>
+__PTO_INSTR__ void TCOLMAX(TileDataOut &dst, TileDataIn &src) {
+  MAP_INSTR_IMPL(TCOLMAX, dst, src)
+}
+
 template <typename TileDataDst, typename TileDataSrc>
 __PTO_INSTR__ void TTRANS(TileDataDst &dst, TileDataSrc &src) {
   MAP_INSTR_IMPL(TTRANS, dst, src)

@@ -193,6 +193,35 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test24
   python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test25
 
+  # TCOLMAX
+  # A3
+  # python3 test/script/run_st.py -r sim -v a3 -t tcolmax
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test01
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test02
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test03
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test11
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test12
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test13
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test21
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test22
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test23
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test31
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test32
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test33
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test41
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test42
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test43
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test51
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test52
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test53
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test61
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test62
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test63
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test71
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test72
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test73
+
   # TROWEXPAND
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t trowexpand
@@ -309,6 +338,18 @@ else
   python3 test/script/run_st.py -r npu -v a3 -t trowsum -g TROWSUMTest.case1
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test1
+
+  # TCOLSUM
+  # A3
+  # python3 test/script/run_st.py -r sim -v a3 -t tcolsum -g TCOLMAXTest.test1
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test01
+
+  # TCOLMAX
+  # A3
+  # python3 test/script/run_st.py -r sim -v a3 -t tcolmax -g TCOLMAXTest.test1
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test01
 
   # TROWEXPAND
   # A3
