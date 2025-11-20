@@ -26,9 +26,9 @@
   } while (0)
 
 #ifdef _DEBUG
-#define ASSERT(condition, message) DEBUG_CHECK(condition, message)
+#define PTO_ASSERT(condition, message) DEBUG_CHECK(condition, message)
 #else
-#define ASSERT(condition, message) ((void)0)
+#define PTO_ASSERT(condition, message) ((void)0)
 #endif
 
 #endif
