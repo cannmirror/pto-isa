@@ -24,12 +24,22 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case3
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case4
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case5
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case6
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case7
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case8
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case9
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case10
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case1
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case2
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case3
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case4
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case5
   python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case6
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case7
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case8
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case9
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case10
+  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULBIASTest.case11
 
   # TMOV
   # A3
