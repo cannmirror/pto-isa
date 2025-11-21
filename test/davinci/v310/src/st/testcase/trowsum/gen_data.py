@@ -8,7 +8,7 @@ import numpy as np
 np.random.seed(19)
 
 
-def gen_golden_data(case_name, param):
+def gen_golden_data(param):
     src_type = param.datatype
     dst_type = param.datatype
     rows = param.row
@@ -23,29 +23,23 @@ def gen_golden_data(case_name, param):
     output_arr.tofile('golden.bin')
 
 class trowsumParams:
-    def __init__(self, datatype, row, col):
+    def __init__(self, name, datatype, row, col):
+        self.name = name
         self.datatype = datatype
         self.row = row
         self.col = col
 
 if __name__ == "__main__":
-    # 用例名称
-    case_name_list = [
-        "TROWSUMTest.test1",
-        "TROWSUMTest.test2",
-        "TROWSUMTest.test3"
-    ]
-    
-    case_params_list = [
-        trowsumParams(np.float32, 16, 16),
-        trowsumParams(np.float16, 16, 16),
-        trowsumParams(np.float32, 666, 666)
+    case_list = [
+        trowsumParams("TROWSUMTest.test1", np.float32, 16, 16),
+        trowsumParams("TROWSUMTest.test2", np.float16, 16, 16),
+        trowsumParams("TROWSUMTest.test3", np.float32, 666, 666)
     ]
 
-    for i, case_name in enumerate(case_name_list):
-        if not os.path.exists(case_name):
-            os.makedirs(case_name)
+    for case in case_list:
+        if not os.path.exists(case.name):
+            os.makedirs(case.name)
         original_dir = os.getcwd()
-        os.chdir(case_name)
-        gen_golden_data(case_name, case_params_list[i])
+        os.chdir(case.name)
+        gen_golden_data(case)
         os.chdir(original_dir)
