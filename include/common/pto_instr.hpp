@@ -180,6 +180,11 @@ __PTO_INSTR__ void TCOLMAX(TileDataOut &dst, TileDataIn &src) {
   MAP_INSTR_IMPL(TCOLMAX, dst, src)
 }
 
+template <typename TileData>
+__PTO_INSTR__ void TSELS(TileData &dst, TileData &src0, TileData &src1, uint8_t selectMode) {
+  MAP_INSTR_IMPL(TSELS, dst, src0, src1, selectMode)
+}
+
 template <typename TileDataDst, typename TileDataSrc>
 __PTO_INSTR__ void TTRANS(TileDataDst &dst, TileDataSrc &src) {
   MAP_INSTR_IMPL(TTRANS, dst, src)

@@ -71,6 +71,7 @@ tmrgsort
 tgather
 tsort32
 tstore
+tsels
 tcopy
 trowexpand
 tcvt
