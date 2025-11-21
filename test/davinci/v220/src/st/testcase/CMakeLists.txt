@@ -77,6 +77,7 @@ tcvt
 tadd
 tsub
 tload_gm2mat
+tstore_acc2gm
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

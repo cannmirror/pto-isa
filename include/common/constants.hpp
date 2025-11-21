@@ -45,5 +45,10 @@ enum class L0cToUBMode : uint8_t{
     DualModeSplitM = 2,
     DualModeSplitN = 3,
 };
+
+enum class AtomicType : uint8_t {
+    AtomicNone = 0,
+    AtomicAdd = 1,
+};
 }
 #endif

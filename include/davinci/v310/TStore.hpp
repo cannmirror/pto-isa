@@ -101,7 +101,8 @@ namespace pto
             }
         }
 
-    template <typename TileData, typename GlobalData>
+
+    template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
     __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src) {
         static_assert((sizeof(typename TileData::DType) == 1) || (sizeof(typename TileData::DType) == 2) ||
                           (sizeof(typename TileData::DType) == 4) || (sizeof(typename TileData::DType) == 8),
