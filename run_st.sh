@@ -393,4 +393,22 @@ else
   python3 test/script/run_st.py -r npu -v a3 -t tload_gm2mat -g TLoadGM2L1Test.ND2NZ_bfloat16_t_1_1_1_1_1_1_1_1_1_1
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX
+
+  # TRSQRT
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64
+
+  # TSQRT
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64
+
+  # TEXP
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t texp -g TEXPTest.case_float_64x64_64x64_64x64
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t texp -g TEXPTest.case_float_64x64_64x64_64x64
 fi

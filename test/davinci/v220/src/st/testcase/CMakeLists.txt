@@ -80,6 +80,9 @@ tsub
 tmins
 tload_gm2mat
 tstore_acc2gm
+trsqrt
+tsqrt
+texp
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

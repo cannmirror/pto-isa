@@ -199,6 +199,21 @@ template <typename TileDataDst, typename TileDataSrc>
 __PTO_INSTR__ void TROWEXPAND(TileDataDst &dst, TileDataSrc &src) {
   MAP_INSTR_IMPL(TROWEXPAND, dst, src)
 }
+
+template <typename TileData>
+__PTO_INSTR__ void TRSQRT(TileData &dst, TileData &src) {
+  MAP_INSTR_IMPL(TRSQRT, dst, src)
+}
+
+template <typename TileData>
+__PTO_INSTR__ void TSQRT(TileData &dst, TileData &src) {
+  MAP_INSTR_IMPL(TSQRT, dst, src)
+}
+
+template <typename TileData>
+__PTO_INSTR__ void TEXP(TileData &dst, TileData &src) {
+  MAP_INSTR_IMPL(TEXP, dst, src)
+}
 } // namespace pto
 
 #endif

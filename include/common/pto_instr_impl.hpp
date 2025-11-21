@@ -25,6 +25,7 @@
 #include "davinci/v220/TPartAdd.hpp"
 #include "davinci/v220/TRowExpand.hpp"
 #include "davinci/v220/TColSum.hpp"
+#include "davinci/v220/TUnaryOp.hpp"
 #endif
 
 #ifdef __DAV_V310
@@ -47,6 +48,7 @@
 #include "davinci/v310/TCopy.hpp"
 #include "davinci/v310/TPartAdd.hpp"
 #include "davinci/v310/TGather.hpp"
+#include "davinci/v310/TUnaryOp.hpp"
 #endif
 
 #endif
