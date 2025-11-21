@@ -284,6 +284,10 @@ if [ "$1" = "dailyBuild" ]; then
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tcopy
 
+  # TMINS
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tmins
+
   # TSUB
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tsub
@@ -379,6 +383,10 @@ else
 
   #A5
   # python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
+
+  # TMINS
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tmins
 
   # TLOAD
   # A3

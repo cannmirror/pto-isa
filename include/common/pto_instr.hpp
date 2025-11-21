@@ -190,6 +190,11 @@ __PTO_INSTR__ void TTRANS(TileDataDst &dst, TileDataSrc &src) {
   MAP_INSTR_IMPL(TTRANS, dst, src)
 }
 
+template <typename TileData, typename T>
+__PTO_INSTR__ void TMINS(TileData &dst, TileData &src, T scalar) {
+  MAP_INSTR_IMPL(TMINS, dst, src, scalar)
+}
+
 template <typename TileDataDst, typename TileDataSrc>
 __PTO_INSTR__ void TROWEXPAND(TileDataDst &dst, TileDataSrc &src) {
   MAP_INSTR_IMPL(TROWEXPAND, dst, src)
