@@ -77,6 +77,7 @@ trowexpand
 tcvt
 tadd
 tsub
+tmins
 tload_gm2mat
 tstore_acc2gm
 )

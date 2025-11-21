@@ -5,6 +5,7 @@
 #ifdef __DAV_V220
 #include "davinci/v220/TAssign.hpp"
 #include "davinci/v220/TAdd.hpp"
+#include "davinci/v220/TMins.hpp"
 #include "davinci/v220/TSub.hpp"
 #include "davinci/v220/TSels.hpp"
 #include "davinci/v220/TLoad.hpp"
