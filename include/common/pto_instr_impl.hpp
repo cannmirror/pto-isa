@@ -6,6 +6,7 @@
 #include "davinci/v220/TAssign.hpp"
 #include "davinci/v220/TAdd.hpp"
 #include "davinci/v220/TSub.hpp"
+#include "davinci/v220/TSels.hpp"
 #include "davinci/v220/TLoad.hpp"
 #include "davinci/v220/TCvt.hpp"
 #include "davinci/v220/TStore.hpp"
