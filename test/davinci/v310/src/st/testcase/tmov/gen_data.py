@@ -4,10 +4,12 @@
 import os
 
 import numpy as np
-import jax.numpy as jnp
+import ml_dtypes
 import copy
 import struct
 np.random.seed(19)
+
+bfloat16 = ml_dtypes.bfloat16
 
 def extract_quant_params(quant_gm):
     """
@@ -38,7 +40,7 @@ def saturation(value, min_val, max_val, target_type):
     将输入的浮点数进行饱和处理，并转换为目标类型
     """
     x_clamped = np.clip(value, min_val, max_val)  # 饱和处理
-    return np.round(x_clamped).astype(target_type).astype(target_type)  # 四舍五入并转换为目标类型
+    return np.round(x_clamped).astype(target_type)  # 四舍五入并转换为目标类型
 
 def qf2b8_pre(data, quant_gm):
     """
@@ -64,7 +66,7 @@ def qf2bf16_pre(data, quant_gm):
     float32 -> bfloat16
     """
     m1, offset, sign = extract_quant_params(quant_gm)
-    return saturation(data.astype(np.float32) * m1, 0x0080, 0x7F80, jnp.bfloat16)
+    return saturation(data.astype(np.float32) * m1, 0x0080, 0x7F80, bfloat16)
 
 def gen_golden_data(case_name, param):
     src_type = param.atype
@@ -103,7 +105,7 @@ def gen_golden_data(case_name, param):
                 elif dst_type == np.float16:
                     # float32 -> float16
                     quant_golden[i, j] = qf2f16_pre(golden[i, j], quant_tensor[j])
-                elif dst_type == jnp.bfloat16:
+                elif dst_type == bfloat16:
                     # float32 -> bfloat16
                     quant_golden[i, j] = qf2bf16_pre(golden[i, j], quant_tensor[j])
                 else:
@@ -155,17 +157,17 @@ if __name__ == "__main__":
         # L1_TO_BIAS
         tmovParams(np.float16, np.float16, np.float32, np.float32, np.float32, np.uint64, 64, 32, 96, 1, 0),    # float32 -> float32
         tmovParams(np.float32, np.float32, np.float32, np.float16, np.float32, np.uint64, 128, 64, 128, 1, 0),  # half -> float32
-        tmovParams(np.float32, np.float32, np.float32, jnp.bfloat16, np.float32, np.uint64, 64, 32, 80, 1, 0),  # bfloat16 -> float32
+        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 64, 32, 80, 1, 0),  # bfloat16 -> float32
         tmovParams(np.int8, np.int8, np.int32, np.int32, np.int32, np.uint64, 128, 64, 96, 1, 0),               # int32 -> int32
         tmovParams(np.int8, np.int8, np.int32, np.int32, np.int32, np.uint64, 31, 63, 32, 1, 0),                # 非对齐分型 int32 -> int32
         tmovParams(np.float16, np.float16, np.float32, np.float16, np.float32, np.uint64, 64, 32, 80, 1, 0),    # 动态tile float32 -> float32
-        tmovParams(np.float32, np.float32, np.float32, jnp.bfloat16, np.float32, np.uint64, 112, 48, 96, 1, 0), # 动态tile bfloat16 -> float32
-        tmovParams(np.float32, np.float32, np.float32, jnp.bfloat16, np.float32, np.uint64, 15, 63, 96, 1, 0),  # 动态tile 非对齐分型 bfloat16 -> float32
+        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 112, 48, 96, 1, 0), # 动态tile bfloat16 -> float32
+        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 15, 63, 96, 1, 0),  # 动态tile 非对齐分型 bfloat16 -> float32
 
         # L1_TO_FB: quant
         tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, np.uint64, 32, 128, 32, 0, 1),                # int32 -> int8
         tmovParams(np.int8, np.int8, np.int32, np.int32, np.float16, np.uint64, 96, 64, 32, 0, 1),              # int32 -> half
-        tmovParams(np.int8, np.int8, np.int32, np.int32, jnp.bfloat16, np.uint64, 128, 64, 96, 0, 1),           # int32 -> bfloat16
+        tmovParams(np.int8, np.int8, np.int32, np.int32, bfloat16, np.uint64, 128, 64, 96, 0, 1),           # int32 -> bfloat16
         tmovParams(np.float32, np.float32, np.float32, np.float32, np.int8, np.uint64, 112, 48, 96, 0, 1),      # float32 -> int8
         tmovParams(np.float32, np.float32, np.float32, np.float32, np.int8, np.uint64, 31, 31, 96, 0, 1),       # 非对齐分型 float32 -> int8
     ]
