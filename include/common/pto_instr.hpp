@@ -27,9 +27,19 @@ __PTO_INSTR__ void TLOAD(TileData &dst, GlobalData &src) {
   MAP_INSTR_IMPL(TLOAD, dst, src)
 }
 
-template <typename TileData, typename GlobalData>
+template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
 __PTO_INSTR__ void TSTORE(GlobalData &dst, TileData &src) {
-  MAP_INSTR_IMPL(TSTORE, dst, src)
+  TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src);
+}
+
+template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
+__PTO_INSTR__ void TSTORE(GlobalData &dst, TileData &src, uint64_t preQuantScalar) {
+  TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src, preQuantScalar);
+}
+
+template <typename TileData, typename GlobalData, typename FpTileData, AtomicType atomicType = AtomicType::AtomicNone>
+__PTO_INSTR__ void TSTORE(GlobalData &dst, TileData &src, FpTileData &fp) {
+  TSTORE_IMPL<TileData, GlobalData, FpTileData, atomicType>(dst, src, fp);
 }
 
 template <typename TileAcc, typename TileLeft, typename TileRight>

@@ -143,26 +143,18 @@ if [ "$1" = "dailyBuild" ]; then
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tstore
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_multi1
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_multi2
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_multi3
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_multi4
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_exhausted1
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_exhausted2
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_single1
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_single2
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_single3
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_single4
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_single5
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_single6
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_single7
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_single8
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_topk1
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_topk2
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_topk3
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_topk4
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_topk5
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case_topk6
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case1
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case2
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case3
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case4
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case5
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case6
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case7
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case8
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case9
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case10
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case11
+  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case12
 
 
   # TROWSUM
