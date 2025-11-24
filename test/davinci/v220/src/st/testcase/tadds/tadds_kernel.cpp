@@ -1,0 +1,100 @@
+#include <common/tile_tensor_impl.hpp>
+#include <common/pto_tileop.hpp>
+#include <common/constants.hpp>
+#include <acl/acl.h>
+
+using namespace std;
+using namespace pto;
+
+template<typename T, int row, int validRow, int col, int validCol>
+__aicore__ PTO_INLINE void runTAddS(__gm__ T *out, __gm__  T *src, T scalar) {
+    using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
+    using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
+    using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
+    GlobalData srcGlobal(src, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
+    GlobalData dstGlobal(out, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
+
+    using srcTileData = Tile<Location::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
+    using dstTileData = Tile<Location::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
+    srcTileData srcTile(validRow, validCol);
+    dstTileData dstTile(validRow, validCol);
+    TASSIGN(srcTile, 0x0);
+    TASSIGN(dstTile, 0x28000);
+
+    TLOAD(dstTile, dstGlobal);
+
+    TLOAD(srcTile, srcGlobal);
+
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    TADDS(dstTile, srcTile, scalar);
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    TSTORE(dstGlobal, dstTile);
+    out = dstGlobal.data();
+}
+
+extern "C" __global__ __aicore__ void launchTADDSCase1(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runTAddS<float, 32, 32, 64, 64>(out, src, scalar);
+}
+extern "C" __global__ __aicore__ void launchTADDSCase2(__gm__ aclFloat16 *out, __gm__ aclFloat16 *src, float scalar)
+{
+    runTAddS<half, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, (half)scalar);
+}
+extern "C" __global__ __aicore__ void launchTADDSCase3(__gm__ int32_t *out, __gm__ int32_t *src, int32_t scalar)
+{
+    runTAddS<int32_t, 31, 31, 128, 128>(out, src, scalar);
+}
+extern "C" __global__ __aicore__ void launchTADDSCase4(__gm__ int16_t *out, __gm__ int16_t *src, int16_t scalar)
+{
+    runTAddS<int16_t, 15, 15, 192, 192>(out, src, scalar);
+}
+extern "C" __global__ __aicore__ void launchTADDSCase5(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runTAddS<float, 7, 7, 448, 448>(out, src, scalar);
+}
+extern "C" __global__ __aicore__ void launchTADDSCase6(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runTAddS<float, 256, 256, 16, 16>(out, src, scalar);
+}
+
+template <uint32_t caseId>
+void launchTADDSTestCase(void *out, void *src, float scalar, aclrtStream stream) {
+    switch(caseId) {
+        case 1: {
+            launchTADDSCase1<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
+        case 2: {
+            launchTADDSCase2<<<1, nullptr, stream>>>((aclFloat16 *)out, (aclFloat16 *)src, scalar);
+            break;
+        }
+        case 3: {
+            launchTADDSCase3<<<1, nullptr, stream>>>((int32_t *)out, (int32_t *)src, scalar);
+            break;
+        }
+        case 4: {
+            launchTADDSCase4<<<1, nullptr, stream>>>((int16_t *)out, (int16_t *)src, scalar);
+            break;
+        }
+        case 5: {
+            launchTADDSCase5<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
+        case 6: {
+            launchTADDSCase6<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
+        default: {
+        }
+    }
+}
+
+
+template void launchTADDSTestCase<1>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTADDSTestCase<2>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTADDSTestCase<3>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTADDSTestCase<4>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTADDSTestCase<5>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTADDSTestCase<6>(void *out, void *src, float scalar, aclrtStream stream);
