@@ -84,6 +84,19 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_3
   python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_4
   python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_6
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_7
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_8
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_9
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_10
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_scalar_quant_pre_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_scalar_quant_pre_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_scalar_quant_pre_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_scalar_quant_pre_4
   python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_1
   python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_2
   python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_3
