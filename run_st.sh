@@ -155,6 +155,7 @@ if [ "$1" = "dailyBuild" ]; then
   # TSTORE
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tstore
+  python3 test/script/run_st.py -r sim -v a3 -t tstore_acc2gm
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case1
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case2
@@ -360,6 +361,7 @@ else
   # TSTORE
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tstore -g TStoreTest.ND_float_1_1_1_2_128_1_1_1_2_128
+  python3 test/script/run_st.py -r npu -v a3 -t tstore_acc2gm -g TStoreAcc2gmTest.case7
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case1
 

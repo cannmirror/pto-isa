@@ -214,13 +214,10 @@ __aicore__ PTO_INLINE void SetAtomicNone()
 }
 
 template <typename GlobalData, typename TileData>
-__tf__ __aicore__ void TStoreAccND(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+__aicore__ PTO_INLINE void TStoreAccND(typename GlobalData::DType *dstAddr, __cc__ typename TileData::DType *srcAddr,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
-    __cc__ typename TileData::DType *srcAddr = (__cc__ typename TileData::DType *)__cce_get_tile_ptr(src);
-    typename GlobalData::DType *dstAddr = dst;
-
     uint16_t mSize = validRow;
     uint16_t nSize = validCol;
 
@@ -250,16 +247,12 @@ __tf__ __aicore__ void TStoreAccND(typename GlobalData::DType __out__ *dst, type
 }
 
 template <typename GlobalData, typename TileData>
-__tf__ __aicore__ void TStoreAccNZ(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+__aicore__ PTO_INLINE void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typename TileData::DType *srcAddr,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
-    __cc__ typename TileData::DType *srcAddr = (__cc__ typename TileData::DType *)__cce_get_tile_ptr(src);
-    typename GlobalData::DType *dstAddr = dst;
-
-    typename GlobalData::DType *dstGlobalAddr = dstAddr;
+     typename GlobalData::DType *dstGlobalAddr = dstAddr;
     __cc__ typename TileData::DType *srcTileAddr = srcAddr;
-
     uint16_t mSize = validRow;
     uint16_t nSize = gShape1 * gShape4;
 
@@ -300,10 +293,13 @@ __tf__ __aicore__ void TStoreAcc(typename GlobalData::DType __out__ *dst, typena
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
+    __cc__ typename TileData::DType *srcAddr = (__cc__ typename TileData::DType *)__cce_get_tile_ptr(src);
+    typename GlobalData::DType *dstAddr = dst;
+    
     if constexpr (GlobalData::layout == pto::Layout::ND) {
-        TStoreAccND<GlobalData, TileData>(dst, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        TStoreAccND<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::NZ) {
-        TStoreAccNZ<GlobalData, TileData>(dst, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        TStoreAccNZ<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
 }
 
