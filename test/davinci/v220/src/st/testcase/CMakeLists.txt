@@ -84,6 +84,9 @@ tstore_acc2gm
 trsqrt
 tsqrt
 texp
+tdivs
+tmuls
+tadds
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
