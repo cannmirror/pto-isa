@@ -559,8 +559,6 @@ def generate_config_inc(package_attr: Dict):
         write_config_inc_var('use_move', package_attr, file)
 
     os.chmod(config_inc, 0o500)
-
-
 def main(pkg_name='', xml_file='', main_args=None):
     """
     功能描述: 执行打包流程(解析配置--->生成文件列表--->执行拷贝/打包动作)

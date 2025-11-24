@@ -2,7 +2,7 @@
 <config name="pto_tile_lib" copy_type="delivery" src_path="include/" dst_path="pto_tile_lib" install_type="all" install_mod="550" install_own="$username:$usergroup">
     <package_info>
         <product_name>cann</product_name>
-        <func_name>pto-tile-lib</func_name>
+        <func_name>pto</func_name>
         <suffix>run</suffix>
         <install_script>pto_tile_lib/scripts/install.sh</install_script>
         <help>pto_tile_lib/scripts/help.info</help>
