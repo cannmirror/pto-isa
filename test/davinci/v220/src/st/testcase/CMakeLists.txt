@@ -76,6 +76,7 @@ tcopy
 trowexpand
 tcvt
 tadd
+tpartadd
 tsub
 tmins
 tload_gm2mat

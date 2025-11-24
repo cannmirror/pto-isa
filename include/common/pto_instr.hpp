@@ -133,11 +133,10 @@ __PTO_INSTR__ void TGATHER(DstTileData &dst, SrcTileData &src) {
 //   TCOPY_IMPL<TileDataDst, TileDataSrc, copyMode>(dst, src);
 // }
 
-// TODO: uncomment if TPARTADD supported for v310
-// template <typename TileData>
-// __PTO_INSTR__ void TPARTADD(TileData &dst, TileData &src0, TileData &src1) {
-//   MAP_INSTR_IMPL(TPARTADD, dst, src0, src1)
-// }
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+__PTO_INSTR__ void TPARTADD(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
+  MAP_INSTR_IMPL(TPARTADD, dst, src0, src1)
+}
 
 template <typename TileDataD, typename TileDataS>
 __PTO_INSTR__ void TCVT(TileDataD &dst, TileDataS &src, RoundMode mode) {
