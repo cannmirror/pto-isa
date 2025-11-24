@@ -20,6 +20,17 @@ export ASCEND_ENV_PATH="${ASCEND_HOME_PATH}/bin"
 export BUILD_PATH="${BASE_PATH}/build"
 export BUILD_OUT_PATH="${BASE_PATH}/build_out"
 
+#print usage message
+usage() {
+  echo "Usage:"
+  echo ""
+  echo "    -h, --help  Print usage"
+  echo "    --pkg Build run package"
+  echo "    --run_all run all st on sim"
+  echo "    --run_simple run some st on board"
+  echo ""
+}
+
 print_success() {
   echo
   echo $dotted_line
@@ -48,25 +59,46 @@ checkopts() {
   PLATFORM_MODE=""
   INST_NAME=""
 
-  if [[ "$1" == "--run_example" ]]; then
-    ENABLE_RUN_EXAMPLE=TRUE
-    INST_NAME="$2"
-    EXAMPLE_NAME="$3"
-    EXAMPLE_MODE="$4"
-    PLATFORM_MODE="$5"
-  elif [ "$1" == "--run_all" ]; then
-    ENABLE_BUILD_ALL=TRUE
-  elif [ "$1" == "--run_simple" ]; then
-    ENABLE_SIMPLE_ST=TRUE
-  elif [ "$1" == "--pkg" ]; then
-    ENABLE_PACKAGE=TRUE
-  fi
+  parsed_args=$(getopt -a -o j:hvuO: -l help,verbose,cov,make_clean,noexec,pkg,run_all,run_simple,cann_3rd_lib_path: -- "$@") || {
+  usage
+  exit 1
+  }
+
+  eval set -- "$parsed_args"
+
+  while true; do
+    case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      --run_all)
+        ENABLE_BUILD_ALL=TRUE
+        shift
+        ;;
+      --run_simple)
+        ENABLE_SIMPLE_ST=TRUE
+        shift
+        ;;
+      --pkg)
+        ENABLE_PACKAGE=TRUE
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        usage
+        exit 1
+        ;;
+    esac
+  done
 }
 
 run_simple_st() {
   echo $dotted_line
   echo "Start to run simple st"
-  cat /usr/local/Ascend/latest/compiler/version.info
   chmod +x run_st.sh
   ./run_st.sh run_simple
   echo "execute samples success"
