@@ -1,52 +1,150 @@
 #ifndef TPATIALADD_HPP
 #define TPATIALADD_HPP
 
-#include "TAdd.hpp"
-#include "TCopy.hpp"
+#include "common/constants.hpp"
+#include "common/utils.hpp"
 
 namespace pto {
-template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ __aicore__ PTO_INLINE void TPartAdd(typename TileData::TileDType __out__ dst,
-    typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1, unsigned src0ValidRow,
+template <typename T, typename TileDataDst, typename TileDataSrc, unsigned blockSizeElem, unsigned dstStride,
+    unsigned srcStride>
+__aicore__
+PTO_INLINE
+void TPartCopyInstr(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr,
+    uint64_t validRow, uint64_t validCol, uint64_t startRow)
+{
+    validRow -= startRow;
+    srcPtr += startRow * TileDataDst::RowStride;
+    dstPtr += startRow * TileDataSrc::RowStride;
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
+    __VEC_SCOPE__
+    {
+        RegTensor<T> vreg0;
+        MaskReg preg;
+        uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
+        constexpr auto distValue = 
+            std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+        for (uint16_t i = 0; i < (uint16_t)(validRow); ++i) {                
+            uint32_t sreg = (uint32_t)(validCol);
+            for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
+                preg = CreatePredicate<T>(sreg);
+                vlds(vreg0, srcPtr + i * srcStride, j * elementsPerRepeat, NORM);
+                vsts(vreg0, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
+            }
+        }
+    } // end of VF
+} // end of tf
+
+template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
+    unsigned blockSizeElem, unsigned dstStride, unsigned src0Stride, unsigned src1Stride>
+__aicore__
+PTO_INLINE
+void TPartAddInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
+    unsigned validRow, unsigned validCol) {
+    if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> || std::is_same_v<T, uint16_t> ||
+              std::is_same_v<T, int16_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, int32_t> ||
+              std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, bfloat16_t>) {
+        __VEC_SCOPE__
+        {                
+            MaskReg preg;
+            RegTensor<T> vreg0, vreg1, vreg2;                   
+            uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
+            constexpr auto distValue =
+                std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+            for (uint16_t i = 0; i < (uint16_t)(validRow); ++i) {
+                uint32_t sreg = (uint32_t)(validCol);
+                for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
+                    preg = CreatePredicate<T>(sreg);
+                    vlds(vreg0, src0Ptr + i * src0Stride, j * elementsPerRepeat, NORM);
+                    vlds(vreg1, src1Ptr + i * src1Stride, j * elementsPerRepeat, NORM);
+                    vadd(vreg2, vreg0, vreg1, preg, MODE_ZEROING);
+                    vsts(vreg2, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
+                }
+            }
+        }  // end VF
+    }
+}
+
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
+          unsigned blockSizeElem, unsigned dstRowStride, unsigned src0RowStride, unsigned src1RowStride>
+__tf__
+__aicore__
+PTO_INLINE
+void TPartAdd(typename TileDataDst::TileDType __out__ dst,
+    typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned src0ValidRow,
     unsigned src0ValidCol, unsigned src1ValidRow, unsigned src1ValidCol, unsigned dstValidRow, unsigned dstValidCol)
 {
+    if (dstValidRow == 0 || dstValidCol == 0) {
+        return;
+    }
+    using T = typename TileDataDst::DType;
+    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
+    __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
+    __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
     bool condSrc0EqDst = (src0ValidRow == dstValidRow && src0ValidCol == dstValidCol);
-    bool condSrc0LtDst = (src0ValidRow < dstValidRow && src0ValidCol <= dstValidCol) ||
-                         (src0ValidRow <= dstValidRow && src0ValidCol < dstValidCol);
+    bool condSrc0RowLtDst = (src0ValidRow < dstValidRow && src0ValidCol == dstValidCol);
+    bool condSrc0ColLtDst = (src0ValidRow == dstValidRow && src0ValidCol < dstValidCol);
     bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
-    bool condSrc1LtDst = (src1ValidRow < dstValidRow && src1ValidCol <= dstValidCol) ||
-                         (src1ValidRow <= dstValidRow && src1ValidCol < dstValidCol);
+    bool condSrc1RowLtDst = (src1ValidRow < dstValidRow && src1ValidCol == dstValidCol);
+    bool condSrc1ColLtDst = (src1ValidRow == dstValidRow && src1ValidCol < dstValidCol);
 
     if (condSrc0EqDst && condSrc1EqDst) {  // src0 == src1 == dst
-        unsigned validRow = dstValidRow;
-        TAdd<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, dstValidRow, dstValidCol);
-    } else if (condSrc0LtDst && condSrc1EqDst) {  // src0 < dst && src1 == dst
-        TCopy<TileData, TileData, TCopyMode::DEEP_COPY, blockSizeElem, rowStride, rowStride>(
-            dst, src1, src1ValidRow, src1ValidCol);
-        if ((src0ValidRow != 0) && (src0ValidCol != 0)) {
-            TAdd<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, dst, src0ValidRow, src0ValidCol);
+        TPartAddInstr<T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
+            dstRowStride, src0RowStride, src1RowStride>(dstPtr, src0Ptr, src1Ptr, dstValidRow, dstValidCol);
+    } else if (condSrc0ColLtDst && condSrc1EqDst) {  // src0Col < dstCol
+        TPartCopyInstr<T, TileDataDst, TileDataSrc1, blockSizeElem, dstRowStride, src1RowStride>(
+            dstPtr, src1Ptr, src1ValidRow, dstValidCol, 0);
+        if (src0ValidCol != 0) {
+            TPartAddInstr<T, TileDataDst, TileDataSrc0, TileDataDst, elementsPerRepeat, blockSizeElem,
+                dstRowStride, src0RowStride, dstRowStride>(dstPtr, src0Ptr, dstPtr, src0ValidRow, src0ValidCol);
         }
-    } else if (condSrc1LtDst && condSrc0EqDst) {  // src1 < dst && src0 == dst
-        TCopy<TileData, TileData, TCopyMode::DEEP_COPY, blockSizeElem, rowStride, rowStride>(
-            dst, src0, src0ValidRow, src0ValidCol);
-        if ((src1ValidRow != 0) && (src1ValidCol != 0)) {
-            TAdd<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src1, dst, src1ValidRow, src1ValidCol);
+    } else if (condSrc0RowLtDst && condSrc1EqDst) {  // src0Row < dstRow
+        if (src0ValidRow != 0) {
+            TPartAddInstr<T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
+                dstRowStride, src0RowStride, src1RowStride>(dstPtr, src0Ptr, src1Ptr, src0ValidRow, src0ValidCol);
         }
+        TPartCopyInstr<T, TileDataDst, TileDataSrc1, blockSizeElem, dstRowStride, src1RowStride>(
+            dstPtr, src1Ptr, src1ValidRow, dstValidCol, src0ValidRow);    
+    } else if (condSrc1ColLtDst && condSrc0EqDst) {  // src1Col < dstCol
+        TPartCopyInstr<T, TileDataDst, TileDataSrc0, blockSizeElem, dstRowStride, src0RowStride>(
+            dstPtr, src0Ptr, src0ValidRow, dstValidCol, 0);
+        if (src1ValidCol != 0) {
+            TPartAddInstr<T, TileDataDst, TileDataSrc1, TileDataDst, elementsPerRepeat, blockSizeElem,
+                dstRowStride, src1RowStride, dstRowStride>(dstPtr, src1Ptr, dstPtr, src1ValidRow, src1ValidCol);
+        }
+    } else if (condSrc1RowLtDst && condSrc0EqDst) {  // src1Row < dstRow
+        if (src1ValidRow != 0) {
+            TPartAddInstr<T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
+                dstRowStride, src0RowStride, src1RowStride>(dstPtr, src0Ptr, src1Ptr, src1ValidRow, src1ValidCol);
+        }
+        TPartCopyInstr<T, TileDataDst, TileDataSrc0, blockSizeElem, dstRowStride, src0RowStride>(
+            dstPtr, src0Ptr, src0ValidRow, dstValidCol, src1ValidRow);
     }  // unsupport other conditions
-}  // end tf
+}
 
-template <typename TileData>
-__aicore__ PTO_INLINE void TPARTADD(TileData &dst, TileData &src0, TileData &src1)
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+__aicore__
+PTO_INLINE
+void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
 {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-    constexpr unsigned rowStride = TileData::RowStride;
+    static_assert(std::is_same<typename TileDataDst::DType, typename TileDataSrc0::DType>::value &&
+                  std::is_same<typename TileDataDst::DType, typename TileDataSrc1::DType>::value,
+                  "TPARTADD: src and dst data type is different!");
+    static_assert(sizeof(typename TileDataDst::DType) ==4 || sizeof(typename TileDataDst::DType) ==2 ||
+                  sizeof(typename TileDataDst::DType) ==1 , "TPARTADD: Invalid data type.");
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+    unsigned src0ValidRow = src0.GetValidRow();
+    unsigned src0ValidCol = src0.GetValidCol();
+    unsigned src1ValidRow = src1.GetValidRow();
+    unsigned src1ValidCol = src1.GetValidCol();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    constexpr unsigned dstRowStride = TileDataDst::RowStride;
+    constexpr unsigned src0RowStride = TileDataSrc0::RowStride;
+    constexpr unsigned src1RowStride = TileDataSrc1::RowStride;
 
-    unsigned src0ValidRow = src0.GetValidRow(), src0ValidCol = src0.GetValidCol();
-    unsigned src1ValidRow = src1.GetValidRow(), src1ValidCol = src1.GetValidCol();
-    unsigned dstValidRow = dst.GetValidRow(), dstValidCol = dst.GetValidCol();
-
-    TPartAdd<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(),
+    TPartAdd<TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem, dstRowStride,
+             src0RowStride, src1RowStride>(dst.data(),
         src0.data(),
         src1.data(),
         src0ValidRow,

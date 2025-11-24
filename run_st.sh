@@ -261,6 +261,20 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
   python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case2
 
+  # TPARTADD
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tpartadd
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_8x64_64x64
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x8_64x64
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_8x64
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x8
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_half_8x48_8x16_8x48
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_half_8x768_8x512_8x768
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_int16_8x48_8x48_8x16
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_int32_64x64_8x64_64x64
+
   # TLOAD
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tload_gm2mat
@@ -412,6 +426,18 @@ else
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
 
+  # TADD
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
+
+  # TPARTADD
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
+  
   #A5
   # python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
 

@@ -67,7 +67,7 @@ namespace pto {
             }
             if (remainAfterLoop) {
                 if (strideOverFlag) {
-                    for (uint64_t j = 0; j < remainAfterLoop; j++) {
+                    for (unsigned j = 0; j < remainAfterLoop; j++) {
                         vadd(dstPtr + numLoop * REPEAT_MAX * stride + j * stride,
                              src0Ptr + numLoop * REPEAT_MAX * stride + j * stride,
                              src1Ptr + numLoop * REPEAT_MAX * stride + j * stride,

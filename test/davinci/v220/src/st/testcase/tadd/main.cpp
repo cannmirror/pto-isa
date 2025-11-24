@@ -7,9 +7,6 @@
 using namespace std;
 using namespace PtoTestCommon;
 
-template <int32_t tilingKey>
-void launchTADD_demo(uint8_t *out, uint8_t *src,void *stream);
-
 class TADDTest : public testing::Test {
 protected:
     void SetUp() override

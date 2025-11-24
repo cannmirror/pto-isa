@@ -107,6 +107,7 @@ set(ALL_TESTCASES
     tcvt
     tsub
     tadd
+    tpartadd
     tmov
     tmov_l0c2ub
     trsqrt
