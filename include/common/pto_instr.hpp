@@ -122,6 +122,11 @@ __PTO_INSTR__ void TGATHER(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1) {
   MAP_INSTR_IMPL(TGATHER, dst, src0, src1)
 }
 
+template <typename TileData, typename T, int descending>
+__PTO_INSTR__ void TCI(TileData &dst, T S) {
+  TCI_IMPL<TileData, T, descending>(dst, S);
+}
+
 template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
 __PTO_INSTR__ void TGATHER(DstTileData &dst, SrcTileData &src) {
   TGATHER_IMPL<DstTileData, SrcTileData, maskPattern>(dst, src);

@@ -15,6 +15,7 @@ python3 test/script/build_st.py -r npu -v a3 -t tsort32 -g TSort32Test.case1
 python3 test/script/build_st.py -r npu -v a3 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
 python3 test/script/build_st.py -r npu -v a3 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
 python3 test/script/build_st.py -r npu -v a3 -t tsub -g TSUBTest.case_float_64x64_64x64_64x64
+python3 test/script/build_st.py -r npu -v a3 -t tci -g TCITest.case1_int32
 
 python3 test/script/build_st.py -r npu -v a5 -t tcvt -g TCVTTest.case1
 python3 test/script/build_st.py -r npu -v a5 -t tmatmul -g TMATMULTest.case1
