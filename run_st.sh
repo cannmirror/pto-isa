@@ -273,12 +273,28 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_32_64_128_VT_64_128_BLK32_STC
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX
 
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_128_128_half_ND2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_128_128_int8_t_ND2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_128_128_float_ND2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_64_128_half_DN2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_63_127_half_ND2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_128_128_float_ND2ND
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_37_126_int8_t_ND2ND
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_2_3_64_128_1_3_4_128_128_384_128_half_ND2ND
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_2_3_33_99_1_2_3_33_99_int8_t_ND2ND
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_33_99_1_1_1_64_128_48_112_half_ND2NZ
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_59_119_1_1_1_64_128_64_128_int8_t_ND2NZ
-  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest. 1_1_1_51_123_1_1_1_64_128_64_128_float_DN2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_51_123_1_1_1_64_128_64_128_float_DN2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_63_127_1_1_1_63_127_64_128_half_DN2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_128_128_1_1_1_128_128_128_128_float_DN2DN
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_37_126_1_1_1_37_126_64_126_int8_t_DN2DN
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_2_3_64_128_1_3_4_96_128_64_768_half_DN2DN
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.2_2_4_16_8_2_2_4_16_8_80_48_float_NZ2NZ
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_10_8_16_16_1_11_9_16_16_128_160_half_NZ2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_8_4_16_32_1_9_4_16_32_80_256_int8_t_NZ2NZ
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_59_119_1_1_1_59_124_59_120_int64_t_ND2ND
+  python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_2_1_64_128_1_3_4_128_128_128_128_uint64_t_ND2ND
+
   # TADD
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tadd
