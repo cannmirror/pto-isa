@@ -340,8 +340,23 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tsub -g TSUBTest.case_int32_64x64_64x64_64x64
   python3 test/script/run_st.py -r sim -v a5 -t tsub -g TSUBTest.case_int16_64x64_64x64_64x64
   python3 test/script/run_st.py -r sim -v a5 -t tsub -g TSUBTest.case_half_16x256_16x256_16x256
+
+  # TCI
+  # A3
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case1
+  python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case2
+  python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case3
+  python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case4
+  python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case5
+
 else
   echo "==================simple build, run one case================="
+  # TCI
+  # A3
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case5
+
   # TCVT
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tcvt -g TCVTTest.case1
