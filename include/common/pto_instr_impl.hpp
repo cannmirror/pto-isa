@@ -43,6 +43,7 @@
 #include "davinci/v310/TColMax.hpp"
 #include "davinci/v310/TRowSum.hpp"
 #include "davinci/v310/TTrans.hpp"
+#include "davinci/v310/Tci.hpp"
 #include "davinci/v310/TSort32.hpp"
 #include "davinci/v310/TExtract.hpp"
 #include "davinci/v310/TMov.hpp"

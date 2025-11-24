@@ -1,0 +1,48 @@
+#include <common/pto_tileop.hpp>
+#include <common/constants.hpp>
+
+using namespace pto;
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int reverse>
+__global__ __aicore__ void runTci( __gm__ T __out__ *out, T S) {
+    // 1. 定义两个类型
+    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
+    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+
+    // 2. 声明device侧的相关变量
+    TileData dstTile(kTRows_, kTCols_);
+
+    // 3. 为devices侧的变量分配地址；
+    TASSIGN(dstTile, 0x0);
+
+    // 4. 定义host侧的变量，并分配地址；
+    GlobalData dstGlobal(out);
+
+    // 5. 加载数据  but as for Tci接口也是不存在这个事项的,因为没有源数据需要加载 pass;
+   
+
+    // 6. 调用指令集进行计算；
+    TCI<TileData, T, reverse>(dstTile, S);
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+
+    // 7.将数据保存到host侧，并输出到gm;
+    TSTORE(dstGlobal, dstTile);
+    out = dstGlobal.data();
+}
+
+// 8. 特别注意，生成索引的数量通过
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int reverse>
+void LaunchTci(T *out, T S, void *stream)
+{
+    runTci<T, kGRows_, kGCols_, kTRows_, kTCols_, reverse><<<1, nullptr, stream>>>((T*)(out), S);
+}
+
+template void LaunchTci<int32_t, 1, 128, 1, 128, 1>(int32_t *out, int32_t S = 100, void *stream);
+template void LaunchTci<int16_t, 1, 128, 1, 128, 0>(int16_t *out, int16_t S = -1, void *stream);
+template void LaunchTci<int16_t, 1, 128, 1, 128, 1>(int16_t *out, int16_t S = -1, void *stream);
+template void LaunchTci<int16_t, 1, 144, 1, 144, 1>(int16_t *out, int16_t S = -1, void *stream);
+template void LaunchTci<int32_t, 1, 144, 1, 144, 1>(int32_t *out, int32_t S = -1, void *stream);
+template void LaunchTci<int32_t, 1, 132, 1, 144, 1>(int32_t *out, int32_t S = -1, void *stream);
