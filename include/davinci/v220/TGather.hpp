@@ -3,6 +3,7 @@
 
 #include "common/constants.hpp"
 
+
 namespace pto {
     __aicore__ PTO_INLINE int CEIL(int a, int b) {
         return (a + (b - 1)) / (b);
@@ -23,6 +24,7 @@ namespace pto {
                                 typename TileDataS0::TileDType __in__ src0,
                                 typename TileDataS1::TileDType __in__ src1,
                                 unsigned validCol, unsigned validRow) {
+
         __ubuf__ typename TileDataD::DType *dstPtr = (__ubuf__ typename TileDataD::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataS0::DType *src0Ptr = (__ubuf__ typename TileDataS0::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileDataS1::DType *src1Ptr = (__ubuf__ typename TileDataS1::DType *)__cce_get_tile_ptr(src1);
@@ -35,37 +37,36 @@ namespace pto {
         unsigned numRepeatPerLine = validCol / elementsPerRepeat;
         unsigned numRemainPerLine = validCol % elementsPerRepeat;
         unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
-        unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
+        unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX; 
 
         if constexpr (std::is_same_v<typename TileDataS0::DType, float> || std::is_same_v<typename TileDataS0::DType, int32_t> || std::is_same_v<typename TileDataS0::DType, uint32_t>) {
-            // 64 element per VL
-            // counter mode
+            //64 element per VL
+            //counter mode
             set_mask_count();
-            set_vector_mask(0, validRow * TShape1);
-            vmuls((__ubuf__ int32_t*) (dstPtr), (__ubuf__ int32_t*) (src1Ptr), sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
-            pipe_barrier(PIPE_V);
-            vmins((__ubuf__ int32_t*) (dstPtr),
-                  (__ubuf__ int32_t*) (dstPtr),
-                  (int32_t)0x0002ffe0, 1, 1, 1, 8, 8);  // Limit addresses for gathering by 0x2ffe0 value as A3 has only 192kb (0x30000) to avoid VECTOR_CORE_EXCEPTION
-            pipe_barrier(PIPE_V);
-            vgather((__ubuf__ uint32_t*) (dstPtr), (__ubuf__ uint32_t*) (dstPtr), (uintptr_t)src0Ptr, 8, 1);
-            set_mask_norm();
-            set_vector_mask(-1, -1);
-        } else {
-            // 128 element per VL
-            // counter mode
-            set_mask_count();
-            set_vector_mask(0, validRow * TShape1);
-            vmuls((__ubuf__ int32_t*) (dstPtr), (__ubuf__ int32_t*) (src1Ptr), sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
-            pipe_barrier(PIPE_V);
-            vmins((__ubuf__ int32_t*) (dstPtr),
-                  (__ubuf__ int32_t*) (dstPtr),
-                  (int32_t)0x0002ffe0, 1, 1, 1, 8, 8);
-            pipe_barrier(PIPE_V);
-            vgather((__ubuf__ uint16_t*) (dstPtr), (__ubuf__ uint32_t*) (dstPtr), (uintptr_t)src0Ptr, 8, 1);
+            for (int i =  0; i < validRow; i++) {
+                set_vector_mask(0, validCol);
+                vmuls((__ubuf__ int32_t*) (dstPtr + i*TShape1), (__ubuf__ int32_t*) (src1Ptr + i*TShape1), sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
+                pipe_barrier(PIPE_V);
+                vgather((__ubuf__ uint32_t*) (dstPtr + i*TShape1), (__ubuf__ uint32_t*) (dstPtr + i*TShape1),  (uintptr_t)src0Ptr, 8, 1);
+            }
+
             set_mask_norm();
             set_vector_mask(-1, -1);
         }
+        else{
+            //128 element per VL
+            //counter mode
+            set_mask_count();
+            for (int i =  0; i < validRow; i++) {
+                set_vector_mask(0, validCol);
+                vmuls((__ubuf__ int32_t*) (dstPtr + i*TShape1), (__ubuf__ int32_t*) (src1Ptr + i*TShape1), sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
+                pipe_barrier(PIPE_V);
+                vgather((__ubuf__ uint16_t*) (dstPtr + i*TShape1), (__ubuf__ uint32_t*) (dstPtr + i*TShape1),  (uintptr_t)src0Ptr, 8, 1);
+            }
+            set_mask_norm();
+            set_vector_mask(-1, -1);
+        }
+        
     }
 
     template <typename TileDataD, typename TileDataS0, typename TileDataS1, unsigned TShape0, unsigned TShape1>
@@ -73,8 +74,10 @@ namespace pto {
                                 typename TileDataS0::TileDType __in__ src0,
                                 typename TileDataS1::TileDType __in__ src1,
                                 typename TileDataS1::TileDType __in__ tmp,
-                                unsigned src0Shape1, unsigned dstShape1,
+                                unsigned src0Shape1, 
+                                unsigned dstShape1, 
                                 unsigned validCol, unsigned validRow, unsigned axis) {
+
         __ubuf__ typename TileDataD::DType *dstPtr = (__ubuf__ typename TileDataD::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataS0::DType *src0Ptr = (__ubuf__ typename TileDataS0::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileDataS1::DType *src1Ptr = (__ubuf__ typename TileDataS1::DType *)__cce_get_tile_ptr(src1);
@@ -85,24 +88,27 @@ namespace pto {
         unsigned numRemainPerLine = TShape1 % elementsPerRepeat;
 
         if (axis == 0) {
-            for (int i = 0; i < TShape1; i++) {
-                tmpPtr[i] = i;
+
+            for( int i=0; i<TShape1; i++ )
+            {
+                tmpPtr[i] = i; 
             }
             set_flag(PIPE_S, PIPE_V, EVENT_ID0);
             wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
 
-            set_mask_count();
-            set_vector_mask(0, TShape0 * validCol);
+	        set_mask_count();
+            set_vector_mask(0, TShape0*validCol);
             vmuls((__ubuf__ int32_t*) (dstPtr), (__ubuf__ int32_t*) (src1Ptr), TShape1, 1, 1, 1, 8, 8);
             pipe_barrier(PIPE_V);
             set_vector_mask(0, validCol);
             for (int i = 0; i < TShape0; ++i) {
                 vadd((__ubuf__ int32_t*) (dstPtr + i * TShape1),
-                     (__ubuf__ int32_t*) (dstPtr + i * TShape1),
-                     tmpPtr, 1, 1, 1, 1, 8, 8, 8);
+                      (__ubuf__ int32_t*) (dstPtr + i * TShape1),
+                      tmpPtr,
+                      1, 1, 1, 1, 8, 8, 8);
             }
             pipe_barrier(PIPE_V);
-            set_vector_mask(0, TShape0 * validCol);
+            set_vector_mask(0, TShape0*validCol);
             vmuls((__ubuf__ int32_t*) (dstPtr), (__ubuf__ int32_t*) (dstPtr), sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
             pipe_barrier(PIPE_V);
             vmins((__ubuf__ int32_t*) (dstPtr),
@@ -113,7 +119,8 @@ namespace pto {
             vgather((__ubuf__ uint32_t*) (dstPtr), (__ubuf__ uint32_t*) (dstPtr), (uintptr_t)src0Ptr, 8, 1);
             set_mask_norm();
             set_vector_mask(-1, -1);
-        } else {
+        }
+        else {
             set_mask_count();
             set_vector_mask(0, validCol);
             for (int i = 0; i < TShape0; ++i) {
@@ -135,7 +142,7 @@ namespace pto {
                         (__ubuf__ uint32_t*) (dstPtr + i * TShape1),
                         (uintptr_t)src0Ptr + i * src0Shape1 * sizeof(typename TileDataD::DType),
                         8, 1);
-            }
+	        }
             set_mask_norm();
             set_vector_mask(-1, -1);
         }
@@ -154,10 +161,12 @@ namespace pto {
     template <typename TileDataD, typename TileDataS0, typename TileDataS1>
     __aicore__ void TGATHER2D(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1, TileDataS1 &tmp, unsigned axis) {
 
+        
         constexpr unsigned TShape0 = TileDataD::Rows;
         constexpr unsigned TShape1 = TileDataD::Cols;
         unsigned src0Shape1 = TileDataD::Cols;
-        if (axis == 1) {
+        if(axis == 1)
+        {
             src0Shape1 = TileDataS0::Cols;
         }
         unsigned dstShape1 = TileDataD::Cols;
@@ -174,27 +183,27 @@ namespace pto {
     {
         using T = typename SrcTileData::DType;
         using U = std::conditional_t<sizeof(T) == sizeof(uint32_t), uint32_t, uint16_t>;
-
+ 
         constexpr unsigned srcRepeatStride = SrcTileData::Cols * sizeof(T) / BLOCK_BYTE_SIZE;
-        
+ 
         __ubuf__ typename DstTileData::DType *dstPtr = (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename SrcTileData::DType *srcPtr = (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src);
-
+ 
         set_mask_count();
         set_vector_mask(0, validCol);
         vreducev2(reinterpret_cast<__ubuf__ U *>(dstPtr), reinterpret_cast<__ubuf__ U *>(srcPtr),
                   reinterpret_cast<__ubuf__ U *>(srcPtr), validRow, 1, maskPattern, srcRepeatStride, 0);
         set_mask_norm();
     }
-
+ 
     template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
     __aicore__ PTO_INLINE void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
     {
         // Todo: add more static_asserts
         using T = typename SrcTileData::DType;
-        static_assert(sizeof(T) == 2 || sizeof(T) == 4, 
+        static_assert(sizeof(T) == 2 || sizeof(T) == 4,
             "TGATHER: src element type must be 16 or 32-bit wide");
-        static_assert((DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec),
+        static_assert((DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec), 
             "TGATHER: expect vec location");
         static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor),
             "TGATHER: expect row major");
