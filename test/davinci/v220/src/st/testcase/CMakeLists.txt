@@ -70,6 +70,7 @@ tmov
 tload
 ttrans
 tmrgsort
+tfillpad
 tgather
 tsort32
 tstore
