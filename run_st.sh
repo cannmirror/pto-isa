@@ -170,7 +170,6 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case11
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case12
 
-
   # TROWSUM
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t trowsum
@@ -248,6 +247,38 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case3_half
   python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case4_int16
 
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P0101
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P1010
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P0001
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P0010
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P0100
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P1000
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P1111
+
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P0101
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P1010
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P0001
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P0010
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P0100
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P1000
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P1111
+
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_U16_P0101
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_U16_P1010
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_I16_P0001
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_I16_P0010
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_U32_P0100
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_I32_P1000
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_I32_P1111
+
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_b8_P0101
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_b8_P1010
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_b8_P0001
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_b8_P0010
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_b8_P0100
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_b8_P1000
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_b8_P1111
+
   # TTRANS
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t ttrans
@@ -278,6 +309,7 @@ if [ "$1" = "dailyBuild" ]; then
   # TLOAD
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tload_gm2mat
+  python3 test/script/run_st.py -r sim -v a3 -t tload
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_128_128_VT_128_128_BLK1
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_64_VT_256_64_BLK8
@@ -287,6 +319,9 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_32_64_128_VT_64_128_BLK32_DYN
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_32_64_128_VT_64_128_BLK32_STC
   python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX
+  python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_int64_GT_128_128_VT_128_128_BLK1
+  python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_uint64_GT_128_125_VT_128_128_BLK1_PADZERO
+  python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_uint64_GT_2_2_2_256_64_VT_256_64_BLK8
 
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_128_128_half_ND2NZ
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_128_128_int8_t_ND2NZ

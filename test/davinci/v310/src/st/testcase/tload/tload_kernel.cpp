@@ -203,6 +203,22 @@ extern "C" __global__ __aicore__ void launchTLOAD_8(__gm__ uint8_t *out, __gm__ 
 	runTLOADND<float,  2, 2, 2, 256, 60, 256, 64, 1, PadValue::Max>((__gm__ float*)out, (__gm__ float*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
+extern "C" __global__ __aicore__ void launchTLOAD_9(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+{
+	runTLOADND<int64_t, 1, 1, 1, 128, 128, 128, 128, 1, PadValue::Null>((__gm__ int64_t*)out, (__gm__ int64_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
+}
+
+extern "C" __global__ __aicore__ void launchTLOAD_10(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+{
+	runTLOADND<uint64_t, 1, 1, 1, 128, 125, 128, 128, 1, PadValue::Zero>((__gm__ uint64_t*)out, (__gm__ uint64_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
+}
+
+extern "C" __global__ __aicore__ void launchTLOAD_12(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+{
+	runTLOADND<uint64_t,  2, 2, 2, 256, 64, 256, 64, 1, PadValue::Null>((__gm__ uint64_t*)out, (__gm__ uint64_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
+}
+
+
 template <int32_t testKey>
 void launchTLOAD(uint8_t *out, uint8_t *src, uint64_t *gLog, void *stream)
 {
@@ -229,7 +245,17 @@ void launchTLOAD(uint8_t *out, uint8_t *src, uint64_t *gLog, void *stream)
     }
 	else if constexpr (testKey == 8) {
         launchTLOAD_8<<<8, nullptr, stream>>>(out, src, 2, 2, 2, 256, 60, gLog);	
-	}	
+	}
+	else if constexpr (testKey == 9) {
+        launchTLOAD_9<<<1, nullptr, stream>>>(out, src, 1, 1, 1, 128, 128, gLog);
+    }
+	else if constexpr (testKey == 10) {
+        launchTLOAD_10<<<1, nullptr, stream>>>(out, src, 1, 1, 1, 128, 125, gLog);
+    }
+	else if constexpr (testKey == 12) {
+        launchTLOAD_12<<<8, nullptr, stream>>>(out, src, 2, 2, 2, 256, 64, gLog);
+	}
+
 }
 
 template <typename T, int Shape0, int Shape1, int Shape2, int Shape3, int Shape4, int kTRows_, int kTCols_, PadValue PadVal_= PadValue::Null>
@@ -308,7 +334,15 @@ int get_input_golden(uint8_t *input, uint8_t *golden)
 	else if constexpr (testKey == 8) {
 		return get_input_golden_case<float, 2, 2, 2, 256, 60, 256, 64, PadValue::Max>(input, golden);
 	}
-	
+	else if constexpr (testKey == 9) {
+        return get_input_golden_case<int64_t, 1, 1, 1, 128, 128, 128, 128, PadValue::Null>(input, golden);
+    }
+	else if constexpr (testKey == 10) {
+        return get_input_golden_case<uint64_t, 1, 1, 1, 128, 125, 128, 128, PadValue::Zero>(input, golden);
+    }
+	else if constexpr (testKey == 12) {
+		return get_input_golden_case<uint64_t, 2, 2, 2, 256, 64, 256, 64, PadValue::Null>(input, golden);
+	}
 	return 0;
 }
 
@@ -320,6 +354,9 @@ template void launchTLOAD<5>(uint8_t *out, uint8_t *src, uint64_t* gLog, void *s
 template void launchTLOAD<6>(uint8_t *out, uint8_t *src, uint64_t* gLog, void *stream);  // 实例化 Key=0 的版本
 template void launchTLOAD<7>(uint8_t *out, uint8_t *src, uint64_t* gLog, void *stream);  // 实例化 Key=0 的版本
 template void launchTLOAD<8>(uint8_t *out, uint8_t *src, uint64_t* gLog, void *stream);  // 实例化 Key=0 的版本
+template void launchTLOAD<9>(uint8_t *out, uint8_t *src, uint64_t* gLog, void *stream);
+template void launchTLOAD<10>(uint8_t *out, uint8_t *src, uint64_t* gLog, void *stream);
+template void launchTLOAD<12>(uint8_t *out, uint8_t *src, uint64_t* gLog, void *stream);
 
 template int get_input_golden<1> (uint8_t *input, uint8_t *golden);
 template int get_input_golden<2> (uint8_t *input, uint8_t *golden);
@@ -329,3 +366,6 @@ template int get_input_golden<5> (uint8_t *input, uint8_t *golden);
 template int get_input_golden<6> (uint8_t *input, uint8_t *golden);
 template int get_input_golden<7> (uint8_t *input, uint8_t *golden);
 template int get_input_golden<8> (uint8_t *input, uint8_t *golden);
+template int get_input_golden<9> (uint8_t *input, uint8_t *golden);
+template int get_input_golden<10> (uint8_t *input, uint8_t *golden);
+template int get_input_golden<12> (uint8_t *input, uint8_t *golden);

@@ -13,7 +13,7 @@ __aicore__ constexpr auto getPadValue()
                 return uint32_t(0);
             default:
                 static_assert((TileData::PadVal == PadValue::Null) || (TileData::PadVal == PadValue::Zero),
-                    "TLOAD: only PadNull and PadZero is supported for b8!");
+                    "TLOAD: only PadNull and PadZero is supported for b64!");
         }
     } else if constexpr (std::is_same<typename TileData::DType, float>::value) {
         switch (TileData::PadVal) {
@@ -403,7 +403,7 @@ __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
             std::is_same_v<typename TileData::DType, int64_t> || std::is_same_v<typename TileData::DType, uint64_t> ||
             std::is_same_v<typename TileData::DType, half> || std::is_same_v<typename TileData::DType, bfloat16_t> ||
             std::is_same_v<typename TileData::DType, float>,
-        "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/half/bfloat16_t/float/int64_t/uint64_t/!");
+        "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/half/bfloat16_t/float/int64_t/uint64_t!");
     static_assert(
         TileData::Loc == pto::Location::Vec || TileData::Loc == pto::Location::Mat, "Dst location must be Vec or Mat!");
     static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
@@ -412,10 +412,10 @@ __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
     if constexpr (std::is_same_v<typename TileData::DType, int64_t> ||
         std::is_same_v<typename TileData::DType, uint64_t>) {
         static_assert(GlobalData::layout == GetTileLayout<TileData>(),
-            "TLOAD only support ND2ND/DN2DN for b8!");
+            "TLOAD only support ND2ND/DN2DN for b64!");
         static_assert((GlobalData::layout == pto::Layout::ND) ||
             (GlobalData::layout == pto::Layout::DN),
-            "TLOAD only support ND2ND/DN2DN for b8!");
+            "TLOAD only support ND2ND/DN2DN for b64!");
     }
 
     if constexpr (TileData::Loc == pto::Location::Vec) {
