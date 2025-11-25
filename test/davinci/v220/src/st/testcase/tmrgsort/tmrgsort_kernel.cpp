@@ -235,8 +235,8 @@ __aicore__ inline void runTMrgsort_single(__gm__ T __out__ *out, __gm__ T __in__
     using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
     using DstTileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
 
-    TileData src0Tile(kGRows_, kGCols_);
-    DstTileData dstTile(kGRows_, kGCols_);
+    TileData src0Tile(kGRows_, kTCols_);
+    DstTileData dstTile(kGRows_, kTCols_);
     TASSIGN(src0Tile, 0x0);
     TASSIGN(dstTile, 0xF000);
 
@@ -449,7 +449,8 @@ extern "C" __global__ __aicore__ void launchTMRGSORT_single_2(__gm__ float *out,
 {   
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 320;
-    runTMrgsort_single<float, ROW, COL, ROW, COL>(out, src0);
+    constexpr uint32_t VAILDCOL = 256;
+    runTMrgsort_single<float, ROW, COL, ROW, VAILDCOL>(out, src0);
 }
 
 extern "C" __global__ __aicore__ void launchTMRGSORT_single_3(__gm__ float *out, __gm__ float *src0)
@@ -463,7 +464,8 @@ extern "C" __global__ __aicore__ void launchTMRGSORT_single_4(__gm__ float *out,
 {   
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 640;
-    runTMrgsort_single<float, ROW, COL, ROW, COL>(out, src0);
+    constexpr uint32_t VAILDCOL = 512;
+    runTMrgsort_single<float, ROW, COL, ROW, VAILDCOL>(out, src0);
 }
 
 extern "C" __global__ __aicore__ void launchTMRGSORT_single_5(__gm__ float *out, __gm__ float *src0)
@@ -478,7 +480,8 @@ extern "C" __global__ __aicore__ void launchTMRGSORT_single_6(__gm__ float *out,
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 320;
-    runTMrgsort_single<half, ROW, COL, ROW, COL>(reinterpret_cast<__gm__ half *>(out),
+    constexpr uint32_t VAILDCOL = 256;
+    runTMrgsort_single<half, ROW, COL, ROW, VAILDCOL>(reinterpret_cast<__gm__ half *>(out),
         reinterpret_cast<__gm__ half *>(src0));
 }
 
@@ -494,7 +497,8 @@ extern "C" __global__ __aicore__ void launchTMRGSORT_single_8(__gm__ float *out,
 {  
     constexpr uint32_t ROW = 1;
     constexpr uint32_t COL = 640;
-    runTMrgsort_single<half, ROW, COL, ROW, COL>(reinterpret_cast<__gm__ half *>(out),
+    constexpr uint32_t VAILDCOL = 512;
+    runTMrgsort_single<half, ROW, COL, ROW, VAILDCOL>(reinterpret_cast<__gm__ half *>(out),
         reinterpret_cast<__gm__ half *>(src0));
 }
 
