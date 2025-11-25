@@ -27,6 +27,8 @@
 #include "davinci/v220/TCvt.hpp"
 #include "davinci/v220/TCopy.hpp"
 #include "davinci/v220/TPartAdd.hpp"
+#include "davinci/v220/TPartMax.hpp"
+#include "davinci/v220/TPartMin.hpp"
 #include "davinci/v220/TRowExpand.hpp"
 #include "davinci/v220/TCI.hpp"
 #include "davinci/v220/TColSum.hpp"
