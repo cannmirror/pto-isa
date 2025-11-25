@@ -169,6 +169,15 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case10
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case11
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case12
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case1
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case3
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case5
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case7
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case9
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case11
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case13
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case16
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case17
 
   # TROWSUM
   # A3
@@ -426,6 +435,8 @@ else
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tstore -g TStoreTest.ND_float_1_1_1_2_128_1_1_1_2_128
   python3 test/script/run_st.py -r npu -v a3 -t tstore_acc2gm -g TStoreAcc2gmTest.case7
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case1
+  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case17 
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case1
 
