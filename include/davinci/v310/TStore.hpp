@@ -134,16 +134,6 @@ namespace pto
             "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/int64_t/uint64_t/half/bfloat16_t/float!");
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
             "Source dtype must be same with dst dtype!");
-        static_assert(((GlobalData::layout == pto::Layout::ND) &&
-                              (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))),
-            "Src and dst layout must be same, only support ND/DN/NZ!");
-        if constexpr (std::is_same_v<typename TileData::DType, int64_t> ||
-                      std::is_same_v<typename TileData::DType, uint64_t>) {
-            static_assert(GlobalData::layout == GetTileLayout<TileData>(),
-                "TSTORE(GlobalTensor, VecTile) only support ND2ND/DN2DN for b8!");
-            static_assert((GlobalData::layout == pto::Layout::ND) || (GlobalData::layout == pto::Layout::DN),
-                "TSTORE(GlobalTensor, VecTile) only support ND2ND/DN2DN for b8!");
-        }
     }
 
     template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
