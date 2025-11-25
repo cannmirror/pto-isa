@@ -9,7 +9,10 @@
 #include <unistd.h>
 #include <cmath>
 #include <sys/stat.h>
-#include "acl/acl.h"
+#ifndef __CPU_SIM
+    #include "acl/acl.h"
+#endif
+#include "common/type.hpp"
 
 namespace PtoTestCommon {
 
@@ -65,7 +68,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
     if (size > bufferSize) {
-        ERROR_LOG("file size is larger than buffer size");
+        ERROR_LOG("%s: file size (%lu) is larger than buffer size (%lu)",filePath.c_str(), size , bufferSize);
         file.close();
         return false;
     }
@@ -115,7 +118,12 @@ void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow
 {
     assert(elementsPerRow != 0);
     for (size_t i = 0; i < count; ++i) {
-        std::cout << std::setw(5) << std::setprecision(6) << aclFloat16ToFloat(data[i]);
+        std::cout << std::setw(5) << std::setprecision(6) << 
+            #ifdef __CPU_SIM  
+                (float)data[i];
+            #else
+                aclFloat16ToFloat(data[i]);
+            #endif
         if (i % elementsPerRow == elementsPerRow - 1) {
             std::cout << std::endl;
         }

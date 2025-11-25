@@ -25,4 +25,11 @@ namespace pto {
     };
 }
 
+#if defined(__CPU_SIM)
+    #include <stdfloat>
+    typedef std::float16_t half;
+    typedef std::float16_t bfloat16_t;
+    typedef std::float16_t aclFloat16;
+#endif
+
 #endif

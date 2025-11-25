@@ -3,6 +3,9 @@
 
 #include "common/memory.hpp"
 #include <common/type.hpp>
+#ifdef __CPU_SIM
+#include <iomanip>
+#endif
 
 namespace pto {
 enum class PadValue {
@@ -475,10 +478,14 @@ struct Tile {
     static_assert(SFractalSize_ == 512 || SFractalSize_ == 1024,
                   "SFractalSize_ illegal");
 
-#ifdef __PTO_AUTO__
-    using TileDType = typename MemoryQualifier<Loc, DType>::type tile_size(Rows * Cols);
+#ifdef __CPU_SIM
+    using TileDType = Tile::DType[Rows*Cols];
 #else
-    using TileDType = typename MemoryQualifier<Loc, DType>::type;
+    #ifdef __PTO_AUTO__
+        using TileDType = typename MemoryQualifier<Loc, DType>::type tile_size(Rows * Cols);
+    #else
+        using TileDType = typename MemoryQualifier<Loc, DType>::type;
+    #endif
 #endif
 
     __aicore__ TileDType &data() { return data_; }
@@ -524,12 +531,13 @@ using TileLeft = Tile<Location::Left, Element_, Rows_, Cols_, BLayout::RowMajor,
                       RowValid_, ColValid_, SLayout::RowMajor, 512>;
 #endif
 
-#ifdef __DAV_V310
+#if defined (__DAV_V310) || defined (__CPU_SIM)
 template <typename Element_, const int Rows_, const int Cols_,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_>
 using TileLeft = Tile<Location::Left, Element_, Rows_, Cols_, BLayout::ColMajor,
                       RowValid_, ColValid_, SLayout::RowMajor, 512>;
 #endif
+
 
 template <typename Element_, const int Rows_, const int Cols_,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_>
