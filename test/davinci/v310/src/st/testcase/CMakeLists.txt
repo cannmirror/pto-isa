@@ -112,6 +112,7 @@ set(ALL_TESTCASES
     tsub
     tadd
     tpartadd
+    tfillpad
     tmov
     tmov_l0c2ub
     trsqrt

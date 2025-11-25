@@ -372,6 +372,10 @@ if [ "$1" = "dailyBuild" ]; then
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tcopy
 
+  # TFILLPAD
+  #A3
+  python3 test/script/run_st.py -r sim -v a3 -t tfillpad
+
   # TMINS
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tmins
@@ -498,6 +502,10 @@ else
   python3 test/script/run_st.py -r npu -v a3 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
+
+  # TFILLPAD
+  #A3
+  python3 test/script/run_st.py -r sim -v a3 -t tfillpad -g TFILLPADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX
   
   #A5
   # python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
