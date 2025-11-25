@@ -52,6 +52,9 @@ __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename 
     // 处理ND格式数据
     if constexpr (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
         // 单条指令处理一个二维数据搬运
+        PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
+        PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
+            "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
         uint16_t nBurst = gShape3;
         uint32_t lenBurst = validCol * sizeof(typename TileData::DType);
         uint32_t gmGap = (gStride3 - gShape4) * sizeof(typename TileData::DType);
@@ -78,6 +81,9 @@ __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename 
         }
         // 处理DN格式数据
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
+        PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
+        PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
+            "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
         uint16_t nBurst = gShape4;
         uint32_t lenBurst = validRow * sizeof(typename TileData::DType);
         uint32_t gmGap = (gStride4 - gShape3) * sizeof(typename TileData::DType);
@@ -104,6 +110,10 @@ __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename 
         }
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
         // 小分型由gShape3 * gShape4表示
+        PTO_ASSERT(validRow == gShape2 * gShape3,
+            "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
+        PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
+            "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
         constexpr uint32_t c0_size = 32;
         uint16_t nBurst = gShape1;
         uint32_t lenBurst = validRow * c0_size;
@@ -295,7 +305,7 @@ __tf__ __aicore__ void TStoreAcc(typename GlobalData::DType __out__ *dst, typena
 {
     __cc__ typename TileData::DType *srcAddr = (__cc__ typename TileData::DType *)__cce_get_tile_ptr(src);
     typename GlobalData::DType *dstAddr = dst;
-    
+
     if constexpr (GlobalData::layout == pto::Layout::ND) {
         TStoreAccND<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::NZ) {
@@ -362,6 +372,9 @@ __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
     static_assert(TileData::Loc == pto::Location::Vec || TileData::Loc == pto::Location::Acc,
         "Source location only suport Vec/Acc!");
+    PTO_ASSERT(dst.GetShape(0) > 0 && dst.GetShape(1) > 0 && dst.GetShape(2) > 0 &&
+        dst.GetShape(3) > 0 && dst.GetShape(4) > 0 && src.GetValidRow() > 0 && src.GetValidCol() > 0,
+        "The shape of src and dst must be greater than 0!");
     if constexpr (TileData::Loc == pto::Location::Vec) {
         CheckStaticVec<TileData, GlobalData>();
         // GlobalTensor为5维数据，Tile为2维数据

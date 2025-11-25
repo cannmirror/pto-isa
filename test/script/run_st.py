@@ -34,7 +34,7 @@ def set_env_variables(run_mode, soc_version):
         ascend_home = os.environ.get("ASCEND_HOME_PATH")
         if not ascend_home:
             raise EnvironmentError("ASCEND_HOME_PATH is not set")
-        
+
         os.environ["LD_LIBRARY_PATH"] = f"{ascend_home}/runtime/lib64/stub:{os.environ.get('LD_LIBRARY_PATH', '')}"
 
         setenv_path = os.path.join(ascend_home, "bin", "setenv.bash")
@@ -159,6 +159,7 @@ def main():
     parser.add_argument("-v", "--soc-version", required=True, help="SOC版本 只支持 a3 or a5")
     parser.add_argument("-t", "--testcase", required=True, help="需要执行的用例")
     parser.add_argument("-g", "--gtest_filter", required=False, help="可选 需要执行的具体case名")
+    parser.add_argument("-d", "--debug-enable", action='store_true', help="开启调试检查")
 
     args = parser.parse_args()
     default_soc_version = "Ascend910B1"
@@ -187,7 +188,7 @@ def main():
         set_env_variables(args.run_mode, default_soc_version)
 
         # 执行构建
-        build_project(args.run_mode, default_soc_version, args.testcase)
+        build_project(args.run_mode, default_soc_version, args.testcase, args.debug_enable)
 
         # 生成标杆
         golden_path = "testcase/" + args.testcase + "/gen_data.py"

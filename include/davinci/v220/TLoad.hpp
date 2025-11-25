@@ -198,6 +198,9 @@ __tf__ __aicore__ void TLoadGm2ub(typename TileData::TileDType __out__ dst, type
 
     if constexpr (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
         static_assert(TileData::Rows < 4096, "TLOAD: Rows>=4095 not supported in A2/A3");
+        PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
+        PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
+            "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
         uint16_t nBurst = gShape3;
         uint32_t lenBurst = validCol * sizeof(typename TileData::DType);
         uint64_t gmGapValue = (gStride3 - gShape4) * sizeof(typename TileData::DType);
@@ -229,6 +232,9 @@ __tf__ __aicore__ void TLoadGm2ub(typename TileData::TileDType __out__ dst, type
             }
         }
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
+        PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
+        PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
+            "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
         uint16_t nBurst = gShape4;
         uint32_t lenBurst = validRow * sizeof(typename TileData::DType);
         uint64_t gmGapValue = (gStride4 - gShape3) * sizeof(typename TileData::DType);
@@ -264,6 +270,10 @@ __tf__ __aicore__ void TLoadGm2ub(typename TileData::TileDType __out__ dst, type
         static_assert(GlobalData::staticShape[3] == 16 &&
                           GlobalData::staticShape[4] == c0_size / sizeof(typename TileData::DType),
             "When TileData is NZ format, the last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
+        PTO_ASSERT(validRow == gShape2 * gShape3,
+            "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
+        PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
+            "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
         uint16_t nBurst = gShape1;
         uint32_t lenBurst = validRow * c0_size;
         uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType);
@@ -293,6 +303,11 @@ __tf__ __aicore__ void TLoadGm2L1(typename TileData::TileDType __out__ dst, type
     typename GlobalData::DType *srcAddr = src;
 
     if constexpr (GetTileLayout<TileData>() == pto::Layout::ND) {
+        PTO_ASSERT(gShape4 * sizeof(typename TileData::DType) % 32 == 0,
+            "The 5th dim of ND shape must be 32 bytes aligned!");
+        PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
+        PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
+            "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
         uint16_t nBurst = gShape3;
         uint16_t lenBurst = validCol / blockSizeElem;
         uint16_t gmGap = (gStride3 - gShape4) / blockSizeElem;
@@ -318,6 +333,11 @@ __tf__ __aicore__ void TLoadGm2L1(typename TileData::TileDType __out__ dst, type
             }
         }
     } else if constexpr (GetTileLayout<TileData>() == pto::Layout::DN) {
+        PTO_ASSERT(gShape3 * sizeof(typename TileData::DType) % 32 == 0,
+            "The 4th dim of DN shape must be 32 bytes aligned!");
+        PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
+        PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
+            "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
         uint16_t nBurst = gShape4;
         uint16_t lenBurst = validRow / blockSizeElem;
         uint16_t gmGap = (gStride4 - gShape3) / blockSizeElem;
@@ -346,6 +366,10 @@ __tf__ __aicore__ void TLoadGm2L1(typename TileData::TileDType __out__ dst, type
         static_assert(GlobalData::staticShape[3] == 16 &&
                           GlobalData::staticShape[4] == 32 / sizeof(typename TileData::DType),
             "When TileData is NZ format, the last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
+        PTO_ASSERT(validRow == gShape2 * gShape3,
+            "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
+        PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
+            "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
         uint16_t nBurst = gShape1;
         uint32_t lenBurst = validRow;
         uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType) / BLOCK_BYTE_SIZE;
@@ -372,6 +396,15 @@ __tf__ __aicore__ void TLoadGm2L1Nd2nz(typename TileData::TileDType __out__ dst,
     constexpr uint32_t blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     __cbuf__ typename TileData::DType *dstAddr = (__cbuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
     typename GlobalData::DType *srcAddr = src;
+
+    PTO_ASSERT(gShape3 > 0 && gShape3 <= 16384,
+            "The Shape3 of GlobalTensor must be in range of [1, 16384]!");
+    PTO_ASSERT(gShape4 > 0 && gShape4 <= 65535,
+            "The Shape4 of GlobalTensor must be must be in range of [1, 65535]!");
+    PTO_ASSERT(gStride3 > 0 && gStride3 <= 65535,
+            "The Stride3 of GlobalTensor must be must be in range of [1, 65535]!");
+    static_assert(TileData::Rows <= 16384, "The Rows of TileData must be less than 16384!");
+
     uint16_t ndNum = 1;
     uint16_t nValue = gShape3;
     uint16_t dValue = gShape4;
@@ -417,6 +450,10 @@ __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
             (GlobalData::layout == pto::Layout::DN),
             "TLOAD only support ND2ND/DN2DN for b64!");
     }
+
+    PTO_ASSERT(src.GetShape(0) > 0 && src.GetShape(1) > 0 && src.GetShape(2) > 0 &&
+        src.GetShape(3) > 0 && src.GetShape(4) > 0 && dst.GetValidRow() > 0 && dst.GetValidCol() > 0,
+        "The shape of src and dst must be greater than 0!");
 
     if constexpr (TileData::Loc == pto::Location::Vec) {
         static_assert(GlobalData::layout == GetTileLayout<TileData>(),
