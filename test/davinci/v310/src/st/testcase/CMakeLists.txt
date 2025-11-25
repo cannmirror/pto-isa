@@ -10,9 +10,10 @@ function(pto_vec_st NAME)
     
     add_executable(${NAME} main.cpp)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
-    target_include_directories(${NAME} PRIVATE 
+    target_include_directories(${NAME} PRIVATE
+        ${PROJECT_SOURCE_DIR}/../../../../../include
         ${PROJECT_SOURCE_DIR}/../../../../../include/common
-        ${PROJECT_SOURCE_DIR}/../../../common
+        ${PROJECT_SOURCE_DIR}/../../../../common
     )
 
     target_link_directories(${NAME} PUBLIC
@@ -40,9 +41,10 @@ function(pto_cube_st NAME)
     
     add_executable(${NAME} main.cpp)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
-    target_include_directories(${NAME} PRIVATE 
+    target_include_directories(${NAME} PRIVATE
+        ${PROJECT_SOURCE_DIR}/../../../../../include 
         ${PROJECT_SOURCE_DIR}/../../../../../include/common
-        ${PROJECT_SOURCE_DIR}/../../../common
+        ${PROJECT_SOURCE_DIR}/../../../../common
     )
 
     target_link_directories(${NAME} PUBLIC
@@ -72,8 +74,9 @@ function(pto_mix_st NAME)
     add_executable(${NAME} main.cpp)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE 
+        ${PROJECT_SOURCE_DIR}/../../../../../include
         ${PROJECT_SOURCE_DIR}/../../../../../include/common
-        ${PROJECT_SOURCE_DIR}/../../../common
+        ${PROJECT_SOURCE_DIR}/../../../../common
     )
 
     target_link_directories(${NAME} PUBLIC

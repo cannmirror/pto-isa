@@ -1,0 +1,62 @@
+#ifndef TMOV_HPP
+#define TMOV_HPP
+
+namespace pto
+{
+    template <typename TileData>
+    __aicore__ size_t GetElementOffsetSubfractals( size_t subTileC, size_t innerC, size_t subTileR,size_t innerR) {
+        if constexpr(!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
+            // Nz
+            return subTileC*TileData::Rows*TileData::InnerCols +
+                subTileR*TileData::InnerNumel + innerR*TileData::InnerCols + innerC;
+        } else if constexpr(TileData::isRowMajor & (TileData::SFractal == SLayout::ColMajor)) {
+            // Zn
+            return subTileR*TileData::Cols*TileData::InnerRows +
+                subTileC*TileData::InnerNumel + innerC*TileData::InnerRows + innerR;
+        } else {
+            static_assert(false, "Invalid layout");
+        }
+    }
+
+    template <typename TileData>
+    __aicore__ size_t GetElementOffsetPlain( size_t c, size_t r) {
+        if constexpr(TileData::isRowMajor) {
+            return c*TileData::Rows+r;
+        } else {
+            return r*TileData::Cols+c;
+        }
+    }
+
+    template <typename DstTileData, typename SrcTileData>
+    __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
+        static_assert(SrcTileData::Rows == DstTileData::Rows && SrcTileData::Cols == DstTileData::Cols);
+        static_assert (SrcTileData::ValidRow == DstTileData::ValidRow && SrcTileData::ValidCol == DstTileData::ValidCol);
+        for(size_t c=0; c<SrcTileData::ValidCol; c++) {
+            size_t subTileSrcC = c / SrcTileData::InnerCols;
+            size_t innerSrcC = c % SrcTileData::InnerCols;
+            size_t subTileDstC = c / DstTileData::InnerCols;
+            size_t innerDstC = c % DstTileData::InnerCols;
+
+            for(size_t r=0; r<SrcTileData::ValidRow; r++) {
+                size_t srcTileIdx, dstTileIdx;
+                if constexpr (SrcTileData::SFractal == SLayout::NoneBox)
+                    srcTileIdx = GetElementOffsetPlain<SrcTileData>(c,r);
+                else {
+                    size_t subTileR = r / SrcTileData::InnerRows;
+                    size_t innerR = r % SrcTileData::InnerRows;
+                    srcTileIdx = GetElementOffsetSubfractals<SrcTileData>(subTileSrcC,innerSrcC,subTileR,innerR);
+                }
+
+                if constexpr (DstTileData::SFractal == SLayout::NoneBox)
+                    dstTileIdx = GetElementOffsetPlain<DstTileData>(c,r);
+                else {
+                    size_t subTileR = r / DstTileData::InnerRows;
+                    size_t innerR = r % DstTileData::InnerRows;
+                    dstTileIdx = GetElementOffsetSubfractals<DstTileData>(subTileDstC,innerDstC,subTileR,innerR);
+                }
+                dst.data()[dstTileIdx] = src.data()[srcTileIdx];
+            }
+        }
+    }
+}
+#endif  // TMOV_HPP

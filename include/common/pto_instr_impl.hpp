@@ -2,6 +2,8 @@
 #define PTO_INSTR_IMPL_HPP
 
 #include "common/pto_tile.hpp"
+#include "common/type.hpp"
+
 #ifdef __DAV_V220
 #include "davinci/v220/TAssign.hpp"
 #include "davinci/v220/TAdd.hpp"
@@ -52,6 +54,15 @@
 #include "davinci/v310/TPartAdd.hpp"
 #include "davinci/v310/TGather.hpp"
 #include "davinci/v310/TUnaryOp.hpp"
+#endif
+
+#ifdef __CPU_SIM
+    #include "cpu_sim/TMatmul.hpp"
+    #include "cpu_sim/TAssign.hpp"
+    #include "cpu_sim/TLoad.hpp"
+    #include "cpu_sim/TStore.hpp"
+    #include "cpu_sim/TMrgSort.hpp"
+    #include "cpu_sim/TMov.hpp"
 #endif
 
 #endif
