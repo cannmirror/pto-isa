@@ -38,3 +38,5 @@ python3 test/script/build_st.py -r npu -v a5 -t tpartadd -g TPARTADDTest.case_fl
 python3 test/script/build_st.py -r npu -v a5 -t tsub -g TSUBTest.case_float_64x64_64x64_64x64
 python3 test/script/build_st.py -r npu -v a5 -t tmov -g TMOVTest.case_bias_dynamic8
 python3 test/script/build_st.py -r npu -v a5 -t tmov -g TMOVTest.case_fixpipe1
+python3 test/script/build_st.py -r npu -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case1
+python3 test/script/build_st.py -r npu -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case17
