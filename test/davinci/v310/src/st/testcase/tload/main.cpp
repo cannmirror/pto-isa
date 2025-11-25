@@ -166,3 +166,18 @@ TEST_F(TLOADTest, case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX)
 {
 	tload_test<8,float,8>();
 }
+
+TEST_F(TLOADTest, case_int64_GT_128_128_VT_128_128_BLK1)
+{
+	tload_test<9,int64_t,1>();
+}
+
+TEST_F(TLOADTest, case_uint64_GT_128_125_VT_128_128_BLK1_PADZERO)
+{
+	tload_test<10,uint64_t,1>();
+}
+
+TEST_F(TLOADTest, case_uint64_GT_2_2_2_256_64_VT_256_64_BLK8)
+{
+	tload_test<12,uint64_t,8>();
+}
