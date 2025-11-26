@@ -22,6 +22,7 @@
 #include "davinci/v220/TColMax.hpp"
 #include "davinci/v220/TMatmul.hpp"
 #include "davinci/v220/TMrgSort.hpp"
+#include "davinci/v220/TCmps.hpp"
 #include "davinci/v220/TExtract.hpp"
 #include "davinci/v220/TMov.hpp"
 #include "davinci/v220/TMul.hpp"

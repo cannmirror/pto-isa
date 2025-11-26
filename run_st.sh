@@ -454,6 +454,10 @@ else
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case1
 
+  # TCMPS
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
+
   # TROWSUM
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t trowsum -g TROWSUMTest.case1

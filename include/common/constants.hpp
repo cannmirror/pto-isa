@@ -50,5 +50,14 @@ enum class AtomicType : uint8_t {
     AtomicNone = 0,
     AtomicAdd = 1,
 };
+
+enum class CmpMode : uint8_t {
+    EQ = 0,
+    NE = 1,
+    LT = 2,
+    GT = 3,
+    GE = 4,
+    LE = 5,
+};
 }
 #endif

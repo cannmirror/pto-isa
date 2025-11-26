@@ -73,6 +73,7 @@ tmrgsort
 tfillpad
 tgather
 tsort32
+tcmps
 tstore
 tsels
 tcopy

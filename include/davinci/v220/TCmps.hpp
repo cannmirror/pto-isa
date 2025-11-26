@@ -1,0 +1,97 @@
+#ifndef TCMPS_HPP
+#define TCMPS_HPP
+
+#include "common/constants.hpp"
+#include "common/utils.hpp"
+
+namespace pto {
+
+constexpr const int NUM_BITS_IN_BYTE = 8;
+
+    template <typename TileDataDst, typename TileDataSrc, typename T>
+    __aicore__ void GenCmpCall(__ubuf__ typename TileDataDst::DType *dst,
+        __ubuf__ typename TileDataSrc::DType *src0, T src1, CmpMode cmpMode,
+        uint8_t repeat, uint16_t dstblockstride, uint16_t srcblockstride,
+        uint16_t dstrepeatstride, uint16_t srcrepeatstride)
+{
+        if constexpr (std::is_same<typename TileDataSrc::DType, int32_t>::value) {
+            vcmpvs_eq(dst, src0, src1, repeat, dstblockstride, srcblockstride, dstrepeatstride, srcrepeatstride);
+        }
+        else {
+            switch (static_cast<CmpMode>(cmpMode)) {
+                case CmpMode::EQ:
+                    vcmpvs_eq(dst, src0, src1, repeat, dstblockstride, srcblockstride, dstrepeatstride, srcrepeatstride);
+                    break;
+                case CmpMode::NE:
+                    vcmpvs_ne(dst, src0, src1, repeat, dstblockstride, srcblockstride, dstrepeatstride, srcrepeatstride);
+                    break;
+                case CmpMode::LT:
+                    vcmpvs_lt(dst, src0, src1, repeat, dstblockstride, srcblockstride, dstrepeatstride, srcrepeatstride);
+                    break;
+                case CmpMode::GT:
+                    vcmpvs_gt(dst, src0, src1, repeat, dstblockstride, srcblockstride, dstrepeatstride, srcrepeatstride);
+                    break;
+                case CmpMode::GE:
+                    vcmpvs_ge(dst, src0, src1, repeat, dstblockstride, srcblockstride, dstrepeatstride, srcrepeatstride);
+                    break;
+                case CmpMode::LE:
+                    vcmpvs_le(dst, src0, src1, repeat, dstblockstride, srcblockstride, dstrepeatstride, srcrepeatstride);
+                    break;
+                default:
+                    vcmpvs_eq(dst, src0, src1, repeat, dstblockstride, srcblockstride, dstrepeatstride, srcrepeatstride);
+                    break;
+            }
+        }
+    }
+
+
+    template <typename TileDataDst, typename TileDataSrc, typename T, unsigned SS>
+    __tf__ __aicore__ void TCmps(typename TileDataDst::TileDType __out__ dst,
+        typename TileDataSrc::TileDType __in__ src0, T src1, 
+        CmpMode mode, unsigned numRepeatPerLine,
+        unsigned numRemainPerLine, unsigned validRow,
+        unsigned elementsPerRepeat, unsigned blockSizeElem) 
+    {
+        __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
+        __ubuf__ typename TileDataSrc::DType *srcPtr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
+        
+        set_mask_count();
+        set_vector_mask(0, TileDataDst::Cols);
+        size_t dst_offset = 0;
+        for (size_t i = 0; i < validRow * numRepeatPerLine; i++) {
+            GenCmpCall<TileDataDst, TileDataSrc>(dstPtr + i * BLOCK_BYTE_SIZE,
+                                    srcPtr + i * SS,
+                                    src1,
+                                    mode,
+                                    1,
+                                    1,
+                                    1,
+                                    1,
+                                    1);
+        }
+        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        for (size_t index = 0; index < validRow * numRepeatPerLine; index++) {
+            for (size_t bit_index = 0; bit_index < NUM_BITS_IN_BYTE; bit_index++){
+                dstPtr[dst_offset + bit_index] = dstPtr[index * BLOCK_BYTE_SIZE + bit_index];
+            }
+            dst_offset = dst_offset + NUM_BITS_IN_BYTE;
+        }
+        set_mask_norm();
+        set_vector_mask(-1, -1);
+    }
+
+    template <typename TileDataDst, typename TileDataSrc0, typename T>
+    __aicore__ void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc0::DType);
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataSrc0::DType);
+        unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat + 1;
+        unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
+        constexpr unsigned SS = REPEAT_BYTE / sizeof(typename TileDataSrc0::DType);
+        unsigned validRow = dst.GetValidRow();
+
+        TCmps<TileDataDst, TileDataSrc0, T, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
+                                                validRow, elementsPerRepeat, blockSizeElem);
+    }
+}
+#endif
