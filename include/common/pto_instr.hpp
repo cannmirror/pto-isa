@@ -32,6 +32,11 @@ __PTO_INSTR__ void TLOAD(TileData &dst, GlobalData &src) {
   MAP_INSTR_IMPL(TLOAD, dst, src)
 }
 
+template <typename TileDataDst, typename TileDataSrc0, typename T>
+__PTO_INSTR__ void TCMPS(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
+  MAP_INSTR_IMPL(TCMPS, dst, src0, src1, cmpMode)
+}
+
 template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
 __PTO_INSTR__ void TSTORE(GlobalData &dst, TileData &src) {
   TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src);
