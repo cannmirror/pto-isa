@@ -116,6 +116,7 @@ set(ALL_TESTCASES
     tmins
     tmov
     tmov_l0c2ub
+    tsels
     trsqrt
     tsqrt
     texp
