@@ -276,7 +276,7 @@ void test_gather() {
         dstsize = size;
     } else if constexpr (PATTERN == HP0101 || PATTERN == HP1010||
       PATTERN == FP0101 || PATTERN == FP1010 || PATTERN == BP0101 || PATTERN == BP1010 ||
-      PATTERN == U16P0101 || PATTERN ==  U16P1010) {
+      PATTERN == U16P0101 || PATTERN ==  U16P1010 || PATTERN == FPINT1010) {
         dstsize = size/2;
     } else {
         dstsize = size/4;
@@ -350,6 +350,11 @@ TEST_F(TGATHERTest, case1_float_P1000)
 TEST_F(TGATHERTest, case1_float_P1111)
 {
     test_gather<float, FP1111, FLOAT_P1111_ROW, FLOAT_P1111_COL>();
+}
+
+TEST_F(TGATHERTest, case1_float_int_P1010)
+{
+    test_gather<float, FPINT1010, FLOAT_P1010_ROW, FLOAT_P1010_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P0101)

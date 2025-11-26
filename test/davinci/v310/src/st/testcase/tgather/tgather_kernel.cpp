@@ -122,6 +122,33 @@ __aicore__ void runTGATHER(__gm__ T __out__ *out, __gm__ T __in__ *src)
     out = dstGlobal.data();
 }
 
+template <typename srcT, typename dstT, int kGRows_,int kGCols_, int kTRows_, int kTCols_, MaskPattern maskPattern>
+__aicore__ void runTGATHERDIFF(__gm__ dstT __out__ *out, __gm__ srcT __in__ *src)
+{
+    using DynShapeDim5 = pto::Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using SrcGlobalData = GlobalTensor<srcT, DynShapeDim5, DynStridDim5>;
+    using DstGlobalData = GlobalTensor<dstT, DynShapeDim5, DynStridDim5>;
+    using TileData = Tile<Location::Vec, srcT, (kTRows_ + 5), (kTCols_ + 32), BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<Location::Vec, dstT, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    TileData srcTile(kTRows_, kTCols_);
+    DstTileData dstTile(kTRows_, kTCols_);
+    TASSIGN(srcTile, 0x0);
+    TASSIGN(dstTile, 0x0 + (kTRows_ + 5) * (kTCols_ + 32) * sizeof(dstT));
+
+    SrcGlobalData srcGlobal(src);
+    DstGlobalData dstGlobal(out);
+
+    TLOAD(srcTile, srcGlobal);
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    TGATHER<DstTileData, TileData, maskPattern>(dstTile, srcTile);
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID1);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID1);
+    TSTORE(dstGlobal, dstTile);
+    out = dstGlobal.data();
+}
+
 extern "C" __global__  __aicore__ void launchTGATHER_31(__gm__ uint8_t *out, __gm__ uint8_t *src) 
 {
     runTGATHER<int8_t, HALF_P0101_ROW, HALF_P0101_COL, HALF_P0101_ROW, HALF_P0101_COL, MaskPattern::P0101>(
@@ -318,6 +345,13 @@ extern "C" __global__  __aicore__ void launchTGATHER_7(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ float *> (src)); 
 }
 
+extern "C" __global__  __aicore__ void launchTGATHER_8(__gm__ uint8_t *out, __gm__ uint8_t *src)
+{
+    runTGATHERDIFF<float, int32_t, FLOAT_P1010_ROW, FLOAT_P1010_COL, FLOAT_P1010_ROW, FLOAT_P1010_COL, MaskPattern::P1010>(
+        reinterpret_cast<__gm__ int32_t *> (out),
+        reinterpret_cast<__gm__ float *> (src));
+}
+
 template <int32_t tilingKey>
 void launchTGATHER_demo(uint8_t *out, uint8_t *src, void *stream)
 {
@@ -335,6 +369,8 @@ void launchTGATHER_demo(uint8_t *out, uint8_t *src, void *stream)
         launchTGATHER_6<<< 1, nullptr, stream >>>(out, src);
     } else if constexpr (tilingKey == FP1111) {
         launchTGATHER_7<<< 1, nullptr, stream >>>(out, src);
+    } else if constexpr (tilingKey == FPINT1010) {
+        launchTGATHER_8<<< 1, nullptr, stream >>>(out, src);
     } else if constexpr (tilingKey == HP0101) {
         launchTGATHER_11<<< 1, nullptr, stream >>>(out, src);
     } else if constexpr (tilingKey == HP1010) {
@@ -387,6 +423,7 @@ template void launchTGATHER_demo<FP0010>(uint8_t *out, uint8_t *src, void *strea
 template void launchTGATHER_demo<FP0100>(uint8_t *out, uint8_t *src, void *stream);
 template void launchTGATHER_demo<FP1000>(uint8_t *out, uint8_t *src, void *stream);
 template void launchTGATHER_demo<FP1111>(uint8_t *out, uint8_t *src, void *stream);
+template void launchTGATHER_demo<FPINT1010>(uint8_t *out, uint8_t *src, void *stream);
 
 template void launchTGATHER_demo<HP0101>(uint8_t *out, uint8_t *src, void *stream);
 template void launchTGATHER_demo<HP1010>(uint8_t *out, uint8_t *src, void *stream);

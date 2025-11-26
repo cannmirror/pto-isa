@@ -147,6 +147,7 @@ if __name__ == "__main__":
         TGatherParamsMasked("TGATHERTest.case1_float_P0100", np.float32, np.float32, FLOAT_P0100_ROW, FLOAT_P0100_COL, P0100),
         TGatherParamsMasked("TGATHERTest.case1_float_P1000", np.float32, np.float32, FLOAT_P1000_ROW, FLOAT_P1000_COL, P1000),
         TGatherParamsMasked("TGATHERTest.case1_float_P1111", np.float32, np.float32, FLOAT_P1111_ROW, FLOAT_P1111_COL, P1111),
+        TGatherParamsMasked("TGATHERTest.case1_float_int_P1010", np.float32, np.int32, FLOAT_P1010_ROW, FLOAT_P1010_COL, P1010),
 
         TGatherParamsMasked("TGATHERTest.case1_half_P0101", np.half, np.half, HALF_P0101_ROW, HALF_P0101_COL, P0101),
         TGatherParamsMasked("TGATHERTest.case1_half_P1010", np.half, np.half, HALF_P1010_ROW, HALF_P1010_COL, P1010),
