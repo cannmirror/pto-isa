@@ -89,16 +89,6 @@ namespace pto
             vmuls(dst, src0, divider, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
         }
     }
-    template <typename DataType>
-    inline __aicore__ void MULS(__ubuf__ DataType *dst, __ubuf__ DataType *src0, DataType src1, uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride, uint8_t dstRepeatStride, uint8_t srcRepeatStride)
-    {
-        vmuls(dst, src0, src1, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-    }
-    template <typename DataType>
-    inline __aicore__ void ADDS(__ubuf__ DataType *dst, __ubuf__ DataType *src0, DataType src1, uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride, uint8_t dstRepeatStride, uint8_t srcRepeatStride)
-    {
-        vadds(dst, src0, src1, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-    }
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride, typename Func>
     __tf__ __aicore__ void TBinScalar(typename TileData::TileDType __out__ dst,
                                       typename TileData::TileDType __in__ src0,
@@ -193,8 +183,7 @@ namespace pto
     }
 
     template <typename TileData>
-    __aicore__ void TDIVS(TileData &dst, TileData &src0, typename TileData::DType scalar)
-    {
+    __aicore__ void TDIVS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar) {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
         unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat;
@@ -206,8 +195,7 @@ namespace pto
                                                                                           numRepeatPerLine, numRemainPerLine, validRow);
     }
     template <typename TileData>
-    __aicore__ void TDIVS(TileData &dst, typename TileData::DType scalar, TileData &src0)
-    {
+    __aicore__ void TDIVS_IMPL(TileData &dst, typename TileData::DType scalar, TileData &src0) {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
         unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat;
@@ -216,32 +204,6 @@ namespace pto
         unsigned validRow = dst.GetValidRow();
         auto funcPtr = SDIV<typename TileData::DType>;
         TBinScalar<TileData, elementsPerRepeat, blockSizeElem, stride, decltype(funcPtr)>(dst.data(), src0.data(), scalar, SDIV,
-                                                                                          numRepeatPerLine, numRemainPerLine, validRow);
-    }
-    template <typename TileData>
-    __aicore__ void TADDS(TileData &dst, TileData &src0, typename TileData::DType scalar)
-    {
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-        unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat;
-        unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
-        constexpr unsigned stride = TileData::RowStride;
-        unsigned validRow = dst.GetValidRow();
-        auto funcPtr = ADDS<typename TileData::DType>;
-        TBinScalar<TileData, elementsPerRepeat, blockSizeElem, stride, decltype(funcPtr)>(dst.data(), src0.data(), scalar, ADDS,
-                                                                                          numRepeatPerLine, numRemainPerLine, validRow);
-    }
-    template <typename TileData>
-    __aicore__ void TMULS(TileData &dst, TileData &src0, typename TileData::DType scalar)
-    {
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-        unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat;
-        unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
-        constexpr unsigned stride = TileData::RowStride;
-        unsigned validRow = dst.GetValidRow();
-        auto funcPtr = MULS<typename TileData::DType>;
-        TBinScalar<TileData, elementsPerRepeat, blockSizeElem, stride, decltype(funcPtr)>(dst.data(), src0.data(), scalar, MULS,
                                                                                           numRepeatPerLine, numRemainPerLine, validRow);
     }
 }
