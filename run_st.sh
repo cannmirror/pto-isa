@@ -405,6 +405,11 @@ else
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case5
 
+  # TGATHERB
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tgatherb
+  # A5
+
   # TCVT
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tcvt -g TCVTTest.case1

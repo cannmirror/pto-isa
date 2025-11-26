@@ -218,6 +218,11 @@ template <typename TileData>
 __PTO_INSTR__ void TEXP(TileData &dst, TileData &src) {
   MAP_INSTR_IMPL(TEXP, dst, src)
 }
+
+template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset>
+__PTO_INSTR__ void TGATHERB(TileDataDst &dst, TileDataSrc &src, TileDataOffset &offset) {
+  MAP_INSTR_IMPL(TGATHERB, dst, src, offset)
+}
 } // namespace pto
 
 #endif

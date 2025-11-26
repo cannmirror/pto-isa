@@ -33,6 +33,7 @@
 #include "davinci/v220/TCI.hpp"
 #include "davinci/v220/TColSum.hpp"
 #include "davinci/v220/TUnaryOp.hpp"
+#include "davinci/v220/TGatherB.hpp"
 #endif
 
 #ifdef __DAV_V310
