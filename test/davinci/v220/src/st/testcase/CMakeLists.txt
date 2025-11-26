@@ -78,6 +78,7 @@ tsels
 tcopy
 trowexpand
 tcvt
+tmul
 tadd
 tpartadd
 tsub

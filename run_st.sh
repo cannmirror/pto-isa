@@ -441,6 +441,10 @@ else
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
 
+  # TMUL
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tmul -g TMULTest.case_float_64x64_64x64_64x64
+
   # TSTORE
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tstore -g TStoreTest.ND_float_1_1_1_2_128_1_1_1_2_128
