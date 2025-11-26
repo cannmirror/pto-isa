@@ -132,7 +132,7 @@ build_package() {
   cd $BUILD_PATH
   cmake ..
   make package
-  echo "---------------package end-----------------"
+  echo "---------------package end------------------"
 }
 
 run_example() {
