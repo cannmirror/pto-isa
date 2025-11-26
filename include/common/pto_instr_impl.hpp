@@ -24,6 +24,7 @@
 #include "davinci/v220/TMrgSort.hpp"
 #include "davinci/v220/TExtract.hpp"
 #include "davinci/v220/TMov.hpp"
+#include "davinci/v220/TMul.hpp"
 #include "davinci/v220/TSort32.hpp"
 #include "davinci/v220/TGather.hpp"
 #include "davinci/v220/TCvt.hpp"
