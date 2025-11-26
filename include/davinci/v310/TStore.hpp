@@ -126,14 +126,34 @@ namespace pto
     {
         static_assert(
             std::is_same_v<typename TileData::DType, int8_t> || std::is_same_v<typename TileData::DType, uint8_t> ||
-            std::is_same_v<typename TileData::DType, int16_t> ||std::is_same_v<typename TileData::DType, uint16_t> ||
-            std::is_same_v<typename TileData::DType, int32_t> || std::is_same_v<typename TileData::DType, uint32_t> ||
-            std::is_same_v<typename TileData::DType, int64_t> || std::is_same_v<typename TileData::DType, uint64_t> ||
-            std::is_same_v<typename TileData::DType, half> || std::is_same_v<typename TileData::DType, bfloat16_t> ||
-            std::is_same_v<typename TileData::DType, float>,
-            "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/int64_t/uint64_t/half/bfloat16_t/float!");
+                std::is_same_v<typename TileData::DType, int16_t> ||
+                std::is_same_v<typename TileData::DType, uint16_t> ||
+                std::is_same_v<typename TileData::DType, int32_t> ||
+                std::is_same_v<typename TileData::DType, uint32_t> ||
+                std::is_same_v<typename TileData::DType, int64_t> ||
+                std::is_same_v<typename TileData::DType, uint64_t> || std::is_same_v<typename TileData::DType, half> ||
+                std::is_same_v<typename TileData::DType, bfloat16_t> ||
+                std::is_same_v<typename TileData::DType, float> ||
+                std::is_same_v<typename TileData::DType, float8_e4m3_t> ||
+                std::is_same_v<typename TileData::DType, float8_e5m2_t> ||
+                std::is_same_v<typename TileData::DType, hifloat8_t>,
+            "Data type must be "
+            "int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/int64_t/uint64_t/half/bfloat16_t/float/float8_e4m3_t/"
+            "float8_e5m2_t/hifloat8_t!");
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
             "Source dtype must be same with dst dtype!");
+        static_assert(((GlobalData::layout == pto::Layout::ND) &&
+                          (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox))) ||
+                          ((GlobalData::layout == pto::Layout::DN) &&
+                              (!TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox))) ||
+                          ((GlobalData::layout == pto::Layout::NZ) &&
+                              (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))),
+            "Src and dst layout must be same!");
+        static_assert(((GlobalData::layout == pto::Layout::ND) &&
+                          (TileData::Cols * sizeof(typename TileData::DType) % 32 == 0)) ||
+                      ((GlobalData::layout == pto::Layout::DN) &&
+                          (TileData::Rows * sizeof(typename TileData::DType) % 32 == 0)) ||
+                      (GlobalData::layout == pto::Layout::NZ));
     }
 
     template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
