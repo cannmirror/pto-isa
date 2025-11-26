@@ -119,6 +119,9 @@ set(ALL_TESTCASES
     tsqrt
     texp
     tstore_acc2gm
+    tdivs
+    tmuls
+    tadds
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

@@ -547,19 +547,19 @@ else
   #A3
   python3 test/script/run_st.py -r sim -v a3 -t tdivs -g TDIVSTest.case1
   python3 test/script/run_st.py -r sim -v a3 -t tdivs -g TDIVSTest.case5
-  # A5 (uncomment after A5 impl)
-  # python3 test/script/run_st.py -r sim -v a5 -t tdivs -g TDIVSTest.case1
-  # python3 test/script/run_st.py -r sim -v a5 -t tdivs -g TDIVSTest.case4
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tdivs -g TDIVSTest.case1
+  python3 test/script/run_st.py -r sim -v a5 -t tdivs -g TDIVSTest.case5
 
   #TMULS
   #A3
   python3 test/script/run_st.py -r sim -v a3 -t tmuls -g TMULSTest.case1
-  # A5 (uncomment after A5 impl)
-  # python3 test/script/run_st.py -r sim -v a5 -t tmuls -g TMULSTest.case1
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tmuls -g TMULSTest.case1
 
   #TADDS
   #A3
   python3 test/script/run_st.py -r sim -v a3 -t tadds -g TADDSTest.case1
-  # A5 (uncomment after A5 impl)
-  # python3 test/script/run_st.py -r sim -v a5 -t tadds -g TADDSTest.case1
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tadds -g TADDSTest.case1
 fi

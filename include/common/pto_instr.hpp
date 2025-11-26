@@ -223,6 +223,26 @@ template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset>
 __PTO_INSTR__ void TGATHERB(TileDataDst &dst, TileDataSrc &src, TileDataOffset &offset) {
   MAP_INSTR_IMPL(TGATHERB, dst, src, offset)
 }
+
+template <typename TileData>
+__PTO_INSTR__ void TADDS(TileData &dst, TileData &src0, typename TileData::DType scalar) {
+  MAP_INSTR_IMPL(TADDS, dst, src0, scalar)
+}
+
+template <typename TileData>
+__PTO_INSTR__ void TDIVS(TileData &dst, TileData &src0, typename TileData::DType scalar) {
+  MAP_INSTR_IMPL(TDIVS, dst, src0, scalar)
+}
+
+template <typename TileData>
+__PTO_INSTR__ void TMULS(TileData &dst, TileData &src0, typename TileData::DType scalar) {
+  MAP_INSTR_IMPL(TMULS, dst, src0, scalar)
+}
+
+template <typename TileData>
+__PTO_INSTR__ void TDIVS(TileData &dst, typename TileData::DType scalar, TileData &src0) {
+  MAP_INSTR_IMPL(TDIVS, dst, scalar, src0)
+}
 } // namespace pto
 
 #endif
