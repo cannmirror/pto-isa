@@ -368,6 +368,8 @@ if [ "$1" = "dailyBuild" ]; then
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tsels -g TSELSTest.case_float_64x64_64x64_64x64
   python3 test/script/run_st.py -r sim -v a3 -t tsels -g TSELSTest.case_half_16x256_16x256_16x256
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_60x60_64x64_60x60
 
   # TCOPY
   # A3
@@ -500,6 +502,9 @@ else
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tsels -g TSELSTest.case_float_64x64_64x64_64x64
   python3 test/script/run_st.py -r sim -v a3 -t tsels -g TSELSTest.case_half_16x256_16x256_16x256
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_half_2x32_2x32_2x32
 
   # TSORT32
   # A3
