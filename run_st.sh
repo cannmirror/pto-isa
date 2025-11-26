@@ -263,6 +263,7 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P0100
   python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P1000
   python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_P1111
+  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float_int_P1010
 
   python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P0101
   python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_half_P1010

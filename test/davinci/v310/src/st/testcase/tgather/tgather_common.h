@@ -5,6 +5,7 @@
 #define FP0100 5
 #define FP1000 6
 #define FP1111 7
+#define FPINT1010 8
 
 #define HP0101 11
 #define HP1010 12

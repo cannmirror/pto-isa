@@ -279,10 +279,10 @@ namespace pto {
     __tf__ __aicore__ void TGather(typename DstTileData::TileDType __out__ dst,
                                 typename SrcTileData::TileDType __in__ src,
                                 uint16_t validRow, uint16_t validCol) {
-        using T = typename SrcTileData::DType;
+        using T = typename DstTileData::DType;
         constexpr unsigned rowStride = SrcTileData::RowStride;
         __ubuf__ typename DstTileData::DType *dstPtr = (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst);
-        __ubuf__ typename SrcTileData::DType *srcPtr = (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src);
+        __ubuf__ typename DstTileData::DType *srcPtr = (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(src);
         __VEC_SCOPE__
         {
             constexpr uint8_t SPR_AR_VALUE = 74;
