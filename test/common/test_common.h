@@ -20,6 +20,9 @@ namespace PtoTestCommon {
 #define WARN_LOG(fmt, args...) fprintf(stdout, "[WARN]  " fmt "\n", ##args)
 #define ERROR_LOG(fmt, args...) fprintf(stdout, "[ERROR]  " fmt "\n", ##args)
 
+#define PAD_VALUE_NULL (-100)
+#define PAD_VALUE_MAX (1)
+
 typedef enum {
     DT_UNDEFINED = -1,
     FLOAT = 0,

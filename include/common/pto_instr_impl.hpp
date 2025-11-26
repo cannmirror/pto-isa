@@ -60,6 +60,7 @@
 #include "davinci/v310/Tci.hpp"
 #include "davinci/v310/TSort32.hpp"
 #include "davinci/v310/TExtract.hpp"
+#include "davinci/v310/TMins.hpp"
 #include "davinci/v310/TMov.hpp"
 #include "davinci/v310/TRowExpand.hpp"
 #include "davinci/v310/TCopy.hpp"

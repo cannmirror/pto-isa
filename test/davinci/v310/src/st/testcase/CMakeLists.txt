@@ -113,6 +113,7 @@ set(ALL_TESTCASES
     tadd
     tpartadd
     tfillpad
+    tmins
     tmov
     tmov_l0c2ub
     trsqrt

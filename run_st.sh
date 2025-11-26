@@ -380,6 +380,8 @@ if [ "$1" = "dailyBuild" ]; then
   # TMINS
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tmins
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tmins
 
   # TSUB
   # A3
@@ -527,6 +529,10 @@ else
   # TMINS
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tmins
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_60x60_64x64_60x60
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_16x200_20x512_16x200
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_1x3600_2x4096_1x3600
 
   # TLOAD
   # A3
