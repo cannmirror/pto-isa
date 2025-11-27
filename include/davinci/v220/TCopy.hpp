@@ -97,7 +97,7 @@ namespace pto{
                 set_flag(PIPE_V, PIPE_S, EVENT_ID7);
                 wait_flag(PIPE_V, PIPE_S, EVENT_ID7);
                 for (unsigned i = 0; i < validRow; ++i) {
-                    dstPtr[i * dstStride + num_tail - 1] = srcPtr[i * srcStride + num_tail - 1];
+                    dstPtr[i * dstStride + validCol - 1] = srcPtr[i * srcStride + validCol - 1];
                 }
                 set_flag(PIPE_S, PIPE_V, EVENT_ID7);
                 wait_flag(PIPE_S, PIPE_V, EVENT_ID7);
@@ -108,22 +108,5 @@ namespace pto{
         set_mask_norm();  // restore to norm mode
         set_vector_mask(-1, -1);
     }  // end of tf
-
-    template <typename TileDataDst, typename TileDataSrc>
-    __aicore__ PTO_INLINE void TCOPY_IMPL(TileDataDst &dst, TileDataSrc &src) {
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc::DType);
-        constexpr unsigned srcStride = TileDataSrc::RowStride;
-        constexpr unsigned dstStride = TileDataDst::RowStride;
-        uint64_t validSrcRow = src.GetValidRow();
-        uint64_t validSrcCol = src.GetValidCol();
-        uint64_t validDstRow = dst.GetValidRow();
-        uint64_t validDstCol = dst.GetValidCol();
-
-        uint64_t validRow = (validSrcRow < validDstRow) ? validSrcRow : validDstRow;
-        uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
-
-        TCopy<TileDataDst, TileDataSrc, blockSizeElem, srcStride, dstStride>(
-            dst.data(), src.data(), validRow, validCol);
-    }
 }
 #endif

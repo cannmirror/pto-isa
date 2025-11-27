@@ -1,6 +1,7 @@
 #ifndef TMOV_HPP
 #define TMOV_HPP
 #include "TExtract.hpp"
+#include "TCopy.hpp"
 
 namespace pto {
 template <typename DstTileData, typename SrcTileData>
@@ -48,9 +49,10 @@ __aicore__ PTO_INLINE void TMovCheckValid()
     using DstType = typename DstTileData::DType;
     static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
                   "TMov: The shape of src needs to be the same as that of dst.");
-    static_assert(SrcTileData::Loc == Location::Mat &&
+    static_assert((SrcTileData::Loc == Location::Mat &&
                       (DstTileData::Loc == Location::Left || DstTileData::Loc == Location::Right ||
-                       DstTileData::Loc == Location::Bias || DstTileData::Loc == Location::Scaling),
+                       DstTileData::Loc == Location::Bias || DstTileData::Loc == Location::Scaling))||
+                       (DstTileData::Loc == Location::Vec && SrcTileData::Loc == Location::Vec),
                   "TMov: Invalid Location.");
     if constexpr (DstTileData::Loc == Location::Left) {
         static_assert(std::is_same<DstType, SrcType>::value,
@@ -102,6 +104,20 @@ __aicore__ PTO_INLINE void TMovCheckValid()
 }
 
 template <typename DstTileData, typename SrcTileData>
+__aicore__ void TMovToVec(DstTileData &dst, SrcTileData &src) {
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename SrcTileData::DType);
+    constexpr unsigned srcStride = SrcTileData::RowStride;
+    constexpr unsigned dstStride = DstTileData::RowStride;
+    uint64_t validSrcRow = src.GetValidRow();
+    uint64_t validSrcCol = src.GetValidCol();
+    uint64_t validDstRow = dst.GetValidRow();
+    uint64_t validDstCol = dst.GetValidCol();
+    uint64_t validRow = (validSrcRow < validDstRow) ? validSrcRow : validDstRow;
+    uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
+    TCopy<DstTileData, SrcTileData, blockSizeElem, srcStride, dstStride>(dst.data(), src.data(), validRow, validCol);
+}
+
+template <typename DstTileData, typename SrcTileData>
 __aicore__ void TMOV_IMPL(DstTileData& dst, SrcTileData& src)
 {
     TMovCheckValid<DstTileData, SrcTileData>();
@@ -121,6 +137,8 @@ __aicore__ void TMOV_IMPL(DstTileData& dst, SrcTileData& src)
         TMovToBt<DstTileData, SrcTileData>(dst.data(), src.data());
     } else if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Scaling) {
         TMovToFb<DstTileData, SrcTileData>(dst.data(), src.data());
+    } else if constexpr (SrcTileData::Loc == Location::Vec && DstTileData::Loc == Location::Vec) {
+        TMovToVec<DstTileData, SrcTileData>(dst, src);
     }
 }
 }  // namespace pto
