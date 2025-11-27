@@ -303,3 +303,10 @@ template void LaunchTLoad<3, uint16_t, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>(uint16_t *o
 template void LaunchTLoad<3, uint16_t, 1, 1, 1, 1, 1, 1, 1, 1, 16, 16>(uint16_t *out, uint16_t *src, void *stream);
 template void LaunchTLoad<3, uint16_t, 1, 1, 1, 256, 1024, 1, 1, 1, 256, 1024>(
     uint16_t *out, uint16_t *src, void *stream);
+
+template void LaunchTLoad<0, int64_t, 1, 1, 1, 3, 128, 3, 3, 3, 32, 128>(int64_t *out, int64_t *src, void *stream);
+template void LaunchTLoad<0, uint64_t, 2, 2, 1, 2, 32, 3, 3, 3, 111, 64>(uint64_t *out, uint64_t *src, void *stream);
+template void LaunchTLoad<0, int64_t, 1, 2, 1, 11, 32, 1, 3, 2, 93, 32>(int64_t *out, int64_t *src, void *stream);
+template void LaunchTLoad<1, uint64_t, 1, 1, 1, 128, 3, 3, 3, 3, 128, 32>(uint64_t *out, uint64_t *src, void *stream);
+template void LaunchTLoad<1, int64_t, 2, 2, 1, 32, 2, 3, 3, 3, 64, 111>(int64_t *out, int64_t *src, void *stream);
+template void LaunchTLoad<1, uint64_t, 1, 2, 1, 32, 11, 1, 3, 2, 32, 93>(uint64_t *out, uint64_t *src, void *stream);
