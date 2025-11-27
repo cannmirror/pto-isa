@@ -316,6 +316,10 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_int16_8x48_8x48_8x16
   python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_int32_64x64_8x64_64x64
 
+  # TSEL
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tsel
+  
   # TLOAD
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tload_gm2mat
@@ -523,6 +527,10 @@ else
   python3 test/script/run_st.py -r npu -v a3 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
+
+  # TSEL
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tsel -g TSELTest.case1
 
   # TFILLPAD
   #A3

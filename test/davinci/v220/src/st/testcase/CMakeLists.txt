@@ -82,6 +82,7 @@ tcvt
 tmul
 tadd
 tpartadd
+tsel
 tsub
 tmins
 tload_gm2mat
