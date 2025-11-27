@@ -76,7 +76,7 @@ tsort32
 tcmps
 tstore
 tsels
-tcopy
+tmov_vect
 trowexpand
 tcvt
 tmul
