@@ -84,6 +84,12 @@ if __name__ == "__main__":
         "TLoadGM2L1Test.ND2NZ_bfloat16_t_1_1_1_1_1_1_1_1_1_1",
         "TLoadGM2L1Test.ND2NZ_bfloat16_t_1_1_1_1_1_1_1_1_16_16",
         "TLoadGM2L1Test.ND2NZ_bfloat16_t_1_1_1_256_1024_1_1_1_256_1024",
+        "TLoadGM2L1Test.ND_int64_1_1_1_3_128_3_3_3_32_128",
+        "TLoadGM2L1Test.ND_uint64_2_2_1_2_32_3_3_3_111_64",
+        "TLoadGM2L1Test.ND_int64_1_2_1_11_32_1_3_2_93_32",
+        "TLoadGM2L1Test.DN_uint64_1_1_1_128_3_3_3_3_128_32",
+        "TLoadGM2L1Test.DN_int64_2_2_1_32_2_3_3_3_64_111",
+        "TLoadGM2L1Test.DN_uint64_1_2_1_32_11_1_3_2_32_93",
     ]
 
     case_params_list = [
@@ -106,6 +112,12 @@ if __name__ == "__main__":
         GlobalTensorInfo(np.float16, "ND2NZ", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
         GlobalTensorInfo(np.float16, "ND2NZ", 1, 1, 1, 1, 1, 1, 1, 1, 16, 16),
         GlobalTensorInfo(np.float16, "ND2NZ", 1, 1, 1, 256, 1024, 1, 1, 1, 256, 1024),
+        GlobalTensorInfo(np.int64, "ND", 1, 1, 1, 3, 128, 3, 3, 3, 32, 128),
+        GlobalTensorInfo(np.uint64, "ND", 2, 2, 1, 2, 32, 3, 3, 3, 111, 64),
+        GlobalTensorInfo(np.int64, "ND", 1, 2, 1, 11, 32, 1, 3, 2, 93, 32),
+        GlobalTensorInfo(np.uint64, "DN", 1, 1, 1, 128, 3, 3, 3, 3, 128, 32),
+        GlobalTensorInfo(np.int64, "DN", 2, 2, 1, 32, 2, 3, 3, 3, 64, 111),
+        GlobalTensorInfo(np.uint64, "DN", 1, 2, 1, 32, 11, 1, 3, 2, 32, 93),
     ]
 
     for i, case_name in enumerate(case_name_list):
