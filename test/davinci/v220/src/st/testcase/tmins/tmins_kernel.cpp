@@ -6,7 +6,7 @@
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-__global__ __aicore__ void runTMins(__gm__ T __out__ *out, __gm__ T __in__ *src0, T src1) {
+__global__ __aicore__ void runTMins(__gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
@@ -22,7 +22,7 @@ __global__ __aicore__ void runTMins(__gm__ T __out__ *out, __gm__ T __in__ *src0
     TLOAD(src0Tile, src0Global);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    TMINS(dstTile, src0Tile, src1);
+    TMINS(dstTile, src0Tile, src1[0]);
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);
@@ -30,18 +30,19 @@ __global__ __aicore__ void runTMins(__gm__ T __out__ *out, __gm__ T __in__ *src0
 }
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-void LaunchTMins(T *out, T *src0, T src1, void *stream)
+void LaunchTMins(T *out, T *src0, T *src1, void *stream)
 {
-    if constexpr ( std::is_same_v<T, aclFloat16> )
-        runTMins<half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>((half*)(out),
-                                                                                  (half*)(src0),
-                                                                                  (half)(src1));
-    else 
-        runTMins<T, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(out, src0, src1);
+    if constexpr ( std::is_same_v<T, aclFloat16> ) {
+        runTMins<half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(
+            (half*)(out), (half*)(src0), (half*)(src1));
+    } else { 
+        runTMins<T, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(
+            out, src0, src1);
+    }
 }
 
-template void LaunchTMins<float, 64, 64, 64, 64>(float *out, float *src0, float src1, void *stream);
-template void LaunchTMins<int32_t, 64, 64, 64, 64>(int32_t *out, int32_t *src0, int32_t src1, void *stream);
-template void LaunchTMins<int16_t, 64, 64, 64, 64>(int16_t *out, int16_t *src0, int16_t src1, void *stream);
-// template void LaunchTMins<aclFloat16, 64, 64, 64, 64>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 src1, void *stream);
-// template void LaunchTMins<aclFloat16, 16, 256, 16, 256>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 src1, void *stream);
+template void LaunchTMins<float, 64, 64, 64, 64>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTMins<int32_t, 64, 64, 64, 64>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTMins<int16_t, 64, 64, 64, 64>(int16_t *out, int16_t *src0, int16_t *src1, void *stream);
+template void LaunchTMins<aclFloat16, 64, 64, 64, 64>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTMins<aclFloat16, 16, 256, 16, 256>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);

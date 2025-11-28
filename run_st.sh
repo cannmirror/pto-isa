@@ -389,7 +389,18 @@ if [ "$1" = "dailyBuild" ]; then
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tmins
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tmins
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_float_64x64_32x32_64x64
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_float_128x128_64x64_128x128
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_float_60x60_64x64_60x60
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_float_16x200_20x512_16x200
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_float_1x3600_2x4096_1x3600
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_int32_32x32_32x32_32x32
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_uint32_32x32_32x32_32x32
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_int16_32x128_32x128_32x128
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_uint16_32x128_32x128_32x128
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_int8_32x128_32x128_32x128
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_uint8_32x128_32x128_32x128
+  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTest.case_half_16x200_20x224_16x200
 
   # TSUB
   # A3
