@@ -400,6 +400,7 @@ if [ "$1" = "dailyBuild" ]; then
 
   # TCI
   # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tci -g TCITest.case1_int32
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case1
   python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case2
@@ -411,6 +412,7 @@ else
   echo "==================simple build, run one case================="
   # TCI
   # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tci -g TCITest.case1_int32
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case5
 
