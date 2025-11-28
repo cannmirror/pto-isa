@@ -87,6 +87,7 @@ tpartadd
 tsel
 tsub
 tmins
+tmin
 tload_gm2mat
 tstore_acc2gm
 trsqrt
