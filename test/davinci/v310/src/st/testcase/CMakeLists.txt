@@ -114,6 +114,7 @@ set(ALL_TESTCASES
     tadd
     tpartadd
     tfillpad
+    tmin
     tmins
     tmov
     tcmps

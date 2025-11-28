@@ -22,6 +22,7 @@ namespace PtoTestCommon {
 
 #define PAD_VALUE_NULL (-100)
 #define PAD_VALUE_MAX (1)
+#define PAD_VALUE_MIN (-1)
 
 typedef enum {
     DT_UNDEFINED = -1,

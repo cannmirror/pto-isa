@@ -27,6 +27,11 @@ __PTO_INSTR__ void TMUL(TileData &dst, TileData &src0, TileData &src1) {
   MAP_INSTR_IMPL(TMUL, dst, src0, src1)
 }
 
+template <typename TileData>
+__PTO_INSTR__ void TMIN(TileData &dst, TileData &src0, TileData &src1) {
+  MAP_INSTR_IMPL(TMIN, dst, src0, src1)
+}
+
 template <typename TileData, typename GlobalData>
 __PTO_INSTR__ void TLOAD(TileData &dst, GlobalData &src) {
   MAP_INSTR_IMPL(TLOAD, dst, src)
