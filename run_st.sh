@@ -359,6 +359,8 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_1_1_59_119_1_1_1_59_124_59_120_int64_t_ND2ND
   python3 test/script/run_st.py -r sim -v a5 -t tload_mix -g TLOADMIXTest.1_2_1_64_128_1_3_4_128_128_128_128_uint64_t_ND2ND
 
+  python3 test/script/run_st.py -r sim -v a5 -t tload_shape2d -g TLOADSHAPE2DTest.1_1_1_51_123_1_1_1_64_128_64_128_float_DN2NZ
+  python3 test/script/run_st.py -r sim -v a5 -t tload_shape2d -g TLOADSHAPE2DTest.1_10_8_16_16_1_11_9_16_16_128_160_half_NZ2NZ
   # TADD
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tadd
