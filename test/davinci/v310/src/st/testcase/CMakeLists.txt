@@ -125,6 +125,7 @@ set(ALL_TESTCASES
     tdivs
     tmuls
     tadds
+    tgatherb
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

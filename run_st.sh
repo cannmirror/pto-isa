@@ -408,18 +408,31 @@ if [ "$1" = "dailyBuild" ]; then
   python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case4
   python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case5
 
+  # TGATHERB
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tgatherb
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_float_2x128_2x16_2x128
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_int32_2x128_2x16_2x128
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_uint32_2x128_2x16_2x128
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_int16_1x32768_1x2048_1x32768
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_uint16_257x128_257x8_257x128
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_int8_2x256_2x8_2x256
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_int8_2x32768_2x1024_2x32768
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_uint8_2x32768_2x1024_2x32768
 else
   echo "==================simple build, run one case================="
+  # TGATHERB
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tgatherb -g TGATHERBTest.case_float_2x128_2x16_2x128
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_float_2x128_2x16_2x128
+
   # TCI
   # A3
   python3 test/script/run_st.py -r sim -v a3 -t tci -g TCITest.case1_int32
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case5
-
-  # TGATHERB
-  # A3
-  python3 test/script/run_st.py -r npu -v a3 -t tgatherb
-  # A5
 
   # TCVT
   # A3
@@ -508,7 +521,7 @@ else
 
   # TTRANS
   # A3
-  # python3 test/script/run_st.py -r npu -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8_param
+  python3 test/script/run_st.py -r npu -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8_param
   #A5
   python3 test/script/run_st.py -r sim -v a5 -t ttrans -g TTRANSTest.case1
 
