@@ -54,6 +54,7 @@
 #include "davinci/v310/TStore.hpp"
 #include "davinci/v310/TMrgSort.hpp"
 #include "davinci/v310/TMatmul.hpp"
+#include "davinci/v310/TCmps.hpp"
 #include "davinci/v310/TColSum.hpp"
 #include "davinci/v310/TColMax.hpp"
 #include "davinci/v310/TRowSum.hpp"

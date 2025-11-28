@@ -445,6 +445,10 @@ else
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case1
 
+  # TCMPS
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
+
   # TMRGSORT
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tmrgsort -g TMRGSORTTest.case_topk1
