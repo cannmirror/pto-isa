@@ -57,8 +57,13 @@ if __name__ == "__main__":
         tciParams(np.int32, 100, 1, 128, "TCITest.case1"),
         tciParams(np.int16, -1, 0, 128, "TCITest.case2"),
         tciParams(np.int16, -1, 1, 128, "TCITest.case3"),
-        tciParams(np.int16, -1, 1, 144, "TCITest.case4"),
-        tciParams(np.int32, -1, 1, 132, "TCITest.case5"),
+        tciParams(np.int16, -1, 1, 192, "TCITest.case4"),
+        tciParams(np.int32, -1, 1, 192, "TCITest.case5"),
+        tciParams(np.int32, 0, 1, 600, "TCITest.case6"),
+        tciParams(np.int16, 0, 0, 800, "TCITest.case7"),
+        tciParams(np.int32, 0, 1, 2560, "TCITest.case8"),
+        tciParams(np.int32, 0, 0, 3200, "TCITest.case9"),
+        tciParams(np.int32, 0, 0, 8, "TCITest.case10"),
     ]
 
     for i, param in enumerate(case_params_list):

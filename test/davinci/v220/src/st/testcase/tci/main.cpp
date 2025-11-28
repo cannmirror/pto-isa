@@ -101,8 +101,8 @@ void test_vci_b16() {
     size_t FileSize = ROW * COL * sizeof(T);
 
     
-    int32_t *dstHost;
-    int32_t *dstDevice;
+    int16_t *dstHost;
+    int16_t *dstDevice;
 
     aclrtMallocHost((void **)(&dstHost), FileSize);
     aclrtMalloc((void **)&dstDevice, FileSize, ACL_MEM_MALLOC_HUGE_FIRST);

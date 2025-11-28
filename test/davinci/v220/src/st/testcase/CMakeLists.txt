@@ -94,6 +94,7 @@ tdivs
 tmuls
 tadds
 tgatherb
+tci
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

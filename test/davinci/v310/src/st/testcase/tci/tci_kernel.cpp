@@ -25,6 +25,8 @@ __global__ __aicore__ void runTci( __gm__ T __out__ *out, T S) {
 
     // 6. 调用指令集进行计算；
     TCI<TileData, T, reverse>(dstTile, S);
+    set_flag(PIPE_S, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_S, PIPE_MTE3, EVENT_ID0);
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
 
@@ -43,6 +45,10 @@ void LaunchTci(T *out, T S, void *stream)
 template void LaunchTci<int32_t, 1, 128, 1, 128, 1>(int32_t *out, int32_t S = 100, void *stream);
 template void LaunchTci<int16_t, 1, 128, 1, 128, 0>(int16_t *out, int16_t S = -1, void *stream);
 template void LaunchTci<int16_t, 1, 128, 1, 128, 1>(int16_t *out, int16_t S = -1, void *stream);
-template void LaunchTci<int16_t, 1, 144, 1, 144, 1>(int16_t *out, int16_t S = -1, void *stream);
-template void LaunchTci<int32_t, 1, 144, 1, 144, 1>(int32_t *out, int32_t S = -1, void *stream);
-template void LaunchTci<int32_t, 1, 132, 1, 144, 1>(int32_t *out, int32_t S = -1, void *stream);
+template void LaunchTci<int16_t, 1, 192, 1, 192, 1>(int16_t *out, int16_t S = -1, void *stream);
+template void LaunchTci<int32_t, 1, 192, 1, 192, 1>(int32_t *out, int32_t S = -1, void *stream);
+template void LaunchTci<int32_t, 1, 600, 1, 600, 1>(int32_t *out, int32_t S = 0, void *stream);
+template void LaunchTci<int16_t, 1, 800, 1, 800, 0>(int16_t *out, int16_t S = 0, void *stream);
+template void LaunchTci<int32_t, 1, 2560, 1, 2560, 1>(int32_t *out, int32_t S = 0, void *stream);
+template void LaunchTci<int32_t, 1, 3200, 1, 3200, 0>(int32_t *out, int32_t S = 0, void *stream);
+template void LaunchTci<int32_t, 1, 8, 1, 8, 0>(int32_t *out, int32_t S = 0, void *stream);

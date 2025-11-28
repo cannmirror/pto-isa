@@ -102,8 +102,23 @@ TEST_F(TCITest, case3) {
     test_tci<int16_t, 1, 128, 1, 128, 1>(-1);
 }
 TEST_F(TCITest, case4) {
-    test_tci<int16_t, 1, 144, 1, 144, 1>(-1);
+    test_tci<int16_t, 1, 192, 1, 192, 1>(-1);
 }
 TEST_F(TCITest, case5) {
-    test_tci<int32_t, 1, 132, 1, 144, 1>(-1);
+    test_tci<int32_t, 1, 192, 1, 192, 1>(-1);
+}
+TEST_F(TCITest, case6) {
+    test_tci<int32_t, 1, 600, 1, 600, 1>(0);
+}
+TEST_F(TCITest, case7) {
+    test_tci<int16_t, 1, 800, 1, 800, 0>(0);
+}
+TEST_F(TCITest, case8) {
+    test_tci<int32_t, 1, 2560, 1, 2560, 1>(0);
+}
+TEST_F(TCITest, case9) {
+    test_tci<int32_t, 1, 3200, 1, 3200, 0>(0);
+}
+TEST_F(TCITest, case10) {
+    test_tci<int32_t, 1, 8, 1, 8, 0>(0);
 }
