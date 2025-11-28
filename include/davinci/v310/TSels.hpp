@@ -95,10 +95,17 @@ __aicore__ void TSELS_IMPL(TileData &dst, TileData &src0, TileData &src1, uint8_
 {
     using T = typename TileData::DType;
     static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TSELS: Invalid data type.");
+    static_assert(TileData::Loc == Location::Vec, "Location of src and dst tiles must be Location::Vec.");
+    static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
+
+    PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol() == dst.GetValidCol(), "Number of columns of src0, src1 and dst must be the same.");
+    PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow() == dst.GetValidRow(), "Number of rows of src0, src1 and dst must be the same.");
 
     if constexpr (TileData::PadVal == PadValue::Null || TileData::PadVal == PadValue::Zero) {
         TSelsImpl<TileData, elementsPerRepeat, blockSizeElem>(dst.data(), src0.data(), src1.data(), selectMode, validRow);

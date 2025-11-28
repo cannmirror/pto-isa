@@ -69,11 +69,11 @@ namespace pto {
         if (numRemainPerLine) {
             unsigned numLoop = validRow / REPEAT_MAX;
             unsigned remainAfterLoop = validRow % REPEAT_MAX;
-            bool strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
+            bool constexpr strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
             SetContinuousMask(numRemainPerLine);
             if (numLoop) {
                 for (uint64_t i = 0; i < numLoop; i++) {
-                    if (strideOverFlag) {
+                    if constexpr (strideOverFlag) {
                         for (uint64_t j = 0; j < REPEAT_MAX; j++) {
                             vsel(
                                 dstPtr + i * REPEAT_MAX * stride + j * stride,
@@ -99,7 +99,7 @@ namespace pto {
                 }
             }
             if (remainAfterLoop) {
-                if (strideOverFlag) {
+                if constexpr (strideOverFlag) {
                     for (uint64_t j = 0; j < remainAfterLoop; j++) {
                         vsel(
                             dstPtr + numLoop * REPEAT_MAX * stride + j * stride,
@@ -134,19 +134,26 @@ namespace pto {
         TileData &src1,
         uint8_t selectMode
     ) {
-        static_assert(
-            std::is_same<typename TileData::DType, half>::value ||
-            std::is_same<typename TileData::DType, float16_t>::value ||
-            std::is_same<typename TileData::DType, float>::value ||
-            std::is_same<typename TileData::DType, float32_t>::value,
-            "TSELS: Invalid data type");
         using T = typename TileData::DType;
+        static_assert(
+            std::is_same<T, half>::value ||
+            std::is_same<T, float16_t>::value ||
+            std::is_same<T, float>::value ||
+            std::is_same<T, float32_t>::value,
+            "TSELS: Invalid data type");
+        static_assert(TileData::Loc == Location::Vec, "Location of src and dst tiles must be Location::Vec.");
+        static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+        
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
         constexpr unsigned stride = TileData::RowStride;
         unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat;
         unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
         unsigned validRow = dst.GetValidRow();
+
+        PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol() == dst.GetValidCol(), "Number of columns of src0, src1 and dst must be the same.");
+        PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow() == dst.GetValidRow(), "Number of rows of src0, src1 and dst must be the same.");
 
         TSelsImpl<TileData, elementsPerRepeat, blockSizeElem, stride>(
             dst.data(), src0.data(), src1.data(), selectMode, validRow, numRepeatPerLine, numRemainPerLine);

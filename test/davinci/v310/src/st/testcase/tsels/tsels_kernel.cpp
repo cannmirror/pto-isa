@@ -58,13 +58,13 @@ __global__ __aicore__ void runTSELS(__gm__ T __out__ *out, __gm__ T __in__ *src0
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kPadValue_>
 void LaunchTSels(T *out, T *src0, T *src1, uint8_t selectMode, void *stream)
 {
-    if constexpr ( std::is_same_v<T, aclFloat16> )
-        runTSELS<half, kGRows_, kGCols_, kTRows_, kTCols_, kPadValue_><<<1, nullptr, stream>>>((half*)(out),
-                                                                                               (half*)(src0),
-                                                                                               (half*)(src1),
-                                                                                               selectMode);
-    else 
-        runTSELS<T, kGRows_, kGCols_, kTRows_, kTCols_, kPadValue_><<<1, nullptr, stream>>>(out, src0, src1, selectMode);
+    if constexpr ( std::is_same_v<T, aclFloat16> && kPadValue_ == PAD_VALUE_NULL ) {
+        runTSELS<half, kGRows_, kGCols_, kTRows_, kTCols_, kPadValue_><<<1, nullptr, stream>>>(
+            (half*)(out), (half*)(src0), (half*)(src1), selectMode);
+    } else {
+        runTSELS<T, kGRows_, kGCols_, kTRows_, kTCols_, kPadValue_><<<1, nullptr, stream>>>(
+            out, src0, src1, selectMode);
+    }
 }
 
 template void LaunchTSels<float, 64, 64, 32, 32, PAD_VALUE_NULL>(float *out, float *src0, float *src1, uint8_t selectMode, void *stream);
@@ -74,7 +74,6 @@ template void LaunchTSels<int32_t, 2, 32, 2, 32, PAD_VALUE_NULL>(int32_t *out, i
 template void LaunchTSels<uint32_t, 2, 32, 2, 32, PAD_VALUE_NULL>(uint32_t *out, uint32_t *src0, uint32_t *src1, uint8_t selectMode, void *stream);
 template void LaunchTSels<aclFloat16, 2, 32, 2, 32, PAD_VALUE_NULL>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, uint8_t selectMode, void *stream);
 template void LaunchTSels<int16_t, 2, 32, 2, 32, PAD_VALUE_NULL>(int16_t *out, int16_t *src0, int16_t *src1, uint8_t selectMode, void *stream);
-// template void LaunchTSels<uint16_t, 2, 32, 2, 32, PAD_VALUE_NULL>(uint16_t *out, uint16_t *src0, uint16_t *src1, uint8_t selectMode, void *stream);
 template void LaunchTSels<int8_t, 2, 32, 2, 32, PAD_VALUE_NULL>(int8_t *out, int8_t *src0, int8_t *src1, uint8_t selectMode, void *stream);
 template void LaunchTSels<uint8_t, 2, 32, 2, 32, PAD_VALUE_NULL>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t selectMode, void *stream);
 
@@ -82,3 +81,4 @@ template void LaunchTSels<float, 60, 60, 64, 64, PAD_VALUE_MAX>(float *out, floa
 template void LaunchTSels<float, 16, 200, 20, 224, PAD_VALUE_MAX>(float *out, float *src0, float *src1, uint8_t selectMode, void *stream);
 template void LaunchTSels<float, 16, 200, 20, 256, PAD_VALUE_MAX>(float *out, float *src0, float *src1, uint8_t selectMode, void *stream);
 template void LaunchTSels<float, 1, 3600, 2, 4096, PAD_VALUE_MAX>(float *out, float *src0, float *src1, uint8_t selectMode, void *stream);
+template void LaunchTSels<uint16_t, 16, 200, 20, 224, PAD_VALUE_MAX>(uint16_t *out, uint16_t *src0, uint16_t *src1, uint8_t selectMode, void *stream);

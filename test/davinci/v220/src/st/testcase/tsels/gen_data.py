@@ -12,8 +12,8 @@ def gen_golden_data_tsels(case_name, param):
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    input2 = np.random.randint(10, 20, size=[H, W]).astype(dtype)
+    input1 = np.random.uniform(low=-1303.033, high=333003.033, size=[H, W]).astype(dtype)
+    input2 = np.random.uniform(low=-1303.033, high=333003.033, size=[H, W]).astype(dtype)
     selectMode = np.random.randint(0, 2, dtype=np.uint8)
 
     golden = np.empty_like(input1)

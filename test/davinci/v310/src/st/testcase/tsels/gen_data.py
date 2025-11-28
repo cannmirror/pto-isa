@@ -18,8 +18,12 @@ def gen_golden_data_tsels(case_name, param):
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    input2 = np.random.randint(10, 20, size=[H, W]).astype(dtype)
+    if dtype in (np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32):
+        input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+        input2 = np.random.randint(10, 20, size=[H, W]).astype(dtype)
+    else:
+        input1 = np.random.uniform(low=-1303.033, high=33003.033, size=[H, W]).astype(dtype)
+        input2 = np.random.uniform(low=-1303.033, high=33003.033, size=[H, W]).astype(dtype)
     selectMode = np.random.randint(0, 2, dtype=np.uint8)
 
     golden = np.empty_like(input1)
@@ -57,9 +61,9 @@ class TestParams:
 def generate_case_name(param):
     dtype_str = {
         np.float32: 'float',
+        np.float16: 'half',
         np.int32: 'int32',
         np.uint32: 'uint32',
-        np.float16: 'half',
         np.int16: 'int16',
         np.uint16: 'uint16',
         np.int8: 'int8',
@@ -84,7 +88,6 @@ if __name__ == "__main__":
         TestParams(np.uint32, 2, 32, 2, 32, 2, 32),
         TestParams(np.float16, 2, 32, 2, 32, 2, 32),
         TestParams(np.int16, 2, 32, 2, 32, 2, 32),
-        # TestParams(np.uint16, 2, 32, 2, 32, 2, 32),
         TestParams(np.int8, 2, 32, 2, 32, 2, 32),
         TestParams(np.uint8, 2, 32, 2, 32, 2, 32),
 
@@ -92,6 +95,7 @@ if __name__ == "__main__":
         TestParams(np.float32, 16, 200, 20, 224, 16, 200, PAD_VALUE_MAX),
         TestParams(np.float32, 16, 200, 20, 256, 16, 200, PAD_VALUE_MAX),
         TestParams(np.float32, 1, 3600, 2, 4096, 1, 3600, PAD_VALUE_MAX),
+        TestParams(np.uint16, 16, 200, 20, 224, 16, 200, PAD_VALUE_MAX),
     ]
 
     for i, param in enumerate(case_params_list):
