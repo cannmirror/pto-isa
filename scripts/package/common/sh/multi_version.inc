@@ -217,19 +217,6 @@ multi_version_install() {
     check_version_install "$install_path" "$version_dir" "$package"
     ret="$?" && [ $ret -ne 0 ] && return $ret
 
-    make_dir_with_permission "${install_path}/${LATEST_DIR}" "750" "${username}" "${usergroup}" "${install_for_all}"
-    ret="$?" && [ $ret -ne 0 ] && return $ret
-
-    make_dir_with_permission "${install_path}/${LATEST_DIR}/var" "750" "${username}" "${usergroup}" "${install_for_all}"
-    ret="$?" && [ $ret -ne 0 ] && return $ret
-
-    upgrade_latest_manager "${install_path}/${LATEST_DIR}/var"
-    ret="$?" && [ $ret -ne 0 ] && return $ret
-
-    notify_latest_manager_installed "$install_path/$LATEST_DIR/var" "$package" \
-        "$version" "$version_dir" "$install_for_all" "$docker_root"
-    ret="$?" && [ $ret -ne 0 ] && return $ret
-
     return ${total_ret}
 }
 
@@ -283,18 +270,6 @@ multi_version_uninstall() {
     check_param_not_empty "usergroup" "need set usergroup parameter in multi version uninstall!"
     ret="$?" && [ ${ret} -ne 0 ] && return ${ret}
 
-    if ! notify_latest_manager_remove_softlink "${install_path}/${LATEST_DIR}/var" "${package}" \
-        "${version}" "${version_dir}" "n" "${docker_root}"; then
-        comm_log "ERROR" "${package} notify latest manager remove softlink in multi version uninstall failed! version is ${version}, version_dir is ${version_dir}."
-        return 1
-    fi
-
-    if ! notify_latest_manager_pre_uninstall "${install_path}/${LATEST_DIR}/var" "${package}" \
-        "${version}" "${version_dir}" "n" "${docker_root}"; then
-        comm_log "ERROR" "${package} notify latest manager pre uninstall in multi version uninstall failed! version is ${version}, version_dir is ${version_dir}."
-        return 1
-    fi
-
     get_tmp_root "tmp_root"
     tmp_filelist_path=$(mktemp "$tmp_root/filelist_XXXXXX" || exit 1)
     cp -f "${filelist_path}" "${tmp_filelist_path}"
@@ -313,24 +288,6 @@ multi_version_uninstall() {
         return 1
     fi
 
-    # 切换目录避免使用uninstall.sh脚本，重建子包软链接时，找到不当前路径问题
-    # sh: 0: getcwd() failed: No such file or directory
-    cd "$install_path"
-
-    if ! notify_latest_manager_uninstalled "${is_recreate_softlink}" "${install_path}/${LATEST_DIR}/var" "${package}" \
-        "${version}" "${version_dir}" "n" "${docker_root}"; then
-        comm_log "ERROR" "${package} notify latest manager uninstalled in multi version uninstall failed! version is ${version}, version_dir is ${version_dir}."
-        eval "${del_tmp_filelist}"
-        return 1
-    fi
-
-    get_running_packages "running_packages" "${install_path}/${LATEST_DIR}"
-    if [ "${running_packages}" = "" ]; then
-        # 删除latest下空目录
-        del_empty_dirs_in_latest "${install_type}" "${install_path}" "${LATEST_DIR}" "${tmp_filelist_path}" "${feature_param}"
-        ret="$?" && [ $ret -ne 0 ] && total_ret="1"
-    fi
-
     # 删除临时文件tmp_filelist_path
     eval "${del_tmp_filelist}"
 
@@ -341,11 +298,5 @@ multi_version_uninstall() {
         ret="$?" && [ $ret -ne 0 ] && total_ret="1"
     fi
 
-    # 删除latest空目录
-    is_dir_empty "${install_path}/${LATEST_DIR}"
-    if [ $? -eq 0 ]; then
-        remove_dir_icp "${install_path}/${LATEST_DIR}"
-        ret="$?" && [ $ret -ne 0 ] && total_ret="1"
-    fi
     return ${total_ret}
 }
