@@ -115,6 +115,7 @@ set(ALL_TESTCASES
     tfillpad
     tmins
     tmov
+    tcmps
     tmov_l0c2ub
     tsels
     trsqrt
