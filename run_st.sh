@@ -509,9 +509,9 @@ else
 
   # TROWEXPAND
   # A3
-
+  python3 test/script/run_st.py -r sim -v a3 -t trowexpand -g TROWEXPANDTest.case0
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t trowexpand -g TROWEXPANDTest.case0
+  python3 test/script/run_st.py -r sim -v a5 -t trowexpand -g TROWEXPANDTest.case5
 
   # TGATHER
   # A3

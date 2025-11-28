@@ -33,6 +33,7 @@ __aicore__ inline void runROWEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src)
     GlobalData srcGlobal(src + offset);
     DstGlobalData dstGlobal(out + offset);
 
+    TLOAD(dstTile, dstGlobal);
     TLOAD(srcTile, srcGlobal);   // gm to ub
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
