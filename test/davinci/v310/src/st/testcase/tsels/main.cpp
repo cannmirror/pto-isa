@@ -84,7 +84,7 @@ void test_tsels() {
     ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize);
     ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize);
 
-    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
+    bool ret = ResultCmp<T>(golden, devFinal, 0.0001f);
 
     EXPECT_TRUE(ret);
 }
@@ -107,9 +107,6 @@ TEST_F(TSELSTest, case_uint32_2x32_2x32_2x32) {
 TEST_F(TSELSTest, case_int16_2x32_2x32_2x32) {
     test_tsels<int16_t, 2, 32, 2, 32, PAD_VALUE_NULL>();
 }
-// TEST_F(TSELSTest, case_uint16_2x32_2x32_2x32) {
-//     test_tsels<uint16_t, 2, 32, 2, 32, PAD_VALUE_NULL>();
-// }
 TEST_F(TSELSTest, case_int8_2x32_2x32_2x32) {
     test_tsels<int8_t, 2, 32, 2, 32, PAD_VALUE_NULL>();
 }
@@ -127,4 +124,7 @@ TEST_F(TSELSTest, case_float_16x200_20x256_16x200) {
 }
 TEST_F(TSELSTest, case_float_1x3600_2x4096_1x3600) {
     test_tsels<float, 1, 3600, 2, 4096, PAD_VALUE_MAX>();
+}
+TEST_F(TSELSTest, case_uint16_16x200_20x224_16x200) {
+    test_tsels<uint16_t, 16, 200, 20, 224, PAD_VALUE_MAX>();
 }

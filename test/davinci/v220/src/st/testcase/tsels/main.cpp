@@ -81,7 +81,7 @@ void test_tsels() {
     ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize);
     ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize);
 
-    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
+    bool ret = ResultCmp<T>(golden, devFinal, 0.0001f);
 
     EXPECT_TRUE(ret);
 }

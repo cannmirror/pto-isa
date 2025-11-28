@@ -372,10 +372,21 @@ if [ "$1" = "dailyBuild" ]; then
 
   # TSELS
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tsels -g TSELSTest.case_float_64x64_64x64_64x64
-  python3 test/script/run_st.py -r sim -v a3 -t tsels -g TSELSTest.case_half_16x256_16x256_16x256
+  python3 test/script/run_st.py -r sim -v a3 -t tsels
   # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_64x64_32x32_64x64
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_128x128_64x64_128x128
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_2x32_2x32_2x32
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_int32_2x32_2x32_2x32
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_uint32_2x32_2x32_2x32
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_int16_2x32_2x32_2x32
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_int8_2x32_2x32_2x32
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_uint8_2x32_2x32_2x32
   python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_60x60_64x64_60x60
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_16x200_20x256_16x200
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_1x3600_2x4096_1x3600
+  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_uint16_16x200_20x224_16x200
 
   # TCOPY
   # A3

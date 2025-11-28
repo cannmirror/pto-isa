@@ -36,13 +36,14 @@ __global__ __aicore__ void runTSels(__gm__ T __out__ *out, __gm__ T __in__ *src0
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void LaunchTSels(T *out, T *src0, T *src1, uint8_t selectMode, void *stream)
 {
-    if constexpr ( std::is_same_v<T, aclFloat16> )
+    if constexpr ( std::is_same_v<T, aclFloat16> ) {
         runTSels<half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>((half*)(out),
                                                                                   (half*)(src0),
                                                                                   (half*)(src1),
                                                                                   selectMode);
-    else 
+    } else { 
         runTSels<T, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(out, src0, src1, selectMode);
+    }
 }
 
 template void LaunchTSels<float, 64, 64, 64, 64>(float *out, float *src0, float *src1, uint8_t selectMode, void *stream);
