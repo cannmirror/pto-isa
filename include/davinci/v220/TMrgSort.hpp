@@ -8,9 +8,10 @@
 
 namespace pto
 {
-constexpr const int STRUCTSIZE = 8;
-constexpr const int STRUCT_SIZE_SHIFT = 3;
-constexpr const int COL_SIZE = 49152;  // UBSIZE / ELEMSIZE = 192 * 1024 B / 4B
+    constexpr const int STRUCTSIZE = 8;
+    constexpr const int STRUCT_SIZE_SHIFT = 3;
+    constexpr const int COL_SIZE = 49152;  // UBSIZE / ELEMSIZE = 192 * 1024 B / 4B
+    constexpr const int UBSIZE = 196608; // 192*1024 B
     
     struct MrgSortExecutedNumList {
         uint16_t mrgSortList0;
@@ -165,18 +166,32 @@ constexpr const int COL_SIZE = 49152;  // UBSIZE / ELEMSIZE = 192 * 1024 B / 4B
         vmrgsort4(dstPtr, addr_array, count, config);
     }
 
+    template <typename DstTileData,  typename TmpTileData, typename Src0TileData, typename Src1TileData, 
+              typename Src2TileData, typename Src3TileData, unsigned listNum>
+    __aicore__ PTO_INLINE void CheckOverMemory(){
+        constexpr unsigned totalSrcCols = Src0TileData::Cols + 
+                                     (listNum >= 2 ? Src1TileData::Cols : 0) +
+                                     (listNum >= 3 ? Src2TileData::Cols : 0) +
+                                     (listNum == 4 ? Src3TileData::Cols : 0);
+        constexpr size_t elemSize = sizeof(typename DstTileData::DType);
+        constexpr size_t srcSize = totalSrcCols * elemSize;
+        constexpr size_t tmpSize = (listNum == 1) ? 0 : TmpTileData::Cols * elemSize;
+        static_assert(srcSize + tmpSize <= UBSIZE,
+                      "ERROR: Total memory usage exceeds UB limit!");
+    }
+
     template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
               typename Src2TileData, typename Src3TileData>
     __aicore__ PTO_INLINE void CheckStatic() 
     {
-        static_assert((std::is_same<typename DstTileData::DType, half>::value) ||
-                      (std::is_same<typename DstTileData::DType, float>::value),
+        using DstType = typename DstTileData::DType;
+        static_assert((std::is_same<DstType, half>::value) || (std::is_same<DstType, float>::value),
                       "expect half/float");
-        static_assert((std::is_same<typename DstTileData::DType, typename TmpTileData::DType>::value) &&
-                      (std::is_same<typename DstTileData::DType, typename Src0TileData::DType>::value) &&
-                      (std::is_same<typename DstTileData::DType, typename Src1TileData::DType>::value) &&
-                      (std::is_same<typename DstTileData::DType, typename Src2TileData::DType>::value) &&
-                      (std::is_same<typename DstTileData::DType, typename Src3TileData::DType>::value),
+        static_assert((std::is_same<DstType, typename TmpTileData::DType>::value) &&
+                      (std::is_same<DstType, typename Src0TileData::DType>::value) &&
+                      (std::is_same<DstType, typename Src1TileData::DType>::value) &&
+                      (std::is_same<DstType, typename Src2TileData::DType>::value) &&
+                      (std::is_same<DstType, typename Src3TileData::DType>::value),
                       "expect same size");
         static_assert((DstTileData::Loc == Location::Vec) && (TmpTileData::Loc == Location::Vec) &&
                       (Src0TileData::Loc == Location::Vec) && (Src1TileData::Loc == Location::Vec) &&
@@ -196,6 +211,7 @@ constexpr const int COL_SIZE = 49152;  // UBSIZE / ELEMSIZE = 192 * 1024 B / 4B
                                         Src0TileData &src0, Src1TileData &src1,
                                         Src2TileData &src2, Src3TileData &src3) {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src3TileData>();
+        CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src3TileData, 4>();
         unsigned dstCol = dst.GetValidCol();
         PTO_ASSERT(src0.GetValidCol() + src1.GetValidCol() + src2.GetValidCol() + src3.GetValidCol() +
                            tmp.GetValidCol() + dstCol < COL_SIZE,
@@ -218,6 +234,7 @@ constexpr const int COL_SIZE = 49152;  // UBSIZE / ELEMSIZE = 192 * 1024 B / 4B
                                         Src0TileData &src0, Src1TileData &src1,
                                         Src2TileData &src2) {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src0TileData>();
+        CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src0TileData, 3>();
         unsigned dstCol = dst.GetValidCol();
         PTO_ASSERT(src0.GetValidCol() + src1.GetValidCol() + src2.GetValidCol() + tmp.GetValidCol() + dstCol < COL_SIZE,
                    "ERROR: Total memory usage exceeds UB limit!");
@@ -237,6 +254,7 @@ constexpr const int COL_SIZE = 49152;  // UBSIZE / ELEMSIZE = 192 * 1024 B / 4B
     __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
                                         Src0TileData &src0, Src1TileData &src1) {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src0TileData, Src0TileData>();
+        CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src0TileData, Src0TileData, 2>();
         unsigned dstCol = dst.GetValidCol();
         PTO_ASSERT(src0.GetValidCol() + src1.GetValidCol() + tmp.GetValidCol() + dstCol < COL_SIZE,
                    "ERROR: Total memory usage exceeds UB limit!");
@@ -254,6 +272,7 @@ constexpr const int COL_SIZE = 49152;  // UBSIZE / ELEMSIZE = 192 * 1024 B / 4B
     template <typename DstTileData, typename SrcTileData>
     __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t blockLen) {
         CheckStatic<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData>();
+        CheckOverMemory<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData, 1>();
         uint32_t dstCol = dst.GetValidCol();
         uint32_t srcCol = src.GetValidCol();
         uint32_t validRow = dst.GetValidRow();

@@ -4,11 +4,12 @@
 #include "common/constants.hpp"
 #define TRUE  1
 #define FALSE  0
-#define STRUCTSIZE  8
-#define UBSIZE 196608 // 192*1024 B
-#define ELEMSIZE 4
 
 namespace pto {
+
+    constexpr const int STRUCTSIZE = 8;
+    constexpr const int STRUCT_SIZE_SHIFT = 3;
+    constexpr const int UBSIZE = 262144; // 256*1024 B
 
     struct MrgSortExecutedNumList {
         uint16_t mrgSortList0;
@@ -169,31 +170,24 @@ namespace pto {
                                      (listNum >= 2 ? Src1TileData::Cols : 0) +
                                      (listNum >= 3 ? Src2TileData::Cols : 0) +
                                      (listNum == 4 ? Src3TileData::Cols : 0);
-
-        // tmpCols 在 listNum == 1 时为 0，否则等于 totalSrcCols
-        constexpr unsigned tmpCols = (listNum == 1) ? 0 : totalSrcCols;
-
-        constexpr unsigned dstCols = DstTileData::Cols;
-
-        constexpr size_t srcSize = totalSrcCols * ELEMSIZE;
-        constexpr size_t tmpSize = tmpCols * ELEMSIZE;
-        constexpr size_t dstSize = dstCols * ELEMSIZE;
-
-        static_assert(srcSize + tmpSize + dstSize < UBSIZE,
+        constexpr size_t elemSize = sizeof(typename DstTileData::DType);
+        constexpr size_t srcSize = totalSrcCols * elemSize;
+        constexpr size_t tmpSize = (listNum == 1) ? 0 : TmpTileData::Cols * elemSize;
+        static_assert(srcSize + tmpSize <= UBSIZE,
                       "ERROR: Total memory usage exceeds UB limit!");
     }
 
     template <typename DstTileData,  typename TmpTileData, typename Src0TileData, typename Src1TileData,
               typename Src2TileData, typename Src3TileData>
     __aicore__ PTO_INLINE void CheckStatic() {
-        static_assert((std::is_same<typename DstTileData::DType, half>::value) ||
-                      (std::is_same<typename DstTileData::DType, float>::value),
+        using DstType = typename DstTileData::DType;
+        static_assert((std::is_same<DstType, half>::value) || (std::is_same<DstType, float>::value),
                       "expect half/float");
-        static_assert((std::is_same<typename DstTileData::DType, typename TmpTileData::DType>::value) &&
-                      (std::is_same<typename DstTileData::DType, typename Src0TileData::DType>::value) &&
-                      (std::is_same<typename DstTileData::DType, typename Src1TileData::DType>::value) &&
-                      (std::is_same<typename DstTileData::DType, typename Src2TileData::DType>::value) &&
-                      (std::is_same<typename DstTileData::DType, typename Src3TileData::DType>::value),
+        static_assert((std::is_same<DstType, typename TmpTileData::DType>::value) &&
+                      (std::is_same<DstType, typename Src0TileData::DType>::value) &&
+                      (std::is_same<DstType, typename Src1TileData::DType>::value) &&
+                      (std::is_same<DstType, typename Src2TileData::DType>::value) &&
+                      (std::is_same<DstType, typename Src3TileData::DType>::value),
                       "expect same size");
         static_assert((DstTileData::Loc == Location::Vec) && (TmpTileData::Loc == Location::Vec) &&
                       (Src0TileData::Loc == Location::Vec) && (Src1TileData::Loc == Location::Vec) &&
@@ -215,11 +209,12 @@ namespace pto {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src3TileData>();
         CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src3TileData, 4>();
         unsigned dstCol = dst.GetValidCol();
-        unsigned eleNum = STRUCTSIZE / sizeof(typename DstTileData::DType);
-        unsigned src0Col = src0.GetValidCol() / eleNum;
-        unsigned src1Col = src1.GetValidCol() / eleNum;
-        unsigned src2Col = src2.GetValidCol() / eleNum;
-        unsigned src3Col = src3.GetValidCol() / eleNum;
+        // STRUCTSIZE div sizeof(dstType) is 2 or 4
+        constexpr unsigned ELE_NUM_SHIFT = (std::is_same<typename DstTileData::DType, float>::value) ? 1 : 2;
+        unsigned src0Col = src0.GetValidCol() >> ELE_NUM_SHIFT;
+        unsigned src1Col = src1.GetValidCol() >> ELE_NUM_SHIFT;
+        unsigned src2Col = src2.GetValidCol() >> ELE_NUM_SHIFT;
+        unsigned src3Col = src3.GetValidCol() >> ELE_NUM_SHIFT;
         TMrgsort<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src3TileData, exhausted, 4>
             (dst.data(), tmp.data(), src0.data(), src1.data(), src2.data(), src3.data(), dstCol,
              executedNumList.mrgSortList0, executedNumList.mrgSortList1,
@@ -235,10 +230,11 @@ namespace pto {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src0TileData>();
         CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src0TileData, 3>();
         unsigned dstCol = dst.GetValidCol();
-        unsigned eleNum = STRUCTSIZE / sizeof(typename DstTileData::DType);
-        unsigned src0Col = src0.GetValidCol() / eleNum;
-        unsigned src1Col = src1.GetValidCol() / eleNum;
-        unsigned src2Col = src2.GetValidCol() / eleNum;
+        // STRUCTSIZE div sizeof(dstType) is 2 or 4
+        constexpr unsigned ELE_NUM_SHIFT = (std::is_same<typename DstTileData::DType, float>::value) ? 1 : 2;
+        unsigned src0Col = src0.GetValidCol() >> ELE_NUM_SHIFT;
+        unsigned src1Col = src1.GetValidCol() >> ELE_NUM_SHIFT;
+        unsigned src2Col = src2.GetValidCol() >> ELE_NUM_SHIFT;
         TMrgsort<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src2TileData, exhausted, 3>
             (dst.data(), tmp.data(), src0.data(), src1.data(), src2.data(), nullptr, dstCol,
              executedNumList.mrgSortList0, executedNumList.mrgSortList1,
@@ -253,9 +249,10 @@ namespace pto {
         CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src0TileData, Src0TileData>();
         CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src0TileData, Src0TileData, 2>();
         unsigned dstCol = dst.GetValidCol();
-        unsigned eleNum = STRUCTSIZE / sizeof(typename DstTileData::DType);
-        unsigned src0Col = src0.GetValidCol() / eleNum;
-        unsigned src1Col = src1.GetValidCol() / eleNum;
+        // STRUCTSIZE div sizeof(dstType) is 2 or 4
+        constexpr unsigned ELE_NUM_SHIFT = (std::is_same<typename DstTileData::DType, float>::value) ? 1 : 2;
+        unsigned src0Col = src0.GetValidCol() >> ELE_NUM_SHIFT;
+        unsigned src1Col = src1.GetValidCol() >> ELE_NUM_SHIFT;
         TMrgsort<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src1TileData, Src1TileData, exhausted, 2>
             (dst.data(), tmp.data(), src0.data(), src1.data(), nullptr, nullptr, dstCol,
              executedNumList.mrgSortList0, executedNumList.mrgSortList1,
@@ -272,7 +269,7 @@ namespace pto {
         uint32_t srcCol = src.GetValidCol();
         uint32_t validRow = dst.GetValidRow();
         // 一个strcut是8字节
-        uint32_t numStrcutures = blockLen * sizeof(typename SrcTileData::DType) / STRUCTSIZE;
+        uint32_t numStrcutures = blockLen * sizeof(typename SrcTileData::DType) >> STRUCT_SIZE_SHIFT;
         uint8_t repeatTimes = srcCol / (blockLen * 4);
         TMrgsort<DstTileData, SrcTileData>(dst.data(), src.data(), numStrcutures, repeatTimes);
     }

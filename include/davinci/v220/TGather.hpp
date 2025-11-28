@@ -194,6 +194,7 @@ namespace pto {
         vreducev2(reinterpret_cast<__ubuf__ U *>(dstPtr), reinterpret_cast<__ubuf__ U *>(srcPtr),
                   reinterpret_cast<__ubuf__ U *>(srcPtr), validRow, 1, maskPattern, srcRepeatStride, 0);
         set_mask_norm();
+        set_vector_mask(-1, -1);
     }
  
     template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
