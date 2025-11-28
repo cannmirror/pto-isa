@@ -52,6 +52,11 @@ __PTO_INSTR__ void TSTORE(GlobalData &dst, TileData &src, FpTileData &fp) {
   TSTORE_IMPL<TileData, GlobalData, FpTileData, atomicType>(dst, src, fp);
 }
 
+template <typename TileData>
+__PTO_INSTR__ void TDIV(TileData &dst, TileData &src0, TileData &src1) {
+  MAP_INSTR_IMPL(TDIV, dst, src0, src1)
+}
+
 template <typename TileAcc, typename TileLeft, typename TileRight>
 __PTO_INSTR__ void TMATMUL(TileAcc &cMatrix, TileLeft &aMatrix,
                            TileRight &bMatrix) {

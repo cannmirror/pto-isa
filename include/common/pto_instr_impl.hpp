@@ -30,6 +30,7 @@
 #include "davinci/v220/TSel.hpp"
 #include "davinci/v220/TGather.hpp"
 #include "davinci/v220/TCvt.hpp"
+#include "davinci/v220/TDiv.hpp"
 #include "davinci/v220/TCopy.hpp"
 #include "davinci/v220/TPartAdd.hpp"
 #include "davinci/v220/TPartMax.hpp"
