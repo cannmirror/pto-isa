@@ -71,6 +71,7 @@
 #include "davinci/v310/TPartAdd.hpp"
 #include "davinci/v310/TGather.hpp"
 #include "davinci/v310/TUnaryOp.hpp"
+#include "davinci/v310/TGatherB.hpp"
 #endif
 
 #ifdef __CPU_SIM
