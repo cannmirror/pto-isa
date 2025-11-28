@@ -18,95 +18,25 @@ namespace pto{
         __ubuf__ U *dstPtr = (__ubuf__ U *)__cce_get_tile_ptr(dst);
 
         static_assert(sizeof(T) == sizeof(U), "TCOPY: src and dst data type is different!");
-        set_mask_count();  // counter mode
-        if constexpr (sizeof(T) == 4) {
-            uint16_t srcRepeatSize = CeilDivision(srcStride, blockSizeElem);
-            uint16_t dstRepeatSize = CeilDivision(dstStride, blockSizeElem);
-            unsigned numLoop = validRow / REPEAT_MAX; // REPEAT_MAX = 255
-            unsigned remainAfterLoop = validRow % REPEAT_MAX;
-            set_vector_mask(0, validCol);
-            for (int i = 0; i < numLoop; i++) {
-                vcopy((__ubuf__ uint32_t *)(dstPtr + i * validCol * REPEAT_MAX),
-                    (__ubuf__ uint32_t *)(srcPtr + i * validCol * REPEAT_MAX),
-                    REPEAT_MAX,
-                    1,
-                    1,
-                    dstRepeatSize,
-                    srcRepeatSize);
-            }
-            if (remainAfterLoop) {
-                vcopy((__ubuf__ uint32_t *)(dstPtr + numLoop * validCol * REPEAT_MAX),
-                    (__ubuf__ uint32_t *)(srcPtr + numLoop * validCol * REPEAT_MAX),
-                    remainAfterLoop,
-                    1,
-                    1,
-                    dstRepeatSize,
-                    srcRepeatSize);
-            }
-        } else if constexpr (sizeof(T) == 2) {
-            uint16_t srcRepeatSize = CeilDivision(srcStride, blockSizeElem);
-            uint16_t dstRepeatSize = CeilDivision(dstStride, blockSizeElem);
-            unsigned numLoop = validRow / REPEAT_MAX; // REPEAT_MAX = 255
-            unsigned remainAfterLoop = validRow % REPEAT_MAX;
-            set_vector_mask(0, validCol);
-            for (int i = 0; i < numLoop; i++) {
-                vcopy((__ubuf__ uint16_t *)(dstPtr + i * validCol * REPEAT_MAX),
-                    (__ubuf__ uint16_t *)(srcPtr + i * validCol * REPEAT_MAX),
-                    REPEAT_MAX,
-                    1,
-                    1,
-                    dstRepeatSize,
-                    srcRepeatSize);
-            }
-            if (remainAfterLoop) {
-                vcopy((__ubuf__ uint16_t *)(dstPtr + numLoop * validCol * REPEAT_MAX),
-                    (__ubuf__ uint16_t *)(srcPtr + numLoop * validCol * REPEAT_MAX),
-                    remainAfterLoop,
-                    1,
-                    1,
-                    dstRepeatSize,
-                    srcRepeatSize);
-            }
-        } else if constexpr (sizeof(T) == 1) {
-            uint64_t mask = validCol >> 1;
-            uint64_t num_tail = validCol % 2;
-            uint16_t srcRepeatSize = CeilDivision(srcStride, blockSizeElem);
-            uint16_t dstRepeatSize = CeilDivision(dstStride, blockSizeElem);
-            unsigned numLoop = validRow / REPEAT_MAX; // REPEAT_MAX = 255
-            unsigned remainAfterLoop = validRow % REPEAT_MAX;
-            set_vector_mask(0, mask);
-            for (int i = 0; i < numLoop; i++) {
-                vcopy((__ubuf__ uint16_t *)(dstPtr + i * validCol * REPEAT_MAX),
-                    (__ubuf__ uint16_t *)(srcPtr + i * validCol * REPEAT_MAX),
-                    REPEAT_MAX,
-                    1,
-                    1,
-                    dstRepeatSize,
-                    srcRepeatSize);
-            }
-            if (remainAfterLoop) {
-                vcopy((__ubuf__ uint16_t *)(dstPtr + numLoop * validCol * REPEAT_MAX),
-                    (__ubuf__ uint16_t *)(srcPtr + numLoop * validCol * REPEAT_MAX),
-                    remainAfterLoop,
-                    1,
-                    1,
-                    dstRepeatSize,
-                    srcRepeatSize);
-            }
-            if (num_tail) {
-                set_flag(PIPE_V, PIPE_S, EVENT_ID7);
-                wait_flag(PIPE_V, PIPE_S, EVENT_ID7);
-                for (unsigned i = 0; i < validRow; ++i) {
-                    dstPtr[i * dstStride + validCol - 1] = srcPtr[i * srcStride + validCol - 1];
-                }
-                set_flag(PIPE_S, PIPE_V, EVENT_ID7);
-                wait_flag(PIPE_S, PIPE_V, EVENT_ID7);
-            }
+        
+        if constexpr ((TileDataDst::isRowMajor && TileDataDst::Cols == TileDataSrc::Cols)||
+        (!TileDataDst::isRowMajor && TileDataDst::Rows == TileDataSrc::Rows)) {
+            set_mask_count();
+            set_vector_mask(0, TileDataDst::Cols*TileDataDst::Rows);
+            uint64_t blockLen = (TileDataDst::Cols*TileDataDst::Rows*sizeof(T) + BLOCK_BYTE_SIZE-1) / BLOCK_BYTE_SIZE;
+            copy_ubuf_to_ubuf(dstPtr, srcPtr, 0, 1, blockLen, 1, 1);
+            set_mask_norm();
+            set_vector_mask(-1, -1);
         } else {
-            static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TCOPY: Invalid data type.");
-        }
-        set_mask_norm();  // restore to norm mode
-        set_vector_mask(-1, -1);
+            set_mask_count();
+            set_vector_mask(0, validCol);
+            uint64_t blockLen = (validCol*sizeof(T) + BLOCK_BYTE_SIZE-1) / BLOCK_BYTE_SIZE;
+            for (uint64_t row = 0; row < validRow; ++row) {
+                copy_ubuf_to_ubuf(dstPtr + row * dstStride, srcPtr + row * srcStride, 0, 1, blockLen, 1, 1);
+            }
+            set_mask_norm();
+            set_vector_mask(-1, -1);
+        }   
     }  // end of tf
 }
 #endif
