@@ -97,6 +97,7 @@ set(ALL_TESTCASES
     tci
     tmatmul
     tload_mix
+    tload_shape2d
     tload
     tmrgsort
     ttrans

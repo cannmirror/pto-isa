@@ -3,6 +3,7 @@
 
 #include "common/memory.hpp"
 #include <common/type.hpp>
+#include "common/constants.hpp"
 #ifdef __CPU_SIM
 #include <iomanip>
 #endif
@@ -363,6 +364,182 @@ GlobalTensor<Element_, Shape_, Stride_, Layout_>::defaultShape{1, 1, 1, 1, 1};
 template <typename Element_, typename Shape_, typename Stride_, Layout Layout_>
 const typename GlobalTensor<Element_, Shape_, Stride_, Layout_>::Stride
 GlobalTensor<Element_, Shape_, Stride_, Layout_>::defaultStride{1, 1, 1, 1, 1};
+
+template <typename T, int rows = DYNAMIC, int cols = DYNAMIC, Layout Layout_ = Layout::ND>
+struct TileShape2D;
+
+template <typename T, int cols>
+constexpr int GetTileShape2DNZCols()
+{
+    if constexpr (cols == DYNAMIC) {
+        return DYNAMIC;
+    } else {
+        return static_cast<int>(cols / (C0_SIZE_BYTE / sizeof(T)));
+    }
+}
+
+template <typename T, int rows>
+constexpr int GetTileShape2DNZRows()
+{
+    if constexpr (rows == DYNAMIC) {
+        return DYNAMIC;
+    } else {
+        return static_cast<int>(rows / FRACTAL_NZ_ROW);
+    }
+}
+
+template <typename T, int rows, int cols>
+struct TileShape2D<T, rows, cols, Layout::NZ>
+    : public Shape<1, GetTileShape2DNZCols<T, cols>(), GetTileShape2DNZRows<T, rows>(), FRACTAL_NZ_ROW,
+                   C0_SIZE_BYTE / sizeof(T)> {
+    static constexpr int C0Size = C0_SIZE_BYTE / sizeof(T);
+    using Parent = Shape<1, GetTileShape2DNZCols<T, cols>(),
+                         GetTileShape2DNZRows<T, rows>(), FRACTAL_NZ_ROW, C0Size>;
+
+    static_assert((rows == DYNAMIC) || (rows % FRACTAL_NZ_ROW == 0), "rows must be divisible by 16 for Layout::NZ");
+    static_assert((cols == DYNAMIC) || (cols % C0Size == 0), "cols must be divisible by C0Size for Layout::NZ");
+
+    __aicore__ PTO_INLINE TileShape2D() : Parent() {}
+
+    __aicore__ PTO_INLINE TileShape2D(int dynamicRows, int dynamicCols)
+        : Parent(1, dynamicCols / C0Size, dynamicRows / FRACTAL_NZ_ROW, FRACTAL_NZ_ROW, C0Size)
+    {
+    }
+    using Parent::Parent;
+};
+
+template <typename T, int cols>
+constexpr int GetShape2DCols()
+{
+    if constexpr (cols == DYNAMIC) {
+        return DYNAMIC;
+    } else {
+        return cols;
+    }
+}
+template <typename T, int rows>
+constexpr int GetShape2DRows()
+{
+    if constexpr (rows == DYNAMIC) {
+        return DYNAMIC;
+    } else {
+        return rows;
+    }
+}
+template <typename T, int rows, int cols>
+struct TileShape2D<T, rows, cols, Layout::ND>
+    : public Shape<1, 1, 1, GetShape2DRows<T, rows>(),
+                   GetShape2DCols<T, cols>()> {
+    using Parent = Shape<1, 1, 1, GetShape2DRows<T, rows>(),
+                         GetShape2DCols<T, cols>()>;
+
+    __aicore__ PTO_INLINE TileShape2D() : Parent() {}
+
+    __aicore__ PTO_INLINE TileShape2D(int dynamicRows, int dynamicCols) : Parent(1, 1, 1, dynamicRows, dynamicCols) {}
+    using Parent::Parent;
+};
+template <typename T, int rows, int cols>
+struct TileShape2D<T, rows, cols, Layout::DN>
+    : public Shape<1, 1, 1, GetShape2DRows<T, rows>(),
+                   GetShape2DCols<T, cols>()> {
+    using Parent = Shape<1, 1, 1, GetShape2DRows<T, rows>(),
+                         GetShape2DCols<T, cols>()>;
+
+    __aicore__ PTO_INLINE TileShape2D() : Parent() {}
+
+    __aicore__ PTO_INLINE TileShape2D(int dynamicRows, int dynamicCols) : Parent(1, 1, 1, dynamicRows, dynamicCols) {}
+    using Parent::Parent;
+};
+
+template <typename T, int rows = DYNAMIC, int cols = DYNAMIC, Layout Layout_ = Layout::ND>
+struct BaseShape2D;
+
+template <typename T, int cols>
+constexpr int GetBaseShape2DNZCols()
+{
+    if constexpr (cols == DYNAMIC) {
+        return DYNAMIC;
+    } else {
+        return static_cast<int>(cols / (C0_SIZE_BYTE / sizeof(T)));
+    }
+}
+
+template <typename T, int rows, int cols>
+constexpr int GetBaseShape2DStride0()
+{
+    if constexpr (cols == DYNAMIC || rows == DYNAMIC) {
+        return DYNAMIC;
+    } else {
+        return static_cast<int>(cols * rows);
+    }
+}
+template <typename T, int rows>
+constexpr int GetBaseShape2DStride1()
+{
+    if constexpr (rows == DYNAMIC) {
+        return DYNAMIC;
+    } else {
+        return static_cast<int>(rows * (C0_SIZE_BYTE / sizeof(T)));
+    }
+}
+template <typename T, int rows, int cols>
+struct BaseShape2D<T, rows, cols, Layout::NZ>
+    : public Stride<GetBaseShape2DStride0<T, rows, cols>(),
+                    GetBaseShape2DStride1<T, rows>(),
+                    FRACTAL_NZ_ROW * (C0_SIZE_BYTE / sizeof(T)), C0_SIZE_BYTE / sizeof(T), 1> {
+    static constexpr int C0Size = C0_SIZE_BYTE / sizeof(T);
+    static constexpr int FractalNZSize = FRACTAL_NZ_ROW * (C0_SIZE_BYTE / sizeof(T));
+    using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(),
+                          GetBaseShape2DStride1<T, rows>(), FractalNZSize, C0Size, 1>;
+    static_assert((rows == DYNAMIC) || (rows % FRACTAL_NZ_ROW == 0), "rows must be divisible by 16 for Layout::NZ");
+    static_assert((cols == DYNAMIC) || (cols % C0Size == 0), "cols must be divisible by C0Size for Layout::NZ");
+
+    __aicore__ PTO_INLINE BaseShape2D() : Parent() {}
+
+    __aicore__ PTO_INLINE BaseShape2D(int dynamicRows, int dynamicCols)
+        : Parent(dynamicCols * dynamicRows, dynamicRows * C0Size, FractalNZSize, C0Size, 1)
+    {
+    }
+    using Parent::Parent;
+};
+template <typename T, int rows, int cols>
+struct BaseShape2D<T, rows, cols, Layout::ND>
+    : public Stride<GetBaseShape2DStride0<T, rows, cols>(),
+                    GetBaseShape2DStride0<T, rows, cols>(),
+                    GetBaseShape2DStride0<T, rows, cols>(),
+                    GetShape2DCols<T, cols>(), 1> {
+    using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(),
+                          GetBaseShape2DStride0<T, rows, cols>(),
+                          GetBaseShape2DStride0<T, rows, cols>(),
+                          GetShape2DCols<T, cols>(), 1>;
+
+    __aicore__ PTO_INLINE BaseShape2D() : Parent() {}
+
+    __aicore__ PTO_INLINE BaseShape2D(int dynamicRows, int dynamicCols)
+        : Parent(dynamicRows * dynamicCols, dynamicRows * dynamicCols, dynamicRows * dynamicCols, dynamicCols, 1)
+    {
+    }
+    using Parent::Parent;
+};
+template <typename T, int rows, int cols>
+struct BaseShape2D<T, rows, cols, Layout::DN>
+    : public Stride<GetBaseShape2DStride0<T, rows, cols>(),
+                    GetBaseShape2DStride0<T, rows, cols>(),
+                    GetBaseShape2DStride0<T, rows, cols>(), 1,
+                    GetShape2DRows<T, rows>()> {
+    using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(),
+                          GetBaseShape2DStride0<T, rows, cols>(),
+                          GetBaseShape2DStride0<T, rows, cols>(), 1,
+                          GetShape2DRows<T, rows>()>;
+
+    __aicore__ PTO_INLINE BaseShape2D() : Parent() {}
+
+    __aicore__ PTO_INLINE BaseShape2D(int dynamicRows, int dynamicCols)
+        : Parent(dynamicRows * dynamicCols, dynamicRows * dynamicCols, dynamicRows * dynamicCols, 1, dynamicRows)
+    {
+    }
+    using Parent::Parent;
+};
 
 template <typename TileData>
 __aicore__ void TASSIGN_IMPL(TileData &tile, uint32_t addr);

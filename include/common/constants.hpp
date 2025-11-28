@@ -23,6 +23,7 @@ constexpr const int BLOCK_LEN = 16;
 constexpr const int CUBE_BLOCK_SIZE = 512;
 
 constexpr const int C0_SIZE_BYTE = 32;
+constexpr const int FRACTAL_NZ_ROW = 16;
 
 enum class RoundMode : uint8_t {
     CAST_NONE = 0,
