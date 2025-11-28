@@ -76,11 +76,17 @@ __aicore__ void TMINS_IMPL(TileData &dst, TileData &src0, typename TileData::DTy
 {
     using T = typename TileData::DType;
     static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TMINS: Invalid data type.");
+    static_assert(TileData::Loc == Location::Vec, "Location of src and dst tiles must be Location::Vec.");
+    static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
     constexpr unsigned rowStride = TileData::RowStride;
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
+
+    PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
 
     if constexpr (TileData::PadVal == PadValue::Null || TileData::PadVal == PadValue::Zero) {
         TMinsImpl<TileData, T, elementsPerRepeat, blockSizeElem>(dst.data(), src0.data(), scalar, validRow);

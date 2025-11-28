@@ -18,11 +18,12 @@ def gen_golden_data_tmins(case_name, param):
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    if dtype == np.float16:
-        input2 = np.random.randint(1, 10, dtype=np.uint16)
-    else:
+    if dtype in (np.int8, np.int16, np.int32, np.uint8, np.uint16, np.uint32):
+        input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
         input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
+    else:
+        input1 = np.random.uniform(low=-13.013, high=130.013, size=[H, W]).astype(dtype)
+        input2 = np.random.uniform(low=-13.013, high=130.013, size=[1]).astype(dtype)
 
     golden = np.minimum(input1, input2)
 
@@ -79,15 +80,14 @@ if __name__ == "__main__":
         TestParams(np.float32, 60, 60, 64, 64, 60, 60, PAD_VALUE_MAX),
         TestParams(np.float32, 16, 200, 20, 512, 16, 200, PAD_VALUE_MAX),
         TestParams(np.float32, 1, 3600, 2, 4096, 1, 3600, PAD_VALUE_MAX),
-        TestParams(np.float32, 16, 200, 20, 224, 16, 200, PAD_VALUE_MAX),
+        TestParams(np.float16, 16, 200, 20, 224, 16, 200, PAD_VALUE_MAX),
 
         TestParams(np.int32, 32, 32, 32, 32, 32, 32),
         TestParams(np.uint32, 32, 32, 32, 32, 32, 32),
         TestParams(np.int16, 32, 128, 32, 128, 32, 128),
-        # TestParams(np.uint16, 32, 128, 32, 128, 32, 128),
+        TestParams(np.uint16, 32, 128, 32, 128, 32, 128),
         TestParams(np.int8, 32, 128, 32, 128, 32, 128),
         TestParams(np.uint8, 32, 128, 32, 128, 32, 128),
-        TestParams(np.float16, 16, 256, 16, 256, 16, 256),
     ]
 
     for i, param in enumerate(case_params_list):

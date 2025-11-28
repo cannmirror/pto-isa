@@ -12,11 +12,12 @@ def gen_golden_data_tmins(case_name, param):
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    if dtype == np.float16:
-        input2 = np.random.randint(1, 10, dtype=np.uint16)
-    else:
+    if dtype in (np.int16, np.int32):
+        input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
         input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
+    else:
+        input1 = np.random.uniform(low=-13.033, high=101.011, size=[H, W]).astype(dtype)
+        input2 = np.random.uniform(low=-13.033, high=101.011, size=[1]).astype(dtype)
 
     golden = np.minimum(input1, input2)
 
@@ -66,8 +67,8 @@ if __name__ == "__main__":
         tminsParams(np.float32, 64, 64, 64, 64, 64, 64),
         tminsParams(np.int32, 64, 64, 64, 64, 64, 64),
         tminsParams(np.int16, 64, 64, 64, 64, 64, 64),
-        # tminsParams(np.float32, 64, 64, 64, 64, 64, 64),
-        # tminsParams(np.float16, 16, 256, 16, 256, 16, 256),
+        tminsParams(np.float16, 64, 64, 64, 64, 64, 64),
+        tminsParams(np.float16, 16, 256, 16, 256, 16, 256),
     ]
 
     for i, param in enumerate(case_params_list):
