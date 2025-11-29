@@ -144,7 +144,8 @@ def gen_golden_data(case_name, param):
         assert(m % 16) == 0, "M should be 16 aligned when matrix C is NZ format"
         assert(n % block_cols) == 0, "N should be aligned when matrix C is NZ format"
         golden = golden.reshape((int(m/16), 16, int(n/block_cols),block_cols)).transpose(2, 0, 1, 3).astype(dst_type)
-
+    elif dst_format == 'DN':
+        golden = golden.transpose()
     golden.astype(dst_type).tofile("./golden.bin")
 
 
@@ -211,6 +212,21 @@ if __name__ == "__main__":
         "TMOVTest.case_nz2nd_scalar_quant_2",
         "TMOVTest.case_nz2nd_scalar_quant_3",
         "TMOVTest.case_nz2nd_scalar_quant_4",
+
+        "TMOVTest.case_nz2dn_1",
+        "TMOVTest.case_nz2dn_2",
+        "TMOVTest.case_nz2dn_3",
+        "TMOVTest.case_nz2dn_4",
+
+        "TMOVTest.case_nz2dn_vector_quant_1",
+        "TMOVTest.case_nz2dn_vector_quant_2",
+        "TMOVTest.case_nz2dn_vector_quant_3",
+        "TMOVTest.case_nz2dn_vector_quant_4",
+
+        "TMOVTest.case_nz2dn_scalar_quant_1",
+        "TMOVTest.case_nz2dn_scalar_quant_2",
+        "TMOVTest.case_nz2dn_scalar_quant_3",
+        "TMOVTest.case_nz2dn_scalar_quant_4",
     ]
 
     case_params_list = [
@@ -252,9 +268,24 @@ if __name__ == "__main__":
         tmovParams(np.float32, np.float32, np.float16, 31, 128, 128, 'ND', 512, True, False, np.uint64),    # vector quant (float -> half)
 
         tmovParams(np.float32, np.float32, np.float16, 112, 48, 96, 'ND', 512, False, True, None, 2),   # scalar quant (float -> half)
-        tmovParams(np.float32, np.float32, bfloat16, 112, 96, 48, 'ND', 512, False, True, None, 5),     # scalar quant (float -> bf16)
+        tmovParams(np.float32, np.float32, np.int8, 112, 96, 64, 'ND', 512, False, True, None, 5),      # scalar quant (float -> int8)
         tmovParams(np.int8, np.int8, np.float16, 32, 128, 64, 'ND', 512, False, True, None, 3),         # scalar quant (int32 -> half)
         tmovParams(np.int8, np.int8, np.int8, 32, 32, 32, 'ND', 512, False, True, None, 1),             # scalar quant (int32 -> int8)
+
+        tmovParams(np.float32, np.float32, np.float32, 64, 128, 32, 'DN'),      # f32 -> f32
+        tmovParams(np.float16, np.float16, np.float16, 128, 32, 64, 'DN'),      # f32 -> f16
+        tmovParams(np.float16, np.float16, bfloat16, 48, 31, 31, 'DN'),         # f32 -> bf16  (48, 31) -> (64, 32)  sub block id = 1
+        tmovParams(np.float16, np.float16, np.float32, 64, 128, 128, 'DN'),      # f32 -> f32 1024
+
+        tmovParams(np.int8, np.int8, np.int8, 128, 128, 64, 'DN', 512, True, False, np.uint64),         # vector quant (int32 -> int8)
+        tmovParams(np.int8, np.int8, np.float16, 32, 32, 128, 'DN', 512, True, False, np.uint64),       # vector quant (int32 -> half)
+        tmovParams(np.float16, np.float16, np.int8, 128, 64, 128, 'DN', 512, True, False, np.uint64),   # vector quant (float -> int8)
+        tmovParams(np.float16, np.float16, np.float16, 32, 32, 64, 'DN', 512, True, False, np.uint64),  # vector quant (float -> half)
+
+        tmovParams(np.float32, np.float32, np.float16, 128, 32, 64, 'DN', 512, False, True, None, 2),   # scalar quant (float -> half)
+        tmovParams(np.float32, np.float32, np.int8, 128, 96, 64, 'DN', 512, False, True, None, 5),      # scalar quant (float -> int8)
+        tmovParams(np.int8, np.int8, np.float16, 32, 128, 64, 'DN', 512, False, True, None, 3),         # scalar quant (int32 -> half)
+        tmovParams(np.int8, np.int8, np.int8, 32, 32, 32, 'DN', 512, False, True, None, 1),             # scalar quant (int32 -> int8)
     ]
 
     for i, case_name in enumerate(case_name_list):

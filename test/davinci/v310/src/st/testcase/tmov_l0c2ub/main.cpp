@@ -9,6 +9,9 @@ template <int32_t tilingKey>
 void launchTMOVL0c2UBNZ2ND(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
+void launchTMOVL0c2UBNZ2DN(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+
+template <int32_t tilingKey>
 void launchTMOVL0c2UBNZ2NZ(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
@@ -22,6 +25,12 @@ void launchTMOVL0c2UBVectorQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, u
 
 template <int32_t tilingKey>
 void launchTMOVL0c2UBSCQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+
+template <int32_t tilingKey>
+void launchTMOVL0c2UBVectorQuantDn(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+
+template <int32_t tilingKey>
+void launchTMOVL0c2UBSCQuantDn(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 class TMOVTest : public testing::Test {
 protected:
@@ -40,12 +49,12 @@ std::string GetGoldenDir()
     return fullPath;
 }
 
-template <typename T, typename U, typename S, int32_t key>
+template <typename CType, typename AType, typename BType, int32_t key>
 void tmov_l0c2ub_nz2nd_test(uint32_t M, uint32_t K, uint32_t N)
 {
-    size_t aFileSize = M * K * sizeof(U);
-    size_t bFileSize = K * N * sizeof(S);
-    size_t cFileSize = M * N * sizeof(T);
+    size_t aFileSize = M * K * sizeof(AType);
+    size_t bFileSize = K * N * sizeof(BType);
+    size_t cFileSize = M * N * sizeof(CType);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -86,8 +95,8 @@ void tmov_l0c2ub_nz2nd_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(cFileSize);
-    std::vector<T> devFinal(cFileSize);
+    std::vector<CType> golden(cFileSize);
+    std::vector<CType> devFinal(cFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
@@ -96,12 +105,12 @@ void tmov_l0c2ub_nz2nd_test(uint32_t M, uint32_t K, uint32_t N)
     EXPECT_TRUE(ret);
 }
 
-template <typename T, typename U, typename S, int32_t key>
+template <typename CType, typename AType, typename BType, int32_t key>
 void tmov_l0c2ub_nz2nz_test(uint32_t M, uint32_t K, uint32_t N)
 {
-    size_t aFileSize = M * K * sizeof(U);
-    size_t bFileSize = K * N * sizeof(S);
-    size_t cFileSize = M * N * sizeof(T);
+    size_t aFileSize = M * K * sizeof(AType);
+    size_t bFileSize = K * N * sizeof(BType);
+    size_t cFileSize = M * N * sizeof(CType);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -142,8 +151,64 @@ void tmov_l0c2ub_nz2nz_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(cFileSize);
-    std::vector<T> devFinal(cFileSize);
+    std::vector<CType> golden(cFileSize);
+    std::vector<CType> devFinal(cFileSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
+    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
+
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
+
+    EXPECT_TRUE(ret);
+}
+
+template <typename CType, typename AType, typename BType, int32_t key>
+void tmov_l0c2ub_nz2dn_test(uint32_t M, uint32_t K, uint32_t N)
+{
+    size_t aFileSize = M * K * sizeof(AType);
+    size_t bFileSize = K * N * sizeof(BType);
+    size_t cFileSize = M * N * sizeof(CType);
+
+    aclInit(nullptr);
+    aclrtSetDevice(0);
+    aclrtStream stream;
+    aclrtCreateStream(&stream);
+
+    uint8_t *dstHost, *src0Host, *src1Host;
+    uint8_t *dstDevice, *src0Device, *src1Device;
+
+    aclrtMallocHost((void **)(&dstHost), cFileSize);
+    aclrtMallocHost((void **)(&src0Host), aFileSize);
+    aclrtMallocHost((void **)(&src1Host), bFileSize);
+
+    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
+    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
+
+    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    launchTMOVL0c2UBNZ2DN<key>(dstDevice, src0Device, src1Device, stream);
+
+    aclrtSynchronizeStream(stream);
+    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+
+    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
+
+    aclrtFree(dstDevice);
+    aclrtFree(src0Device);
+    aclrtFree(src1Device);
+
+    aclrtFreeHost(dstHost);
+    aclrtFreeHost(src0Host);
+    aclrtFreeHost(src1Host);
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(0);
+    aclFinalize();
+
+    std::vector<CType> golden(cFileSize);
+    std::vector<CType> devFinal(cFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
@@ -330,6 +395,67 @@ void tmov_l0c2ub_nz2nz_vector_quant_test(uint32_t M, uint32_t K, uint32_t N)
     EXPECT_TRUE(ret);
 }
 
+template <typename CType, typename AType, typename BType, typename QuantType, int32_t key>
+void tmov_l0c2ub_nz2dn_vector_quant_test(uint32_t M, uint32_t K, uint32_t N)
+{
+    size_t aFileSize = M * K * sizeof(AType);
+    size_t bFileSize = K * N * sizeof(BType);
+    size_t cFileSize = M * N * sizeof(CType);
+    size_t FBQuantFileSize = N * sizeof(QuantType);
+
+    aclInit(nullptr);
+    aclrtSetDevice(0);
+    aclrtStream stream;
+    aclrtCreateStream(&stream);
+
+    uint8_t *dstHost, *src0Host, *src1Host, *src2Host;
+    uint8_t *dstDevice, *src0Device, *src1Device, *src2Device;
+
+    aclrtMallocHost((void **)(&dstHost), cFileSize);
+    aclrtMallocHost((void **)(&src0Host), aFileSize);
+    aclrtMallocHost((void **)(&src1Host), bFileSize);
+    aclrtMallocHost((void **)(&src2Host), FBQuantFileSize);
+
+    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src2Device, FBQuantFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
+    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
+    ReadFile(GetGoldenDir() + "/quant_gm.bin", FBQuantFileSize, src2Host, FBQuantFileSize);
+
+    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(src2Device, FBQuantFileSize, src2Host, FBQuantFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    launchTMOVL0c2UBVectorQuantDn<key>(dstDevice, src0Device, src1Device, src2Device, stream);
+
+    aclrtSynchronizeStream(stream);
+    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+
+    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
+
+    aclrtFree(dstDevice);
+    aclrtFree(src0Device);
+    aclrtFree(src1Device);
+
+    aclrtFreeHost(dstHost);
+    aclrtFreeHost(src0Host);
+    aclrtFreeHost(src1Host);
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(0);
+    aclFinalize();
+
+    std::vector<CType> golden(cFileSize);
+    std::vector<CType> devFinal(cFileSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
+    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
+
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
+
+    EXPECT_TRUE(ret);
+}
+
 template <typename CType, typename AType, typename BType, int32_t key>
 void tmov_l0c2ub_nz2nz_sc_quant_test(uint32_t M, uint32_t K, uint32_t N)
 {
@@ -359,6 +485,62 @@ void tmov_l0c2ub_nz2nz_sc_quant_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     launchTMOVL0c2UBSCQuantNz<key>(dstDevice, src0Device, src1Device, stream);
+
+    aclrtSynchronizeStream(stream);
+    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+
+    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
+
+    aclrtFree(dstDevice);
+    aclrtFree(src0Device);
+    aclrtFree(src1Device);
+
+    aclrtFreeHost(dstHost);
+    aclrtFreeHost(src0Host);
+    aclrtFreeHost(src1Host);
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(0);
+    aclFinalize();
+
+    std::vector<CType> golden(cFileSize);
+    std::vector<CType> devFinal(cFileSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
+    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
+
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
+
+    EXPECT_TRUE(ret);
+}
+
+template <typename CType, typename AType, typename BType, int32_t key>
+void tmov_l0c2ub_nz2dn_sc_quant_test(uint32_t M, uint32_t K, uint32_t N)
+{
+    size_t aFileSize = M * K * sizeof(AType);
+    size_t bFileSize = K * N * sizeof(BType);
+    size_t cFileSize = M * N * sizeof(CType);
+
+    aclInit(nullptr);
+    aclrtSetDevice(0);
+    aclrtStream stream;
+    aclrtCreateStream(&stream);
+
+    uint8_t *dstHost, *src0Host, *src1Host;
+    uint8_t *dstDevice, *src0Device, *src1Device;
+
+    aclrtMallocHost((void **)(&dstHost), cFileSize);
+    aclrtMallocHost((void **)(&src0Host), aFileSize);
+    aclrtMallocHost((void **)(&src1Host), bFileSize);
+
+    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
+    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
+
+    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    launchTMOVL0c2UBSCQuantDn<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -652,7 +834,7 @@ TEST_F(TMOVTest, case_nz2nd_scalar_quant_1)
 
 TEST_F(TMOVTest, case_nz2nd_scalar_quant_2)
 {
-    tmov_l0c2ub_sc_quant_test<uint16_t, uint32_t, uint32_t, 2>(112, 96, 48);
+    tmov_l0c2ub_sc_quant_test<int8_t, uint32_t, uint32_t, 2>(112, 96, 64);
 }
 
 TEST_F(TMOVTest, case_nz2nd_scalar_quant_3)
@@ -663,4 +845,64 @@ TEST_F(TMOVTest, case_nz2nd_scalar_quant_3)
 TEST_F(TMOVTest, case_nz2nd_scalar_quant_4)
 {
     tmov_l0c2ub_sc_quant_test<int8_t, int8_t, int8_t, 4>(32, 32, 32);
+}
+
+TEST_F(TMOVTest, case_nz2dn_1)
+{
+    tmov_l0c2ub_nz2dn_test<uint32_t, uint32_t, uint32_t, 1>(64, 128, 32);
+}
+
+TEST_F(TMOVTest, case_nz2dn_2)
+{
+    tmov_l0c2ub_nz2dn_test<uint16_t, uint16_t, uint16_t, 2>(128, 32, 64);
+}
+
+TEST_F(TMOVTest, case_nz2dn_3)
+{
+    tmov_l0c2ub_nz2dn_test<uint16_t, uint16_t, uint16_t, 3>(48, 31, 31);
+}
+
+TEST_F(TMOVTest, case_nz2dn_4)
+{
+    tmov_l0c2ub_nz2dn_test<uint32_t, uint16_t, uint16_t, 4>(64, 128, 128);
+}
+
+TEST_F(TMOVTest, case_nz2dn_vector_quant_1)
+{
+    tmov_l0c2ub_nz2dn_vector_quant_test<int8_t, int8_t, int8_t, uint64_t, 1>(128, 128, 64);
+}
+
+TEST_F(TMOVTest, case_nz2dn_vector_quant_2)
+{
+    tmov_l0c2ub_nz2dn_vector_quant_test<uint16_t, int8_t, int8_t, uint64_t, 2>(32, 32, 128);
+}
+
+TEST_F(TMOVTest, case_nz2dn_vector_quant_3)
+{
+    tmov_l0c2ub_nz2dn_vector_quant_test<int8_t, uint16_t, uint16_t, uint64_t, 3>(128, 64, 128);
+}
+
+TEST_F(TMOVTest, case_nz2dn_vector_quant_4)
+{
+    tmov_l0c2ub_nz2dn_vector_quant_test<uint16_t, uint16_t, uint16_t, uint64_t, 4>(32, 32, 64);
+}
+
+TEST_F(TMOVTest, case_nz2dn_scalar_quant_1)
+{
+    tmov_l0c2ub_nz2dn_sc_quant_test<uint16_t, float, float, 1>(128, 32, 64);
+}
+
+TEST_F(TMOVTest, case_nz2dn_scalar_quant_2)
+{
+    tmov_l0c2ub_nz2dn_sc_quant_test<int8_t, float, float, 2>(128, 96, 64);
+}
+
+TEST_F(TMOVTest, case_nz2dn_scalar_quant_3)
+{
+    tmov_l0c2ub_nz2dn_sc_quant_test<uint16_t, int8_t, int8_t, 3>(32, 128, 64);
+}
+
+TEST_F(TMOVTest, case_nz2dn_scalar_quant_4)
+{
+    tmov_l0c2ub_nz2dn_sc_quant_test<int8_t, int8_t, int8_t, 4>(32, 32, 32);
 }
