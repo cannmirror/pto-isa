@@ -370,7 +370,6 @@ def get_env_items_by_version_dir(version_dir: Optional[str]) -> Iterator[Tuple[s
     """根据version_dir获取环境字典条目。"""
     if version_dir:
         yield 'VERSION_DIR', version_dir
-        yield 'VERSION', version
 
 
 def get_os_arch_default_env_items() -> Iterator[Tuple[str, str]]:
