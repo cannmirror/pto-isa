@@ -17,6 +17,8 @@ python3 test/script/build_st.py -r npu -v a3 -t tpartadd -g TPARTADDTest.case_fl
 python3 test/script/build_st.py -r npu -v a3 -t tsub -g TSUBTest.case_float_64x64_64x64_64x64
 python3 test/script/build_st.py -r npu -v a3 -t tci -g TCITest.case1_int32
 python3 test/script/build_st.py -r npu -v a3 -t tfillpad -g TFILLPADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX
+python3 test/script/build_st.py -r npu -v a3 -t tpartmin -g TPARTMINTest.test0
+python3 test/script/build_st.py -r npu -v a3 -t tpartmax -g TPARTMAXTest.test0
 
 python3 test/script/build_st.py -r npu -v a5 -t tcvt -g TCVTTest.case1
 python3 test/script/build_st.py -r npu -v a5 -t tmatmul -g TMATMULTest.case1
