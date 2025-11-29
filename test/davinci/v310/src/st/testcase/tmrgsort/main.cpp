@@ -9,14 +9,19 @@ using namespace PtoTestCommon;
 
 using DataType = float;
 
-template <int32_t tilingKey>
-void launchTMRGSORT_single_demo(float *out, float *src0, void* stream);
-template <int32_t tilingKey>
-void launchTMRGSORT_topk_demo(float *out, float *src0, void* stream);
-template <int32_t tilingKey>
-void launchTMRGSORT_multi_demo(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
-template <int32_t tilingKey>
-void launchTMrgsort_demo_multi_exhausted(float *out, float *src0, float *src1, float *src2, float *src3, void* stream);
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kTCols_src1, int kTCols_src2,
+          int kTCols_src3, int TOPK, int LISTNUM>
+void LanchTMrgsortMulti(DataType* out, DataType* src0, DataType* src1, DataType* src2, DataType* src3, void* stream);
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kTCols_src1, int kTCols_src2,
+          int kTCols_src3, int TOPK, int LISTNUM>
+void LanchTMrgsortExhausted(DataType *out, DataType *src0, DataType *src1, DataType *src2, DataType *src3, void* stream);
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, uint32_t blockLen>
+void LanchTMrgsortSingle(DataType* out, DataType* src, void* stream);
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int topk>
+void LanchTMrgsortTopK(DataType* out, DataType* src, void* stream);
 
 class TMRGSORTTest : public testing::Test { 
 protected:
@@ -34,10 +39,11 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <int32_t tilingKey>
-void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
-    size_t inputFileSize = row * col * sizeof(DataType); // uint16_t represent half
-    size_t outputFileSize = listNum * row * col * sizeof(DataType); // uint16_t represent half
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kTCols_src1, int kTCols_src2,
+          int kTCols_src3, int TOPK, int LISTNUM>
+void tmrgsort_multi() {
+    size_t inputFileSize = kGRows_ * kGCols_ * sizeof(DataType);
+    size_t outputFileSize = LISTNUM * kGRows_ * kGCols_ * sizeof(DataType);
     std::cout << "Starting tmrgsort_multi with inputFileSize = " << inputFileSize << std::endl;
     std::cout << "Starting tmrgsort_multi with outputFileSize = " << outputFileSize << std::endl;
     // 使用vector动态管理设备/主机指针
@@ -58,9 +64,9 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
     aclrtMallocHost((void **)(&dstHost), outputFileSize);
     aclrtMalloc((void**)(&dstDevice), outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    switch (listNum) {
+    switch (LISTNUM) {
     case 2:
-        std::cout << "Processing case 2: listNum = 2" << std::endl;
+        std::cout << "Processing case 2: LISTNUM = 2" << std::endl;
         aclrtMallocHost((void **)(&src0Host), inputFileSize);
         aclrtMallocHost((void **)(&src1Host), inputFileSize);
 
@@ -79,10 +85,11 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
         aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-        launchTMRGSORT_multi_demo<tilingKey>(dstDevice, src0Device, src1Device, nullptr, nullptr, stream);
+        LanchTMrgsortMulti<T, kGRows_, kGCols_, kTRows_, kTCols_, kTCols_src1, kTCols_src2, kTCols_src3, TOPK, LISTNUM>(
+            dstDevice, src0Device, src1Device, nullptr, nullptr, stream);
         break;
     case 3:
-        std::cout << "Processing case 2: listNum = 3" << std::endl;
+        std::cout << "Processing case 2: LISTNUM = 3" << std::endl;
         aclrtMallocHost((void**)(&src0Host), inputFileSize);
         aclrtMallocHost((void**)(&src1Host), inputFileSize);
         aclrtMallocHost((void**)(&src2Host), inputFileSize);
@@ -106,10 +113,11 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
         aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src2Device, inputFileSize, src2Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-        launchTMRGSORT_multi_demo<tilingKey>(dstDevice, src0Device, src1Device, src2Device, nullptr, stream);
+        LanchTMrgsortMulti<T, kGRows_, kGCols_, kTRows_, kTCols_, kTCols_src1, kTCols_src2, kTCols_src3, TOPK, LISTNUM>(
+            dstDevice, src0Device, src1Device, src2Device, nullptr, stream);
         break;
     case 4:
-        std::cout << "Processing case 2: listNum = 4" << std::endl;
+        std::cout << "Processing case 2: LISTNUM = 4" << std::endl;
         aclrtMallocHost((void**)(&src0Host), inputFileSize);
         aclrtMallocHost((void**)(&src1Host), inputFileSize);
         aclrtMallocHost((void**)(&src2Host), inputFileSize);
@@ -139,10 +147,11 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
         aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src2Device, inputFileSize, src2Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-        launchTMRGSORT_multi_demo<tilingKey>(dstDevice, src0Device, src1Device, src2Device, src3Device, stream);
+        LanchTMrgsortMulti<T, kGRows_, kGCols_, kTRows_, kTCols_, kTCols_src1, kTCols_src2, kTCols_src3, TOPK, LISTNUM>(
+            dstDevice, src0Device, src1Device, src2Device, src3Device, stream);
         break;
     default:
-        std::cerr << "Unsupported listNum: " << listNum << std::endl;
+        std::cerr << "Unsupported LISTNUM: " << LISTNUM << std::endl;
         break;
     }
 
@@ -176,8 +185,8 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
+    std::vector<T> golden(outputFileSize);
+    std::vector<T> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
@@ -186,11 +195,12 @@ void tmrgsort_multi(uint16_t row, uint16_t col, uint16_t listNum) {
     EXPECT_TRUE(ret);
 }
 
-template <int32_t tilingKey>
-void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kTCols_src1, int kTCols_src2,
+          int kTCols_src3, int TOPK, int LISTNUM>
+void tmrgsort_exhausted() {
 
-    size_t inputFileSize = row * col * sizeof(DataType); // uint16_t represent half
-    size_t outputFileSize = listNum * row * col * sizeof(DataType); // uint16_t represent half
+    size_t inputFileSize = kGRows_ * kGCols_ * sizeof(DataType);
+    size_t outputFileSize = LISTNUM * kGRows_ * kGCols_ * sizeof(DataType);
 
     // 使用vector 动态管理设备/主机指针
     std::vector<DataType*> srcHostList;
@@ -210,7 +220,7 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
     aclrtMallocHost((void **)(&dstHost), outputFileSize);
     aclrtMalloc((void**)(&dstDevice), outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    switch (listNum) {
+    switch (LISTNUM) {
     case 2:
 
         aclrtMallocHost((void **)(&src0Host), inputFileSize);
@@ -225,7 +235,8 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
         aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-        launchTMrgsort_demo_multi_exhausted<tilingKey>(dstDevice, src0Device, src1Device, nullptr, nullptr, stream);
+        LanchTMrgsortExhausted<T, kGRows_, kGCols_, kTRows_, kTCols_, kTCols_src1, kTCols_src2, kTCols_src3, TOPK,
+                               LISTNUM>(dstDevice, src0Device, src1Device, nullptr, nullptr, stream);
         break;
     case 3:
         aclrtMallocHost((void**)(&src0Host), inputFileSize);
@@ -244,7 +255,8 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
         aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src2Device, inputFileSize, src2Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-        launchTMrgsort_demo_multi_exhausted<tilingKey>(dstDevice, src0Device, src1Device, src2Device, nullptr, stream);
+        LanchTMrgsortExhausted<T, kGRows_, kGCols_, kTRows_, kTCols_, kTCols_src1, kTCols_src2, kTCols_src3, TOPK,
+                               LISTNUM>(dstDevice, src0Device, src1Device, src2Device, nullptr, stream);
         break;
     case 4:
         aclrtMallocHost((void**)(&src0Host), inputFileSize);
@@ -267,10 +279,11 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
         aclrtMemcpy(src2Device, inputFileSize, src2Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         aclrtMemcpy(src3Device, inputFileSize, src3Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-        launchTMrgsort_demo_multi_exhausted<tilingKey>(dstDevice, src0Device, src1Device, src2Device, src3Device, stream);
+        LanchTMrgsortExhausted<T, kGRows_, kGCols_, kTRows_, kTCols_, kTCols_src1, kTCols_src2, kTCols_src3, TOPK,
+                               LISTNUM>(dstDevice, src0Device, src1Device, src2Device, src3Device, stream);
         break;
     default:
-        std::cerr << "Unsupported listNum: " << listNum << std::endl;
+        std::cerr << "Unsupported LISTNUM: " << LISTNUM << std::endl;
         break;
     }
 
@@ -305,8 +318,8 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
+    std::vector<DataType> golden(outputFileSize);
+    std::vector<DataType> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
@@ -315,10 +328,10 @@ void tmrgsort_exhausted(uint16_t row, uint16_t col, uint16_t listNum) {
     EXPECT_TRUE(ret);
 }
 
-template <int32_t tilingKey>
-void tmrgsort_single(uint32_t row, uint32_t col) {
-    size_t inputFileSize = row * col * sizeof(DataType);
-    size_t outputFileSize = row * col * sizeof(DataType);
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, uint32_t blockLen>
+void tmrgsort_single() {
+    size_t inputFileSize = kGRows_ * kGCols_ * sizeof(DataType);
+    size_t outputFileSize = kGRows_ * kGCols_ * sizeof(DataType);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -338,7 +351,7 @@ void tmrgsort_single(uint32_t row, uint32_t col) {
     ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
 
     aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMRGSORT_single_demo<tilingKey>(dstDevice, src0Device, stream);
+    LanchTMrgsortSingle<T, kGRows_, kGCols_, kTRows_, kTCols_, blockLen>(dstDevice, src0Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -355,8 +368,8 @@ void tmrgsort_single(uint32_t row, uint32_t col) {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
+    std::vector<DataType> golden(outputFileSize);
+    std::vector<DataType> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
@@ -365,10 +378,10 @@ void tmrgsort_single(uint32_t row, uint32_t col) {
     EXPECT_TRUE(ret);
 }
 
-template <int32_t tilingKey>
-void tmrgsort_topk(uint32_t row, uint32_t col) {
-        size_t inputFileSize = row * col * sizeof(DataType);
-    size_t outputFileSize = row * col * sizeof(DataType);
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int topk>
+void tmrgsort_topk() {
+    size_t inputFileSize = kGRows_ * kGCols_ * sizeof(DataType);
+    size_t outputFileSize = kGRows_ * kGCols_ * sizeof(DataType);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -388,7 +401,7 @@ void tmrgsort_topk(uint32_t row, uint32_t col) {
     ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
 
     aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMRGSORT_topk_demo<tilingKey>(dstDevice, src0Device, stream);
+    LanchTMrgsortTopK<T, kGRows_, kGCols_, kTRows_, kTCols_, topk>(dstDevice, src0Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -405,8 +418,8 @@ void tmrgsort_topk(uint32_t row, uint32_t col) {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
+    std::vector<DataType> golden(outputFileSize);
+    std::vector<DataType> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
@@ -417,116 +430,94 @@ void tmrgsort_topk(uint32_t row, uint32_t col) {
 
 TEST_F(TMRGSORTTest, case_multi1)
 {
-    uint32_t row = 1;
-    uint32_t col = 128;
-    uint32_t listNum = 4;
-    tmrgsort_multi<1>(row, col, listNum);
-
+    tmrgsort_multi<float, 1, 128, 1, 128, 128, 128, 128, 512, 4>();
 }
 
 TEST_F(TMRGSORTTest, case_multi2)
 {
-    uint32_t row = 1;
-    uint32_t col = 128;
-    uint32_t listNum = 4;
-    tmrgsort_multi<2>(row, col, listNum);
-
+    tmrgsort_multi<uint16_t, 1, 128, 1, 128, 128, 128, 128, 512, 4>();
 }
 
 TEST_F(TMRGSORTTest, case_multi3)
 {
-    uint32_t row = 1;
-    uint32_t col = 128;
-    uint32_t listNum = 4;
-    tmrgsort_multi<3>(row, col, listNum);
-
+    tmrgsort_multi<float, 1, 128, 1, 128, 128, 128, 64, 448, 4>();
 }
 
 TEST_F(TMRGSORTTest, case_multi4)
 {
-    uint32_t row = 1;
-    uint32_t col = 128;
-    uint32_t listNum = 3;
-    tmrgsort_multi<4>(row, col, listNum);
-
+    tmrgsort_multi<float, 1, 128, 1, 128, 128, 64, 0, 128, 3>();
 }
 
 TEST_F(TMRGSORTTest, case_exhausted1)
 {
-    uint32_t row = 1;
-    uint32_t col = 64;
-    uint32_t listNum = 2;
-    tmrgsort_exhausted<1>(row, col, listNum);
+    tmrgsort_exhausted<float, 1, 64, 1, 64, 64, 0, 0, 128, 2>();
 }
 
 TEST_F(TMRGSORTTest, case_exhausted2)
 {
-    uint32_t row = 1;
-    uint32_t col = 256;
-    uint32_t listNum = 3;
-    tmrgsort_exhausted<2>(row, col, listNum);
+    tmrgsort_exhausted<uint16_t, 1, 256, 1, 256, 256, 256, 0, 768, 3>();
 }
 
 TEST_F(TMRGSORTTest, case_single1)
 {
-    tmrgsort_single<1>(1, 256);
+    tmrgsort_single<float, 1, 256, 1, 256, 64>();
 }
 
 TEST_F(TMRGSORTTest, case_single2)
 {
-    tmrgsort_single<2>(1, 320);
+    tmrgsort_single<float, 1, 320, 1, 256, 64>();
 }
 
 TEST_F(TMRGSORTTest, case_single3)
 {
-    tmrgsort_single<3>(1, 512);
+    tmrgsort_single<float, 1, 512, 1, 512, 64>();
 }
 
 TEST_F(TMRGSORTTest, case_single4)
 {
-    tmrgsort_single<4>(1, 640);
+    tmrgsort_single<float, 1, 640, 1, 512, 64>();
 }
 
 TEST_F(TMRGSORTTest, case_single5)
 {
-    tmrgsort_single<5>(1, 256);
+    tmrgsort_single<uint16_t, 1, 256, 1, 256, 64>();
 }
 
 TEST_F(TMRGSORTTest, case_single6)
 {
-    tmrgsort_single<6>(1, 320);
+    tmrgsort_single<uint16_t, 1, 320, 1, 256, 64>();
 }
 
 TEST_F(TMRGSORTTest, case_single7)
 {
-    tmrgsort_single<7>(1, 512);
+    tmrgsort_single<uint16_t, 1, 512, 1, 512, 64>();
 }
 
 TEST_F(TMRGSORTTest, case_single8)
 {
-    tmrgsort_single<8>(1, 640);
+    tmrgsort_single<uint16_t, 1, 1024, 1, 1024, 256>();
 }
 
 TEST_F(TMRGSORTTest, case_topk1) {
-    tmrgsort_topk<1>(1, 2048);
+    tmrgsort_topk<float, 1, 2048, 1, 2048, 1024>();
 }
 
 TEST_F(TMRGSORTTest, case_topk2) {
-    tmrgsort_topk<2>(1, 2048);
+    tmrgsort_topk<float, 1, 2048, 1, 2048, 2048>();
 }
 
 TEST_F(TMRGSORTTest, case_topk3) {
-    tmrgsort_topk<3>(1, 1280);
+    tmrgsort_topk<float, 1, 1280, 1, 1280, 512>();
 }
 
 TEST_F(TMRGSORTTest, case_topk4) {
-    tmrgsort_topk<4>(1, 2048);
+    tmrgsort_topk<uint16_t, 1, 2048, 1, 2048, 1024>();
 }
 
 TEST_F(TMRGSORTTest, case_topk5) {
-    tmrgsort_topk<5>(1, 2048);
+    tmrgsort_topk<uint16_t, 1, 2048, 1, 2048, 2048>();
 }
 
 TEST_F(TMRGSORTTest, case_topk6) {
-    tmrgsort_topk<6>(1, 1280);
+    tmrgsort_topk<uint16_t, 1, 1280, 1, 1280, 512>();
 }
