@@ -301,6 +301,8 @@ if [ "$1" = "dailyBuild" ]; then
   # A5
   python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
   python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case2
+  python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case3
+  python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case4
 
   # TPARTADD
   # A3

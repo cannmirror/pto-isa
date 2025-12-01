@@ -14,16 +14,16 @@ template <typename T, uint32_t ROWS_, uint32_t COLS_, uint32_t VALID_R_, uint32_
 __aicore__ void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, __gm__ T *tmp){
 
     constexpr uint32_t TYPE_COEF = sizeof(float)/sizeof(T);
-    using SrcShapeDim5 = pto::Shape<1, 1, 1, ROWS_, ALIGN_C>;
+    using SrcShapeDim5 = pto::Shape<1, 1, 1, ROWS_, COLS_>;
     using SrcStridDim5 = pto::Stride<1, 1, 1, COLS_, 1>;
     using SrcGlobalData = GlobalTensor<T, SrcShapeDim5, SrcStridDim5>;
 
     using IdxShapeDim5 = pto::Shape<1, 1, 1, ROWS_, COLS_>;
-    using IdxStridDim5 = pto::Stride<1, 1, 1, ALIGN_C, 1>;
+    using IdxStridDim5 = pto::Stride<1, 1, 1, COLS_, 1>;
     using IdxGlobalData = GlobalTensor<uint32_t, IdxShapeDim5, IdxStridDim5>;
 
     using TmpShapeDim5 = pto::Shape<1, 1, 1, 1, ALIGN_C>;
-    using TmpStridDim5 = pto::Stride<1, 1, 1, ALIGN_C, 1>;
+    using TmpStridDim5 = pto::Stride<1, 1, 1, 1, 1>;
     using TmpGlobalData = GlobalTensor<T, TmpShapeDim5, TmpStridDim5>;
 
     using OutShapeDim5 = pto::Shape<1, 1, 1, ROWS_, TYPE_COEF * 2 * COLS_>;
@@ -32,17 +32,17 @@ __aicore__ void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, 
 
     using SrcTileData = Tile<Location::Vec, T,    ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
     using IdxTileData = Tile<Location::Vec, uint32_t, ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
-    using DstTileData = Tile<Location::Vec, T,    ROWS_, TYPE_COEF * 2 * COLS_, BLayout::RowMajor>;
+    using DstTileData = Tile<Location::Vec, T,    ROWS_, TYPE_COEF * 2 * ALIGN_C, BLayout::RowMajor, -1, -1>;
     using TmpTileData = Tile<Location::Vec, T,    1, ALIGN_C, BLayout::RowMajor>;
 
     SrcTileData srcTile(VALID_R_, VALID_C);
     IdxTileData idxTile(VALID_R_, ALIGN_C);
-    DstTileData dstTile;
+    DstTileData dstTile(VALID_R_, VALID_C * TYPE_COEF * 2);
     TmpTileData tmpTile;
     TASSIGN(srcTile, 0x0);
-    TASSIGN(idxTile, 0x4000);
-    TASSIGN(dstTile, 0x8000);
-    TASSIGN(tmpTile, 0x16000);
+    TASSIGN(idxTile, 0x8000);
+    TASSIGN(dstTile, 0x16000);
+    TASSIGN(tmpTile, 0x20000);
 
     SrcGlobalData srcGlobal(src);
     IdxGlobalData idxGlobal(idx);
@@ -92,16 +92,50 @@ extern "C" __global__ __aicore__ void launchTSORT32_2(__gm__ uint64_t *out, __gm
                 reinterpret_cast<__gm__ half *>(src), idx, reinterpret_cast<__gm__ half *>(tmp));
 }
 
+extern "C" __global__ __aicore__ void launchTSORT32_3(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
+        __gm__ uint64_t *tmp)
+{
+    constexpr uint32_t ROWS = 1;
+    constexpr uint32_t COLS = 256 * 32;
+    constexpr uint32_t VALID_R = 1;
+    constexpr uint32_t VALID_C = 256 * 32;
+    constexpr uint32_t ALIGN_C = (VALID_C + 31 - 1) / 32 * 32;
+    
+    runTSORT32<float, ROWS, COLS, VALID_R, VALID_C, ALIGN_C>(
+                reinterpret_cast<__gm__ float *>(out),
+                reinterpret_cast<__gm__ float *>(src), idx, reinterpret_cast<__gm__ float *>(tmp));
+}
+
+extern "C" __global__ __aicore__ void launchTSORT32_4(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
+        __gm__ uint64_t *tmp)
+{
+    constexpr uint32_t ROWS = 2;
+    constexpr uint32_t COLS = 13;
+    constexpr uint32_t VALID_R = 2;
+    constexpr uint32_t VALID_C = 13;
+    constexpr uint32_t ALIGN_C = (VALID_C * sizeof(float) + 31 - 1) / 32 * 32 / sizeof(float);
+    
+    runTSORT32<float, ROWS, COLS, VALID_R, VALID_C, ALIGN_C>(
+                reinterpret_cast<__gm__ float *>(out),
+                reinterpret_cast<__gm__ float *>(src), idx, reinterpret_cast<__gm__ float *>(tmp));
+}
+
 template <int32_t testKey>
 void launchTSORT32(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream){
     cout << "launchTSORT32 start!" << endl;
-    if constexpr (testKey == 1){
+    if constexpr (testKey == 1) {
         launchTSORT32_1<<<1, nullptr, stream>>>(out, src, idx, tmp);
-    } else if constexpr (testKey == 2){
+    } else if constexpr (testKey == 2) {
         launchTSORT32_2<<<1, nullptr, stream>>>(out, src, idx, tmp);
+    } else if constexpr (testKey == 3) {
+        launchTSORT32_3<<<1, nullptr, stream>>>(out, src, idx, tmp);
+    } else if constexpr (testKey == 4) {
+        launchTSORT32_4<<<1, nullptr, stream>>>(out, src, idx, tmp);
     }
     cout << "launchTSORT32 end!" << endl;
 }
 
 template void launchTSORT32<1>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream);
 template void launchTSORT32<2>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream);
+template void launchTSORT32<3>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream);
+template void launchTSORT32<4>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream);
