@@ -7,7 +7,55 @@ using namespace pto;
 using namespace std;
 
 namespace pto {
-    constexpr const uint32_t TSORT32_BLOCK_SIZE = 32;
+
+    constexpr const uint32_t BLOCK_SIZE = 32;
+    constexpr const uint32_t FLOAT_DST_STRIDE_COEF = 2;
+    constexpr const uint32_t HALF_DST_STRIDE_COEF = 4;
+    constexpr const uint32_t MAX_UB_TMP = 32 * 255;
+
+    template <typename T, typename IdxT, unsigned dstStride, unsigned srcStride>
+    __aicore__ PTO_INLINE void LargeTmpBufferImpl(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, __ubuf__ IdxT *idxPtr, __ubuf__ T *tmpPtr,
+        unsigned validRow, unsigned repeatNumPerRow, unsigned idxStride, unsigned srcTailPerRow, unsigned srcTailRepeatNum)
+    {
+        T minVal = -(0.0 / 0.0);
+        auto loopNum = ((repeatNumPerRow + REPEAT_MAX) - 1) / REPEAT_MAX;
+        constexpr uint32_t typeCoef = (sizeof(T) == sizeof(float)) ? FLOAT_DST_STRIDE_COEF : HALF_DST_STRIDE_COEF;
+        for (int32_t i = 0; i < validRow; i++) {
+            for (int32_t j = 0; j < loopNum; j++) {
+                if (j < loopNum - 1) {
+                    vbitsort(dstPtr + i * dstStride + j * REPEAT_MAX * BLOCK_SIZE * typeCoef,
+                        srcPtr + i * srcStride + j * REPEAT_MAX * BLOCK_SIZE,
+                        idxPtr + i * idxStride + j * REPEAT_MAX * BLOCK_SIZE, REPEAT_MAX);
+                    pipe_barrier(PIPE_V);
+                } else {
+                    // sort for last block
+                    vbitsort(dstPtr + i * dstStride + j * REPEAT_MAX * BLOCK_SIZE * typeCoef,
+                        srcPtr + i * srcStride + j * REPEAT_MAX * BLOCK_SIZE,
+                        idxPtr + i * idxStride + j * REPEAT_MAX * BLOCK_SIZE, srcTailRepeatNum - 1);
+                    pipe_barrier(PIPE_V);
+
+                    // copy row src cbuf to tmp cbuf
+                    uint16_t lenBurst = (srcTailPerRow * sizeof(T) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+                    copy_ubuf_to_ubuf(tmpPtr, srcPtr + i * srcStride + j * REPEAT_MAX * BLOCK_SIZE +
+                        (srcTailRepeatNum - 1) * BLOCK_SIZE, 0, 1, lenBurst, 0, 0);
+                    pipe_barrier(PIPE_V);
+
+                    // dup -inf of tial value in tmp cbuf
+                    uint64_t mask = ~(((static_cast<uint32_t>(1)) << (srcTailPerRow)) - 1);
+                    set_mask_norm();
+                    set_vector_mask(0, mask);
+                    vector_dup(tmpPtr, minVal, 1, 1, 1, 8, (int64_t)0);
+                    pipe_barrier(PIPE_V);
+
+                    // sort for tmp and out to dst
+                    vbitsort(dstPtr + i * dstStride + (j * REPEAT_MAX + (srcTailRepeatNum - 1)) * BLOCK_SIZE * typeCoef,
+                        tmpPtr, idxPtr + i * idxStride + (j * REPEAT_MAX + (srcTailRepeatNum - 1)) * BLOCK_SIZE, 1);
+                    pipe_barrier(PIPE_V);
+                    set_vector_mask(-1, -1);
+                }
+            }
+        }
+    } 
 
     template <typename DstTileData, typename SrcTileData, typename IdxTileData,
         unsigned dstStride, unsigned srcStride>
@@ -24,29 +72,26 @@ namespace pto {
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
         __ubuf__ IdxT *idxPtr = (__ubuf__ IdxT *)__cce_get_tile_ptr(idx);
 
-        if (repeatNumPerRow < REPEAT_MAX) {
+        if (repeatNumPerRow <= REPEAT_MAX) {
             for (int32_t i = 0; i < validRow; i++) {
                 vbitsort(dstPtr + i * dstStride, srcPtr + i * srcStride, idxPtr + i * idxStride, repeatNumPerRow);
                 pipe_barrier(PIPE_V);
             }
-            // Returning early, compiler constant folding might cause errors, and subsequent function segments might
-            // still be compiled. This scenario needs to be changed to an if-else structure.
-            return;
-        }
-
-        auto loopNum = repeatNumPerRow / REPEAT_MAX;
-        auto tailRepeatNum = repeatNumPerRow % REPEAT_MAX;
-        for (int32_t i = 0; i < validRow; i++) {
-            for (int32_t j = 0; j < loopNum; j++) {
-                vbitsort(dstPtr + i * dstStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE,
-                    srcPtr + i * srcStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE,
-                    idxPtr + i * idxStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE, REPEAT_MAX);
-                pipe_barrier(PIPE_V);
+        } else {
+            uint32_t loopNum = ((repeatNumPerRow + REPEAT_MAX) - 1) / REPEAT_MAX;
+            uint32_t tailRepeatNum = repeatNumPerRow % REPEAT_MAX;
+            constexpr uint32_t typeCoef = (sizeof(T) == sizeof(float)) ? FLOAT_DST_STRIDE_COEF : HALF_DST_STRIDE_COEF;
+            for (int32_t i = 0; i < validRow; i++) {
+                for (int32_t j = 0; j < loopNum; j++) {
+                    uint32_t repeatNum = (j == loopNum -1) ? tailRepeatNum : REPEAT_MAX;
+                    vbitsort(
+                        dstPtr + i * dstStride + j * REPEAT_MAX * BLOCK_SIZE * typeCoef,
+                        srcPtr + i * srcStride + j * REPEAT_MAX * BLOCK_SIZE,
+                        idxPtr + i * idxStride + j * REPEAT_MAX * BLOCK_SIZE,
+                        repeatNum);
+                    pipe_barrier(PIPE_V);
+                }
             }
-            vbitsort(dstPtr + i * dstStride + repeatNumPerRow * TSORT32_BLOCK_SIZE,
-                srcPtr + i * srcStride + repeatNumPerRow * TSORT32_BLOCK_SIZE,
-                idxPtr + i * idxStride + repeatNumPerRow * TSORT32_BLOCK_SIZE, tailRepeatNum);
-            pipe_barrier(PIPE_V);
         }
     }
 
@@ -69,21 +114,19 @@ namespace pto {
         __ubuf__ IdxT *idxPtr = (__ubuf__ IdxT *)__cce_get_tile_ptr(idx);
         __ubuf__ T *tmpPtr = (__ubuf__ T *)__cce_get_tile_ptr(tmp);
 
-        T MIN_VAL = -(0.0 / 0.0);
-        constexpr uint32_t MAX_UB_TMP = 8 * 1024;
-        // 8KB memory tmp reserved need to decide, meet <= 8KB mean repeat Time <= 255;
-        if (srcShapeBytesPerRow <= MAX_UB_TMP) {
+        T minVal = -(0.0 / 0.0);
+        if (srcShapeBytesPerRow * sizeof(float) / sizeof(T) <= MAX_UB_TMP) {
             for (int32_t i = 0; i < validRow; i++) {
                 // copy row src cbuf to tmp cbuf
-                uint16_t lenBurst = (srcShapeBytesPerRow + TSORT32_BLOCK_SIZE - 1) / TSORT32_BLOCK_SIZE;
+                uint16_t lenBurst = (srcShapeBytesPerRow + BLOCK_SIZE - 1) / BLOCK_SIZE;
                 copy_ubuf_to_ubuf(tmpPtr,srcPtr + i * srcStride, 0, 1, lenBurst, 0, 0);
                 pipe_barrier(PIPE_V);
 
                 // dup -NAN of tial value in tmp cbuf
-                uint64_t mask = ~(((static_cast<uint64_t>(1)) << (srcTailPerRow)) - 1);
+                uint64_t mask = ~(((static_cast<uint32_t>(1)) << (srcTailPerRow)) - 1);
                 set_mask_norm();
                 set_vector_mask(0, mask);
-                vector_dup(tmpPtr + repeatNumPerRow * TSORT32_BLOCK_SIZE, MIN_VAL, 1, 1, 1, 8, (int64_t)0);
+                vector_dup(tmpPtr + repeatNumPerRow * BLOCK_SIZE, minVal, 1, 1, 1, 8, (int64_t)0);
                 pipe_barrier(PIPE_V);
 
                 // sort for tmp and out to dst
@@ -91,46 +134,9 @@ namespace pto {
                 pipe_barrier(PIPE_V);
                 set_vector_mask(-1, -1);
             }
-            return;
-        }
-
-        auto loopNum = repeatNumPerRow / REPEAT_MAX + 1;
-        for (int32_t i = 0; i < validRow; i++) {
-            for (int32_t j = 0; j < loopNum; j++) {
-                if (j < loopNum - 1) {
-                    // sort for (loopNum - 1) * REPEAT_MAX
-                    vbitsort(dstPtr + i * dstStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE,
-                        srcPtr + i * srcStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE,
-                        idxPtr + i * idxStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE, REPEAT_MAX);
-                    pipe_barrier(PIPE_V);
-                } else {
-                    // sort for last block
-                    vbitsort(dstPtr + i * dstStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE,
-                        srcPtr + i * srcStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE,
-                        idxPtr + i * idxStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE, srcTailRepeatNum - 1);
-                    pipe_barrier(PIPE_V);
-
-                    // copy row src cbuf to tmp cbuf
-                    uint16_t lenBurst = (srcTailPerRow * sizeof(T) + TSORT32_BLOCK_SIZE - 1) / TSORT32_BLOCK_SIZE;
-                    copy_ubuf_to_ubuf(tmpPtr, srcPtr + i * srcStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE +
-                        (srcTailRepeatNum - 1) * TSORT32_BLOCK_SIZE, 0, 1, lenBurst, 0, 0);
-                    pipe_barrier(PIPE_V);
-
-                    // dup -inf of tial value in tmp cbuf
-                    uint64_t mask = ~(((static_cast<uint64_t>(1)) << (srcTailPerRow)) - 1);
-                    set_mask_norm();
-                    set_vector_mask(0, mask);
-                    vector_dup(tmpPtr, MIN_VAL, 1, 1, 1, 8, (int64_t)0);
-                    pipe_barrier(PIPE_V);
-
-                    // sort for tmp and out to dst
-                    vbitsort(dstPtr + i * dstStride + j * REPEAT_MAX * TSORT32_BLOCK_SIZE +
-                        (srcTailRepeatNum - 1) * TSORT32_BLOCK_SIZE, tmpPtr, idxPtr + i * idxStride +
-                        j * REPEAT_MAX * TSORT32_BLOCK_SIZE + (srcTailRepeatNum - 1) * TSORT32_BLOCK_SIZE, 1);
-                    pipe_barrier(PIPE_V);
-                    set_vector_mask(-1, -1);
-                }
-            }
+        } else {
+            LargeTmpBufferImpl<T, IdxT, dstStride, srcStride>(dstPtr, srcPtr, idxPtr, tmpPtr, validRow, repeatNumPerRow, idxStride,
+                srcTailPerRow, srcTailRepeatNum);            
         }
     }
 
@@ -141,7 +147,7 @@ namespace pto {
                       (std::is_same<typename DstTileData::DType, float>::value),
                       "Dst and src must be half or float.");
         static_assert((std::is_same<typename IdxTileData::DType, uint32_t>::value),
-                      "Idx must be uint32_t");
+                      "Idx must be uint32_t.");
         static_assert((std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value),
                       "Dst and src must be same.");
         static_assert((DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec) &&
@@ -157,7 +163,7 @@ namespace pto {
     {
         CheckStatic<DstTileData, SrcTileData, IdxTileData>();
         unsigned validRow = dst.GetValidRow();
-        unsigned repeatNumPerRow = src.GetValidCol() / TSORT32_BLOCK_SIZE;
+        unsigned repeatNumPerRow = src.GetValidCol() / BLOCK_SIZE;
         constexpr unsigned dstStride = DstTileData::RowStride;
         constexpr unsigned srcStride = SrcTileData::RowStride;
         unsigned idxStride = idx.GetValidRow() == 1 ? 0 : IdxTileData::RowStride;
@@ -172,9 +178,9 @@ namespace pto {
     {
         CheckStatic<DstTileData, SrcTileData, IdxTileData>();
         unsigned validRow = dst.GetValidRow();
-        unsigned repeatNumPerRow = src.GetValidCol() / TSORT32_BLOCK_SIZE;
+        unsigned repeatNumPerRow = src.GetValidCol() / BLOCK_SIZE;
         constexpr unsigned byteSize = sizeof(typename DstTileData::DType);
-        constexpr unsigned idxByteSize = sizeof(typename SrcTileData::DType);
+        constexpr unsigned idxByteSize = sizeof(typename IdxTileData::DType);
         constexpr unsigned dstStride =
             ((DstTileData::RowStride * byteSize + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE) / byteSize;
         constexpr unsigned srcStride = 
@@ -183,10 +189,10 @@ namespace pto {
             ((IdxTileData::RowStride * idxByteSize + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE) / idxByteSize;
         unsigned idxStride = idx.GetValidRow() == 1 ? 0 : tmpIdxStride;
 
-        if (src.GetValidCol() % TSORT32_BLOCK_SIZE > 0) {
+        if (src.GetValidCol() % BLOCK_SIZE > 0) {
             unsigned srcShapeBytesPerRow = src.GetValidCol() * byteSize;
-            unsigned srcTailPerRow = src.GetValidCol() % TSORT32_BLOCK_SIZE;
-            unsigned srcTailRepeatNum = ((src.GetValidCol() + TSORT32_BLOCK_SIZE - 1) / TSORT32_BLOCK_SIZE) % REPEAT_MAX;
+            unsigned srcTailPerRow = src.GetValidCol() % BLOCK_SIZE;
+            unsigned srcTailRepeatNum = ((src.GetValidCol() + BLOCK_SIZE - 1) / BLOCK_SIZE) % REPEAT_MAX;
             TSort32Impl<DstTileData, SrcTileData, IdxTileData, TmpTileData, dstStride, srcStride>
                 (dst.data(), src.data(), idx.data(), tmp.data(), validRow, repeatNumPerRow, idxStride,
                 srcShapeBytesPerRow, srcTailPerRow, srcTailRepeatNum);

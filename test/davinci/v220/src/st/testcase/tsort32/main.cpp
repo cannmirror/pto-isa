@@ -97,3 +97,13 @@ TEST_F(TSort32Test, case2)
 {
     tsort32_test<2, uint16_t>(4, 64, 64);
 }
+
+TEST_F(TSort32Test, case3)
+{
+    tsort32_test<3, float>(1, 32 * 256, 32 * 256);
+}
+
+TEST_F(TSort32Test, case4)
+{
+    tsort32_test<4, float>(2, 13, 16);
+}

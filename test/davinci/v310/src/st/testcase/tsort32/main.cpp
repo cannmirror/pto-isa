@@ -8,7 +8,7 @@ using namespace PtoTestCommon;
 template <int32_t testKey>
 void launchTSORT32(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream);
 
-class TSort32Test : public testing::Test {
+class TSort32Test : public testing::Test{
 protected:
     void SetUp() override
     {}
@@ -64,34 +64,46 @@ void tsort32_test(int32_t rows, int32_t cols, int32_t colsAlign)
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstByteSize, dstDevice, dstByteSize, ACL_MEMCPY_DEVICE_TO_HOST);
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstByteSize);
+    WriteFile(GetGoldenDir()+"/output.bin", dstHost, dstByteSize);
 
     aclrtFree(dstDevice);
     aclrtFree(srcDevice);
     aclrtFree(idxDevice);
     aclrtFree(tmpDevice);
     aclrtFreeHost(dstHost);
-    aclrtFreeHost(srcHost);
+    aclrtFreeHost(srcHost);    
     aclrtFreeHost(idxHost);
     aclrtFreeHost(tmpHost);
+
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
     std::vector<dType> golden(dstByteSize);
     std::vector<dType> devFinal(dstByteSize);
-    ReadFile(GetGoldenDir()+"/golden_output.bin", dstByteSize, golden.data(), dstByteSize);
-    ReadFile(GetGoldenDir()+"/output.bin", dstByteSize, devFinal.data(), dstByteSize);
+    ReadFile(GetGoldenDir() + "/golden_output.bin", dstByteSize, golden.data(), dstByteSize);
+    ReadFile(GetGoldenDir() + "/output.bin", dstByteSize, devFinal.data(), dstByteSize);
+
     bool ret = ResultCmp(golden, devFinal, 0.001f);
     EXPECT_TRUE(ret);
 }
 
 TEST_F(TSort32Test, case1)
 {
-        tsort32_test<1, float>(2, 32, 32);
+    tsort32_test<1, float>(2, 32, 32);
 }
 
 TEST_F(TSort32Test, case2)
 {
-        tsort32_test<2, uint16_t>(4, 64, 64);
+    tsort32_test<2, uint16_t>(4, 64, 64);
+}
+
+TEST_F(TSort32Test, case3)
+{
+    tsort32_test<3, float>(1, 32 * 256, 32 * 256);
+}
+
+TEST_F(TSort32Test, case4)
+{
+    tsort32_test<4, float>(2, 13, 16);
 }
