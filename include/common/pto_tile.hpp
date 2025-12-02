@@ -19,12 +19,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #endif
 
 namespace pto {
-enum class PadValue {
-  Null,
-  Zero,
-  Max,
-  Min,
-};
 
 enum class Layout {
     ND,                      // ND RowMajor

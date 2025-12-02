@@ -15,10 +15,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-template <int shapeNum, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
+template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
 void LaunchTStore(T *out, T * src0, void *stream);
-
+template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
+    int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void LaunchTStoreB4(T *out, T * src0, void *stream);
 class TStoreTest : public testing::Test {
 protected:
     void SetUp() override
@@ -153,4 +155,77 @@ TEST_F(TStoreTest, case11)
 TEST_F(TStoreTest, case12)
 {
     test_tstore<0, int64_t, 1, 1, 2, 39, 47, 2, 2, 2, 43, 50>();
+}
+
+template<int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
+int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void TestTstoreB4() {
+    size_t dataSize = gWholeShape0 * gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4 * sizeof(DataType);
+
+    aclInit(nullptr);
+    aclrtSetDevice(0);
+
+    aclrtStream stream;
+    aclrtCreateStream(&stream);
+
+    DataType *dstHost, *srcHost;
+    DataType *dstDevice, *srcDevice;
+
+    aclrtMallocHost((void **)(&dstHost), dataSize);
+    aclrtMallocHost((void **)(&srcHost), dataSize);
+
+    aclrtMalloc((void **)&dstDevice, dataSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, dataSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    ReadFile(GetGoldenDir() + "/input.bin", dataSize, srcHost, dataSize);
+
+    aclrtMemcpy(srcDevice, dataSize, srcHost, dataSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    LaunchTStoreB4<format,
+            DataType,
+            gShape0,
+            gShape1,
+            gShape2,
+            gShape3,
+            gShape4,
+            gWholeShape0,
+            gWholeShape1,
+            gWholeShape2,
+            gWholeShape3,
+            gWholeShape4>(dstDevice, srcDevice, stream);
+
+    aclrtSynchronizeStream(stream);
+    aclrtMemcpy(dstHost, dataSize, dstDevice, dataSize, ACL_MEMCPY_DEVICE_TO_HOST);
+
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dataSize);
+
+    aclrtFree(dstDevice);
+    aclrtFree(srcDevice);
+
+    aclrtFreeHost(dstHost);
+    aclrtFreeHost(srcHost);
+
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(0);
+    aclFinalize();
+
+    std::vector<DataType> golden(dataSize);
+    std::vector<DataType> devFinal(dataSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", dataSize, golden.data(), dataSize);
+    ReadFile(GetGoldenDir() + "/output.bin", dataSize, devFinal.data(), dataSize);
+
+    bool ret = ResultCmp<DataType>(golden, devFinal, 0.001f);
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TStoreTest, fp4case1)
+{
+    TestTstoreB4<0, uint8_t, 2, 2, 3, 23, 47, 3, 3, 4, 32, 50>();
+}
+TEST_F(TStoreTest, fp4case2)
+{
+    TestTstoreB4<1, uint8_t, 2, 3, 7, 47, 13, 2, 3, 7, 55, 29>();
+}
+TEST_F(TStoreTest, fp4case3)
+{
+    TestTstoreB4<2, uint8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>();
 }

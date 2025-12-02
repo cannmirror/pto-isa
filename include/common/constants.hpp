@@ -10,7 +10,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
-
+#include <common/type.hpp>
 namespace pto{
 constexpr int REPEAT_BYTE = 256;
 
@@ -62,13 +62,195 @@ enum class AtomicType : uint8_t {
     AtomicAdd = 1,
 };
 
-enum class CmpMode : uint8_t {
-    EQ = 0,
-    NE = 1,
-    LT = 2,
-    GT = 3,
-    GE = 4,
-    LE = 5,
+enum class PadValue {
+  Null,
+  Zero,
+  Max,
+  Min,
 };
+
+template <typename DType, PadValue PadVal>
+struct PadValueMap {
+    static_assert(sizeof(DType) < 0, "TLOAD: Unsupported DType for PadValue!");
+};
+
+template <PadValue PadVal>
+struct PadValueMap<int64_t, PadVal> {
+    static constexpr auto value = uint32_t(0);
+};
+template <PadValue PadVal>
+struct PadValueMap<uint64_t, PadVal> {
+    static constexpr auto value = uint32_t(0);
+};
+
+template <>
+struct PadValueMap<float, PadValue::Null> {
+    static constexpr auto value = uint32_t(0);
+};
+template <>
+struct PadValueMap<float, PadValue::Zero> {
+    static constexpr auto value = uint32_t(0);
+};
+template <>
+struct PadValueMap<float, PadValue::Min> {
+    static constexpr auto value = uint32_t(0xff800000UL);
+};
+template <>
+struct PadValueMap<float, PadValue::Max> {
+    static constexpr auto value = uint32_t(0x7f800000UL);
+};
+
+template <>
+struct PadValueMap<int32_t, PadValue::Null> {
+    static constexpr auto value = uint32_t(0);
+};
+template <>
+struct PadValueMap<int32_t, PadValue::Zero> {
+    static constexpr auto value = uint32_t(0);
+};
+template <>
+struct PadValueMap<int32_t, PadValue::Min> {
+    static constexpr auto value = uint32_t(0xffffffffUL);
+};
+template <>
+struct PadValueMap<int32_t, PadValue::Max> {
+    static constexpr auto value = uint32_t(0x7fffffffUL);
+};
+
+template <>
+struct PadValueMap<uint32_t, PadValue::Null> {
+    static constexpr auto value = uint32_t(0);
+};
+template <>
+struct PadValueMap<uint32_t, PadValue::Zero> {
+    static constexpr auto value = uint32_t(0);
+};
+template <>
+struct PadValueMap<uint32_t, PadValue::Min> {
+    static constexpr auto value = uint32_t(0);
+};
+template <>
+struct PadValueMap<uint32_t, PadValue::Max> {
+    static constexpr auto value = uint32_t(0xffffffffUL);
+};
+
+template <>
+struct PadValueMap<bfloat16_t, PadValue::Null> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<bfloat16_t, PadValue::Zero> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<bfloat16_t, PadValue::Min> {
+    static constexpr auto value = uint16_t(0xff80);
+};
+template <>
+struct PadValueMap<bfloat16_t, PadValue::Max> {
+    static constexpr auto value = uint16_t(0x7f80);
+};
+
+template <>
+struct PadValueMap<half, PadValue::Null> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<half, PadValue::Zero> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<half, PadValue::Min> {
+    static constexpr auto value = uint16_t(0xfc00);
+};
+template <>
+struct PadValueMap<half, PadValue::Max> {
+    static constexpr auto value = uint16_t(0x7c00);
+};
+
+template <>
+struct PadValueMap<int16_t, PadValue::Null> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<int16_t, PadValue::Zero> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<int16_t, PadValue::Min> {
+    static constexpr auto value = uint16_t(0xffff);
+};
+template <>
+struct PadValueMap<int16_t, PadValue::Max> {
+    static constexpr auto value = uint16_t(0x7fff);
+};
+
+template <>
+struct PadValueMap<uint16_t, PadValue::Null> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<uint16_t, PadValue::Zero> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<uint16_t, PadValue::Min> {
+    static constexpr auto value = uint16_t(0);
+};
+template <>
+struct PadValueMap<uint16_t, PadValue::Max> {
+    static constexpr auto value = uint16_t(0xffff);
+};
+
+template <>
+struct PadValueMap<int8_t, PadValue::Null> {
+    static constexpr auto value = uint8_t(0);
+};
+template <>
+struct PadValueMap<int8_t, PadValue::Zero> {
+    static constexpr auto value = uint8_t(0);
+};
+template <>
+struct PadValueMap<int8_t, PadValue::Min> {
+    static constexpr auto value = uint8_t(0xff);
+};
+template <>
+struct PadValueMap<int8_t, PadValue::Max> {
+    static constexpr auto value = uint8_t(0x7f);
+};
+
+template <>
+struct PadValueMap<uint8_t, PadValue::Null> {
+    static constexpr auto value = uint8_t(0);
+};
+template <>
+struct PadValueMap<uint8_t, PadValue::Zero> {
+    static constexpr auto value = uint8_t(0);
+};
+template <>
+struct PadValueMap<uint8_t, PadValue::Min> {
+    static constexpr auto value = uint8_t(0);
+};
+template <>
+struct PadValueMap<uint8_t, PadValue::Max> {
+    static constexpr auto value = uint8_t(0xff);
+};
+
+#if defined (__DAV_V310)
+template <PadValue PadVal>
+struct PadValueMap<float4_e1m2x2_t, PadVal> {
+    static constexpr auto value = uint8_t(0);
+};
+template <PadValue PadVal>
+struct PadValueMap<float4_e2m1x2_t, PadVal> {
+    static constexpr auto value = uint8_t(0);
+};
+#endif
+template <typename TileData>
+__aicore__ PTO_INLINE constexpr auto GetPadValue() {
+    using DType = typename TileData::DType;
+    constexpr PadValue PadVal = TileData::PadVal;
+    return PadValueMap<DType, PadVal>::value;
 }
+} // namespace pto
 #endif

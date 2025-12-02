@@ -11,16 +11,20 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <common/tile_tensor_impl.hpp>
 #include <common/pto_tile.hpp>
 #include <common/constants.hpp>
-#include <davinci/v310/TMrgSort.hpp>
-#include <davinci/v310/TLoad.hpp>
-#include <davinci/v310/TStore.hpp>
-#include <davinci/v310/TAssign.hpp>
 #include <iostream>
 
 using namespace std;
 using namespace pto;
-
-
+namespace {
+template <typename T>
+__aicore__ constexpr uint32_t GetBlockSize()
+{
+    if constexpr (std::is_same<T, float4_e1m2x2_t>::value || std::is_same<T, float4_e2m1x2_t>::value) {
+        return 64;
+    }
+    return 32 / sizeof(T);
+}
+}
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
 int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
 __aicore__ inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ *src) {
@@ -31,7 +35,8 @@ __aicore__ inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ 
         gWholeShape4,
         1
     };
-    constexpr int blockSize = 32 / sizeof(T);
+
+    constexpr int blockSize = GetBlockSize<T>();
     constexpr int validRow = gShape0 * gShape1 * gShape2 * gShape3;
     constexpr int validCol = gShape4;
     constexpr int Row = gShape0 * gShape1 * gShape2 * gShape3;
@@ -68,7 +73,7 @@ __aicore__ inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ 
         gWholeShape3
     };
 
-    constexpr int blockSize = 32 / sizeof(T);
+    constexpr int blockSize = GetBlockSize<T>();
     constexpr int Row = (gShape3 + blockSize - 1) / blockSize * blockSize;
     constexpr int Col = gShape0 * gShape1 * gShape2 * gShape4;
     constexpr int validRow = gShape3;
@@ -229,3 +234,24 @@ template void LaunchTStore<2, uint8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>(uint8_t
 template void LaunchTStore<0, int64_t, 1, 1, 2, 16, 16, 2, 2, 2, 16, 16>(int64_t *out, int64_t *src, void *stream);
 template void LaunchTStore<1, uint64_t, 1, 1, 2, 16, 64, 2, 2, 2, 16, 64>(uint64_t *out, uint64_t *src, void *stream);
 template void LaunchTStore<0, int64_t, 1, 1, 2, 39, 47, 2, 2, 2, 43, 50>(int64_t *out, int64_t *src, void *stream);
+
+template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
+    int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void LaunchTStoreB4(T *out, T *src, void *stream) {
+    if constexpr (format == 0) {
+        TStoreKernel<float4_e1m2x2_t, pto::Layout::ND, gShape0, gShape1, gShape2, gShape3, gShape4 * 2, gWholeShape0,
+            gWholeShape1, gWholeShape2, gWholeShape3, gWholeShape4 * 2><<<1, nullptr, stream>>>(
+            reinterpret_cast<float4_e1m2x2_t *>(out), reinterpret_cast<float4_e1m2x2_t *>(src));
+    } else if constexpr (format == 1) {
+        TStoreKernel<float4_e1m2x2_t, pto::Layout::DN, gShape0, gShape1, gShape2, gShape3 * 2, gShape4, gWholeShape0,
+            gWholeShape1, gWholeShape2, gWholeShape3 * 2, gWholeShape4><<<1, nullptr, stream>>>(
+            reinterpret_cast<float4_e1m2x2_t *>(out), reinterpret_cast<float4_e1m2x2_t *>(src));
+    } else if constexpr (format == 2) {
+        TStoreKernel<float4_e1m2x2_t, pto::Layout::NZ, gShape0, gShape1, gShape2, gShape3, gShape4 * 2, gWholeShape0,
+            gWholeShape1, gWholeShape2, gWholeShape3, gWholeShape4 * 2><<<1, nullptr, stream>>>(
+            reinterpret_cast<float4_e1m2x2_t *>(out), reinterpret_cast<float4_e1m2x2_t *>(src));
+    }
+}
+template void LaunchTStoreB4<0, uint8_t, 2, 2, 3, 23, 47, 3, 3, 4, 32, 50>(uint8_t *out, uint8_t *src, void *stream);
+template void LaunchTStoreB4<1, uint8_t, 2, 3, 7, 47, 13, 2, 3, 7, 55, 29>(uint8_t *out, uint8_t *src, void *stream);
+template void LaunchTStoreB4<2, uint8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>(uint8_t *out, uint8_t *src, void *stream);
