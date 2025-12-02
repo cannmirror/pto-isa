@@ -58,7 +58,7 @@ namespace pto {
             unsigned remainAfterLoop = validRow % REPEAT_MAX;
             bool constexpr strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
             SetContinuousMask(numRemainPerLine);
-            if (numLoop) {
+            if (numLoop > 0) {
                 for (int i = 0; i < numLoop; i++) {
                     if constexpr (strideOverFlag) {
                         for (uint64_t j = 0; j < REPEAT_MAX; j++) {
@@ -79,7 +79,7 @@ namespace pto {
                     }
                 }
             }
-            if (remainAfterLoop) {
+            if (remainAfterLoop > 0) {
                 if constexpr (strideOverFlag) {
                     for (uint64_t j = 0; j < remainAfterLoop; j++) {
                         vmins(
