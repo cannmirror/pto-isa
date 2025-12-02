@@ -6,8 +6,6 @@
 #include "common.hpp"
 #include "utils.hpp"
 
-using namespace pto;
-using namespace std;
 
 namespace pto
 {

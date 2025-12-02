@@ -6,9 +6,6 @@
 #include "common.hpp"
 #include "utils.hpp"
 
-using namespace pto;
-using namespace std;
-
 namespace pto
 {
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
@@ -20,7 +17,7 @@ namespace pto
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
         float divider = static_cast<float>(src1);
-        if (divider != 0)
+        if (divider != 0.0f)
         {
             divider = 1.0f / divider;
         }

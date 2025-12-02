@@ -52,7 +52,7 @@ namespace pto
     __aicore__ void DIVS(__ubuf__ DataType *dst, __ubuf__ DataType *src0, DataType src1, uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride, uint8_t dstRepeatStride, uint8_t srcRepeatStride)
     {
         float divider = static_cast<float>(src1);
-        if (divider != 0)
+        if (divider != 0.0f)
         {
             divider = 1.0f / divider;
         }
@@ -106,7 +106,7 @@ namespace pto
             unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
             for (int i = 0; i < validRow; i++)
             {
-                if (numLoop)
+                if (numLoop > 0)
                 {
                     for (int j = 0; j < numLoop; j++)
                     {
@@ -116,7 +116,7 @@ namespace pto
                                     REPEAT_MAX, 1, 1, 8, 8);
                     }
                 }
-                if (remainAfterLoop)
+                if (remainAfterLoop > 0)
                 {
                     currentFunc(dstPtr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
                                 src0Ptr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
@@ -129,13 +129,13 @@ namespace pto
         dstPtr += numRepeatPerLine * elementsPerRepeat;
         src0Ptr += numRepeatPerLine * elementsPerRepeat;
 
-        if (numRemainPerLine)
+        if (numRemainPerLine > 0)
         {
             unsigned numLoop = validRow / REPEAT_MAX;
             unsigned remainAfterLoop = validRow % REPEAT_MAX;
             bool strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
             SetContinuousMask(numRemainPerLine);
-            if (numLoop)
+            if (numLoop > 0)
             {
                 for (int i = 0; i < numLoop; i++)
                 {
@@ -158,7 +158,7 @@ namespace pto
                     }
                 }
             }
-            if (remainAfterLoop)
+            if (remainAfterLoop > 0)
             {
                 if (strideOverFlag)
                 {
