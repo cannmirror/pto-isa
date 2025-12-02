@@ -13,12 +13,12 @@
 param_mult_ver=$1
 REAL_SHELL_PATH=`realpath ${BASH_SOURCE[0]}`
 CANN_PATH=$(cd $(dirname ${REAL_SHELL_PATH})/../../ && pwd)
-if [ -d "${CANN_PATH}/include/pto" ] && [ -d "${CANN_PATH}/../latest" ]; then
+if [ -d "${CANN_PATH}/include/pto" ] && [ -d "${CANN_PATH}/../cann" ]; then
     INSATLL_PATH=$(cd $(dirname ${REAL_SHELL_PATH})/../../../ && pwd)
-    if [ -L "${INSATLL_PATH}/latest/include/pto" ]; then
+    if [ -L "${INSATLL_PATH}/cann/include/pto" ]; then
         _ASCEND_PTO_TILE_LIB_PATH=`cd ${CANN_PATH}/include/pto && pwd`
         if [ "$param_mult_ver" = "multi_version" ]; then
-            _ASCEND_PTO_TILE_LIB_PATH=`cd ${INSATLL_PATH}/latest/include/pto && pwd`
+            _ASCEND_PTO_TILE_LIB_PATH=`cd ${INSATLL_PATH}/cann/include/pto && pwd`
         fi
     fi
 elif [ -d "${CANN_PATH}/include/pto" ]; then
