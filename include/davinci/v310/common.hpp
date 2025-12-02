@@ -15,6 +15,15 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <common/type.hpp>
 
 namespace pto {
+
+    template <typename T>
+    __aicore__ PTO_INLINE uint32_t GetByteSize(const uint32_t value) {
+        if constexpr (std::is_same<T, float4_e1m2x2_t>::value || std::is_same<T, float4_e2m1x2_t>::value) {
+            return value >> 1; // fp4 4bits
+        }
+        return sizeof(T) * value;
+    }
+
     template <typename T, int U, int... Args> __aicore__ constexpr bool SupportBytes()
     {
         if constexpr (sizeof...(Args) > 0) {

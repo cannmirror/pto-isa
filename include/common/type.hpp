@@ -33,6 +33,15 @@ namespace pto {
         P1000 = 6,  // 6: 10001000...1000 # 每个repeat内每四个元素取第四个元素
         P1111 = 7,  // 7: 11111111...1111 # 每个repeat内取全部元素
     };
+
+    enum class CmpMode : uint8_t {
+        EQ = 0,
+        NE = 1,
+        LT = 2,
+        GT = 3,
+        GE = 4,
+        LE = 5,
+    };
 }
 
 #if defined(__CPU_SIM)

@@ -11,7 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "test_common.h"
 #include "acl/acl.h"
 #include <gtest/gtest.h>
-#include "../../include/common/constants.hpp"
+#include "../../include/common/type.hpp"
 
 #include "acl/acl.h"
 

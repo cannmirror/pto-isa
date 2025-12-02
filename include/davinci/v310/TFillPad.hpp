@@ -31,7 +31,7 @@ void TFillPad(typename TileDataDst::TileDType __out__ dst, typename TileDataSrc:
     constexpr unsigned dstStride = TileDataDst::Cols;
     unsigned padCols = TileDataDst::Cols - srcValidCol;
     unsigned padRows = dstValidRow - srcValidRow;
-    auto uint_pv = getPadValue<TileDataDst>();
+    auto uint_pv = GetPadValue<TileDataDst>();
     T padValue;
     *(T*)&padValue = *((T*)&uint_pv);
 

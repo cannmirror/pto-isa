@@ -14,8 +14,7 @@ import os
 import numpy as np
 from enum import Enum
 np.random.seed(19)
-# np.set_printoptions(threshold=np.inf)
-
+np.set_printoptions(threshold=np.inf)
 
 class DataFormat(Enum):
     ND2NZ = 1
@@ -23,7 +22,7 @@ class DataFormat(Enum):
     ND2ND = 3
     NZ2NZ = 4
     DN2DN = 5
-
+    DN2ZN = 6
 
 def gen_golden_data(case_name, param):
     src_type = param.atype
@@ -51,6 +50,13 @@ def gen_golden_data(case_name, param):
         min_k = min(K, golden.shape[1])
         golden[:min_m, :min_k] = x1_gm[:min_m, :min_k]
     elif param.load_type == DataFormat['DN2NZ'].value:
+        x1_gm = np.random.randint(
+            1, 5, [whole_shape4, whole_shape3]).astype(src_type)
+        golden = np.zeros([BASEK, BASEM]).astype(src_type)  # L1中Tile大小
+        min_k = min(K, golden.shape[0])
+        min_m = min(M, golden.shape[1])
+        golden[:min_k, :min_m] = x1_gm[:min_k, :min_m]
+    elif param.load_type == DataFormat['DN2ZN'].value:
         x1_gm = np.random.randint(
             1, 5, [whole_shape4, whole_shape3]).astype(src_type)
         golden = np.zeros([BASEK, BASEM]).astype(src_type)  # L1中Tile大小
@@ -123,7 +129,7 @@ def gen_golden_data(case_name, param):
         c0Size = 16
         if src_type == np.float32:
             c0Size = 8
-        elif src_type == np.int8:
+        elif src_type == np.int8 or src_type == np.uint8:
             c0Size = 32
         print("ND2NZ, c0Size=", c0Size)
         assert (
@@ -145,7 +151,7 @@ def gen_golden_data(case_name, param):
         c0Size = 16
         if src_type == np.float32:
             c0Size = 8
-        elif src_type == np.int8:
+        elif src_type == np.int8 or src_type == np.uint8:
             c0Size = 32
         print("ND2NZ, c0Size=", c0Size)
         assert (
@@ -155,24 +161,34 @@ def gen_golden_data(case_name, param):
     elif param.load_type == DataFormat['DN2NZ'].value:
         golden = golden.transpose()
         # print("=====after transpose=======golden.shape======",golden.shape)
-        assert (BASEK %
-                16) == 0, "BASEK should be 16 aligned when matrix A is NZ format"
+        assert (BASEK % 16) == 0, "BASEK should be 16 aligned when matrix A is NZ format"
         c0Size = 16
         if src_type == np.float32:
             c0Size = 8
-        elif src_type == np.int8:
+        elif src_type == np.int8 or src_type == np.uint8:
             c0Size = 32
         print("DN2NZ, c0Size=", c0Size)
-        assert (
-            BASEM % c0Size) == 0, "BASEM should be c0Size aligned when matrix A is NZ format"
+        assert (BASEM % c0Size) == 0, "BASEM should be c0Size aligned when matrix A is NZ format"
         golden = golden.reshape(
             (int(BASEM / 16), 16, int(BASEK / c0Size), c0Size)).transpose(2, 0, 1, 3).astype(src_type)
+    elif param.load_type == DataFormat['DN2ZN'].value:
+        # print("=====after transpose=======golden.shape======",golden.shape)
+        assert (BASEK % 16) == 0, "BASEK should be 16 aligned when matrix A is NZ format"
+        c0Size = 16
+        if src_type == np.float32:
+            c0Size = 8
+        elif src_type == np.int8 or src_type == np.uint8:
+            c0Size = 32
+        print("DN2ZN, c0Size=", c0Size)
+        assert (BASEM % c0Size) == 0, "BASEM should be c0Size aligned when matrix A is NZ format"
+        golden = golden.reshape(
+            (int(BASEK / 16), 16, int(BASEM / c0Size), c0Size)).transpose(2, 0, 1, 3).astype(src_type)
+
 
     # print("============golden======",golden)
     x1_gm.tofile("./x1_gm.bin")
     x2_gm.tofile("./x2_gm.bin")
     golden.tofile("./golden.bin")
-
 
 class tmatmulParams:
     def __init__(self, atype, btype, ctype, shape0, shape1, shape2, m, k,  ws0, ws1, ws2, ws3, ws4,  basem, basek, load_type):
@@ -195,11 +211,9 @@ class tmatmulParams:
         self.basek = basek  # L1 col
         self.load_type = load_type
 
-
 if __name__ == "__main__":
     # 用例名称
     case_name_list = [
-        # 此名称需要和 TEST_F(TMATMULTest, case1)定义的名称一致
         "TLOADMIXTest.1_1_1_128_128_half_ND2NZ",
         "TLOADMIXTest.1_1_1_128_128_int8_t_ND2NZ",
         "TLOADMIXTest.1_1_1_128_128_float_ND2NZ",
@@ -226,6 +240,15 @@ if __name__ == "__main__":
 
         "TLOADMIXTest.1_1_1_59_119_1_1_1_59_124_59_120_int64_t_ND2ND",
         "TLOADMIXTest.1_2_1_64_128_1_3_4_128_128_128_128_uint64_t_ND2ND",
+
+        "TLOADMIXTest.1_2_1_64_128_1_3_4_128_128_128_128_fp4x2_e1m2_t_ND2ND",
+        "TLOADMIXTest.1_1_1_59_119_1_1_1_64_128_64_128_fp4x2_e2m1_t_ND2NZ",
+        "TLOADMIXTest.1_8_4_16_32_1_9_4_16_32_80_256_fp4x2_e1m2_t_NZ2NZ",
+        "TLOADMIXTest.1_1_1_37_126_1_1_1_37_126_64_126_fp4x2_e1m2_t_DN2DN",
+
+        "TLOADMIXTest.1_1_1_33_99_1_1_1_64_128_48_112_half_DN2ZN",
+        "TLOADMIXTest.1_1_1_59_119_1_1_1_64_128_64_128_int8_t_DN2ZN",
+        "TLOADMIXTest.1_1_1_59_119_1_1_1_64_128_64_128_fp4x2_e1m2_t_DN2ZN",
     ]
 
     case_params_list = [
@@ -276,6 +299,22 @@ if __name__ == "__main__":
                       119, 1, 1, 1, 59, 124, 59, 120, DataFormat['ND2ND'].value),
         tmatmulParams(np.uint64, np.uint64,  np.uint64, 1, 2, 1, 64,
                       128, 1, 3, 4, 128, 128, 128, 128, DataFormat['ND2ND'].value),
+        # fp4 input use uint8 for test
+        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 2, 1, 64,
+                      128, 1, 3, 4, 128, 128, 128, 128, DataFormat['ND2ND'].value),
+        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 1, 1, 59, 119,
+                      1, 1, 1, 64, 128, 64, 128, DataFormat['ND2NZ'].value), 
+        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 8, 4, 16, 32,
+                      1, 9, 4, 16, 32, 80, 256, DataFormat['NZ2NZ'].value),
+        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 1, 1, 37, 126,
+                      1, 1, 1, 37, 126, 64, 126, DataFormat['DN2DN'].value),
+
+        tmatmulParams(np.float16, np.float16, np.float32, 1, 1, 1, 33,
+                      99, 1, 1, 1, 64, 128, 48, 112, DataFormat['DN2ZN'].value),
+        tmatmulParams(np.int8, np.int8, np.int32, 1, 1, 1, 59, 119,
+                      1, 1, 1, 64, 128, 64, 128, DataFormat['DN2ZN'].value),
+        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 1, 1, 59, 119,
+                      1, 1, 1, 64, 128, 64, 128, DataFormat['DN2ZN'].value), # fp4
     ]
 
     for i, case_name in enumerate(case_name_list):
