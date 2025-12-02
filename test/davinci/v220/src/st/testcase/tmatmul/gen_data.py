@@ -69,7 +69,7 @@ if __name__ == "__main__":
     case_params_list = [
         tmatmulParams(np.float16, np.float16, np.float32, 128, 128, 64, False),
         tmatmulParams(np.int8, np.int8, np.int32, 128, 128, 64, False),
-        tmatmulParams(np.float16, np.float16, np.float32, 127, 128, 63, False),
+        tmatmulParams(np.float16, np.float16, np.float32, 127, 63, 63, False),
         # bias test
         tmatmulParams(np.float16, np.float16, np.float32, 128, 128, 64, True, np.float32),
         tmatmulParams(np.float16, np.float16, np.float32, 128, 128, 63, True, np.float32),
