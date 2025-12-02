@@ -22,7 +22,7 @@ namespace pto
             unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
             for (int i = 0; i < validRow; i++)
             {
-                if (numLoop)
+                if (numLoop > 0)
                 {
                     for (int j = 0; j < numLoop; j++)
                     {
@@ -32,7 +32,7 @@ namespace pto
                               REPEAT_MAX, 1, 1, 8, 8);
                     }
                 }
-                if (remainAfterLoop)
+                if (remainAfterLoop > 0)
                 {
                     vadds(dstPtr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
                           src0Ptr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
@@ -45,13 +45,13 @@ namespace pto
         dstPtr += numRepeatPerLine * elementsPerRepeat;
         src0Ptr += numRepeatPerLine * elementsPerRepeat;
 
-        if (numRemainPerLine)
+        if (numRemainPerLine > 0)
         {
             unsigned numLoop = validRow / REPEAT_MAX;
             unsigned remainAfterLoop = validRow % REPEAT_MAX;
             bool strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
             SetContinuousMask(numRemainPerLine);
-            if (numLoop)
+            if (numLoop > 0)
             {
                 for (int i = 0; i < numLoop; i++)
                 {
@@ -74,7 +74,7 @@ namespace pto
                     }
                 }
             }
-            if (remainAfterLoop)
+            if (remainAfterLoop > 0)
             {
                 if (strideOverFlag)
                 {
