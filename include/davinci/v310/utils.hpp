@@ -34,7 +34,8 @@ namespace pto{
         DIST_MRG4CHN_B8,
         DIST_MRG2CHN_B8,
         DIST_MRG2CHN_B16,
-        DIST_NORM
+        DIST_NORM,
+        DIST_ONEPT
     };
     
     template <typename T, DistVST dist> __aicore__ PTO_INLINE constexpr DistVST GetDistVst()
@@ -48,6 +49,17 @@ namespace pto{
             } else if constexpr (sizeof(T) == 4) {
                 return DistVST::DIST_NORM_B32;
             }
+        } else if constexpr (dist == DistVST::DIST_ONEPT) {
+          static_assert(SupportBytes<T, 1, 2, 4>(),
+                        "DistVST DIST_ONEPT only support type b8/b16/b32 on "
+                        "current device");
+          if constexpr (sizeof(T) == 1) {
+            return DistVST::DIST_ONEPT_B8;
+          } else if constexpr (sizeof(T) == 2) {
+            return DistVST::DIST_ONEPT_B16;
+          } else if constexpr (sizeof(T) == 4) {
+            return DistVST::DIST_ONEPT_B32;
+          }
         }
         return dist;
     }

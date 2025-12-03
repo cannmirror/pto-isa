@@ -113,6 +113,7 @@ set(ALL_TESTCASES
     tstore
     textract
     trowsum
+    trowmax
     tcolsum
     tcolmax
     tsort32
