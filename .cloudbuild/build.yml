@@ -22,7 +22,7 @@ params:
   - name: product
     value: cloudbuild2.0
   - name: branch
-    value: br-hisi-trunk
+    value: br_hisi_trunk_ai
 
 steps:
   PRE_BUILD:
@@ -30,11 +30,11 @@ steps:
         path: pto-tile-lib
   BUILD:
     - build_execute:
-      command: >
-        cd pto-tile-lib
-        && chmod +x run_st.sh
-        && ./run_st.sh ${buildType}
-      check:
-        mode: sync
-        buildcheck:
-          subcheck: installscript
+        command: >
+          cd pto-tile-lib
+          && chmod +x run_st.sh
+          && ./run_st.sh ${buildType}
+        check:
+          mode: sync
+          buildcheck:
+            subcheck: installscript
