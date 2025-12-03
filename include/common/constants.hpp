@@ -11,27 +11,20 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 #include <common/type.hpp>
-namespace pto{
+#include <common/memory.hpp>
+
+namespace pto {
 constexpr int REPEAT_BYTE = 256;
-
 constexpr int REPEAT_MAX = 255;
-
 constexpr const int BLOCK_BYTE_SIZE = 32;
-
+constexpr const uint32_t SHIFT_BLOCK_BYTE = 5;
 constexpr const int REPEAT_STRIDE_MAX = 255;
-
 constexpr const uint64_t BLOCK_MAX_PER_REPEAT = 8;
-
 constexpr const uint32_t TMP_UB_SIZE = 8 * 1024;
-
 constexpr const uint32_t TMP_UB_OFFSET = 184 * 1024;
-
 constexpr const uint64_t MASK_LEN = 64;
-
 constexpr const int BLOCK_LEN = 16;
-
 constexpr const int CUBE_BLOCK_SIZE = 512;
-
 constexpr const int C0_SIZE_BYTE = 32;
 constexpr const int FRACTAL_NZ_ROW = 16;
 
@@ -45,12 +38,12 @@ enum class RoundMode : uint8_t {
     CAST_ODD = 6,   // round to odd (Von Neumann rounding)
 };
 
-enum class TCopyMode : uint8_t{
+enum class TCopyMode : uint8_t {
     SHALLOW_COPY = 0,
     DEEP_COPY = 1,
 };
 
-enum class L0cToUBMode : uint8_t{
+enum class L0cToUBMode : uint8_t {
     SingleModeUB0 = 0,
     SingleModeUB1 = 1,
     DualModeSplitM = 2,
@@ -246,11 +239,41 @@ struct PadValueMap<float4_e2m1x2_t, PadVal> {
     static constexpr auto value = uint8_t(0);
 };
 #endif
+
 template <typename TileData>
 __aicore__ PTO_INLINE constexpr auto GetPadValue() {
     using DType = typename TileData::DType;
     constexpr PadValue PadVal = TileData::PadVal;
     return PadValueMap<DType, PadVal>::value;
+}
+
+enum class TileLayoutCustom : uint8_t {
+    ND,
+    DN,
+    NZ,
+    ZN,
+    ZZ,
+    NONE,
+};
+
+template <typename TileData>
+__aicore__ PTO_INLINE constexpr TileLayoutCustom GetTileLayoutCustom() {
+    if constexpr (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)) {
+        return TileLayoutCustom::ND;
+    } else if constexpr (!TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)) {
+        return TileLayoutCustom::DN;
+    } else if constexpr (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor) &&
+                         TileData::SFractalSize == 512) {
+        return TileLayoutCustom::NZ;
+    } else if constexpr (TileData::isRowMajor && (TileData::SFractal == SLayout::ColMajor) &&
+                         TileData::SFractalSize == 512) {
+        return TileLayoutCustom::ZN;
+    } else if constexpr (TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor) &&
+                         TileData::SFractalSize == 512) {
+        return TileLayoutCustom::ZZ;
+    } else {
+        return TileLayoutCustom::NONE;
+    }
 }
 } // namespace pto
 #endif
