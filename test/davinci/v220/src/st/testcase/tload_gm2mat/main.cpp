@@ -42,12 +42,16 @@ void test_tload() {
     // foramt = 1: DN2DN
     // format = 2: NZ2NZ
     // format = 3: ND2NZ
+    // format = 4: DN2ZN
     size_t srcDataSize = gWholeShape0 * gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4 * sizeof(DataType);
     size_t dstDataSize = gShape0 * gShape1 * gShape2 * gShape3 * gShape4 * sizeof(DataType);
+    constexpr int c0Size = 32 / sizeof(DataType);
     if (format == 3) {
-        constexpr int c0_size = 32 / sizeof(DataType);
-        int gShape4Align = (gShape4 + c0_size - 1) / c0_size * c0_size;
+        int gShape4Align = (gShape4 + c0Size - 1) / c0Size * c0Size;
         dstDataSize = gShape0 * gShape1 * gShape2 * gShape3 * gShape4Align * sizeof(DataType);
+    } else if (format == 4) {
+        int gShape3Align = (gShape3 + c0Size - 1) / c0Size * c0Size;
+        dstDataSize = gShape0 * gShape1 * gShape2 * gShape3Align * gShape4 * sizeof(DataType);
     }
 
     aclInit(nullptr);
@@ -226,4 +230,24 @@ TEST_F(TLoadGM2L1Test, DN_int64_2_2_1_32_2_3_3_3_64_111)
 TEST_F(TLoadGM2L1Test, DN_uint64_1_2_1_32_11_1_3_2_32_93)
 {
     test_tload<1, uint64_t, 1, 2, 1, 32, 11, 1, 3, 2, 32, 93>();
+}
+
+TEST_F(TLoadGM2L1Test, DN2ZN_bfloat16_t_1_1_1_256_1024_1_1_1_256_1024)
+{
+    test_tload<4, uint16_t, 1, 1, 1, 256, 1024, 1, 1, 1, 256, 1024>();
+}
+
+TEST_F(TLoadGM2L1Test, DN2ZN_float_t_1_1_1_49_35_1_1_1_49_35)
+{
+    test_tload<4, float, 1, 1, 1, 49, 35, 1, 1, 1, 49, 35>();
+}
+
+TEST_F(TLoadGM2L1Test, DN2ZN_int16_t_1_1_1_155_250_1_1_1_752_1000)
+{
+    test_tload<4, int16_t, 1, 1, 1, 155, 250, 1, 1, 1, 752, 1000>();
+}
+
+TEST_F(TLoadGM2L1Test, DN2ZN_int8_t_1_1_1_1023_511_1_1_1_1024_1024)
+{
+    test_tload<4, int8_t, 1, 1, 1, 1023, 511, 1, 1, 1, 1024, 1024>();
 }

@@ -347,9 +347,9 @@ __aicore__ PTO_INLINE void CheckStaticVec()
         "Src and dst layout must be same, only support ND/DN/NZ!");
     if constexpr (std::is_same_v<typename TileData::DType, int64_t> ||
                   std::is_same_v<typename TileData::DType, uint64_t>) {
-        static_assert(GlobalData::layout == GetTileLayout<TileData>(),
-            "TSTORE(GlobalTensor, VecTile) only support ND2ND/DN2DN for b64!");
-        static_assert((GlobalData::layout == pto::Layout::ND) || (GlobalData::layout == pto::Layout::DN),
+        static_assert((GlobalData::layout == pto::Layout::ND &&
+        (TileData::isRowMajor && TileData::SFractal == SLayout::NoneBox)) ||
+        (GlobalData::layout == pto::Layout::DN && (!TileData::isRowMajor && TileData::SFractal == SLayout::NoneBox)),
             "TSTORE(GlobalTensor, VecTile) only support ND2ND/DN2DN for b64!");
     }
 }

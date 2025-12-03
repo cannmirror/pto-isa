@@ -50,6 +50,17 @@ def gen_golden_data(case_name, gInfo):
                    0:gShape4] = input_arr[0:gShape0, 0:gShape1, 0:gShape2, 0:gShape3, 0:gShape4]
         output_arr = output_arr.reshape(gShape0, gShape1, gShape2, gShape3,
             gShape4Align // c0_size, c0_size).transpose(4, 0, 1, 2, 3, 5)
+    elif gInfo.format == "DN2ZN":
+        input_arr = np.random.randint(-5, 5, size=(gWholeShape0, gWholeShape1,
+                                    gWholeShape2, gWholeShape4, gWholeShape3)).astype(data_type)
+        c0_size = 32 // np.dtype(data_type).itemsize
+        gShape3Align = (gShape3 + c0_size - 1) // c0_size * c0_size
+        output_arr = np.zeros(
+            shape=(gShape0, gShape1, gShape2, gShape4, gShape3Align), dtype=data_type)
+        output_arr[0:gShape0, 0:gShape1, 0:gShape2, 0:gShape4,
+                   0:gShape3] = input_arr[0:gShape0, 0:gShape1, 0:gShape2, 0:gShape4, 0:gShape3]
+        output_arr = output_arr.reshape(gShape0, gShape1, gShape2, gShape4,
+            gShape3Align // c0_size, c0_size).transpose(0, 1, 2, 4, 3, 5)
 
     input_arr.tofile("./input.bin")
     output_arr.tofile("./golden.bin")
@@ -58,7 +69,7 @@ class GlobalTensorInfo:
     def __init__(self, datatype, format, gShape0, gShape1, gShape2, gShape3, gShape4,
                  gWholeShape0, gWholeShape1, gWholeShape2, gWholeShape3, gWholeShape4):
         self.datatype = datatype
-        # 0:ND2ND, 1:DN2DN, 2:NZ2NZ, 3:ND2NZ
+        # 0:ND2ND, 1:DN2DN, 2:NZ2NZ, 3:ND2NZ, 4:DN2ZN
         self.format = format
         self.gShape0 = gShape0
         self.gShape1 = gShape1
@@ -99,6 +110,10 @@ if __name__ == "__main__":
         "TLoadGM2L1Test.DN_uint64_1_1_1_128_3_3_3_3_128_32",
         "TLoadGM2L1Test.DN_int64_2_2_1_32_2_3_3_3_64_111",
         "TLoadGM2L1Test.DN_uint64_1_2_1_32_11_1_3_2_32_93",
+        "TLoadGM2L1Test.DN2ZN_bfloat16_t_1_1_1_256_1024_1_1_1_256_1024",
+        "TLoadGM2L1Test.DN2ZN_float_t_1_1_1_49_35_1_1_1_49_35",
+        "TLoadGM2L1Test.DN2ZN_int16_t_1_1_1_155_250_1_1_1_752_1000",
+        "TLoadGM2L1Test.DN2ZN_int8_t_1_1_1_1023_511_1_1_1_1024_1024",
     ]
 
     case_params_list = [
@@ -127,6 +142,10 @@ if __name__ == "__main__":
         GlobalTensorInfo(np.uint64, "DN", 1, 1, 1, 128, 3, 3, 3, 3, 128, 32),
         GlobalTensorInfo(np.int64, "DN", 2, 2, 1, 32, 2, 3, 3, 3, 64, 111),
         GlobalTensorInfo(np.uint64, "DN", 1, 2, 1, 32, 11, 1, 3, 2, 32, 93),
+        GlobalTensorInfo(np.float16, "DN2ZN", 1, 1, 1, 256, 1024, 1, 1, 1, 256, 1024),
+        GlobalTensorInfo(np.float32, "DN2ZN", 1, 1, 1, 49, 35, 1, 1, 1, 49, 35),
+        GlobalTensorInfo(np.int16, "DN2ZN", 1, 1, 1, 155, 250, 1, 1, 1, 752, 1000),
+        GlobalTensorInfo(np.int8, "DN2ZN", 1, 1, 1, 1023, 511, 1, 1, 1, 1024, 1024),
     ]
 
     for i, case_name in enumerate(case_name_list):
