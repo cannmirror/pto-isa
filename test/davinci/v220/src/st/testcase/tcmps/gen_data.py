@@ -21,8 +21,12 @@ def gen_golden_data_tcmps(case_name, param):
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
+    if (dtype == np.float16):
+        input1 = np.random.randint(-5, 5, size=[H, W]).astype(dtype)
+        input2 = np.random.randint([0], size=[1]).astype(dtype)
+    else:
+        input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+        input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
 
     if param.mode == "CmpMode::EQ":
         golden = (abs(input1 - input2) < 10e-9)
