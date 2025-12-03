@@ -214,6 +214,12 @@ __PTO_INSTR__ void TCOLMAX(TileDataOut &dst, TileDataIn &src) {
   MAP_INSTR_IMPL(TCOLMAX, dst, src)
 }
 
+template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
+__PTO_INSTR__ void TROWMAX(TileDataOut &dst, TileDataIn &src,
+                           TileDataTmp &tmp) {
+  MAP_INSTR_IMPL(TROWMAX, dst, src, tmp)
+}
+
 template <typename TileData>
 __PTO_INSTR__ void TSELS(TileData &dst, TileData &src0, TileData &src1, uint8_t selectMode) {
   MAP_INSTR_IMPL(TSELS, dst, src0, src1, selectMode)

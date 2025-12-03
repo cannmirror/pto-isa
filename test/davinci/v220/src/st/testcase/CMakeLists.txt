@@ -74,6 +74,7 @@ endfunction()
 set(ALL_TESTCASES
 tmatmul
 trowsum
+trowmax
 textract
 tmov
 tload

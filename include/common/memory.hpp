@@ -46,7 +46,7 @@ template <Location L, typename DType> struct MemoryQualifier;
 
 template <typename DType> struct MemoryQualifier<Location::Vec, DType> {
 #ifdef __PTO_AUTO__
-  using type = __attribute((annotate("__ubuf__"))) DType;
+  using type = __ubuf__ DType;
 #else
   using type = __ubuf__ DType *;
 #endif
@@ -54,7 +54,7 @@ template <typename DType> struct MemoryQualifier<Location::Vec, DType> {
 
 template <typename DType> struct MemoryQualifier<Location::Mat, DType> {
 #ifdef __PTO_AUTO__
-  using type = __attribute((annotate("__cbuf__"))) DType;
+  using type = __cbuf__ DType;
 #else
   using type = __cbuf__ DType *;
 #endif
@@ -62,7 +62,7 @@ template <typename DType> struct MemoryQualifier<Location::Mat, DType> {
 
 template <typename DType> struct MemoryQualifier<Location::Left, DType> {
 #ifdef __PTO_AUTO__
-  using type = __attribute((annotate("__ca__"))) DType;
+  using type = __ca__ DType;
 #else
   using type = __ca__ DType *;
 #endif
@@ -70,7 +70,7 @@ template <typename DType> struct MemoryQualifier<Location::Left, DType> {
 
 template <typename DType> struct MemoryQualifier<Location::Right, DType> {
 #ifdef __PTO_AUTO__
-  using type = __attribute((annotate("__cb__"))) DType;
+  using type = __cb__ DType;
 #else
   using type = __cb__ DType *;
 #endif
@@ -78,23 +78,19 @@ template <typename DType> struct MemoryQualifier<Location::Right, DType> {
 
 template <typename DType> struct MemoryQualifier<Location::Acc, DType> {
 #ifdef __PTO_AUTO__
-  using type = __attribute((annotate("__cc__"))) DType;
+  using type = __cc__ DType;
 #else
   using type = __cc__ DType *;
 #endif
 };
 
 template <typename DType> struct MemoryQualifier<Location::Bias, DType> {
-#ifdef __PTO_AUTO__
-  using type = __attribute((annotate("__bt__"))) DType;
-#else
   using type = uint64_t;
-#endif
 };
 
 template <typename DType> struct MemoryQualifier<Location::Scaling, DType> {
 #ifdef __PTO_AUTO__
-  using type = __attribute((annotate("__fbuf__"))) DType;
+  using type = __fbuf__ DType;
 #else
   using type = __fbuf__ DType *;
 #endif
