@@ -34,6 +34,8 @@ namespace PtoTestCommon {
 #define PAD_VALUE_MAX (1)
 #define PAD_VALUE_MIN (-1)
 
+#define CHECK_RESULT_GTEST(x) if(!(x)) ASSERT_TRUE(false);
+
 typedef enum {
     DT_UNDEFINED = -1,
     FLOAT = 0,
@@ -59,7 +61,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
     struct stat sBuf;
     int fileStatus = stat(filePath.data(), &sBuf);
     if (fileStatus == -1) {
-        ERROR_LOG("failed to get file");
+        ERROR_LOG("Failed to get file. Path = %s", filePath.c_str());
         return false;
     }
     if (S_ISREG(sBuf.st_mode) == 0) {
@@ -70,7 +72,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
     std::ifstream file;
     file.open(filePath, std::ios::binary);
     if (!file.is_open()) {
-        ERROR_LOG("Open file failed. path = %s", filePath.c_str());
+        ERROR_LOG("Open file failed. Path = %s", filePath.c_str());
         return false;
     }
 

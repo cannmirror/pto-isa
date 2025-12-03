@@ -60,8 +60,8 @@ TEST_F(TMATMULTest, case1)
     aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize));
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
@@ -85,8 +85,8 @@ TEST_F(TMATMULTest, case1)
 
     std::vector<float> golden(cFileSize);
     std::vector<float> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize));
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
 
@@ -118,8 +118,8 @@ TEST_F(TMATMULTest, case2)
     aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize));
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
@@ -143,8 +143,8 @@ TEST_F(TMATMULTest, case2)
 
     std::vector<int32_t> golden(cFileSize);
     std::vector<int32_t> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize));
 
     bool ret = ResultCmp<int32_t>(golden, devFinal, 0.001f);
     EXPECT_TRUE(ret);
@@ -177,8 +177,8 @@ TEST_F(TMATMULTest, case3)
     aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize));
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
@@ -203,8 +203,8 @@ TEST_F(TMATMULTest, case3)
     std::vector<float> golden(cFileSize);
     std::vector<float> devFinal(cFileSize);
 
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize));
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
     EXPECT_TRUE(ret);
@@ -236,8 +236,8 @@ TEST_F(TMATMULTest, case4)
     aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
-    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize));
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
@@ -261,8 +261,8 @@ TEST_F(TMATMULTest, case4)
 
     std::vector<float> golden(cFileSize);
     std::vector<float> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize));
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
 
