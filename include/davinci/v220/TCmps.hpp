@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-constexpr const int NUM_BITS_IN_BYTE = 8;
+constexpr const uint64_t NUM_BITS_IN_BYTE = 8;
 
     template <typename TileDataDst, typename TileDataSrc, typename T>
     __aicore__ void GenCmpCall(__ubuf__ typename TileDataDst::DType *dst,
@@ -55,7 +55,7 @@ constexpr const int NUM_BITS_IN_BYTE = 8;
     }
 
 
-    template <typename TileDataDst, typename TileDataSrc, typename T, unsigned SS>
+    template <typename TileDataDst, typename TileDataSrc, typename T, unsigned SS, unsigned DS>
     __tf__ __aicore__ void TCmps(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
         CmpMode mode, unsigned numRepeatPerLine,
@@ -82,10 +82,10 @@ constexpr const int NUM_BITS_IN_BYTE = 8;
         set_flag(PIPE_V, PIPE_S, EVENT_ID0);
         wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
         for (size_t index = 0; index < validRow * numRepeatPerLine; index++) {
-            for (size_t bit_index = 0; bit_index < NUM_BITS_IN_BYTE; bit_index++){
+            for (size_t bit_index = 0; bit_index < DS; bit_index++){
                 dstPtr[dst_offset + bit_index] = dstPtr[index * BLOCK_BYTE_SIZE + bit_index];
             }
-            dst_offset = dst_offset + NUM_BITS_IN_BYTE;
+            dst_offset = dst_offset + DS;
         }
         set_mask_norm();
         set_vector_mask(-1, -1);
@@ -99,8 +99,8 @@ constexpr const int NUM_BITS_IN_BYTE = 8;
         unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
         constexpr unsigned SS = REPEAT_BYTE / sizeof(typename TileDataSrc0::DType);
         unsigned validRow = dst.GetValidRow();
-
-        TCmps<TileDataDst, TileDataSrc0, T, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
+        constexpr uint64_t DS = NUM_BITS_IN_BYTE * (sizeof(float)/sizeof(T));
+        TCmps<TileDataDst, TileDataSrc0, T, SS, DS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
                                                 validRow, elementsPerRepeat, blockSizeElem);
     }
 }
