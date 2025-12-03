@@ -21,7 +21,8 @@ namespace pto {
 
     template <typename DstTileData, typename Src0TileData, typename Src1TileData>
     __aicore__ PTO_INLINE void CheckValid() {
-        static_assert((sizeof(typename DstTileData::DType) == 1) || (sizeof(typename DstTileData::DType) == 2) || (sizeof(typename DstTileData::DType) == 4),
+        static_assert((sizeof(typename DstTileData::DType) == 1) || (sizeof(typename DstTileData::DType) == 2) ||
+                      (sizeof(typename DstTileData::DType) == 4),
                       "expect b8/b16/b32");
         static_assert((sizeof(typename Src1TileData::DType) == 2) || (sizeof(typename Src1TileData::DType) == 4),
                       "expect b16/b32");
@@ -31,10 +32,9 @@ namespace pto {
 
     template <typename TileDataD, typename TileDataS0, typename TileDataS1>
     __tf__ __aicore__ void TGather(typename TileDataD::TileDType __out__ dst,
-                                typename TileDataS0::TileDType __in__ src0,
-                                typename TileDataS1::TileDType __in__ src1,
-                                unsigned validCol, unsigned validRow) {
-
+                                   typename TileDataS0::TileDType __in__ src0,
+                                   typename TileDataS1::TileDType __in__ src1,
+                                   unsigned validCol, unsigned validRow) {
         __ubuf__ typename TileDataD::DType *dstPtr = (__ubuf__ typename TileDataD::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataS0::DType *src0Ptr = (__ubuf__ typename TileDataS0::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileDataS1::DType *src1Ptr = (__ubuf__ typename TileDataS1::DType *)__cce_get_tile_ptr(src1);
@@ -116,9 +116,7 @@ namespace pto {
                         vlds(index, src1Ptr, (i * TShape1 + j*batch_size), NORM);
 
                         uint32_t count = ((j + 1) * batch_size >= validCol ? validCol - j * batch_size : batch_size);
-                        // vector_bool preg = plt_b8(count, POST_UPDATE);    //cannot use b8 for vgather is still output b16
                         vector_bool preg = plt_b16(count, POST_UPDATE);
-                        // vector_bool preg_b8_ALL = pset_b8(PAT_ALL);  //no mask work
 
                         vector_f8e4m3 v_output;
                         vgather2(v_output, src0Ptr,(vector_u16 &) index, preg);
@@ -151,12 +149,11 @@ namespace pto {
 
     template <typename TileDataD, typename TileDataS0, typename TileDataS1, unsigned TShape0, unsigned TShape1>
     __tf__ __aicore__ void TGather2D(typename TileDataS0::TileDType __out__ dst,
-                                typename TileDataS0::TileDType __in__ src0,
-                                typename TileDataS1::TileDType __in__ src1,
-                                unsigned src0Shape1,
-                                unsigned dstShape1,
-                                unsigned axis) {
-
+                                     typename TileDataS0::TileDType __in__ src0,
+                                     typename TileDataS1::TileDType __in__ src1,
+                                     unsigned src0Shape1,
+                                     unsigned dstShape1,
+                                     unsigned axis) {
         __ubuf__ typename TileDataD::DType *dstPtr = (__ubuf__ typename TileDataD::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataS0::DType *src0Ptr = (__ubuf__ typename TileDataS0::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileDataS1::DType *src1Ptr = (__ubuf__ typename TileDataS1::DType *)__cce_get_tile_ptr(src1);
@@ -175,7 +172,6 @@ namespace pto {
                         uint32_t count = ((j + 1) * batch_size >= TShape1 ? TShape1 - j * batch_size : batch_size);
                         vector_bool preg = plt_b32(count, POST_UPDATE);
 
-
                         if (axis == 0) {
                             // For axis=0: output[i,j] = src0[index[i,j], j]
                             // Calculate offset = index * src0Shape1 + j
@@ -186,7 +182,6 @@ namespace pto {
                             vector_s32 row_offset;
                             vci(row_offset,0);
                             vadd(index,index,row_offset,preg);
-
                         } else {
                             // For axis=1: output[i,j] = src0[i, index[i,j]]
                             // Calculate offset = i * src0Shape1 + index
@@ -215,7 +210,6 @@ namespace pto {
                     uint32_t count = ((j + 1) * batch_size >= TShape1 ? TShape1 - j * batch_size : batch_size);
                     vector_bool preg = plt_b16(count, POST_UPDATE);
 
-
                     if (axis == 0) {
                         // For axis=0: output[i,j] = src0[index[i,j], j]
                         // Calculate offset = index * src0Shape1 + j
@@ -226,7 +220,6 @@ namespace pto {
                         vector_s16 row_offset;
                         vci(row_offset,0);
                         vadd(index,index,row_offset,preg);
-
                     } else {
                         // For axis=1: output[i,j] = src0[i, index[i,j]]
                         // Calculate offset = i * src0Shape1 + index
@@ -254,17 +247,18 @@ namespace pto {
     }
 
     template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-    __aicore__ void TGATHER2D(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1, unsigned src0Shape1, unsigned dstShape1, unsigned axis) {
-
-
+    __aicore__ void TGATHER2D(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1,
+                              unsigned src0Shape1, unsigned dstShape1, unsigned axis) {
         constexpr unsigned TShape0 = TileDataD::Rows;
         constexpr unsigned TShape1 = TileDataD::Cols;
 
-        TGather2D<TileDataD, TileDataS0, TileDataS1, TShape0, TShape1>(dst.data(), src0.data(), src1.data(), src0Shape1, dstShape1, axis);
+        TGather2D<TileDataD, TileDataS0, TileDataS1, TShape0, TShape1>(dst.data(), src0.data(), src1.data(),
+                                                                       src0Shape1, dstShape1, axis);
     }
 
     template <typename T, typename U>
-    __aicore__ PTO_INLINE MaskReg PSetWithType(U dist) {
+    __aicore__ PTO_INLINE MaskReg PSetWithType(U dist)
+    {
         if constexpr (sizeof(T) == sizeof(float)) {
             return pset_b32(dist);
         } else if constexpr (sizeof(T) == sizeof(half)) {
@@ -275,7 +269,8 @@ namespace pto {
     }
 
     template <typename T>
-    __aicore__ PTO_INLINE void PIntlvWithType(MaskReg &dst0, MaskReg &dst1, MaskReg src0, MaskReg src1) {
+    __aicore__ PTO_INLINE void PIntlvWithType(MaskReg &dst0, MaskReg &dst1, MaskReg src0, MaskReg src1)
+    {
         if constexpr (sizeof(T) == sizeof(float)) {
             pintlv_b32(dst0, dst1, src0, src1);
         } else if constexpr (sizeof(T) == sizeof(half)) {
@@ -285,10 +280,51 @@ namespace pto {
         }
     }
 
+    template <typename T, MaskPattern maskPattern>
+    __aicore__ PTO_INLINE MaskReg GetMaskVal()
+    {
+        MaskReg pg0;
+        MaskReg pg1;
+        MaskReg dstPg0;
+        MaskReg dstPg1;
+        if constexpr (maskPattern == MaskPattern::P0101) {
+            pg0 = PSetWithType<T>(PAT_ALL);
+            pg1 = PSetWithType<T>(PAT_ALLF);
+            PIntlvWithType<T>(dstPg0, dstPg1, pg0, pg1);
+        } else if constexpr (maskPattern == MaskPattern::P1010) {
+            pg0 = PSetWithType<T>(PAT_ALL);
+            pg1 = PSetWithType<T>(PAT_ALLF);
+            PIntlvWithType<T>(dstPg0, dstPg1, pg1, pg0);
+        } else if constexpr (maskPattern == MaskPattern::P0001) {
+            pg0 = PSetWithType<T>(PAT_ALL);
+            pg1 = PSetWithType<T>(PAT_ALLF);
+            PIntlvWithType<T>(dstPg0, dstPg1, pg0, pg1);
+            PIntlvWithType<T>(dstPg0, dstPg1, dstPg0, pg1);
+        } else if constexpr (maskPattern == MaskPattern::P0010) {
+            pg0 = PSetWithType<T>(PAT_ALL);
+            pg1 = PSetWithType<T>(PAT_ALLF);
+            PIntlvWithType<T>(dstPg0, dstPg1, pg0, pg1);
+            PIntlvWithType<T>(dstPg0, dstPg1, pg1, dstPg0);
+        } else if constexpr (maskPattern == MaskPattern::P0100) {
+            pg0 = PSetWithType<T>(PAT_ALL);
+            pg1 = PSetWithType<T>(PAT_ALLF);
+            PIntlvWithType<T>(dstPg0, dstPg1, pg1, pg0);
+            PIntlvWithType<T>(dstPg0, dstPg1, dstPg0, pg1);
+        } else if constexpr (maskPattern == MaskPattern::P1000) {
+            pg0 = PSetWithType<T>(PAT_ALL);
+            pg1 = PSetWithType<T>(PAT_ALLF);
+            PIntlvWithType<T>(dstPg0, dstPg1, pg1, pg0);
+            PIntlvWithType<T>(dstPg0, dstPg1, pg1, dstPg0);
+        } else if constexpr (maskPattern == MaskPattern::P1111) {
+            dstPg0 = PSetWithType<T>(PAT_ALL);
+        }
+        return dstPg0;
+    }
+
     template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
     __tf__ __aicore__ void TGather(typename DstTileData::TileDType __out__ dst,
-                                typename SrcTileData::TileDType __in__ src,
-                                uint16_t validRow, uint16_t validCol) {
+        typename SrcTileData::TileDType __in__ src, uint16_t validRow, uint16_t validCol)
+    {
         using T = typename DstTileData::DType;
         constexpr unsigned rowStride = SrcTileData::RowStride;
         __ubuf__ typename DstTileData::DType *dstPtr = (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst);
@@ -299,41 +335,7 @@ namespace pto {
             constexpr auto sprValue = std::integral_constant<::Spr, static_cast<::Spr>(SPR_AR_VALUE)>();
             sprclr(sprValue);
 
-            MaskReg pg0;
-            MaskReg pg1;
-            MaskReg dstPg0;
-            MaskReg dstPg1;
-            if constexpr (maskPattern == MaskPattern::P0101) {
-                pg0 = PSetWithType<T>(PAT_ALL);
-                pg1 = PSetWithType<T>(PAT_ALLF);
-                PIntlvWithType<T>(dstPg0, dstPg1, pg0, pg1);
-            } else if constexpr (maskPattern == MaskPattern::P1010) {
-                pg0 = PSetWithType<T>(PAT_ALL);
-                pg1 = PSetWithType<T>(PAT_ALLF);
-                PIntlvWithType<T>(dstPg0, dstPg1, pg1, pg0);
-            } else if constexpr (maskPattern == MaskPattern::P0001) {
-                pg0 = PSetWithType<T>(PAT_ALL);
-                pg1 = PSetWithType<T>(PAT_ALLF);
-                PIntlvWithType<T>(dstPg0, dstPg1, pg0, pg1);
-                PIntlvWithType<T>(dstPg0, dstPg1, dstPg0, pg1);
-            } else if constexpr (maskPattern == MaskPattern::P0010) {
-                pg0 = PSetWithType<T>(PAT_ALL);
-                pg1 = PSetWithType<T>(PAT_ALLF);
-                PIntlvWithType<T>(dstPg0, dstPg1, pg0, pg1);
-                PIntlvWithType<T>(dstPg0, dstPg1, pg1, dstPg0);
-            } else if constexpr (maskPattern == MaskPattern::P0100) {
-                pg0 = PSetWithType<T>(PAT_ALL);
-                pg1 = PSetWithType<T>(PAT_ALLF);
-                PIntlvWithType<T>(dstPg0, dstPg1, pg1, pg0);
-                PIntlvWithType<T>(dstPg0, dstPg1, dstPg0, pg1);
-            } else if constexpr (maskPattern == MaskPattern::P1000) {
-                pg0 = PSetWithType<T>(PAT_ALL);
-                pg1 = PSetWithType<T>(PAT_ALLF);
-                PIntlvWithType<T>(dstPg0, dstPg1, pg1, pg0);
-                PIntlvWithType<T>(dstPg0, dstPg1, pg1, dstPg0);
-            } else if constexpr (maskPattern == MaskPattern::P1111) {
-                dstPg0 = PSetWithType<T>(PAT_ALL);
-            }
+            MaskReg dstPg0 = GetMaskVal<T, maskPattern>();
             RegTensor<T> dstReg;
             RegTensor<T> srcReg;
             MaskReg loadMask;
@@ -344,49 +346,42 @@ namespace pto {
             uint16_t innerRepeatTimes = CeilDivision(validCol, elementsPerRepeat);
 
             for (uint16_t i = 0; i < validRow; ++i) { // repeat行数
-              uint32_t maskValue = validCol;
-              for (uint16_t j = 0; j < innerRepeatTimes; ++j) {
-                loadMask = CreatePredicate<T>(maskValue);
-                vlds(srcReg, srcPtr + i * rowStride, j * elementsPerRepeat, NORM);
-                pand(executeMask, dstPg0, loadMask, loadMask);
-                vsqz(dstReg, srcReg, executeMask, MODE_STORED); // 1表示写入AR reg
-                vstur(ureg, dstReg, dstPtr, POST_UPDATE);
-              }
+                uint32_t maskValue = validCol;
+                for (uint16_t j = 0; j < innerRepeatTimes; ++j) {
+                    loadMask = CreatePredicate<T>(maskValue);
+                    vlds(srcReg, srcPtr + i * rowStride, j * elementsPerRepeat, NORM);
+                    pand(executeMask, dstPg0, loadMask, loadMask);
+                    vsqz(dstReg, srcReg, executeMask, MODE_STORED); // 1表示写入AR reg
+                    vstur(ureg, dstReg, dstPtr, POST_UPDATE);
+                }
             }
             vstar(ureg, dstPtr);
         }
     }
 
     template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
-    __aicore__ PTO_INLINE void TGATHER_IMPL(DstTileData &dst, SrcTileData &src) {
+    __aicore__ PTO_INLINE void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
+    {
         using T = typename SrcTileData::DType;
         using U = typename DstTileData::DType;
-        static_assert(
-            std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t> ||
-            std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> ||
-            std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> ||
-            std::is_same_v<T, half> || std::is_same_v<T, bfloat16_t> ||
-            std::is_same_v<T, float>|| std::is_same_v<T, float8_e4m3_t> ||
-            std::is_same_v<T, float8_e5m2_t> || std::is_same_v<T, hifloat8_t>,
+        static_assert(std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t> || std::is_same_v<T, int16_t> ||
+                          std::is_same_v<T, uint16_t> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> ||
+                          std::is_same_v<T, half> || std::is_same_v<T, bfloat16_t> || std::is_same_v<T, float> ||
+                          std::is_same_v<T, float8_e4m3_t> || std::is_same_v<T, float8_e5m2_t> ||
+                          std::is_same_v<T, hifloat8_t>,
             "TGATHER: Src data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/"
-            "half/bfloat16_t/float/float8_e4m3_t/float8_e5m2_t/hifloat8_t."
-        );
-        static_assert(
-            std::is_same_v<U, int8_t> || std::is_same_v<U, uint8_t> ||
-            std::is_same_v<U, int16_t> || std::is_same_v<U, uint16_t> ||
-            std::is_same_v<U, int32_t> || std::is_same_v<U, uint32_t> ||
-            std::is_same_v<U, half> || std::is_same_v<U, bfloat16_t> ||
-            std::is_same_v<U, float>|| std::is_same_v<U, float8_e4m3_t> ||
-            std::is_same_v<U, float8_e5m2_t> || std::is_same_v<U, hifloat8_t>,
+            "half/bfloat16_t/float/float8_e4m3_t/float8_e5m2_t/hifloat8_t.");
+        static_assert(std::is_same_v<U, int8_t> || std::is_same_v<U, uint8_t> || std::is_same_v<U, int16_t> ||
+                          std::is_same_v<U, uint16_t> || std::is_same_v<U, int32_t> || std::is_same_v<U, uint32_t> ||
+                          std::is_same_v<U, half> || std::is_same_v<U, bfloat16_t> || std::is_same_v<U, float> ||
+                          std::is_same_v<U, float8_e4m3_t> || std::is_same_v<U, float8_e5m2_t> ||
+                          std::is_same_v<U, hifloat8_t>,
             "TGATHER: Dst data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/"
-            "half/bfloat16_t/float/float8_e4m3_t/float8_e5m2_t/hifloat8_t."
-        );
-        static_assert((sizeof(U) == sizeof(T)),
-            "TGATHER: expect same type size for dst and src");
-        static_assert((DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec), 
-            "TGATHER: expect vec location");
-        static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor),
-            "TGATHER: expect row major");
+            "half/bfloat16_t/float/float8_e4m3_t/float8_e5m2_t/hifloat8_t.");
+        static_assert((sizeof(U) == sizeof(T)), "TGATHER: expect same type size for dst and src");
+        static_assert(
+            (DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec), "TGATHER: expect vec location");
+        static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor), "TGATHER: expect row major");
         uint16_t rows = src.GetValidRow();
         uint16_t cols = src.GetValidCol();
         TGather<DstTileData, SrcTileData, maskPattern>(dst.data(), src.data(), rows, cols);
