@@ -9,7 +9,11 @@
 # --------------------------------------------------------------------------------
 
 function(pto_cpu_sim_st NAME)
-    add_executable(${NAME} ${NAME}_kernel.cpp main.cpp)
+    set(FILES_LIST main.cpp)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${NAME}_kernel.cpp)
+        list(APPEND FILES_LIST ${NAME}_kernel.cpp)
+    endif()
+    add_executable(${NAME} ${FILES_LIST})
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS} -std=c++23)
     target_include_directories(${NAME} PRIVATE
         ${PROJECT_SOURCE_DIR}/../../../include/
@@ -25,6 +29,15 @@ endfunction()
 
 set(ALL_TESTCASES
 tmatmul
+tload
+tstore
+textract
+tmov
+trowsum
+tadd
+texp
+trowmax
+tfillpad
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})

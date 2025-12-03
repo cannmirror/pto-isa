@@ -279,6 +279,27 @@ template <typename TileData>
 __PTO_INSTR__ void TDIVS(TileData &dst, typename TileData::DType scalar, TileData &src0) {
   MAP_INSTR_IMPL(TDIVS, dst, scalar, src0)
 }
-} // namespace pto
 
+#ifdef __CPU_SIM
+template <typename TileData>
+__PTO_INSTR__ void TDIV(TileData &dst, TileData &src0, TileData &src1) {
+  MAP_INSTR_IMPL(TDIV, dst, src0, src1)
+}
+
+template <typename TileData>
+__PTO_INSTR__ void TMAX(TileData &dst, TileData &src0, TileData &src1) {
+  MAP_INSTR_IMPL(TMAX, dst, src0, src1)
+}
+
+template <typename dstTileData, typename srcTileData>
+__PTO_INSTR__ void TROWMAX(dstTileData &dst, srcTileData &src) {
+  MAP_INSTR_IMPL(TROWMAX, dst, src)
+}
+
+template <typename TileDataDst, typename TileDataSrc, bool inplace>
+__PTO_INSTR__ void TFILLPAD(TileDataDst &dst, TileDataSrc &src) {
+  MAP_INSTR_IMPL(TFILLPAD, dst, src)
+}
+#endif
+} // namespace pto
 #endif

@@ -89,12 +89,23 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #endif
 
 #ifdef __CPU_SIM
+    #include "cpu_sim/TSub.hpp"
+    #include "cpu_sim/TMul.hpp"
+    #include "cpu_sim/TDiv.hpp"
     #include "cpu_sim/TMatmul.hpp"
     #include "cpu_sim/TAssign.hpp"
+    #include "cpu_sim/TAdd.hpp"
     #include "cpu_sim/TLoad.hpp"
     #include "cpu_sim/TStore.hpp"
+    #include "cpu_sim/TExp.hpp"
+    #include "cpu_sim/TRowmax.hpp"
     #include "cpu_sim/TMrgSort.hpp"
     #include "cpu_sim/TMov.hpp"
+    #include "cpu_sim/TExtract.hpp"
+    #include "cpu_sim/TRowSum.hpp"
+    #include "cpu_sim/TMax.hpp"
+    #include "cpu_sim/TExtract.hpp"
+    #include "cpu_sim/TFillPad.hpp"
 #endif
 
 #endif

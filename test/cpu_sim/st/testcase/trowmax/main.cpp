@@ -1,0 +1,92 @@
+#include "test_common.h"
+#include "pto_tileop.hpp"
+#include <gtest/gtest.h>
+
+
+using namespace std;
+using namespace PtoTestCommon;
+
+class TROWMAXTest : public testing::Test {
+protected:
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
+};
+
+std::string GetGoldenDir() {
+    const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
+    const std::string caseName = testInfo->name();
+    std::string suiteName = testInfo->test_suite_name();
+    std::string fullPath = "../" + suiteName + "." + caseName;
+    return fullPath;
+}
+
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void LaunchTROWMAX(T *out, T *src,  void *stream);
+
+template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void test_trowmax() {
+
+    size_t dstFileSize = kTRows_ * sizeof(T);
+    size_t srcFileSize = kTRows_ * kTCols_ * sizeof(T);
+
+    aclInit(nullptr);
+    aclrtSetDevice(0);
+    aclrtStream stream;
+    aclrtCreateStream(&stream);
+
+    T *dstHost, *srcHost;
+    T *dstDevice, *srcDevice;
+
+    aclrtMallocHost((void **)(&dstHost), dstFileSize);
+    aclrtMallocHost((void **)(&srcHost), srcFileSize);
+
+    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input1.bin", srcFileSize, srcHost, srcFileSize));
+
+    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    LaunchTROWMAX<T, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, srcDevice, stream);
+
+    aclrtSynchronizeStream(stream);
+    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
+
+    aclrtFree(dstDevice);
+    aclrtFree(srcDevice);
+
+    aclrtFreeHost(dstHost);
+    aclrtFreeHost(srcHost);
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(0);
+    aclFinalize();
+
+    std::vector<T> golden(dstFileSize);
+    std::vector<T> devFinal(dstFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, devFinal.data(), dstFileSize));
+
+    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
+
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWMAXTest, case_float_64x64_64x64_64x64) {
+    test_trowmax<float, 64, 64, 64, 64>();
+}
+TEST_F(TROWMAXTest, case_half_64x64_64x64_64x64) {
+    test_trowmax<aclFloat16, 64, 64, 64, 64>();
+}
+TEST_F(TROWMAXTest, case_half_161x161_32x32_161x161) {
+    test_trowmax<aclFloat16, 161, 161, 32, 32>();
+}
+TEST_F(TROWMAXTest, case_float_77x81_32x16_77x81) {
+    test_trowmax<float, 77, 81, 32, 16>();
+}
+TEST_F(TROWMAXTest, case_float_32x32_32x16_32x32) {
+    test_trowmax<float, 32, 32, 32, 16>();
+}

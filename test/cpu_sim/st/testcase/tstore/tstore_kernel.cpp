@@ -1,0 +1,218 @@
+#include <common/pto_tileop.hpp>
+#include <common/tile_tensor_impl.hpp>
+#include <common/constants.hpp>
+#include <iostream>
+
+using namespace std;
+using namespace pto;
+
+template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, 
+    int gWholeShape2, int gWholeShape3, int gWholeShape4>
+__aicore__ inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
+    constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
+        gWholeShape2 * gWholeShape3 * gWholeShape4,
+        gWholeShape3 * gWholeShape4,
+        gWholeShape4,
+        1};
+    constexpr int blockSize = 32 / sizeof(T);
+    constexpr int validRow = gShape0 * gShape1 * gShape2 * gShape3;
+    constexpr int validCol = gShape4;
+    constexpr int Rows = gShape0 * gShape1 * gShape2 * gShape3;
+    constexpr int Cols = (gShape4 + blockSize - 1) / blockSize * blockSize;
+
+    using DynShapeDim5 = Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
+    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
+    using TileData = Tile<Location::Vec, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
+
+    TileData srcTile(validRow, validCol);
+
+    TASSIGN(srcTile, 0x0);
+
+    int offset = 0;
+
+    GlobalData srcGlobal(src);
+    GlobalData dstGlobal(out);
+
+    TLOAD(srcTile, srcGlobal);
+    set_flag(PIPE_MTE2, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_MTE3, EVENT_ID0);
+    TSTORE(dstGlobal, srcTile);
+    out = dstGlobal.data();
+
+}
+
+template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1,
+int gWholeShape2, int gWholeShape3, int gWholeShape4>
+__aicore__ inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
+    constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
+        gWholeShape2 * gWholeShape3 * gWholeShape4,
+        gWholeShape3 * gWholeShape4,
+        1,
+        gWholeShape3};
+
+    constexpr int blockSize = 32 / sizeof(T);
+    constexpr int Rows = (gShape3 + blockSize - 1) / blockSize * blockSize;
+    constexpr int Cols = gShape0 * gShape1 * gShape2 * gShape4;
+    constexpr int validRow = gShape3;
+    constexpr int validCol = gShape0 * gShape1 * gShape2 * gShape4;
+
+    using DynShapeDim5 = Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
+    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5, Layout::DN>;
+    using TileData = Tile<Location::Vec, T, Rows, Cols, BLayout::ColMajor, -1, -1>;
+
+    TileData srcTile(validRow, validCol);
+
+    TASSIGN(srcTile, 0x0);
+
+    int offset = 0;
+    GlobalData srcGlobal(src);
+    GlobalData dstGlobal(out);
+
+    TLOAD(srcTile, srcGlobal);
+    set_flag(PIPE_MTE2, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_MTE3, EVENT_ID0);
+    TSTORE(dstGlobal, srcTile);
+    out = dstGlobal.data();
+}
+
+template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1,
+    int gWholeShape2, int gWholeShape3, int gWholeShape4>
+__aicore__ inline void RunTStoreNZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
+    constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
+        gWholeShape2 * gWholeShape3 * gWholeShape4,
+        gWholeShape3 * gWholeShape4,
+        gWholeShape4,
+        1};
+
+    constexpr int Rows = gShape2 * gShape3;
+    constexpr int Cols = gShape0 * gShape1 * gShape4;
+
+
+    using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
+    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5, Layout::NZ>;
+    using TileData = Tile<Location::Vec, T, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>;
+
+    int validRow = gShape2 * gShape3;
+    int validCol = gShape0 * gShape1 * gShape4;
+    TileData srcTile(validRow, validCol);
+
+    TASSIGN(srcTile, 0x0);
+
+    GlobalData srcGlobal(src);
+    GlobalData dstGlobal(out);
+
+    TLOAD(srcTile, srcGlobal);
+    set_flag(PIPE_MTE2, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_MTE3, EVENT_ID0);
+    TSTORE(dstGlobal, srcTile);
+    out = dstGlobal.data();
+}
+
+template <typename T, pto::Layout format, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
+    int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+__global__ __aicore__ void TStoreKernel(__gm__ T *out, __gm__ T *src)
+{
+    if constexpr (format == pto::Layout::ND) {
+        RunTStoreRowMajor<T,
+            gShape0,
+            gShape1,
+            gShape2,
+            gShape3,
+            gShape4,
+            gWholeShape0,
+            gWholeShape1,
+            gWholeShape2,
+            gWholeShape3,
+            gWholeShape4>(out, src);
+    } else if constexpr (format == pto::Layout::DN) {
+        RunTStoreColMajor<T,
+            gShape0,
+            gShape1,
+            gShape2,
+            gShape3,
+            gShape4,
+            gWholeShape0,
+            gWholeShape1,
+            gWholeShape2,
+            gWholeShape3,
+            gWholeShape4>(out, src);
+    } else if constexpr (format == pto::Layout::NZ) {
+        RunTStoreNZ<T,
+            gShape0,
+            gShape1,
+            gShape2,
+            gShape3,
+            gShape4,
+            gWholeShape0,
+            gWholeShape1,
+            gWholeShape2,
+            gWholeShape3,
+            gWholeShape4>(out, src);
+}
+}
+
+template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, 
+    int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void LaunchTStore (T *out, T *src, void *stream)
+{
+    if constexpr (format == 0) {
+        TStoreKernel<T,
+            pto::Layout::ND,
+            gShape0,
+            gShape1,
+            gShape2,
+            gShape3,
+            gShape4,
+            gWholeShape0,
+            gWholeShape1,
+            gWholeShape2,
+            gWholeShape3,
+            gWholeShape4>(out, src);
+    } else if constexpr (format == 1) {
+        TStoreKernel<T,
+            pto::Layout::DN,
+            gShape0,
+            gShape1,
+            gShape2,
+            gShape3,
+            gShape4,
+            gWholeShape0,
+            gWholeShape1,
+            gWholeShape2,
+            gWholeShape3,
+            gWholeShape4>(out, src);
+    } else if constexpr (format == 2) {
+        TStoreKernel<T,
+            pto::Layout::NZ,
+            gShape0,
+            gShape1,
+            gShape2,
+            gShape3,
+            gShape4,
+            gWholeShape0,
+            gWholeShape1,
+            gWholeShape2,
+            gWholeShape3,
+            gWholeShape4>(out, src);
+    }
+}
+
+template void LaunchTStore<0, float, 1, 1, 1, 2, 128, 1, 1, 1, 2, 128>(float *out, float *src, void *stream);
+template void LaunchTStore<0, int16_t, 1, 2, 1, 23, 121, 3, 2, 2, 35, 125>(int16_t *out, int16_t *src, void *stream);
+template void LaunchTStore<0, int8_t, 2, 2, 3, 23, 47, 3, 3, 4, 32, 50>(int8_t *out, int8_t *src, void *stream);
+template void LaunchTStore<1, float, 1, 1, 1, 4, 21, 1, 1, 1, 8, 32>(float *out, float *src, void *stream);
+template void LaunchTStore<1, int16_t, 3, 1, 1, 1, 124, 5, 1, 1, 2, 128>(int16_t *out, int16_t *src, void *stream);
+template void LaunchTStore<1, int8_t, 2, 1, 2, 32, 32, 3, 4, 3, 64, 35>(int8_t *out, int8_t *src, void *stream);
+// template void LaunchTStore<2, float, 1, 1, 1, 16, 8, 1, 1, 2, 16, 8>(float *out, float *src, void *stream);
+// template void LaunchTStore<2, int16_t, 2, 2, 2, 16, 16, 5, 3, 3, 16, 16>(int16_t *out, int16_t *src, void *stream);
+// template void LaunchTStore<2, int8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>(int8_t *out, int8_t *src, void *stream);
+template void LaunchTStore<0, int64_t, 1, 1, 1, 2, 128, 1, 1, 1, 2, 128>(int64_t *out, int64_t *src, void *stream);
+template void LaunchTStore<0, uint64_t, 1, 2, 1, 23, 121, 3, 2, 2, 35, 125>(uint64_t *out, uint64_t *src, void *stream);
+template void LaunchTStore<1, int64_t, 1, 1, 1, 4, 21, 1, 1, 1, 8, 32>(int64_t *out, int64_t *src, void *stream);
+template void LaunchTStore<1, uint64_t, 3, 1, 1, 1, 124, 5, 1, 1, 2, 128>(uint64_t *out, uint64_t *src, void *stream);
