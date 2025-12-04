@@ -32,6 +32,7 @@ steps:
     - build_execute:
         command: >
           cd pto-tile-lib
+          && source ${SET_ENV_PATH}
           && chmod +x run_st.sh
           && ./run_st.sh ${buildType}
         check:
