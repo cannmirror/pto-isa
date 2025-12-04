@@ -173,6 +173,17 @@ __PTO_INSTR__ void TPARTADD(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &
   MAP_INSTR_IMPL(TPARTADD, dst, src0, src1)
 }
 
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+__PTO_INSTR__ void TPARTMAX(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
+  MAP_INSTR_IMPL(TPARTMAX, dst, src0, src1)
+}
+
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+__PTO_INSTR__ void TPARTMIN(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
+  MAP_INSTR_IMPL(TPARTMIN, dst, src0, src1)
+}
+
+
 template <typename TileDataD, typename TileDataS>
 __PTO_INSTR__ void TCVT(TileDataD &dst, TileDataS &src, RoundMode mode) {
   MAP_INSTR_IMPL(TCVT, dst, src, mode)

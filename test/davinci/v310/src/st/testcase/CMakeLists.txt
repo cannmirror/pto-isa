@@ -138,6 +138,8 @@ set(ALL_TESTCASES
     tmuls
     tadds
     tgatherb
+    tpartmin
+    tpartmax
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
