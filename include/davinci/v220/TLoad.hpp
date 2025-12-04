@@ -12,111 +12,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TLOAD_HPP
 
 namespace pto {
-template <typename TileData>
-__aicore__ constexpr auto getPadValue()
-{
-    if constexpr (std::is_same<typename TileData::DType, int64_t>::value ||
-        std::is_same<typename TileData::DType, uint64_t>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-                return uint32_t(0);
-            default:
-                static_assert((TileData::PadVal == PadValue::Null) || (TileData::PadVal == PadValue::Zero),
-                    "TLOAD: only PadNull and PadZero is supported for b64!");
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, float>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-                return uint32_t(0);
-            case PadValue::Min:
-                return uint32_t(0xff800000UL);
-            case PadValue::Max:
-                return uint32_t(0x7f800000UL);
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, int32_t>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-                return uint32_t(0);
-            case PadValue::Min:
-                return uint32_t(0xffffffffUL);
-            case PadValue::Max:
-                return uint32_t(0x7fffffffUL);
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, uint32_t>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-            case PadValue::Min:
-                return uint32_t(0);
-            case PadValue::Max:
-                return uint32_t(0xffffffffUL);
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, bfloat16_t>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-                return uint16_t(0);
-            case PadValue::Min:
-                return uint16_t(0xff80);
-            case PadValue::Max:
-                return uint16_t(0x7f80);
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, half>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-                return uint16_t(0);
-            case PadValue::Min:
-                return uint16_t(0xfc00);
-            case PadValue::Max:
-                return uint16_t(0x7c00);
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, int16_t>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-                return uint16_t(0);
-            case PadValue::Min:
-                return uint16_t(0xffff);
-            case PadValue::Max:
-                return uint16_t(0x7fff);
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, uint16_t>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-            case PadValue::Min:
-                return uint16_t(0);
-            case PadValue::Max:
-                return uint16_t(0xffff);
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, int8_t>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-                return uint8_t(0);
-            case PadValue::Min:
-                return uint8_t(0xff);
-            case PadValue::Max:
-                return uint8_t(0x7f);
-        }
-    } else if constexpr (std::is_same<typename TileData::DType, uint8_t>::value) {
-        switch (TileData::PadVal) {
-            case PadValue::Null:
-            case PadValue::Zero:
-            case PadValue::Min:
-                return uint8_t(0);
-            case PadValue::Max:
-                return uint8_t(0xff);
-        }
-    } else {
-        static_assert(sizeof(TileData::DType) < 0, "TLOAD: Unsupported DType for PadValue!");
-    }
-}
-
 template <typename TileData, typename GlobalData>
 __aicore__ PTO_INLINE void TLoadInstrGm2ub(__ubuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
     uint16_t nBurst, uint32_t lenBurst, uint32_t gmGap, uint32_t ubGap, uint32_t ubPad)
@@ -161,8 +56,8 @@ __aicore__ PTO_INLINE void TLoadInstrGm2L1(__cbuf__ typename TileData::DType *ds
 
 template <typename TileData, typename GlobalData>
 __aicore__ PTO_INLINE void TLoadGm2ubNd2nd(__ubuf__ typename TileData::DType *dstAddr,
-    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
-    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
+    int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
     static_assert(TileData::Rows < 4096, "TLOAD: Rows>=4095 not supported in A2/A3");
     PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
@@ -176,25 +71,25 @@ __aicore__ PTO_INLINE void TLoadGm2ubNd2nd(__ubuf__ typename TileData::DType *ds
     uint32_t ubGapElement = (TileData::Cols - validCol);
     uint32_t ubGap = (ubGapElement * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
     uint32_t ubPad = 0;
-    if constexpr(TileData::PadVal != PadValue::Null) {
+    if constexpr (TileData::PadVal != PadValue::Null) {
         ubPad = ubGapElement % blockSizeElem;
-        set_mov_pad_val(getPadValue<TileData>());
+        set_mov_pad_val(GetPadValue<TileData>());
     }
-    typename GlobalData::DType *srcAddrP = srcAddr;
     __ubuf__ typename TileData::DType *dstAddrP = dstAddr;
+    typename GlobalData::DType *srcAddrP = srcAddr;
     int64_t dstStride2 = gShape3 * TileData::Cols;
     int64_t dstStride1 = gShape2 * dstStride2;
     int64_t dstStride0 = gShape1 * dstStride1;
 
     for (uint32_t i = 0; i < gShape0; i++) {
-        int64_t dstAddr0 = i * dstStride0;
         int64_t srcAddr0 = i * gStride0;
+        int64_t dstAddr0 = i * dstStride0;
         for (uint32_t j = 0; j < gShape1; j++) {
-            int64_t dstAddr1 = j * dstStride1;
             int64_t srcAddr1 = j * gStride1;
+            int64_t dstAddr1 = j * dstStride1;
             for (uint32_t k = 0; k < gShape2; k++) {
-                dstAddrP = dstAddr + dstAddr0 + dstAddr1 + k * dstStride2;
                 srcAddrP = srcAddr + srcAddr0 + srcAddr1 + k * gStride2;
+                dstAddrP = dstAddr + dstAddr0 + dstAddr1 + k * dstStride2;
                 TLoadInstrGm2ub<TileData, GlobalData>(dstAddrP, srcAddrP, nBurst, lenBurst, gmGap, ubGap, ubPad);
             }
         }
@@ -203,8 +98,8 @@ __aicore__ PTO_INLINE void TLoadGm2ubNd2nd(__ubuf__ typename TileData::DType *ds
 
 template <typename TileData, typename GlobalData>
 __aicore__ PTO_INLINE void TLoadGm2ubDn2dn(__ubuf__ typename TileData::DType *dstAddr,
-    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
-    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
+    int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
     PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
     PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
@@ -217,9 +112,9 @@ __aicore__ PTO_INLINE void TLoadGm2ubDn2dn(__ubuf__ typename TileData::DType *ds
     uint32_t ubGapElement = (TileData::Rows - gShape3);
     uint32_t ubGap = (ubGapElement * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
     uint32_t ubPad = 0;
-    if constexpr(TileData::PadVal != PadValue::Null) {
+    if constexpr (TileData::PadVal != PadValue::Null) {
         ubPad = ubGapElement % blockSizeElem;
-        set_mov_pad_val(getPadValue<TileData>());
+        set_mov_pad_val(GetPadValue<TileData>());
     }
     typename GlobalData::DType *srcAddrP = srcAddr;
     __ubuf__ typename TileData::DType *dstAddrP = dstAddr;
@@ -243,17 +138,22 @@ __aicore__ PTO_INLINE void TLoadGm2ubDn2dn(__ubuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadGm2ubNz2nz(__ubuf__ typename TileData::DType *dstAddr,
-    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
-    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+__aicore__ PTO_INLINE void CheckNzFormat(int gShape0, int gShape1, int gShape2, int gShape3, int gShape4)
 {
-    static_assert(GlobalData::staticShape[3] == 16 &&
+    static_assert(GlobalData::staticShape[3] == FRACTAL_NZ_ROW &&
                       GlobalData::staticShape[4] == C0_SIZE_BYTE / sizeof(typename TileData::DType),
         "When TileData is NZ format, the last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
-
     PTO_ASSERT(validRow == gShape2 * gShape3, "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
     PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
         "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
+}
+
+template <typename TileData, typename GlobalData>
+__aicore__ PTO_INLINE void TLoadGm2ubNz2nz(__ubuf__ typename TileData::DType *dstAddr,
+    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
+    int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+{
+    CheckNzFormat<TileData, GlobalData>(gShape0, gShape1, gShape2, gShape3, gShape4);
     uint16_t nBurst = gShape1;
     uint32_t lenBurst = validRow * C0_SIZE_BYTE;
     uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType);
@@ -289,8 +189,8 @@ __tf__ __aicore__ void TLoadGm2ub(typename TileData::TileDType __out__ dst, type
 
 template <typename TileData, typename GlobalData>
 __aicore__ PTO_INLINE void TLoadGm2L1Nd2nd(__cbuf__ typename TileData::DType *dstAddr,
-    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
-    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
+    int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
     PTO_ASSERT(gShape4 * sizeof(typename TileData::DType) % BLOCK_BYTE_SIZE == 0,
         "The 5th dim of ND shape must be 32 bytes aligned!");
@@ -308,11 +208,11 @@ __aicore__ PTO_INLINE void TLoadGm2L1Nd2nd(__cbuf__ typename TileData::DType *ds
     int64_t dstStride0 = gShape1 * dstStride1;
 
     for (uint32_t i = 0; i < gShape0; i++) {
-        int64_t dstAddr0 = i * dstStride0;
         int64_t srcAddr0 = i * gStride0;
+        int64_t dstAddr0 = i * dstStride0;
         for (uint32_t j = 0; j < gShape1; j++) {
-            int64_t dstAddr1 = j * dstStride1;
             int64_t srcAddr1 = j * gStride1;
+            int64_t dstAddr1 = j * dstStride1;
             for (uint32_t k = 0; k < gShape2; k++) {
                 dstAddrP = dstAddr + dstAddr0 + dstAddr1 + k * dstStride2;
                 srcAddrP = srcAddr + srcAddr0 + srcAddr1 + k * gStride2;
@@ -324,8 +224,8 @@ __aicore__ PTO_INLINE void TLoadGm2L1Nd2nd(__cbuf__ typename TileData::DType *ds
 
 template <typename TileData, typename GlobalData>
 __aicore__ PTO_INLINE void TLoadGm2L1Dn2dn(__cbuf__ typename TileData::DType *dstAddr,
-    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
-    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
+    int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
     PTO_ASSERT(gShape3 * sizeof(typename TileData::DType) % BLOCK_BYTE_SIZE == 0,
         "The 4th dim of DN shape must be 32 bytes aligned!");
@@ -336,8 +236,8 @@ __aicore__ PTO_INLINE void TLoadGm2L1Dn2dn(__cbuf__ typename TileData::DType *ds
     uint16_t lenBurst = (validRow * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
     uint16_t gmGap = ((gStride4 - gShape3) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
     uint16_t l1Gap = ((TileData::Rows - gShape3) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
-    typename GlobalData::DType *srcAddrP = srcAddr;
     __cbuf__ typename TileData::DType *dstAddrP = dstAddr;
+    typename GlobalData::DType *srcAddrP = srcAddr;
 
     int64_t dstStride2 = gShape4 * TileData::Rows;
     int64_t dstStride1 = gShape2 * dstStride2;
@@ -346,11 +246,11 @@ __aicore__ PTO_INLINE void TLoadGm2L1Dn2dn(__cbuf__ typename TileData::DType *ds
         int64_t dstAddr0 = i * dstStride0;
         int64_t srcAddr0 = i * gStride0;
         for (uint32_t j = 0; j < gShape1; j++) {
-            int64_t dstAddr1 = j * dstStride1;
             int64_t srcAddr1 = j * gStride1;
+            int64_t dstAddr1 = j * dstStride1;
             for (uint32_t k = 0; k < gShape2; k++) {
-                dstAddrP = dstAddr + dstAddr0 + dstAddr1 + k * dstStride2;
                 srcAddrP = srcAddr + srcAddr0 + srcAddr1 + k * gStride2;
+                dstAddrP = dstAddr + dstAddr0 + dstAddr1 + k * dstStride2;
                 TLoadInstrGm2L1<TileData, GlobalData>(dstAddrP, srcAddrP, nBurst, lenBurst, gmGap, l1Gap);
             }
         }
@@ -359,17 +259,10 @@ __aicore__ PTO_INLINE void TLoadGm2L1Dn2dn(__cbuf__ typename TileData::DType *ds
 
 template <typename TileData, typename GlobalData>
 __aicore__ PTO_INLINE void TLoadGm2L1Nz2nz(__cbuf__ typename TileData::DType *dstAddr,
-    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
-    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+    typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
+    int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
-    static_assert(GlobalData::staticShape[3] == 16 &&
-                        GlobalData::staticShape[4] == C0_SIZE_BYTE / sizeof(typename TileData::DType),
-        "When TileData is NZ format, the last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
-    PTO_ASSERT(validRow == gShape2 * gShape3,
-        "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
-    PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
-        "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
-
+    CheckNzFormat<TileData, GlobalData>(gShape0, gShape1, gShape2, gShape3, gShape4);
     uint16_t nBurst = gShape1;
     uint32_t lenBurst = validRow;
     uint32_t gmGap = ((gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
@@ -448,7 +341,8 @@ __tf__ __aicore__ void TLoadGm2L1Dn2zn(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void CheckTloadStaticData() {
+__aicore__ PTO_INLINE void CheckTloadStaticData()
+{
     static_assert(
         std::is_same_v<typename TileData::DType, int8_t> || std::is_same_v<typename TileData::DType, uint8_t> ||
             std::is_same_v<typename TileData::DType, int16_t> || std::is_same_v<typename TileData::DType, uint16_t> ||
@@ -518,5 +412,5 @@ __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
         }
     }
 }
-}  // namespace pto
-#endif  // TLOAD_HPP
+} // namespace pto
+#endif // TLOAD_HPP

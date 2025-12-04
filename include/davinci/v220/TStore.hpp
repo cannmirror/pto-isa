@@ -12,41 +12,106 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TSTORE_HPP
 
 namespace pto {
-
 template <typename GlobalData, typename TileData>
-__aicore__ PTO_INLINE void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src,
+__aicore__ PTO_INLINE void TStoreUb2gmInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src,
     uint16_t nBurst, uint32_t lenBurst, uint32_t gmGap, uint32_t ubGap)
 {
     if constexpr (sizeof(typename TileData::DType) == 1) {
-        copy_ubuf_to_gm_align_b8(dst,
-            src,
-            0, /* sid */
-            nBurst,
-            lenBurst,
-            0 /* left padding count */,
-            0 /* right padding count */,
-            ubGap,
-            gmGap);
+        copy_ubuf_to_gm_align_b8(dst, src, 0, nBurst, lenBurst, 0, 0, ubGap, gmGap);
     } else if constexpr (sizeof(typename TileData::DType) == 2) {
-        copy_ubuf_to_gm_align_b16(dst,
-            src,
-            0, /* sid */
-            nBurst,
-            lenBurst,
-            0 /* left padding count */,
-            0 /* right padding count */,
-            ubGap,
-            gmGap);
+        copy_ubuf_to_gm_align_b16(dst, src, 0, nBurst, lenBurst, 0, 0, ubGap, gmGap);
     } else if constexpr (sizeof(typename TileData::DType) == 4 || sizeof(typename TileData::DType) == 8) {
-        copy_ubuf_to_gm_align_b32(dst,
-            src,
-            0, /* sid */
-            nBurst,
-            lenBurst,
-            0 /* left padding count */,
-            0 /* right padding count */,
-            ubGap,
-            gmGap);
+        copy_ubuf_to_gm_align_b32(dst, src, 0, nBurst, lenBurst, 0, 0, ubGap, gmGap);
+    }
+}
+
+template <typename GlobalData, typename TileData>
+__aicore__ PTO_INLINE void TStoreUb2gmNd2nd(typename GlobalData::DType *dstAddr,
+    __ubuf__ typename TileData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+{
+    PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
+    PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
+        "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
+    uint16_t nBurst = gShape3;
+    uint32_t lenBurst = validCol * sizeof(typename TileData::DType);
+    uint32_t gmGap = (gStride3 - gShape4) * sizeof(typename TileData::DType);
+    uint32_t ubGap = ((TileData::Cols - validCol) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+    typename GlobalData::DType *dstGlobalAddr = dstAddr;
+    __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+
+    int64_t srcStride2 = gShape3 * TileData::Cols;
+    int64_t srcStride1 = gShape2 * srcStride2;
+    int64_t srcStride0 = gShape1 * srcStride1;
+    for (uint32_t i = 0; i < gShape0; i++) {
+        int64_t dstAddr0 = i * gStride0;
+        int64_t srcAddr0 = i * srcStride0;
+        for (uint32_t j = 0; j < gShape1; j++) {
+            int64_t dstAddr1 = j * gStride1;
+            int64_t srcAddr1 = j * srcStride1;
+            for (uint32_t k = 0; k < gShape2; k++) {
+                dstGlobalAddr = dstAddr + dstAddr0 + dstAddr1 + k * gStride2;
+                srcTileAddr = srcAddr + srcAddr0 + srcAddr1 + k * srcStride2;
+                TStoreUb2gmInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);
+            }
+        }
+    }
+}
+
+template <typename GlobalData, typename TileData>
+__aicore__ PTO_INLINE void TStoreUb2gmDn2dn(typename GlobalData::DType *dstAddr,
+    __ubuf__ typename TileData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+{
+    PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
+    PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
+        "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
+    uint16_t nBurst = gShape4;
+    uint32_t lenBurst = validRow * sizeof(typename TileData::DType);
+    uint32_t gmGap = (gStride4 - gShape3) * sizeof(typename TileData::DType);
+    uint32_t ubGap = ((TileData::Rows - gShape3) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+    typename GlobalData::DType *dstGlobalAddr = dstAddr;
+    __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+    int64_t srcStride2 = TileData::Rows * gShape4;
+    int64_t srcStride1 = gShape2 * srcStride2;
+    int64_t srcStride0 = gShape1 * srcStride1;
+
+    for (uint32_t i = 0; i < gShape0; i++) {
+        int64_t srcAddr0 = i * srcStride0;
+        int64_t dstAddr0 = i * gStride0;
+        for (uint32_t j = 0; j < gShape1; j++) {
+            int64_t srcAddr1 = j * srcStride1;
+            int64_t dstAddr1 = j * gStride1;
+            for (uint32_t k = 0; k < gShape2; k++) {
+                dstGlobalAddr = dstAddr + dstAddr0 + dstAddr1 + k * gStride2;
+                srcTileAddr = srcAddr + srcAddr0 + srcAddr1 + k * srcStride2;
+                TStoreUb2gmInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);
+            }
+        }
+    }
+}
+
+template <typename GlobalData, typename TileData>
+__aicore__ PTO_INLINE void TStoreUb2gmNz2nz(typename GlobalData::DType *dstAddr,
+    __ubuf__ typename TileData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
+{
+    PTO_ASSERT(validRow == gShape2 * gShape3, "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
+    PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
+        "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
+    uint16_t nBurst = gShape1;
+    uint32_t lenBurst = validRow * C0_SIZE_BYTE;
+    uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType);
+    uint32_t ubGap = TileData::Rows - validRow;
+
+    typename GlobalData::DType *dstGlobalAddr = dstAddr;
+    __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+
+    int64_t tileStride = TileData::Rows * gShape1 * gShape4;
+    for (uint32_t i = 0; i < gShape0; i++) {
+        dstGlobalAddr = dstAddr + i * gStride0;
+        srcTileAddr = srcAddr + i * tileStride;
+        TStoreUb2gmInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);
     }
 }
 
@@ -55,90 +120,18 @@ __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename 
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
-    constexpr uint32_t blockSize = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     __ubuf__ typename TileData::DType *srcAddr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src);
     typename GlobalData::DType *dstAddr = dst;
 
-    // 处理ND格式数据
     if constexpr (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
-        // 单条指令处理一个二维数据搬运
-        PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
-        PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
-            "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
-        uint16_t nBurst = gShape3;
-        uint32_t lenBurst = validCol * sizeof(typename TileData::DType);
-        uint32_t gmGap = (gStride3 - gShape4) * sizeof(typename TileData::DType);
-        uint32_t ubGap = (TileData::Cols - validCol) / blockSize;
-
-        typename GlobalData::DType *dstGlobalAddr = dstAddr;
-        __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
-
-        int64_t srcStride2 = gShape3 * TileData::Cols;
-        int64_t srcStride1 = gShape2 * srcStride2;
-        int64_t srcStride0 = gShape1 * srcStride1;
-        for (uint32_t i = 0; i < gShape0; i++) {
-            int64_t srcAddr0 = i * srcStride0;
-            int64_t dstAddr0 = i * gStride0;
-            for (uint32_t j = 0; j < gShape1; j++) {
-                int64_t srcAddr1 = j * srcStride1;
-                int64_t dstAddr1 = j * gStride1;
-                for (uint32_t k = 0; k < gShape2; k++) {
-                    dstGlobalAddr = dstAddr + dstAddr0 + dstAddr1 + k * gStride2;
-                    srcTileAddr = srcAddr + srcAddr0 + srcAddr1 + k * srcStride2;
-                    TStoreInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);
-                }
-            }
-        }
-        // 处理DN格式数据
+        TStoreUb2gmNd2nd<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
-        PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
-        PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
-            "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
-        uint16_t nBurst = gShape4;
-        uint32_t lenBurst = validRow * sizeof(typename TileData::DType);
-        uint32_t gmGap = (gStride4 - gShape3) * sizeof(typename TileData::DType);
-        uint32_t ubGap = (TileData::Rows - gShape3) / blockSize;
-
-        typename GlobalData::DType *dstGlobalAddr = dstAddr;
-        __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
-
-        int64_t srcStride2 = TileData::Rows * gShape4;
-        int64_t srcStride1 = gShape2 * srcStride2;
-        int64_t srcStride0 = gShape1 * srcStride1;
-        for (uint32_t i = 0; i < gShape0; i++) {
-            int64_t srcAddr0 = i * srcStride0;
-            int64_t dstAddr0 = i * gStride0;
-            for (uint32_t j = 0; j < gShape1; j++) {
-                int64_t srcAddr1 = j * srcStride1;
-                int64_t dstAddr1 = j * gStride1;
-                for (uint32_t k = 0; k < gShape2; k++) {
-                    dstGlobalAddr = dstAddr + dstAddr0 + dstAddr1 + k * gStride2;
-                    srcTileAddr = srcAddr + srcAddr0 + srcAddr1 + k * srcStride2;
-                    TStoreInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);
-                }
-            }
-        }
+        TStoreUb2gmDn2dn<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
-        // 小分型由gShape3 * gShape4表示
-        PTO_ASSERT(validRow == gShape2 * gShape3,
-            "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
-        PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
-            "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
-        constexpr uint32_t c0_size = 32;
-        uint16_t nBurst = gShape1;
-        uint32_t lenBurst = validRow * c0_size;
-        uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType);
-        uint32_t ubGap = TileData::Rows - validRow;
-
-        typename GlobalData::DType *dstGlobalAddr = dstAddr;
-        __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
-
-        int64_t tileStride = TileData::Rows * gShape1 * gShape4;
-        for (uint32_t i = 0; i < gShape0; i++) {
-            dstGlobalAddr = dstAddr + i * gStride0;
-            srcTileAddr = srcAddr + i * tileStride;
-            TStoreInstr<GlobalData, TileData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, gmGap, ubGap);
-        }
+        TStoreUb2gmNz2nz<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
 }
 
@@ -317,12 +310,13 @@ __tf__ __aicore__ void TStoreAcc(typename GlobalData::DType __out__ *dst, typena
     typename GlobalData::DType *dstAddr = dst;
 
     if constexpr (GlobalData::layout == pto::Layout::ND) {
-        TStoreAccND<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        TStoreAccND<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::NZ) {
-        TStoreAccNZ<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        TStoreAccNZ<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
 }
-
 
 template <typename TileData, typename GlobalData>
 __aicore__ PTO_INLINE void CheckStaticVec()
@@ -334,8 +328,7 @@ __aicore__ PTO_INLINE void CheckStaticVec()
             std::is_same_v<typename TileData::DType, int64_t> || std::is_same_v<typename TileData::DType, uint64_t> ||
             std::is_same_v<typename TileData::DType, half> || std::is_same_v<typename TileData::DType, bfloat16_t> ||
             std::is_same_v<typename TileData::DType, float>,
-        "Data type must be "
-        "int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/int64_t/uint64_t/half/bfloat16_t/float!");
+        "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/int64_t/uint64_t/half/bfloat16_t/float!");
     static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
         "Source dtype must be same with dst dtype!");
     static_assert(((GlobalData::layout == pto::Layout::ND) &&
@@ -382,45 +375,22 @@ __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
     static_assert(TileData::Loc == pto::Location::Vec || TileData::Loc == pto::Location::Acc,
         "Source location only suport Vec/Acc!");
-    PTO_ASSERT(dst.GetShape(0) > 0 && dst.GetShape(1) > 0 && dst.GetShape(2) > 0 &&
-        dst.GetShape(3) > 0 && dst.GetShape(4) > 0 && src.GetValidRow() > 0 && src.GetValidCol() > 0,
+    PTO_ASSERT(dst.GetShape(0) > 0 && dst.GetShape(1) > 0 && dst.GetShape(2) > 0 && dst.GetShape(3) > 0 &&
+                   dst.GetShape(4) > 0 && src.GetValidRow() > 0 && src.GetValidCol() > 0,
         "The shape of src and dst must be greater than 0!");
     if constexpr (TileData::Loc == pto::Location::Vec) {
         CheckStaticVec<TileData, GlobalData>();
-        // GlobalTensor为5维数据，Tile为2维数据
-        TStore<GlobalData, TileData>(dst.data(),
-            src.data(),
-            dst.GetShape(0),
-            dst.GetShape(1),
-            dst.GetShape(2),
-            dst.GetShape(3),
-            dst.GetShape(4),
-            dst.GetStride(0),
-            dst.GetStride(1),
-            dst.GetStride(2),
-            dst.GetStride(3),
-            dst.GetStride(4),
-            src.GetValidRow(),
-            src.GetValidCol());
+        TStore<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(0), dst.GetShape(1), dst.GetShape(2),
+            dst.GetShape(3), dst.GetShape(4), dst.GetStride(0), dst.GetStride(1), dst.GetStride(2), dst.GetStride(3),
+            dst.GetStride(4), src.GetValidRow(), src.GetValidCol());
     } else if constexpr (TileData::Loc == pto::Location::Acc) {
         CheckStaticAcc<TileData, GlobalData, false>();
         if constexpr (atomicType == AtomicType::AtomicAdd) {
             SetAtomicAdd<typename GlobalData::DType>();
         }
-        TStoreAcc<GlobalData, TileData>(dst.data(),
-            src.data(),
-            dst.GetShape(0),
-            dst.GetShape(1),
-            dst.GetShape(2),
-            dst.GetShape(3),
-            dst.GetShape(4),
-            dst.GetStride(0),
-            dst.GetStride(1),
-            dst.GetStride(2),
-            dst.GetStride(3),
-            dst.GetStride(4),
-            src.GetValidRow(),
-            src.GetValidCol());
+        TStoreAcc<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(0), dst.GetShape(1), dst.GetShape(2),
+            dst.GetShape(3), dst.GetShape(4), dst.GetStride(0), dst.GetStride(1), dst.GetStride(2), dst.GetStride(3),
+            dst.GetStride(4), src.GetValidRow(), src.GetValidCol());
         if constexpr (atomicType == AtomicType::AtomicAdd) {
             SetAtomicNone();
         }

@@ -17,17 +17,16 @@ using namespace PtoTestCommon;
 
 template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-void LaunchTStore(T *out, T * src, void *stream);
+void LaunchTStore(T *out, T *src, void *stream);
 
 class TStoreTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -35,9 +34,10 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template<int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
-int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-void test_tstore() {
+template <int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void test_tstore()
+{
     size_t dataSize = gWholeShape0 * gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4 * sizeof(DataType);
 
     aclInit(nullptr);
@@ -58,18 +58,8 @@ void test_tstore() {
     ReadFile(GetGoldenDir() + "/input.bin", dataSize, srcHost, dataSize);
 
     aclrtMemcpy(srcDevice, dataSize, srcHost, dataSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTStore<format,
-            DataType,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(dstDevice, srcDevice, stream);
+    LaunchTStore<format, DataType, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1,
+        gWholeShape2, gWholeShape3, gWholeShape4>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dataSize, dstDevice, dataSize, ACL_MEMCPY_DEVICE_TO_HOST);

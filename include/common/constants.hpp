@@ -56,10 +56,10 @@ enum class AtomicType : uint8_t {
 };
 
 enum class PadValue {
-  Null,
-  Zero,
-  Max,
-  Min,
+    Null,
+    Zero,
+    Max,
+    Min,
 };
 
 template <typename DType, PadValue PadVal>
@@ -229,7 +229,7 @@ struct PadValueMap<uint8_t, PadValue::Max> {
     static constexpr auto value = uint8_t(0xff);
 };
 
-#if defined (__DAV_V310)
+#if defined(__DAV_V310)
 template <PadValue PadVal>
 struct PadValueMap<float4_e1m2x2_t, PadVal> {
     static constexpr auto value = uint8_t(0);
@@ -241,7 +241,8 @@ struct PadValueMap<float4_e2m1x2_t, PadVal> {
 #endif
 
 template <typename TileData>
-__aicore__ PTO_INLINE constexpr auto GetPadValue() {
+__aicore__ PTO_INLINE constexpr auto GetPadValue()
+{
     using DType = typename TileData::DType;
     constexpr PadValue PadVal = TileData::PadVal;
     return PadValueMap<DType, PadVal>::value;
@@ -257,7 +258,8 @@ enum class TileLayoutCustom : uint8_t {
 };
 
 template <typename TileData>
-__aicore__ PTO_INLINE constexpr TileLayoutCustom GetTileLayoutCustom() {
+__aicore__ PTO_INLINE constexpr TileLayoutCustom GetTileLayoutCustom()
+{
     if constexpr (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)) {
         return TileLayoutCustom::ND;
     } else if constexpr (!TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)) {
