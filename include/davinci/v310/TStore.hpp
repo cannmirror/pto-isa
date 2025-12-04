@@ -274,6 +274,119 @@ __aicore__ PTO_INLINE void TStoreInstr(typename GlobalData::DType *dst, __ubuf__
 }
 
 template <typename GlobalData, typename TileData>
+__aicore__ PTO_INLINE void TStoreVecND(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    typename GlobalData::DType *dstGlobalAddr = dstAddr;
+    __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+    uint32_t loop1SrcStride = GetByteSize<typename TileData::DType>(gShape3 * TileData::Cols);
+    uint32_t loop1DstStride = GetByteSize<typename TileData::DType>(gStride2);
+    uint32_t loop2SrcStride = GetByteSize<typename TileData::DType>(gShape2 * gShape3 * TileData::Cols);
+    uint32_t loop2DstStride = GetByteSize<typename TileData::DType>(gStride1);
+
+    uint64_t loopSizeConfig = 0;
+    uint64_t loop1Size = gShape2 & 0x1FFFFF;
+    loopSizeConfig |= loop1Size;
+    uint64_t loop2Size = (static_cast<uint64_t>(gShape1) & 0x3FFFFF) << 21;
+    loopSizeConfig |= loop2Size;
+    set_loop_size_ubtoout(loopSizeConfig);
+
+    uint64_t loop1Config = 0;
+    loop1Config |= ((uint64_t)loop1SrcStride) << 40;
+    loop1Config |= (uint64_t)loop1DstStride;
+    set_loop1_stride_ubtoout(loop1Config);
+    uint64_t loop2Config = 0;
+    loop2Config |= ((uint64_t)loop2SrcStride) << 40;
+    loop2Config |= (uint64_t)loop2DstStride;
+    set_loop2_stride_ubtoout(loop2Config);
+    uint64_t srcStride0 = gShape1 * gShape2 * gShape3 * TileData::Cols;
+    if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
+                  std::is_same<typename TileData::DType, float4_e2m1x2_t>::value) {
+        srcStride0 = srcStride0 >> 1; // fp4 srcAddr offset need divide 2 as use b8 to move
+        gStride0 = gStride0 >> 1;     // fp4 dstAddr offset need divide 2 as use b8 to move
+    }
+    uint16_t nBurst = gShape3;
+
+    uint32_t lenBurst = GetByteSize<typename TileData::DType>(validCol);
+    uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride3);
+    uint32_t burstSrcStride = GetByteSize<typename TileData::DType>(TileData::Cols);
+    for (uint32_t k = 0; k < gShape0; k++) {
+        dstGlobalAddr = dstAddr + k * gStride0;
+        srcTileAddr = srcAddr + k * srcStride0;
+        TStoreInstr<TileData, GlobalData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, burstDstStride, burstSrcStride);
+    }
+}
+template <typename GlobalData, typename TileData>
+__aicore__ PTO_INLINE void TStoreVecDN(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    typename GlobalData::DType *dstGlobalAddr = dstAddr;
+    __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+    uint32_t loop1SrcStride = GetByteSize<typename TileData::DType>(TileData::Rows * gShape4);
+    uint32_t loop1DstStride = GetByteSize<typename TileData::DType>(gStride2);
+    uint32_t loop2SrcStride = GetByteSize<typename TileData::DType>(gShape2 * TileData::Rows * gShape4);
+    uint32_t loop2DstStride = GetByteSize<typename TileData::DType>(gStride1);
+
+    uint64_t loop1Config = 0;
+    loop1Config |= ((uint64_t)loop1SrcStride) << 40;
+    loop1Config |= (uint64_t)loop1DstStride;
+    set_loop1_stride_ubtoout(loop1Config);
+    uint64_t loop2Config = 0;
+    loop2Config |= ((uint64_t)loop2SrcStride) << 40;
+    loop2Config |= (uint64_t)loop2DstStride;
+    set_loop2_stride_ubtoout(loop2Config);
+
+    uint64_t loopSizeConfig = 0;
+    uint64_t loop1Size = gShape2 & 0x1FFFFF;
+    loopSizeConfig |= loop1Size;
+    uint64_t loop2Size = (static_cast<uint64_t>(gShape1) & 0x3FFFFF) << 21;
+    loopSizeConfig |= loop2Size;
+    set_loop_size_ubtoout(loopSizeConfig);
+
+    uint64_t srcStride0 = gShape1 * gShape2 * gShape4 * TileData::Rows;
+    uint16_t nBurst = gShape4;
+    uint32_t lenBurst = GetByteSize<typename TileData::DType>(validRow);
+    uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride4);
+    uint32_t burstSrcStride = GetByteSize<typename TileData::DType>(TileData::Rows);
+    if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
+                  std::is_same<typename TileData::DType, float4_e2m1x2_t>::value) {
+        srcStride0 = srcStride0 >> 1; // fp4 srcAddr offset need divide 2 as use b8 to move
+        gStride0 = gStride0 >> 1;     // fp4 dstAddr offset need divide 2 as use b8 to move
+    }
+
+    for (uint32_t k = 0; k < gShape0; k++) {
+        dstGlobalAddr = dstAddr + k * gStride0;
+        srcTileAddr = srcAddr + k * srcStride0;
+        TStoreInstr<TileData, GlobalData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, burstDstStride, burstSrcStride);
+    }
+}
+
+template <typename GlobalData, typename TileData>
+__aicore__ PTO_INLINE void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    typename GlobalData::DType *dstGlobalAddr = dstAddr;
+    __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
+    uint16_t nBurst = gShape1;
+    uint32_t lenBurst = validRow * C0_SIZE_BYTE;
+    uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride1);
+    uint32_t burstSrcStride = TileData::Rows * C0_SIZE_BYTE;
+    int64_t tileStride = gShape1 * TileData::Rows * gShape4;
+    if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
+                  std::is_same<typename TileData::DType, float4_e2m1x2_t>::value) {
+        tileStride = tileStride >> 1; // fp4 srcAddr offset need divide 2 as use b8 to move
+        gStride0 = gStride0 >> 1;     // fp4 dstAddr offset need divide 2 as use b8 to move
+    }
+    for (uint32_t k = 0; k < gShape0; k++) {
+        dstGlobalAddr = dstAddr + k * gStride0;
+        srcTileAddr = srcAddr + k * tileStride;
+        TStoreInstr<TileData, GlobalData>(dstGlobalAddr, srcTileAddr, nBurst, lenBurst, burstDstStride, burstSrcStride);
+    }
+}
+template <typename GlobalData, typename TileData>
 __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
@@ -281,105 +394,15 @@ __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename 
     __ubuf__ typename TileData::DType *srcAddr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src);
     typename GlobalData::DType *dstAddr = dst;
 
-    typename GlobalData::DType *dstGlobalAddr = dstAddr;
-    __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
-
     if constexpr (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
-        uint32_t loop1SrcStride = GetByteSize<typename TileData::DType>(gShape3 * TileData::Cols);
-        uint32_t loop1DstStride = GetByteSize<typename TileData::DType>(gStride2);
-        uint32_t loop2SrcStride = GetByteSize<typename TileData::DType>(gShape2 * gShape3 * TileData::Cols);
-        uint32_t loop2DstStride = GetByteSize<typename TileData::DType>(gStride1);
-
-        uint64_t loop1Config = 0;
-        loop1Config |= ((uint64_t)loop1SrcStride) << 40;
-        loop1Config |= (uint64_t)loop1DstStride;
-        set_loop1_stride_ubtoout(loop1Config);
-        uint64_t loop2Config = 0;
-        loop2Config |= ((uint64_t)loop2SrcStride) << 40;
-        loop2Config |= (uint64_t)loop2DstStride;
-        set_loop2_stride_ubtoout(loop2Config);
-
-        uint64_t loopSizeConfig = 0;
-        uint64_t loop1Size = gShape2 & 0x1FFFFF;
-        loopSizeConfig |= loop1Size;
-        uint64_t loop2Size = (static_cast<uint64_t>(gShape1) & 0x3FFFFF) << 21;
-        loopSizeConfig |= loop2Size;
-        set_loop_size_ubtoout(loopSizeConfig);
-
-        uint64_t srcStride0 = gShape1 * gShape2 * gShape3 * TileData::Cols;
-        if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
-                      std::is_same<typename TileData::DType, float4_e2m1x2_t>::value) {
-            srcStride0 = srcStride0 >> 1; // fp4 srcAddr offset need divide 2 as use b8 to move
-            gStride0 = gStride0 >> 1;     // fp4 dstAddr offset need divide 2 as use b8 to move
-        }
-        uint16_t nBurst = gShape3;
-
-        uint32_t lenBurst = GetByteSize<typename TileData::DType>(validCol);
-        uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride3);
-        uint32_t burstSrcStride = GetByteSize<typename TileData::DType>(TileData::Cols);
-        for (uint32_t k = 0; k < gShape0; k++) {
-            dstGlobalAddr = dstAddr + k * gStride0;
-            srcTileAddr = srcAddr + k * srcStride0;
-            TStoreInstr<TileData, GlobalData>(
-                dstGlobalAddr, srcTileAddr, nBurst, lenBurst, burstDstStride, burstSrcStride);
-        }
+        TStoreVecND<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
-        uint32_t loop1SrcStride = GetByteSize<typename TileData::DType>(TileData::Rows * gShape4);
-        uint32_t loop1DstStride = GetByteSize<typename TileData::DType>(gStride2);
-        uint32_t loop2SrcStride = GetByteSize<typename TileData::DType>(gShape2 * TileData::Rows * gShape4);
-        uint32_t loop2DstStride = GetByteSize<typename TileData::DType>(gStride1);
-
-        uint64_t loop1Config = 0;
-        loop1Config |= ((uint64_t)loop1SrcStride) << 40;
-        loop1Config |= (uint64_t)loop1DstStride;
-        set_loop1_stride_ubtoout(loop1Config);
-        uint64_t loop2Config = 0;
-        loop2Config |= ((uint64_t)loop2SrcStride) << 40;
-        loop2Config |= (uint64_t)loop2DstStride;
-        set_loop2_stride_ubtoout(loop2Config);
-
-        uint64_t loopSizeConfig = 0;
-        uint64_t loop1Size = gShape2 & 0x1FFFFF;
-        loopSizeConfig |= loop1Size;
-        uint64_t loop2Size = (static_cast<uint64_t>(gShape1) & 0x3FFFFF) << 21;
-        loopSizeConfig |= loop2Size;
-        set_loop_size_ubtoout(loopSizeConfig);
-
-        uint64_t srcStride0 = gShape1 * gShape2 * gShape4 * TileData::Rows;
-        uint16_t nBurst = gShape4;
-        uint32_t lenBurst = GetByteSize<typename TileData::DType>(validRow);
-        uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride4);
-        uint32_t burstSrcStride = GetByteSize<typename TileData::DType>(TileData::Rows);
-        if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
-                      std::is_same<typename TileData::DType, float4_e2m1x2_t>::value) {
-            srcStride0 = srcStride0 >> 1; // fp4 srcAddr offset need divide 2 as use b8 to move
-            gStride0 = gStride0 >> 1;     // fp4 dstAddr offset need divide 2 as use b8 to move
-        }
-
-        for (uint32_t k = 0; k < gShape0; k++) {
-            dstGlobalAddr = dstAddr + k * gStride0;
-            srcTileAddr = srcAddr + k * srcStride0;
-            TStoreInstr<TileData, GlobalData>(
-                dstGlobalAddr, srcTileAddr, nBurst, lenBurst, burstDstStride, burstSrcStride);
-        }
+        TStoreVecDN<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
-        constexpr uint32_t c0_size = 32;
-        uint16_t nBurst = gShape1;
-        uint32_t lenBurst = validRow * c0_size;
-        uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride1);
-        uint32_t burstSrcStride = TileData::Rows * c0_size;
-        int64_t tileStride = gShape1 * TileData::Rows * gShape4;
-        if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
-                      std::is_same<typename TileData::DType, float4_e2m1x2_t>::value) {
-            tileStride = tileStride >> 1; // fp4 srcAddr offset need divide 2 as use b8 to move
-            gStride0 = gStride0 >> 1;     // fp4 dstAddr offset need divide 2 as use b8 to move
-        }
-        for (uint32_t k = 0; k < gShape0; k++) {
-            dstGlobalAddr = dstAddr + k * gStride0;
-            srcTileAddr = srcAddr + k * tileStride;
-            TStoreInstr<TileData, GlobalData>(
-                dstGlobalAddr, srcTileAddr, nBurst, lenBurst, burstDstStride, burstSrcStride);
-        }
+        TStoreVecNZ<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
 }
 
