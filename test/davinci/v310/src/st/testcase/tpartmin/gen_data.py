@@ -1,0 +1,113 @@
+#!/usr/bin/python3
+# coding=utf-8
+
+import os
+import numpy as np
+np.random.seed(19)
+
+
+def gen_golden_data_tpartmin(case_name, param):
+    dtype = param.dtype
+
+    dst_rows,  dst_cols  = [param.dstVR,  param.dstVC]
+    src0_rows, src0_cols = [param.src0VR, param.src0VC]
+    src1_rows, src1_cols = [param.src1VR, param.src1VC]
+
+    # Generate random input arrays
+    src0_in = np.random.uniform(low=-255, high=255, size=(src0_rows, src0_cols)).astype(dtype)
+    src1_in = np.random.uniform(low=-255, high=255, size=(src1_rows, src1_cols)).astype(dtype)
+
+
+    pad_value = {
+        np.float32: np.float32(np.inf),
+        np.float16: np.float16(np.inf),
+        #bfloat16:  np.float32(-np.inf),
+        np.uint8:   np.iinfo(np.uint8).max,
+        np.int8:    np.iinfo(np.int8).max,
+        np.uint16:  np.iinfo(np.uint16).max,
+        np.int16:   np.iinfo(np.int16).max,
+        np.uint32:  np.iinfo(np.uint32).max,
+        np.int32:   np.iinfo(np.int32).max,
+    }.get(dtype)
+
+    if src0_rows < dst_rows or src0_cols < dst_cols:
+        padded_src0 = np.full((dst_rows, dst_cols) , pad_value, dtype=dtype)
+        padded_src0[:src0_rows, :src0_cols] = src0_in
+    else:
+        padded_src0 = src0_in
+
+    if src1_rows < dst_rows or src1_cols < dst_cols:
+        padded_src1 = np.full((dst_rows, dst_cols) , pad_value, dtype=dtype)
+        padded_src1[:src1_rows, :src1_cols] = src1_in
+    else:
+        padded_src1 = src1_in
+
+
+    # Save the input and golden data to binary files
+    src0_in.tofile("input1.bin")
+    src1_in.tofile("input2.bin")
+    
+    dst_out = np.minimum(padded_src0, padded_src1) #elemwise min
+    dst_out.tofile("golden.bin")
+
+    output = np.zeros((dst_rows, dst_cols)).astype(dtype)
+    return output, src0_in, src1_in, dst_out
+
+
+class tpartminParams:
+    def __init__(self, dtype, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC):
+        self.dtype = dtype
+        self.dstVR = dstVR
+        self.dstVC = dstVC
+        self.src0VR = src0VR
+        self.src0VC = src0VC
+        self.src1VR = src1VR
+        self.src1VC = src1VC
+
+
+def generate_case_name(param):
+    dtype_str = {
+        np.float32: 'fp32',
+        np.float16: 'fp16',
+        np.int8:    's8',
+        np.int16:   's16',
+        np.int32:   's32',
+        np.uint8:   'u8',
+        np.uint16:  'u16',
+        np.uint32:  'u32',
+        # bfloat16, 'bf16'
+    }[param.dtype]
+    return f"TPARTMINTest.case_{dtype_str}_{param.dstVR}x{param.dstVC}_{param.src0VR}x{param.src0VC}_{param.src1VR}x{param.src1VC}"
+
+if __name__ == "__main__":
+    # Get the absolute path of the script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    testcases_dir = os.path.join(script_dir, "testcases")
+
+    # Ensure the testcases directory exists
+    if not os.path.exists(testcases_dir):
+        os.makedirs(testcases_dir)
+
+    case_params_list = [
+        tpartminParams(np.float32, 64,  64,  64,  64,  64,  64),
+        tpartminParams(np.float32, 128, 64,  128, 64,  96,  64),
+        tpartminParams(np.float32, 95,  95,  95,  95,  95,  95),
+        tpartminParams(np.float32, 122, 123, 104, 123, 122, 110),
+        tpartminParams(np.float16, 122, 123, 104, 123, 122, 110),
+        tpartminParams(np.int8,    122, 123, 104, 123, 122, 110),
+        tpartminParams(np.int16,   122, 123, 104, 123, 122, 110),
+        tpartminParams(np.int32,   122, 123, 104, 123, 122, 110),
+        tpartminParams(np.uint8,   122, 123, 104, 123, 122, 110),
+        tpartminParams(np.uint16,  122, 123, 104, 123, 122, 110),
+        tpartminParams(np.uint32,  122, 123, 104, 123, 122, 110),
+        # tpartminParams(bfloat16,  122, 123, 104, 123, 122, 110)
+    ]
+
+    for i, param in enumerate(case_params_list):
+        case_name = generate_case_name(param)
+        if not os.path.exists(case_name):
+            os.makedirs(case_name)
+        original_dir = os.getcwd()
+        os.chdir(case_name)
+        gen_golden_data_tpartadd(case_name, param)
+        os.chdir(original_dir)
