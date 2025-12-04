@@ -27,15 +27,14 @@ __aicore__ inline void TSTORE_MAT2GM(GlobalData &dst, TileData &src)
     uint32_t validRow = src.GetValidRow();
     uint32_t validCol = src.GetValidCol();
 
-    if constexpr (GlobalData::layout == pto::Layout::ND &&
-        GetTileLayoutCustom<TileData>() == TileLayoutCustom::ND) {
+    if constexpr (GlobalData::layout == pto::Layout::ND && GetTileLayoutCustom<TileData>() == TileLayoutCustom::ND) {
         uint16_t nBurst = validRow;
         uint16_t lenBurst = validCol / blockSizeElem;
         uint16_t l1Gap = (TileData::Cols - validCol) / blockSizeElem;
         uint16_t gmGap = 0;
         copy_cbuf_to_gm(dstAddr, srcAddr, (uint8_t)0, nBurst, lenBurst, l1Gap, gmGap);
     } else if constexpr (GlobalData::layout == pto::Layout::DN &&
-        GetTileLayoutCustom<TileData>() == TileLayoutCustom::DN) {
+                         GetTileLayoutCustom<TileData>() == TileLayoutCustom::DN) {
         uint16_t nBurst = validCol;
         uint16_t lenBurst = validRow / blockSizeElem;
         uint16_t l1Gap = (TileData::Rows - validRow) / blockSizeElem;
@@ -61,10 +60,7 @@ template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gS
 __aicore__ inline void RunTLoadND2ND(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape3 * gWholeShape4,
-        gWholeShape4,
-        1};
+        gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4, 1};
     constexpr int blockSize = 32 / sizeof(T);
     constexpr int validRow = gShape0 * gShape1 * gShape2 * gShape3;
     constexpr int validCol = gShape4;
@@ -95,10 +91,7 @@ template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gS
 __aicore__ inline void RunTLoadDN2DN(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape3 * gWholeShape4,
-        1,
-        gWholeShape3};
+        gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, 1, gWholeShape3};
 
     constexpr int blockSize = 32 / sizeof(T);
     constexpr int Rows = (gShape3 + blockSize - 1) / blockSize * blockSize;
@@ -131,10 +124,7 @@ template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gS
 __aicore__ inline void RunTLoadNZ2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape3 * gWholeShape4,
-        gWholeShape4,
-        1};
+        gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4, 1};
     constexpr int Rows = gShape2 * gShape3;
     constexpr int Cols = gShape0 * gShape1 * gShape4;
 
@@ -164,10 +154,7 @@ template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gS
 __aicore__ inline void RunTLoadND2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape3 * gWholeShape4,
-        gWholeShape4,
-        1};
+        gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4, 1};
     constexpr int c0_size = pto::BLOCK_BYTE_SIZE / sizeof(T);
     constexpr int Rows = (gShape0 * gShape1 * gShape2 * gShape3 + 16 - 1) / 16 * 16;
     constexpr int Cols = (gShape4 + c0_size - 1) / c0_size * c0_size;
@@ -198,10 +185,7 @@ template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gS
 __aicore__ inline void RunTLoadDN2ZN(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape3 * gWholeShape4,
-        1,
-        gWholeShape3};
+        gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, 1, gWholeShape3};
     constexpr int c0_size = pto::BLOCK_BYTE_SIZE / sizeof(T);
     constexpr int Rows = (gShape3 + c0_size - 1) / c0_size * c0_size;
     constexpr int Cols = (gShape4 + 16 - 1) / 16 * 16;
@@ -232,65 +216,20 @@ template <typename T, int format, int gShape0, int gShape1, int gShape2, int gSh
 __global__ __aicore__ void TLoadKernel(__gm__ T *out, __gm__ T *src)
 {
     if constexpr (format == 0) {
-        RunTLoadND2ND<T,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(out, src);
+        RunTLoadND2ND<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+            gWholeShape3, gWholeShape4>(out, src);
     } else if constexpr (format == 1) {
-        RunTLoadDN2DN<T,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(out, src);
+        RunTLoadDN2DN<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+            gWholeShape3, gWholeShape4>(out, src);
     } else if constexpr (format == 2) {
-        RunTLoadNZ2NZ<T,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(out, src);
+        RunTLoadNZ2NZ<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+            gWholeShape3, gWholeShape4>(out, src);
     } else if constexpr (format == 3) {
-        RunTLoadND2NZ<T,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(out, src);
+        RunTLoadND2NZ<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+            gWholeShape3, gWholeShape4>(out, src);
     } else if constexpr (format == 4) {
-        RunTLoadDN2ZN<T,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(out, src);
+        RunTLoadDN2ZN<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+            gWholeShape3, gWholeShape4>(out, src);
     }
 }
 
@@ -303,32 +242,12 @@ template <int format, typename T, int gShape0, int gShape1, int gShape2, int gSh
 void LaunchTLoad(T *out, T *src, void *stream)
 {
     if constexpr (std::is_same_v<T, uint16_t>) {
-        TLoadKernel<bfloat16_t,
-            format,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>
+        TLoadKernel<bfloat16_t, format, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1,
+            gWholeShape2, gWholeShape3, gWholeShape4>
             <<<1, nullptr, stream>>>(reinterpret_cast<bfloat16_t *>(out), reinterpret_cast<bfloat16_t *>(src));
     } else {
-        TLoadKernel<T,
-            format,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4><<<1, nullptr, stream>>>(out, src);
+        TLoadKernel<T, format, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+            gWholeShape3, gWholeShape4><<<1, nullptr, stream>>>(out, src);
     }
 }
 

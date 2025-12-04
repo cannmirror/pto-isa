@@ -117,11 +117,11 @@ void TFillPad(typename TileDataDst::TileDType __out__ dst, typename TileDataSrc:
     auto dstPtr = getCopyNullPtr<TileDataDst>();
     srcPtr = (decltype(srcPtr)) __cce_get_tile_ptr(src);
     dstPtr = (decltype(dstPtr)) __cce_get_tile_ptr(dst);
-    auto padValue = getPadValue<TileDataDst>();
+    auto padValue = GetPadValue<TileDataDst>();
 
     constexpr const uint64_t copyDstCols = sizeof(T) == 1 ? TileDataDst::Cols / 2 : TileDataDst::Cols;
     uint64_t elements_per_block = (sizeof(T) == 1) ? 16 : 32 / sizeof(T);
-    uint64_t srcValidCol32B = (sizeof(T) == 1) ? CeilDivision(CeilDivision(srcValidCol, 2), elements_per_block) * elements_per_block : 
+    uint64_t srcValidCol32B = (sizeof(T) == 1) ? CeilDivision(CeilDivision(srcValidCol, 2), elements_per_block) * elements_per_block :
                             CeilDivision(srcValidCol, elements_per_block) * elements_per_block;
     uint64_t padOffset = srcValidCol32B;
     uint64_t padCols = copyDstCols - srcValidCol32B;

@@ -21,13 +21,12 @@ void LaunchTLoad(T *out, T *src, void *stream);
 
 class TLoadGM2L1Test : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -35,9 +34,10 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template<int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
-int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-void test_tload() {
+template <int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void test_tload()
+{
     // format = 0: ND2ND
     // foramt = 1: DN2DN
     // format = 2: NZ2NZ
@@ -63,25 +63,15 @@ void test_tload() {
     DataType *dstHost, *srcHost;
     DataType *dstDevice, *srcDevice;
 
-    aclrtMallocHost((void**)(&dstHost), dstDataSize);
-    aclrtMallocHost((void**)(&srcHost), srcDataSize);
+    aclrtMallocHost((void **)(&dstHost), dstDataSize);
+    aclrtMallocHost((void **)(&srcHost), srcDataSize);
 
-    aclrtMalloc((void**)&dstDevice, dstDataSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void**)&srcDevice, srcDataSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&dstDevice, dstDataSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, srcDataSize, ACL_MEM_MALLOC_HUGE_FIRST);
     ReadFile(GetGoldenDir() + "/input.bin", srcDataSize, srcHost, srcDataSize);
     aclrtMemcpy(srcDevice, srcDataSize, srcHost, srcDataSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTLoad<format,
-        DataType,
-        gShape0,
-        gShape1,
-        gShape2,
-        gShape3,
-        gShape4,
-        gWholeShape0,
-        gWholeShape1,
-        gWholeShape2,
-        gWholeShape3,
-        gWholeShape4>(dstDevice, srcDevice, stream);
+    LaunchTLoad<format, DataType, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+        gWholeShape3, gWholeShape4>(dstDevice, srcDevice, stream);
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstDataSize, dstDevice, dstDataSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
