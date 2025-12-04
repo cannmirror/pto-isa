@@ -13,18 +13,18 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto 
 {
+    constexpr const int LOG2_BLOCK_LEN = 4; // 2^4 = 16
+    constexpr const int LOG2_BLOCK_BYTE_SIZE = 5; // 2^5 = 32
+
     template <typename DstTileData, typename SrcTileData, bool Transpose>
     __tf__ __aicore__ void TExtractToA(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
         uint16_t indexRow, uint16_t indexCol) {
-        using SrcType = typename SrcTileData::DType;
-        using DstType = typename DstTileData::DType;
         constexpr int32_t srcRow = SrcTileData::Rows;
         constexpr int32_t srcCol = SrcTileData::Cols;
         constexpr int32_t dstRow = DstTileData::Rows;
         constexpr int32_t dstCol = DstTileData::Cols;
-        constexpr const int LOG2_BLOCK_LEN = 4; // 2^4 = 16
-        constexpr const int LOG2_BLOCK_BYTE_SIZE = 5; // 2^5 = 32
-        constexpr const int BLOCK_BYTE_SIZE = 32;
+        using SrcType = typename SrcTileData::DType;
+        using DstType = typename DstTileData::DType;
         constexpr int typeSize = sizeof(SrcType);
         constexpr int c0Size = BLOCK_BYTE_SIZE / sizeof(SrcType);
         __cbuf__ SrcType *srcAddr = (__cbuf__ SrcType *)(src);
@@ -70,9 +70,6 @@ namespace pto
         constexpr int32_t srcCol = SrcTileData::Cols;
         constexpr int32_t dstRow = DstTileData::Rows;
         constexpr int32_t dstCol = DstTileData::Cols;
-        constexpr const int LOG2_BLOCK_LEN = 4; // 2^4 = 16
-        constexpr const int LOG2_BLOCK_BYTE_SIZE = 5; // 2^5 = 32
-        constexpr const int BLOCK_BYTE_SIZE = 32;
         constexpr int typeSize = sizeof(SrcType);
         constexpr int c0Size = BLOCK_BYTE_SIZE / sizeof(SrcType);
         __cbuf__ SrcType *srcAddr = (__cbuf__ SrcType *)(src);

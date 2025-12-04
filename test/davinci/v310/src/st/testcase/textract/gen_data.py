@@ -81,6 +81,34 @@ def HF8(input):
         input = (1 + m3/2) * 2 ** (f2 * (8 + int(input[4]) * 4 + int(input[5]) * 2 + int(input[6]))) * f1
         return input
 
+
+def get_hif8_golden(x1_gm, x2_gm, start_m, start_k, start_n, dst_type):
+    s1 = x1_gm.reshape(-1)
+    s2 = x2_gm.reshape(-1)
+    s1_len = len(s1)
+    s2_len = len(s2)
+    re1 = [0] * s1_len
+    re2 = [0] * s2_len
+    for i in range(s1_len):
+        temp = bin(s1[i])
+        temp = temp.split('b')[1]
+        temp = check(temp, 8)
+        re1[i] = HF8(temp)
+    s1 = cast(re1, 'fp32')
+    for i in range(s2_len):
+        temp = bin(s2[i])
+        temp = temp.split('b')[1]
+        temp = check(temp, 8)
+        re2[i] = HF8(temp)
+    s2 = cast(re2, 'fp32')
+    x1_gm = s1.reshape(x1_gm.shape)
+    x2_gm = s2.reshape(x2_gm.shape)
+    x1_slice = x1_gm[start_m:, start_k:]
+    x2_slice = x2_gm[start_k:, start_n:]
+    golden = np.matmul(x1_slice.astype(dst_type), x2_slice.astype(dst_type)).astype(dst_type)
+    return golden
+
+
 def create_padded_tensors(
     x1_gm, x2_gm, m, n, k, target_m, target_n, target_k, src_type = np.int8,
     rand_range_right = (1,5),
@@ -140,49 +168,12 @@ def gen_golden_data(case_name, param):
                     rand_range_right=(1,5), rand_range_down=(1,5), rand_range_corner=(1,5))
     # hifloat8_t数据处理
     if (param.atype == np.uint8):
-        x1_gm_copy = x1_gm
-        x2_gm_copy = x2_gm
-        s1 = x1_gm_copy.reshape(-1)
-        s2 = x2_gm_copy.reshape(-1)
-        s1_len = len(s1)
-        s2_len = len(s2)
-        re1 = [0] * s1_len
-        re2 = [0] * s2_len
-        for i in range(s1_len):
-            temp = bin(s1[i])
-            temp = temp.split('b')[1]
-            temp = check(temp,8)
-            re1[i] = HF8(temp)
-        s1 = cast(re1,'fp32')
-        for i in range(s2_len):
-            temp = bin(s2[i])
-            temp = temp.split('b')[1]
-            temp = check(temp,8)
-            re2[i] = HF8(temp)
-        s2 = cast(re2,'fp32')
-        x1_gm_copy = s1.reshape(x1_gm_copy.shape)
-        x2_gm_copy = s2.reshape(x2_gm_copy.shape)
-        x1_copy_slice = x1_gm_copy[start_m:, start_k:]
-        x2_copy_slice = x2_gm_copy[start_k:, :]
-        golden = np.matmul(x1_copy_slice.astype(dst_type), x2_copy_slice.astype(dst_type)).astype(dst_type)
+        golden = get_hif8_golden(x1_gm, x2_gm, start_m, start_k, start_n, dst_type)
 
     if is_atrans:
         x1_gm = x1_gm.transpose()
     if not is_btrans:
         x2_gm = x2_gm.transpose()#[N,K]
-
-    c0_size = 16
-    if src_type == np.float32:
-        c0_size = 8
-    elif src_type == np.int8 or src_type == fp8_e4m3fn or src_type == fp8_e5m2 or src_type == np.uint8:
-        c0_size = 32
-
-    #转成NZ格式的输入
-    x1_gm = x1_gm.reshape((int(x1_gm.shape[0] / 16), 16, int(x1_gm.shape[1] / c0_size), c0_size)).transpose(2, 0, 1, 3)
-    x1_gm = x1_gm.reshape(x1_gm.shape[0] * x1_gm.shape[1], x1_gm.shape[2] * x1_gm.shape[3])
-
-    x2_gm = x2_gm.reshape((int(x2_gm.shape[0] / 16), 16, int(x2_gm.shape[1] / c0_size), c0_size)).transpose(2, 0, 1, 3)
-    x2_gm = x2_gm.reshape(x2_gm.shape[0] * x2_gm.shape[1], x2_gm.shape[2] * x2_gm.shape[3])
 
     x1_gm.tofile("./x1_gm.bin")
     x2_gm.tofile("./x2_gm.bin")
