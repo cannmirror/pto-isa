@@ -16,38 +16,36 @@ using namespace std;
 using namespace PtoTestCommon;
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBNZ2ND(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+void LaunchTMOVL0c2UBNZ2ND(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBNZ2DN(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+void LaunchTMOVL0c2UBNZ2DN(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBNZ2NZ(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+void LaunchTMOVL0c2UBNZ2NZ(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBFBQuant(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+void LaunchTMOVL0c2UBFBQuant(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBSCQuant(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+void LaunchTMOVL0c2UBSCQuant(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBVectorQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+void LaunchTMOVL0c2UBVectorQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBSCQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+void LaunchTMOVL0c2UBSCQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBVectorQuantDn(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+void LaunchTMOVL0c2UBVectorQuantDn(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
 
 template <int32_t tilingKey>
-void launchTMOVL0c2UBSCQuantDn(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+void LaunchTMOVL0c2UBSCQuantDn(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 class TMOVTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 std::string GetGoldenDir()
@@ -87,7 +85,7 @@ void tmov_l0c2ub_nz2nd_test(uint32_t M, uint32_t K, uint32_t N)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBNZ2ND<key>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMOVL0c2UBNZ2ND<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -143,7 +141,7 @@ void tmov_l0c2ub_nz2nz_test(uint32_t M, uint32_t K, uint32_t N)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBNZ2NZ<key>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMOVL0c2UBNZ2NZ<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -199,7 +197,7 @@ void tmov_l0c2ub_nz2dn_test(uint32_t M, uint32_t K, uint32_t N)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBNZ2DN<key>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMOVL0c2UBNZ2DN<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -260,7 +258,7 @@ void tmov_l0c2ub_fb_quant_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src2Device, FBQuantFileSize, src2Host, FBQuantFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBFBQuant<key>(dstDevice, src0Device, src1Device, src2Device, stream);
+    LaunchTMOVL0c2UBFBQuant<key>(dstDevice, src0Device, src1Device, src2Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -316,7 +314,7 @@ void tmov_l0c2ub_sc_quant_test(uint32_t M, uint32_t K, uint32_t N)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBSCQuant<key>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMOVL0c2UBSCQuant<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -377,7 +375,7 @@ void tmov_l0c2ub_nz2nz_vector_quant_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src2Device, FBQuantFileSize, src2Host, FBQuantFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBVectorQuantNz<key>(dstDevice, src0Device, src1Device, src2Device, stream);
+    LaunchTMOVL0c2UBVectorQuantNz<key>(dstDevice, src0Device, src1Device, src2Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -438,7 +436,7 @@ void tmov_l0c2ub_nz2dn_vector_quant_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src2Device, FBQuantFileSize, src2Host, FBQuantFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBVectorQuantDn<key>(dstDevice, src0Device, src1Device, src2Device, stream);
+    LaunchTMOVL0c2UBVectorQuantDn<key>(dstDevice, src0Device, src1Device, src2Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -494,7 +492,7 @@ void tmov_l0c2ub_nz2nz_sc_quant_test(uint32_t M, uint32_t K, uint32_t N)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBSCQuantNz<key>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMOVL0c2UBSCQuantNz<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -550,7 +548,7 @@ void tmov_l0c2ub_nz2dn_sc_quant_test(uint32_t M, uint32_t K, uint32_t N)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMOVL0c2UBSCQuantDn<key>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMOVL0c2UBSCQuantDn<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);

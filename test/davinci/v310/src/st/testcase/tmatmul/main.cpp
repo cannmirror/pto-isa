@@ -16,17 +16,15 @@ using namespace std;
 using namespace PtoTestCommon;
 
 template <int32_t tilingKey>
-void launchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+void LaunchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
-void launchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+void LaunchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
 
 class TMATMULTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 std::string GetGoldenDir()
@@ -66,7 +64,7 @@ void tmatmul_test(uint32_t M, uint32_t K, uint32_t N)
 
     aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTMATMUL<key>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMATMUL<key>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -186,10 +184,8 @@ TEST_F(TMATMULTest, case10)
 
 class TMATMULBIASTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 template <typename T, typename U, typename S, typename B, int32_t key>
@@ -226,7 +222,7 @@ void tmatmul_bias_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src2Device, biasFileSize, src2Host, biasFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-    launchTMATMULBIAS<key>(dstDevice, src0Device, src1Device, src2Device, stream);
+    LaunchTMATMULBIAS<key>(dstDevice, src0Device, src1Device, src2Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
