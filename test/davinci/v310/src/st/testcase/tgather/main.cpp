@@ -17,21 +17,23 @@ using namespace PtoTestCommon;
 
 void launchTGATHER_demo_float(float *out, float *src0, int32_t *src1, aclrtStream stream);
 void launchTGATHER_demo_int32(int32_t *out, int32_t *src0, int32_t *src1, aclrtStream stream);
-void launchTGATHER_demo_half(int16_t  *out, int16_t *src0, int16_t *src1, aclrtStream stream);
+void launchTGATHER_demo_half(int16_t *out, int16_t *src0, int16_t *src1, aclrtStream stream);
 void launchTGATHER_demo_int16(int16_t *out, int16_t *src0, int16_t *src1, aclrtStream stream);
+
+constexpr int HALF_SIZE = 2;
+constexpr int QUARTER_SIZE = 4;
 
 template <int32_t tilingKey>
 void launchTGATHER_demo(uint8_t *out, uint8_t *src, void *stream);
 
 class TGATHERTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -271,10 +273,9 @@ TEST_F(TGATHERTest, case4_int16)
     EXPECT_TRUE(ret);
 }
 
-
-template<typename T, uint8_t PATTERN, uint32_t ROW, uint32_t COL>
-void test_gather() {
-
+template <typename T, uint8_t PATTERN, uint32_t ROW, uint32_t COL>
+void test_gather()
+{
     aclInit(nullptr);
     aclrtSetDevice(0);
     aclrtStream stream;
@@ -284,12 +285,12 @@ void test_gather() {
     size_t dstsize = 0;
     if constexpr (PATTERN == HP1111 || PATTERN == FP1111 || PATTERN == BP1111 || PATTERN == I32P1111) {
         dstsize = size;
-    } else if constexpr (PATTERN == HP0101 || PATTERN == HP1010||
-      PATTERN == FP0101 || PATTERN == FP1010 || PATTERN == BP0101 || PATTERN == BP1010 ||
-      PATTERN == U16P0101 || PATTERN ==  U16P1010 || PATTERN == FPINT1010) {
-        dstsize = size/2;
+    } else if constexpr (PATTERN == HP0101 || PATTERN == HP1010 || PATTERN == FP0101 || PATTERN == FP1010 ||
+                         PATTERN == BP0101 || PATTERN == BP1010 || PATTERN == U16P0101 || PATTERN == U16P1010 ||
+                         PATTERN == FPINT1010) {
+        dstsize = size / HALF_SIZE;
     } else {
-        dstsize = size/4;
+        dstsize = size / QUARTER_SIZE;
     }
     uint8_t *dstHost, *src0Host;
     uint8_t *dstDevice, *src0Device;
@@ -327,17 +328,17 @@ void test_gather() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TGATHERTest, case1_float_P0101) 
+TEST_F(TGATHERTest, case1_float_P0101)
 {
-    test_gather<float, FP0101, FLOAT_P0101_ROW, FLOAT_P0101_COL>(); 
+    test_gather<float, FP0101, FLOAT_P0101_ROW, FLOAT_P0101_COL>();
 }
 
-TEST_F(TGATHERTest, case1_float_P1010) 
+TEST_F(TGATHERTest, case1_float_P1010)
 {
     test_gather<float, FP1010, FLOAT_P1010_ROW, FLOAT_P1010_COL>();
 }
 
-TEST_F(TGATHERTest, case1_float_P0001) 
+TEST_F(TGATHERTest, case1_float_P0001)
 {
     test_gather<float, FP0001, FLOAT_P0001_ROW, FLOAT_P0001_COL>();
 }
@@ -347,7 +348,7 @@ TEST_F(TGATHERTest, case1_float_P0010)
     test_gather<float, FP0010, FLOAT_P0010_ROW, FLOAT_P0010_COL>();
 }
 
-TEST_F(TGATHERTest, case1_float_P0100) 
+TEST_F(TGATHERTest, case1_float_P0100)
 {
     test_gather<float, FP0100, FLOAT_P0100_ROW, FLOAT_P0100_COL>();
 }
