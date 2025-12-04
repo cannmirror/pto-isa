@@ -12,7 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TCOLSUM_HPP
 
 #include "common/constants.hpp"
-#include "utils.hpp"
+#include "common/utils.hpp"
 
 namespace pto {
     template <typename T, typename TileDataDst, typename TileDataSrc, typename TileDataTmp,
