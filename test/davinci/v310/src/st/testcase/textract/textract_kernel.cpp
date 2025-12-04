@@ -14,74 +14,31 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 using namespace pto;
 
-template <typename T>
-__aicore__ inline void DynGM2L1(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0, unsigned TShape1)
-{
-    uint32_t lenBurst = TShape0 * TShape1 * sizeof(T);
-    copy_gm_to_cbuf_align_v2(dst, src, 0, 1, lenBurst, 0, 0, 0, 0, 0, 0);
-}
-
-template <typename GMT, typename L0CT, unsigned TShape0, unsigned TShape1, unsigned oriTShape0, unsigned oriTShape1>
-__aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src, unsigned GmShape0, unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1, int uf) { // NZ2ND
-    uint16_t MSize = oriTShape0 < (GmShape0 - GmOffset0) ? oriTShape0 : (GmShape0 - GmOffset0);
-    uint16_t NSize = TShape1 < (GmShape1 - GmOffset1) ? TShape1 : (GmShape1 - GmOffset1);
-    uint32_t dstStride_dst_D = GmShape1;
-    uint16_t srcStride = TShape0;
-    uint64_t ndNum = 1;
-    uint64_t src_nd_stride = 0;
-    uint64_t dst_nd_stride = 0;
-
-    uint8_t UnitFlagMode = uf;
-    uint64_t QuantPRE = NoQuant;
-    uint8_t ReLUPRE = 0;
-    bool channelSplit = false;
-    bool NZ2ND_EN = true;
-
-    if (std::is_same<L0CT, float>::value) {
-        if (std::is_same<GMT, half>::value) {
-            QuantPRE = QuantMode_t::F322F16;
-        } else if (std::is_same<GMT, bfloat16_t>::value) {
-            QuantPRE = QuantMode_t::F322BF16;
-        } else {
-            QuantPRE = QuantMode_t::NoQuant;
-        }
-    }
-    uint64_t config = (static_cast<uint64_t>(dst_nd_stride) << 32) | (static_cast<uint64_t>(src_nd_stride) << 16) |
-                        (static_cast<uint64_t>(ndNum));
-    set_loop3_para(config);
-    copy_matrix_cc_to_gm((__gm__ GMT *)(dst + (GmOffset0 * GmShape1) + GmOffset1), (__cc__ L0CT *)src, 0, NSize, MSize,
-        dstStride_dst_D, srcStride, 0, 0, UnitFlagMode,
-        QuantPRE, ReLUPRE, 0, NZ2ND_EN, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0);
-}
-
 template <typename T, typename U, typename S, int M, int K, int N, uint16_t indexM, uint16_t indexK, uint16_t indexN, bool isAtranspose, bool isBtranspose>
 __aicore__ inline void runTEXTRACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
-    // static shape
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>>;
-    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
-
     constexpr int mValid = M - indexM;
     constexpr int kValid = K - indexK;
     constexpr int nValid = N - indexN;
+
+    using GlobalDataSrc0 = std::conditional_t< isAtranspose,
+        GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, 1, M>, Layout::DN>,
+        GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>, Layout::ND>>;
+    using GlobalDataSrc1 = std::conditional_t< isBtranspose,
+        GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>, Layout::ND>,
+        GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, 1, K>, Layout::DN>>;
+    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, mValid, nValid>, pto::Stride<1 * mValid * nValid, 1 * mValid * nValid, mValid * nValid, nValid, 1>>;
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = std::conditional_t<
-        isAtranspose,
+    using TileMatAData = std::conditional_t< isAtranspose,
         Tile<Location::Mat, U, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>
-    >;
-    using TileMatBData = std::conditional_t<
-        isBtranspose,
+        Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
+    using TileMatBData = std::conditional_t< isBtranspose,
         Tile<Location::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>
-    >;
+        Tile<Location::Mat, S, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, mValid, kValid, mValid, kValid>;
     using RightTile = TileRight<S, kValid, nValid, kValid, nValid>;
@@ -99,79 +56,55 @@ __aicore__ inline void runTEXTRACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
-    using AType = typename LeftTile::DType;
-    using BType = typename RightTile::DType;
-    using CType = typename AccTile::DType;
-
-    __cbuf__ AType *srcAAddr = aMatTile.data();
-    __cbuf__ BType *srcBAddr = bMatTile.data();
-
-
-    __ca__ AType *a = (__ca__ AType *)(aTile.data());
-    __cb__ BType *b = (__cb__ BType *)(bTile.data());
-    __cc__ CType *c = (__cc__ CType *)(cTile.data());
-
     /*************************************TLOAD****************************************/
-
-    DynGM2L1<U>(srcAAddr, src0, M,K);
-    DynGM2L1<U>(srcBAddr, src1, K,N);
-
+    TLOAD(aMatTile, src0Global);
+    TLOAD(bMatTile, src1Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
     /**********************************TMOV && TEXTRACT**********************************/
     TEXTRACT(aTile, aMatTile, indexM, indexK);
     TEXTRACT(bTile, bMatTile, indexK, indexN);
-
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
 
-    mad(c, a, b, mValid, kValid, nValid, false, false, false, true);
-
+    TMATMUL(cTile, aTile, bTile);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
     /****************************************TSTORE*****************************************/
-
-    L0CCopyOut<T, T, mValid, nValid, mValid, nValid>(out, c, mValid, nValid, 0, 0, 0);
-
+    TSTORE(dstGlobal, cTile);
     out = dstGlobal.data();
 }
 
 template <typename T, typename U, typename S, int M, int K, int N, uint16_t indexM, uint16_t indexK, uint16_t indexN,  bool isAtranspose, bool isBtranspose>
 __aicore__ inline void runTEXTRACT_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, int m, int k, int n)
 {
-    using DynShape1Dim5 = pto::Shape<1, 1, 1, M, K>;
-    using DynSTrid1Dim5 = pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>;
-
-    using DynShape2Dim5 = pto::Shape<1, 1, 1, K, N>;
-    using DynSTrid2Dim5 = pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>;
-
-    using DynShape3Dim5 = pto::Shape<1, 1, 1, M, N>;
-    using DynSTrid3Dim5 = pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>;
-
-    using GlobalDataSrc0 = GlobalTensor<U, DynShape1Dim5, DynSTrid1Dim5>;
-    using GlobalDataSrc1 = GlobalTensor<S, DynShape2Dim5, DynSTrid2Dim5>;
-    using GlobalDataOut = GlobalTensor<T, DynShape3Dim5, DynSTrid3Dim5>;
-
     constexpr int mValid = M - indexM;
     constexpr int kValid = K - indexK;
     constexpr int nValid = N - indexN;
+
+    using GlobalDataSrc0 = std::conditional_t< isAtranspose,
+        GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, 1, M>, Layout::DN>,
+        GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>, Layout::ND>>;
+    using GlobalDataSrc1 = std::conditional_t< isBtranspose,
+        GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>, Layout::ND>,
+        GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, 1, K>, Layout::DN>>;
+
+    using DynShape3Dim5 = pto::Shape<1, 1, 1, mValid, nValid>;
+    using DynSTrid3Dim5 = pto::Stride<1 * mValid * nValid, 1 * mValid * nValid, mValid * nValid, nValid, 1>;
+    using GlobalDataOut = GlobalTensor<T, DynShape3Dim5, DynSTrid3Dim5>;
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = std::conditional_t<
-        isAtranspose,
+    using TileMatAData = std::conditional_t< isAtranspose,
         Tile<Location::Mat, U, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>
-    >;
-    using TileMatBData = std::conditional_t<
-        isBtranspose,
+        Tile<Location::Mat, U, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
+    using TileMatBData = std::conditional_t< isBtranspose,
         Tile<Location::Mat, S, K, N, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>
-    >;
+        Tile<Location::Mat, S, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, mValid, kValid, -1, -1>;
     using RightTile = TileRight<S, kValid, nValid, kValid, -1>;
@@ -182,52 +115,35 @@ __aicore__ inline void runTEXTRACT_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__
     TASSIGN(aMatTile, 0x0);
     TASSIGN(bMatTile, 0x10000);
 
-    int rowValid = m - indexM;
-    int colValid = k - indexK;
+    int validM = m - indexM;
+    int validK = k - indexK;
+    int validN = n - indexN;
 
-    LeftTile aTile(rowValid, colValid);
-    RightTile bTile(n);
-    AccTile cTile(rowValid);
+    LeftTile aTile(validM, validK);
+    RightTile bTile(validN);
+    AccTile cTile(validM);
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
-    using AType = typename LeftTile::DType;
-    using BType = typename RightTile::DType;
-    using CType = typename AccTile::DType;
-
-    __cbuf__ AType *srcAAddr = aMatTile.data();
-    __cbuf__ BType *srcBAddr = bMatTile.data();
-
-
-    __ca__ AType *a = (__ca__ AType *)(aTile.data());
-    __cb__ BType *b = (__cb__ BType *)(bTile.data());
-    __cc__ CType *c = (__cc__ CType *)(cTile.data());
-
     /*************************************TLOAD****************************************/
-
-    DynGM2L1<U>(srcAAddr, src0, M,K);
-    DynGM2L1<U>(srcBAddr, src1, K,N);
-
+    TLOAD(aMatTile, src0Global);
+    TLOAD(bMatTile, src1Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
     /**********************************TMOV && TEXTRACT**********************************/
     TEXTRACT(aTile, aMatTile, indexM, indexK);
     TEXTRACT(bTile, bMatTile, indexK, indexN);
-
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
 
-    mad(c, a, b, mValid, kValid, nValid, false, false, false, true);
-
+    TMATMUL(cTile, aTile, bTile);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
     /****************************************TSTORE*****************************************/
-
-    L0CCopyOut<T, T, mValid, nValid, mValid, nValid>(out, c, rowValid, nValid, 0, 0, 0);
-
+    TSTORE(dstGlobal, cTile);
     out = dstGlobal.data();
 }
 
@@ -530,25 +446,24 @@ template void launchTEXTRACT<16>(uint8_t *out, uint8_t *src0, uint8_t *src1, voi
 template <typename T, typename U, typename S, int M, int K, int N, bool isAtranspose, bool isBtranspose>
 __aicore__ inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
-    // static shape
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>>;
+    using GlobalDataSrc0 = std::conditional_t< isAtranspose,
+        GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, 1, M>, Layout::DN>,
+        GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>, Layout::ND>>;
+    using GlobalDataSrc1 = std::conditional_t< isBtranspose,
+        GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>, Layout::ND>,
+        GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, 1, K>, Layout::DN>>;
     using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = std::conditional_t<
-        isAtranspose,
+    using TileMatAData = std::conditional_t< isAtranspose,
         Tile<Location::Mat, U, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>
-    >;
-    using TileMatBData = std::conditional_t<
-        isBtranspose,
+        Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
+    using TileMatBData = std::conditional_t< isBtranspose,
         Tile<Location::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>
-    >;
+        Tile<Location::Mat, S, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, M, K, M, K>;
     using RightTile = TileRight<S, K, N, K, N>;
@@ -566,75 +481,51 @@ __aicore__ inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
-    using AType = typename LeftTile::DType;
-    using BType = typename RightTile::DType;
-    using CType = typename AccTile::DType;
-
-    __cbuf__ AType *srcAAddr = aMatTile.data();
-    __cbuf__ BType *srcBAddr = bMatTile.data();
-
-
-    __ca__ AType *a = (__ca__ AType *)(aTile.data());
-    __cb__ BType *b = (__cb__ BType *)(bTile.data());
-    __cc__ CType *c = (__cc__ CType *)(cTile.data());
-
     /*************************************TLOAD****************************************/
-
-    DynGM2L1<U>(srcAAddr, src0, M,K);
-    DynGM2L1<U>(srcBAddr, src1, K,N);
-
+    TLOAD(aMatTile, src0Global);
+    TLOAD(bMatTile, src1Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
     /**********************************TMOV && TEXTRACT**********************************/
     TMOV(aTile, aMatTile);
     TMOV(bTile, bMatTile);
-
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
 
-    mad(c, a, b, M, K, N, false, false, false, true);
-
+    TMATMUL(cTile, aTile, bTile);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
     /****************************************TSTORE*****************************************/
-
-    L0CCopyOut<T, T, M, N, M, N>(out, c, M, N, 0, 0, 0);
-
+    TSTORE(dstGlobal, cTile);
     out = dstGlobal.data();
 }
 
 template <typename T, typename U, typename S, int M, int K, int N, bool isAtranspose, bool isBtranspose>
 __aicore__ inline void runTMOV_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, int m, int k, int n)
 {
-    using DynShape1Dim5 = pto::Shape<1, 1, 1, M, K>;
-    using DynSTrid1Dim5 = pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>;
-
-    using DynShape2Dim5 = pto::Shape<1, 1, 1, K, N>;
-    using DynSTrid2Dim5 = pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>;
-
+    using GlobalDataSrc0 = std::conditional_t< isAtranspose,
+        GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, 1, M>, Layout::DN>,
+        GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>, Layout::ND>>;
+    using GlobalDataSrc1 = std::conditional_t< isBtranspose,
+        GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>, Layout::ND>,
+        GlobalTensor<S, pto::Shape<1, 1, 1, K, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, 1, K>, Layout::DN>>;
+        
     using DynShape3Dim5 = pto::Shape<1, 1, 1, M, N>;
     using DynSTrid3Dim5 = pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>;
-
-    using GlobalDataSrc0 = GlobalTensor<U, DynShape1Dim5, DynSTrid1Dim5>;
-    using GlobalDataSrc1 = GlobalTensor<S, DynShape2Dim5, DynSTrid2Dim5>;
     using GlobalDataOut = GlobalTensor<T, DynShape3Dim5, DynSTrid3Dim5>;
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = std::conditional_t<
-        isAtranspose,
+    using TileMatAData = std::conditional_t< isAtranspose,
         Tile<Location::Mat, U, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>
-    >;
-    using TileMatBData = std::conditional_t<
-        isBtranspose,
+        Tile<Location::Mat, U, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
+    using TileMatBData = std::conditional_t< isBtranspose,
         Tile<Location::Mat, S, K, N, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>
-    >;
+        Tile<Location::Mat, S, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, M, K, -1, -1>;
     using RightTile = TileRight<S, K, N, K, -1>;
@@ -645,81 +536,59 @@ __aicore__ inline void runTMOV_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *
     TASSIGN(aMatTile, 0x0);
     TASSIGN(bMatTile, 0x10000);
 
-    int rowValid = m;
-    int colValid = k;
-
-    LeftTile aTile(rowValid, colValid);
+    LeftTile aTile(m, k);
     RightTile bTile(n);
-    AccTile cTile(rowValid);
+    AccTile cTile(m);
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
-    using AType = typename LeftTile::DType;
-    using BType = typename RightTile::DType;
-    using CType = typename AccTile::DType;
-
-    __cbuf__ AType *srcAAddr = aMatTile.data();
-    __cbuf__ BType *srcBAddr = bMatTile.data();
-
-
-    __ca__ AType *a = (__ca__ AType *)(aTile.data());
-    __cb__ BType *b = (__cb__ BType *)(bTile.data());
-    __cc__ CType *c = (__cc__ CType *)(cTile.data());
-
     /*************************************TLOAD****************************************/
-
-    DynGM2L1<U>(srcAAddr, src0, M,K);
-    DynGM2L1<U>(srcBAddr, src1, K,N);
-
+    TLOAD(aMatTile, src0Global);
+    TLOAD(bMatTile, src1Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
     /**********************************TMOV && TEXTRACT**********************************/
     TMOV(aTile, aMatTile);
     TMOV(bTile, bMatTile);
-
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
 
-    mad(c, a, b, M, K, N, false, false, false, true);
-
+    TMATMUL(cTile, aTile, bTile);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
     /****************************************TSTORE*****************************************/
-
-    L0CCopyOut<T, T, M, N, M, N>(out, c, rowValid, N, 0, 0, 0);
-
+    TSTORE(dstGlobal, cTile);
     out = dstGlobal.data();
 }
 
 template <typename T, typename U, typename S, int M, int K, int N, bool isAtranspose, bool isBtranspose, int targetM, int targetK, int targetN>
 __aicore__ inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
-    // static shape
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, targetM, targetK>, pto::Stride<1*targetM*targetK, 1*targetM*targetK, targetM*targetK, targetK, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, targetK, targetN>, pto::Stride<1*targetK*targetN, 1*targetK*targetN, targetK*targetN, targetN, 1>>;
-    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, targetM, targetN>, pto::Stride<1*targetM*targetN, 1*targetM*targetN, targetM*targetN, targetN, 1>>;
+    using GlobalDataSrc0 = std::conditional_t< isAtranspose,
+        GlobalTensor<U, pto::Shape<1, 1, 1, targetM, targetK>, pto::Stride<1*targetM*targetK, 1*targetM*targetK, targetM*targetK, 1, targetM>, Layout::DN>,
+        GlobalTensor<U, pto::Shape<1, 1, 1, targetM, targetK>, pto::Stride<1*targetM*targetK, 1*targetM*targetK, targetM*targetK, targetK, 1>, Layout::ND>>;
+    using GlobalDataSrc1 = std::conditional_t< isBtranspose,
+        GlobalTensor<S, pto::Shape<1, 1, 1, targetK, targetN>, pto::Stride<1*targetK*targetN, 1*targetK*targetN, targetK*targetN, targetN, 1>, Layout::ND>,
+        GlobalTensor<S, pto::Shape<1, 1, 1, targetK, targetN>, pto::Stride<1*targetK*targetN, 1*targetK*targetN, targetK*targetN, 1, targetK>, Layout::DN>>;
+    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = std::conditional_t<
-        isAtranspose,
+    using TileMatAData = std::conditional_t< isAtranspose,
         Tile<Location::Mat, U, targetM, targetK, BLayout::RowMajor, targetM, targetK, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, targetM, targetK, BLayout::ColMajor, targetM, targetK, SLayout::RowMajor, 512>
-    >;
-    using TileMatBData = std::conditional_t<
-        isBtranspose,
+        Tile<Location::Mat, U, targetM, targetK, BLayout::ColMajor, targetM, targetK, SLayout::RowMajor, 512>>;
+    using TileMatBData = std::conditional_t< isBtranspose,
         Tile<Location::Mat, S, targetK, targetN, BLayout::ColMajor, targetK, targetN, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, targetK, targetN, BLayout::RowMajor, targetK, targetN, SLayout::ColMajor, 512>
-    >;
+        Tile<Location::Mat, S, targetK, targetN, BLayout::RowMajor, targetK, targetN, SLayout::ColMajor, 512>>;
 
-    using LeftTile = TileLeft<U, targetM, targetK, targetM, targetK>;
-    using RightTile = TileRight<S, targetK, targetN, targetK, targetN>;
-    using AccTile = TileAcc<T, targetM, targetN, targetM, targetN>;
+    using LeftTile = TileLeft<U, targetM, targetK, targetM, K>;
+    using RightTile = TileRight<S, targetK, targetN, K, targetN>;
+    using AccTile = TileAcc<T, targetM, targetN, M, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -733,42 +602,24 @@ __aicore__ inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
-    using AType = typename LeftTile::DType;
-    using BType = typename RightTile::DType;
-    using CType = typename AccTile::DType;
-
-    __cbuf__ AType *srcAAddr = aMatTile.data();
-    __cbuf__ BType *srcBAddr = bMatTile.data();
-
-
-    __ca__ AType *a = (__ca__ AType *)(aTile.data());
-    __cb__ BType *b = (__cb__ BType *)(bTile.data());
-    __cc__ CType *c = (__cc__ CType *)(cTile.data());
-
     /*************************************TLOAD****************************************/
-
-    DynGM2L1<U>(srcAAddr, src0, targetM, targetK);
-    DynGM2L1<U>(srcBAddr, src1, targetK, targetN);
-
+    TLOAD(aMatTile, src0Global);
+    TLOAD(bMatTile, src1Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
     /**********************************TMOV && TEXTRACT**********************************/
     TMOV(aTile, aMatTile);
     TMOV(bTile, bMatTile);
-
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
 
-    mad(c, a, b, targetM, K, targetN, false, false, false, true);
-
+    TMATMUL(cTile, aTile, bTile);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
     /****************************************TSTORE*****************************************/
-
-    L0CCopyOut<T, T, targetM, targetN, targetM, targetN>(out, c, M, N, 0, 0, 0);
-
+    TSTORE(dstGlobal, cTile);
     out = dstGlobal.data();
 }
 
