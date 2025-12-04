@@ -13,7 +13,6 @@ function(pto_vec_st NAME)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c310-vec -D__DAV_V310 -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE 
         ${PROJECT_SOURCE_DIR}/../../../../../include
-        ${PROJECT_SOURCE_DIR}/../../../../../include/common
     )
     target_link_options(${NAME}_kernel PRIVATE --cce-fatobj-link)
     
@@ -21,7 +20,6 @@ function(pto_vec_st NAME)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE
         ${PROJECT_SOURCE_DIR}/../../../../../include
-        ${PROJECT_SOURCE_DIR}/../../../../../include/common
         ${PROJECT_SOURCE_DIR}/../../../../common
     )
 
@@ -44,7 +42,6 @@ function(pto_cube_st NAME)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c310-cube -D__DAV_V310 -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE 
         ${PROJECT_SOURCE_DIR}/../../../../../include/
-        ${PROJECT_SOURCE_DIR}/../../../../../include/common
     )
     target_link_options(${NAME}_kernel PRIVATE --cce-fatobj-link)
     
@@ -52,7 +49,6 @@ function(pto_cube_st NAME)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE
         ${PROJECT_SOURCE_DIR}/../../../../../include 
-        ${PROJECT_SOURCE_DIR}/../../../../../include/common
         ${PROJECT_SOURCE_DIR}/../../../../common
     )
 
@@ -76,7 +72,6 @@ function(pto_mix_st NAME)
 
     target_include_directories(${NAME}_kernel_mix PRIVATE 
         ${PROJECT_SOURCE_DIR}/../../../../../include/
-        ${PROJECT_SOURCE_DIR}/../../../../../include/common
     )
     target_link_options(${NAME}_kernel_mix PRIVATE --cce-fatobj-link)
 
@@ -84,7 +79,6 @@ function(pto_mix_st NAME)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE 
         ${PROJECT_SOURCE_DIR}/../../../../../include
-        ${PROJECT_SOURCE_DIR}/../../../../../include/common
         ${PROJECT_SOURCE_DIR}/../../../../common
     )
 

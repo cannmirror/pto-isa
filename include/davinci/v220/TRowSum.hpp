@@ -11,7 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TROWSUM_HPP
 #define TROWSUM_HPP
 
-#include <utils.hpp>
+#include <common/utils.hpp>
 #include <common/type.hpp>
 #include <common/pto_tile.hpp>
 #include <common/tile_tensor_impl.hpp>

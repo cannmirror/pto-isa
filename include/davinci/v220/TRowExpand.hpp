@@ -12,7 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TROWEXPAND_HPP
 
 #include "common/constants.hpp"
-#include "utils.hpp"
+#include "common/utils.hpp"
 
 namespace pto {
     __aicore__ PTO_INLINE uint16_t DupB8ToB16(uint8_t value) {

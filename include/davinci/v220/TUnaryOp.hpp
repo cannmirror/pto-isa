@@ -11,7 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TUNARYOP_HPP
 #define TUNARYOP_HPP
 
-#include "constants.hpp"
+#include "common/constants.hpp"
 
 namespace pto {
     template <typename TileData, typename Func>
