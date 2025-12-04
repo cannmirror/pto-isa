@@ -8,28 +8,29 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#ifndef TMIN_HPP
-#define TMIN_HPP
+#ifndef TMAX_HPP
+#define TMAX_HPP
 
 #include "common/constants.hpp"
 #include "common.hpp"
 #include "utils.hpp"
+#include "TBinOp.hpp"
 
 using namespace pto;
 using namespace std;
 
 namespace pto {
-
-    template <typename T> struct MinOp {
+    
+    template <typename T> struct MaxOp {
         __aicore__ PTO_INLINE static void BinInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1, MaskReg &preg)
         {
-            vmin(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
+            vmax(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
         }
     };
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
     __tf__ __aicore__ PTO_INLINE
-    void TMin(typename TileData::TileDType __out__ dst, 
+    void TMax(typename TileData::TileDType __out__ dst, 
                                 typename TileData::TileDType __in__ src0, 
                                 typename TileData::TileDType __in__ src1,
                                 unsigned kValidRows,
@@ -39,19 +40,19 @@ namespace pto {
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
         __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
-        BinaryInstr<MinOp<T>, TileData, elementsPerRepeat, blockSizeElem, rowStride>(
+        BinaryInstr<MaxOp<T>, TileData, elementsPerRepeat, blockSizeElem, rowStride>(
                     dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols, version);
     }
 
     template <typename TileData>
-    __aicore__ void TMIN_IMPL(TileData &dst, TileData &src0, TileData &src1) {
+    __aicore__ void TMAX_IMPL(TileData &dst, TileData &src0, TileData &src1) {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 
         constexpr unsigned rowStride = TileData::RowStride;
         unsigned validRow = dst.GetValidRow();
         unsigned validCol = dst.GetValidCol();
 
-        TMin<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1.data(), validRow, validCol);
+        TMax<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1.data(), validRow, validCol);
     }
 }
 #endif
