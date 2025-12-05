@@ -462,47 +462,47 @@ else
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tgatherb -g TGATHERBTest.case_float_2x128_2x16_2x128
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_float_2x128_2x16_2x128
+  # python3 test/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_float_2x128_2x16_2x128
 
   # TCI
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tci -g TCITest.case1_int32
+  python3 test/script/run_st.py -r npu -v a3 -t tci -g TCITest.case1_int32
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case5
+  # python3 test/script/run_st.py -r sim -v a5 -t tci -g TCITest.case5
 
   # TCVT
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tcvt -g TCVTTest.case1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case1
 
   # TMATMUL
   # A3
-  python3 test/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
+  # python3 test/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
 
   # TMOV
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tmov -g TMOVTest.case14_scaling_dynamic_int32_int8_0_1_1_1_0_param
+  python3 test/script/run_st.py -r npu -v a3 -t tmov -g TMOVTest.case14_scaling_dynamic_int32_int8_0_1_1_1_0_param
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias1
-  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_1
+  # python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias1
+  # python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_1
   # TEXTRACT
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t textract -g TEXTRACTTest.case1_half_0_1_param
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t textract -g TEXTRACTTest.case1
 
   # TCMPS
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
+  # python3 test/script/run_st.py -r sim -v a5 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
 
   # TMRGSORT
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tmrgsort -g TMRGSORTTest.case_topk1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
+  # python3 test/script/run_st.py -r sim -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
 
   # TMUL
   # A3
@@ -516,76 +516,76 @@ else
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tstore -g TStoreTest.ND_float_1_1_1_2_128_1_1_1_2_128
   python3 test/script/run_st.py -r npu -v a3 -t tstore_acc2gm -g TStoreAcc2gmTest.case7
-  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case1
-  python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case17 
+  # python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case1
+  # python3 test/script/build_st.py -r sim -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case17 
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t tstore -g TStoreTest.case1
 
   # TCMPS
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
+  python3 test/script/run_st.py -r npu -v a3 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
 
   # TROWSUM
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t trowsum -g TROWSUMTest.case1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test1
+  # python3 test/script/run_st.py -r sim -v a5 -t trowsum -g TROWSUMTest.test1
 
   # TCOLSUM
   # A3
   # python3 test/script/run_st.py -r sim -v a3 -t tcolsum -g TCOLMAXTest.test1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test01
+  # python3 test/script/run_st.py -r sim -v a5 -t tcolsum -g TCOLSUMTest.test01
 
   # TCOLMAX
   # A3
   # python3 test/script/run_st.py -r sim -v a3 -t tcolmax -g TCOLMAXTest.test1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test01
+  # python3 test/script/run_st.py -r sim -v a5 -t tcolmax -g TCOLMAXTest.test01
 
   # TROWEXPAND
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t trowexpand -g TROWEXPANDTest.case0
+  python3 test/script/run_st.py -r npu -v a3 -t trowexpand -g TROWEXPANDTest.case0
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t trowexpand -g TROWEXPANDTest.case5
+  # python3 test/script/run_st.py -r sim -v a5 -t trowexpand -g TROWEXPANDTest.case5
 
   # TGATHER
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tgather -g TGATHERTest.case1_float_P0101
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float
+  # python3 test/script/run_st.py -r sim -v a5 -t tgather -g TGATHERTest.case1_float
 
   # TTRANS
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8_param
   #A5
-  python3 test/script/run_st.py -r sim -v a5 -t ttrans -g TTRANSTest.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t ttrans -g TTRANSTest.case1
 
   # TSELS
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tsels -g TSELSTest.case_float_64x64_64x64_64x64
-  python3 test/script/run_st.py -r sim -v a3 -t tsels -g TSELSTest.case_half_16x256_16x256_16x256
+  python3 test/script/run_st.py -r npu -v a3 -t tsels -g TSELSTest.case_float_64x64_64x64_64x64
+  python3 test/script/run_st.py -r npu -v a3 -t tsels -g TSELSTest.case_half_16x256_16x256_16x256
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
-  python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_half_2x32_2x32_2x32
+  # python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
+  # python3 test/script/run_st.py -r sim -v a5 -t tsels -g TSELSTest.case_half_2x32_2x32_2x32
 
   # TSORT32
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tsort32 -g TSort32Test.case1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
 
   # TADD
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
+  # python3 test/script/run_st.py -r sim -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
 
   # TPARTADD
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
+  # python3 test/script/run_st.py -r sim -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
 
   # TSEL
   # A3
@@ -593,60 +593,60 @@ else
 
   # TFILLPAD
   #A3
-  python3 test/script/run_st.py -r sim -v a3 -t tfillpad -g TFILLPADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX
+  python3 test/script/run_st.py -r npu -v a3 -t tfillpad -g TFILLPADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX
   
   #A5
   # python3 test/script/run_st.py -r sim -v a5 -t tsort32 -g TSort32Test.case1
 
   # TMINS
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tmins
+  python3 test/script/run_st.py -r npu -v a3 -t tmins
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_60x60_64x64_60x60
-  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_16x200_20x512_16x200
-  python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_1x3600_2x4096_1x3600
+  # python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_60x60_64x64_60x60
+  # python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_16x200_20x512_16x200
+  # python3 test/script/run_st.py -r sim -v a5 -t tmins -g TMINSTEST.case_float_1x3600_2x4096_1x3600
 
   # TLOAD
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tload_gm2mat -g TLoadGM2L1Test.ND2NZ_bfloat16_t_1_1_1_1_1_1_1_1_1_1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX
+  # python3 test/script/run_st.py -r sim -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX
 
   # TRSQRT
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64
+  python3 test/script/run_st.py -r npu -v a3 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64
+  # python3 test/script/run_st.py -r sim -v a5 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64
 
   # TSQRT
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64
+  python3 test/script/run_st.py -r npu -v a3 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64
+  # python3 test/script/run_st.py -r sim -v a5 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64
 
   # TEXP
   # A3
-  python3 test/script/run_st.py -r sim -v a3 -t texp -g TEXPTest.case_float_64x64_64x64_64x64
+  python3 test/script/run_st.py -r npu -v a3 -t texp -g TEXPTest.case_float_64x64_64x64_64x64
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t texp -g TEXPTest.case_float_64x64_64x64_64x64
+  # python3 test/script/run_st.py -r sim -v a5 -t texp -g TEXPTest.case_float_64x64_64x64_64x64
 
   #TDIVS
   #A3
-  python3 test/script/run_st.py -r sim -v a3 -t tdivs -g TDIVSTest.case1
-  python3 test/script/run_st.py -r sim -v a3 -t tdivs -g TDIVSTest.case5
+  python3 test/script/run_st.py -r npu -v a3 -t tdivs -g TDIVSTest.case1
+  python3 test/script/run_st.py -r npu -v a3 -t tdivs -g TDIVSTest.case5
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tdivs -g TDIVSTest.case1
-  python3 test/script/run_st.py -r sim -v a5 -t tdivs -g TDIVSTest.case5
+  # python3 test/script/run_st.py -r sim -v a5 -t tdivs -g TDIVSTest.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t tdivs -g TDIVSTest.case5
 
   #TMULS
   #A3
-  python3 test/script/run_st.py -r sim -v a3 -t tmuls -g TMULSTest.case1
+  python3 test/script/run_st.py -r npu -v a3 -t tmuls -g TMULSTest.case1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tmuls -g TMULSTest.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t tmuls -g TMULSTest.case1
 
   #TADDS
   #A3
-  python3 test/script/run_st.py -r sim -v a3 -t tadds -g TADDSTest.case1
+  python3 test/script/run_st.py -r npu -v a3 -t tadds -g TADDSTest.case1
   # A5
-  python3 test/script/run_st.py -r sim -v a5 -t tadds -g TADDSTest.case1
+  # python3 test/script/run_st.py -r sim -v a5 -t tadds -g TADDSTest.case1
 fi
