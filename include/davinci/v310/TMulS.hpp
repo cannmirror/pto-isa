@@ -15,78 +15,49 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "common/utils.hpp"
 #include "common.hpp"
 #include "utils.hpp"
+#include "TBinSOp.hpp"
 
+namespace pto {
 
-namespace pto
+template <typename T> struct MulSOp {
+    __aicore__ PTO_INLINE static void BinSInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, T src1, MaskReg &preg)
+    {
+        vmuls(reg_dst, reg_src0, src1, preg, MODE_ZEROING);
+    }
+};
+
+template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
+__tf__ __aicore__ PTO_INLINE
+void TMulS(typename TileData::TileDType __out__ dst, 
+           typename TileData::TileDType __in__ src0, 
+           typename TileData::DType src1,
+           unsigned kValidRows,
+           unsigned kValidCols,
+           BinSOpsImpl version = BinSOpsImpl::BinSOpsIMPL_DEFAULT) {
+    using T = typename TileData::DType;
+    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
+    __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
+    BinaryInstr<MulSOp<T>, TileData, T, elementsPerRepeat, blockSizeElem, rowStride>(
+                dstPtr, src0Ptr, src1, kValidRows, kValidCols, version);
+}
+
+template <typename TileData>
+__aicore__ void TMULS_IMPL(TileData &dst, TileData &src0, typename TileData::DType src1)
 {
-    template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __tf__ __aicore__ PTO_INLINE void TMulS(typename TileData::TileDType __out__ dst,
-                                            typename TileData::TileDType __in__ src0, typename TileData::DType __in__ src1, unsigned validRow,
-                                            unsigned validCol)
-    {
-        using T = typename TileData::DType;
-        __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-        __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-        if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> || std::is_same_v<T, uint16_t> ||
-                      std::is_same_v<T, int16_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, int32_t> ||
-                      std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, bfloat16_t>)
-        {
-            if constexpr (TileData::PadVal == PadValue::Zero)
-            {
-                __VEC_SCOPE__
-                {
-                    MaskReg preg;
-                    RegTensor<T> vregsrc, vregdst;
-                    uint32_t sreg = (uint32_t)(validRow * TileData::Cols);
-                    uint16_t repeatTimes = CeilDivision(validRow * TileData::Cols, elementsPerRepeat);
-                    constexpr auto distValue =
-                        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-                    for (uint16_t i = 0; i < (uint16_t)repeatTimes; ++i)
-                    {
-                        preg = CreatePredicate<T>(sreg);
-                        vlds(vregsrc, src0Ptr, elementsPerRepeat, NORM, POST_UPDATE);
-                        vmuls(vregdst, vregsrc, src1, preg);
-                        vsts(vregdst, dstPtr, elementsPerRepeat, distValue, preg, POST_UPDATE);
-                    }
-                } // end of VF
-            }
-            else
-            { // -INF(MIN) or INF(MAX)
-                __VEC_SCOPE__
-                {
-                    MaskReg preg;
-                    RegTensor<T> vregdst, vregsrc;
-                    uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
-                    constexpr auto distValue =
-                        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-                    for (uint16_t i = 0; i < (uint16_t)(validRow); ++i)
-                    {
-                        uint32_t sreg = (uint32_t)(validCol);
-                        for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j)
-                        {
-                            preg = CreatePredicate<T>(sreg);
-                            vlds(vregsrc, src0Ptr + i * rowStride, j * elementsPerRepeat, NORM);
-                            vmuls(vregdst, vregsrc, src1, preg);
-                            vsts(vregdst, dstPtr + i * rowStride, j * elementsPerRepeat, distValue, preg);
-                        }
-                    }
-                } // end VF
-            }
-        }
-        else
-        {
-            static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TADD: Invalid data type.");
-        }
-    }
-    template <typename TileData>
-    __aicore__ void TMULS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar)
-    {
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-        constexpr unsigned rowStride = TileData::RowStride;
-        unsigned validRow = dst.GetValidRow();
-        unsigned validCol = dst.GetValidCol();
-        TMulS<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), scalar, validRow, validCol);
-    }
-} // namespace pto
+    using T = typename TileData::DType;
+    static_assert(TileData::Loc == Location::Vec, "Location of src and dst tiles must be Location::Vec.");
+    static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
+    constexpr unsigned rowStride = TileData::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
+
+    TMulS<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1, validRow, validCol);
+}
+}  // namespace pto
 #endif
