@@ -59,7 +59,7 @@ void TSel(typename TileData::TileDType __out__ dst, typename MaskTile::TileDType
 
 template <typename TileData, typename MaskTile>
 __aicore__
-void TSEL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1)
+void TSEL_IMPL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1)
 {
     constexpr unsigned rowStride = TileData::RowStride;
     constexpr unsigned maskRowStride = MaskTile::RowStride;
