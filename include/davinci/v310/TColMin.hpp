@@ -8,37 +8,37 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#ifndef TCOLMAX_HPP
-#define TCOLMAX_HPP
+#ifndef TCOLMIN_HPP
+#define TCOLMIN_HPP
 
 #include "TColReduceOps.hpp"
 
 namespace pto {
   template <typename T>
-  struct TColMaxOp {
+  struct TColMinOp {
     __PTO_INSTR__ static void ReduceInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1, MaskReg &pReg) {
-      vmax(dst, src0, src1, pReg, MODE_ZEROING);
+      vmin(dst, src0, src1, pReg, MODE_ZEROING);
     }
   };
 
   template <typename T, typename TileDataOut, typename TileDataIn>
-  __tf__ __PTO_INSTR__ void TColMax(typename TileDataOut::TileDType __out__ dstData,
+  __tf__ __PTO_INSTR__ void TColMin(typename TileDataOut::TileDType __out__ dstData,
     typename TileDataIn::TileDType __in__ srcData, uint16_t validRow, int validCol, unsigned version) {
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
     __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
 
-    TColReduceInstr<TColMaxOp<T>, T, TileDataIn>(dst, src, validRow, validCol, version);
+    TColReduceInstr<TColMinOp<T>, T, TileDataIn>(dst, src, validRow, validCol, version);
   }
 
   template <typename TileDataOut, typename TileDataIn>
-  __PTO_INSTR__ void TCOLMAX_IMPL(TileDataOut &dst, TileDataIn &src) {
+  __PTO_INSTR__ void TCOLMIN_IMPL(TileDataOut &dst, TileDataIn &src) {
     int validCol = src.GetValidCol();
     int validRow = src.GetValidRow();
     TColReduceCheck<TileDataOut, TileDataIn>(validRow, validCol, dst.GetValidRow());
     if (validCol == 0 || validRow == 0) {
       return;
     }
-    TColMax<typename TileDataIn::DType, TileDataOut, TileDataIn>(dst.data(), src.data(), validRow, validCol,
+    TColMin<typename TileDataIn::DType, TileDataOut, TileDataIn>(dst.data(), src.data(), validRow, validCol,
       VFImplKind::VFIMPL_DEFAULT);
   }
 }
