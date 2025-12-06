@@ -6,5 +6,5 @@ build
 output/
 __pycache__/
 *.log
-test/davinci/v220/src/st/build
-test/davinci/v310/src/st/build
+tests/npu/a2a3/src/st/build
+tests/npu/a5/src/st/build

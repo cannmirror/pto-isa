@@ -21,7 +21,7 @@
   - 编译执行
  
     ```
-    python3 test/script/run_st.py -r [RUN_MODE] -v [SOC_VERSION] -t [TEST_CASE] -g [GTEST_FILTER_CASE]
+    python3 tests/script/run_st.py -r [RUN_MODE] -v [SOC_VERSION] -t [TEST_CASE] -g [GTEST_FILTER_CASE]
     ```
     其中脚本参数说明如下：
     - RUN_MODE ：编译执行方式，NPU仿真，NPU上板，对应参数分别为[sim / npu]。
@@ -32,9 +32,9 @@
     示例如下:
     A3:
     ```
-    python3 test/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
+    python3 tests/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
     ```
     A5:
     ```
-    python3 test/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
+    python3 tests/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
     ```

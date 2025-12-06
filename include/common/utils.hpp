@@ -24,7 +24,8 @@ __aicore__ PTO_INLINE void SetContinuousMask(unsigned n)
 }
 
 template <int index>
-__aicore__ PTO_INLINE void movemask(uint64_t mask){
+__aicore__ PTO_INLINE void movemask(uint64_t mask)
+{
     if constexpr (index == 0){
         asm volatile("MOVEMASK 	MASK[0],  %0\n":"+l"(mask));
     }else if constexpr (index == 1) {
@@ -40,7 +41,8 @@ __aicore__ PTO_INLINE void SetVectorCount(uint64_t n)
 }
 
 template <typename T>
-__aicore__ PTO_INLINE void SetFullVecMaskByDType(){
+__aicore__ PTO_INLINE void SetFullVecMaskByDType()
+{
     if constexpr (sizeof(T) == 4){
         movemask<0>(-1);
     }else{

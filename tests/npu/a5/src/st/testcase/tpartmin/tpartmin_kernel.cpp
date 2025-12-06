@@ -1,0 +1,76 @@
+#include <common/tile_tensor_impl.hpp>
+#include <pto-inst.hpp>
+#include <common/constants.hpp>
+#include "acl/acl.h"
+
+using namespace pto;
+#define PTO_CEIL(x,y) ((((x)+(y)-1)/(y)) * (y))
+
+namespace TPartMinTest {
+
+template <typename T, int dstVR, int dstVC, int src0VR, int src0VC, int src1VR, int src1VC>
+__global__ __aicore__ void runTPartMin( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
+    constexpr uint16_t alignedSrc0VC = PTO_CEIL(src0VC, BLOCK_BYTE_SIZE/sizeof(T));
+    constexpr uint16_t alignedSrc1VC = PTO_CEIL(src1VC, BLOCK_BYTE_SIZE/sizeof(T));
+    constexpr uint16_t alignedDstVC  = PTO_CEIL(dstVC,  BLOCK_BYTE_SIZE/sizeof(T));
+
+    using GlobalDataDst  = GlobalTensor<T, Shape<1, 1, 1, dstVR,  dstVC>,  pto::Stride<1, 1, 1, dstVC, 1>>;
+    using GlobalDataSrc0 = GlobalTensor<T, Shape<1, 1, 1, src0VR, src0VC>, pto::Stride<1, 1, 1, src0VC, 1>>;
+    using GlobalDataSrc1 = GlobalTensor<T, Shape<1, 1, 1, src1VR, src1VC>, pto::Stride<1, 1, 1, src1VC, 1>>;
+
+    using TileDataDst  = Tile<Location::Vec, T, dstVR,  alignedDstVC,  BLayout::RowMajor, -1, -1>;
+    using TileDataSrc0 = Tile<Location::Vec, T, src0VR, alignedSrc0VC, BLayout::RowMajor, -1, -1>;
+    using TileDataSrc1 = Tile<Location::Vec, T, src1VR, alignedSrc1VC, BLayout::RowMajor, -1, -1>;
+    
+    TileDataSrc0 src0Tile(src0VR, src0VC);
+    TileDataSrc1 src1Tile(src1VR, src1VC);
+    TileDataDst  dstTile(dstVR,   dstVC);
+
+    TASSIGN(src0Tile, 0x0);
+    TASSIGN(src1Tile, 0x12000);
+    TASSIGN(dstTile,  0x24000);
+
+    GlobalDataSrc0 src0Global(src0);
+    GlobalDataSrc1 src1Global(src1);
+    GlobalDataDst  dstGlobal(out);
+
+    TLOAD(src0Tile, src0Global);
+    TLOAD(src1Tile, src1Global);
+    
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    
+    TPARTMIN<TileDataDst, TileDataSrc0, TileDataSrc1>(dstTile, src0Tile, src1Tile);
+    
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    
+    TSTORE(dstGlobal, dstTile);
+    out = dstGlobal.data();
+}
+
+template <typename T, int dstVR, int dstVC, int src0VR, int src0VC, int src1VR, int src1VC>
+void LaunchTPartMin(T *out, T *src0, T *src1, void *stream)
+{
+    if constexpr ( std::is_same_v<T, aclFloat16> )
+        runTPartMin<half, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC><<<1, nullptr, stream>>>((half*)(out),
+                                                                                                (half*)(src0),
+                                                                                                (half*)(src1));
+    else 
+        runTPartMin<T, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC><<<1, nullptr, stream>>>(out, src0, src1);
+}
+}
+
+template void LaunchTPartMin<float,      64,  64,  64,  64,  64,  64>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<float,      128, 64,  128, 64,  96,  64>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<float,      95,  95,  95,  95,  95,  95>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<float,      122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<aclFloat16, 122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<int16_t,    122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<int32_t,    122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<uint16_t,   122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<uint32_t,   122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<int8_t,     122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+template void LaunchTPartMin<uint8_t,    122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+// template void LaunchTPartMin<bfloat16_t, 122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
+
