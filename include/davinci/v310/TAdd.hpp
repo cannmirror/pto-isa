@@ -48,6 +48,7 @@ void TAdd(typename TileData::TileDType __out__ dst,
 template <typename TileData>
 __aicore__ PTO_INLINE void TADD_IMPL(TileData &dst, TileData &src0, TileData &src1)
 {
+    static_assert(TileData::isRowMajor, "TADD: not supported Layout type");
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned rowStride = TileData::RowStride;
