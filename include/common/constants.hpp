@@ -28,6 +28,14 @@ constexpr const int CUBE_BLOCK_SIZE = 512;
 constexpr const int C0_SIZE_BYTE = 32;
 constexpr const int FRACTAL_NZ_ROW = 16;
 
+enum VFImplKind : unsigned {
+    VFIMPL_DEFAULT              = 0,    // 默认版本
+    VFIMPL_1D_NO_POST_UPDATE    = 1,
+    VFIMPL_2D_NO_POST_UPDATE    = 2,
+    VFIMPL_1D_POST_UPDATE       = 3,
+    VFIMPL_2D_POST_UPDATE       = 4,
+};
+
 enum class RoundMode : uint8_t {
     CAST_NONE = 0,
     CAST_RINT = 1,  // round to nearest, tie to even

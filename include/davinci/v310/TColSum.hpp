@@ -15,166 +15,121 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "common/utils.hpp"
 #include "common.hpp"
 #include "utils.hpp"
+#include "TColReduceOps.hpp"
 
 namespace pto {
-    template <typename T, typename TileDataOut, typename TileDataIn, typename TileDataTmp, bool isBinary>
-    __tf__ __aicore__ PTO_INLINE void TColSum(typename TileDataOut::TileDType __out__ dstData,
-                                              typename TileDataIn::TileDType __in__ srcData,
-                                              typename TileDataIn::TileDType __in__ tmpData,
-                                              uint16_t validRow, int validCol) {
-        __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
-        __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+  template <typename T>
+  struct TColSumOp {
+    __PTO_INSTR__ static void ReduceInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1, MaskReg &pReg) {
+      vadd(dst, src0, src1, pReg, MODE_ZEROING);
+    }
+  };
 
-        constexpr unsigned srcRowStride = TileDataIn::Cols;
-        constexpr unsigned dstRowStride = TileDataOut::Cols;
-        constexpr unsigned nElmPerRepeat = CCE_VL / sizeof(T);  // 每次repeat涉及多少个元素
-        uint16_t repeatTimes = CeilDivision(validCol, nElmPerRepeat);
+  template <typename T, unsigned TmpStride>
+  __PTO_INSTR__ void TColSum_Binary_TmpProc(RegTensor<T> &src0VReg, RegTensor<T> &src1VReg, RegTensor<T> &dstVReg,
+    MaskReg &pReg, __ubuf__ T *tmp, uint16_t nLoop) {
+    bool remain;
+    constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>
+      (GetDistVst<T, DistVST::DIST_NORM>())>();
 
-        if (validRow == 1) {
-            __VEC_SCOPE__
-            {
-                RegTensor<T> VReg;
-                MaskReg preg;
-                uint32_t sreg = validCol;
-                constexpr auto distValue =
-                    std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-                for (uint16_t i = 0; i < repeatTimes; ++i) {
-                    preg = CreatePredicate<T>(sreg);
-                    vlds(VReg, src, nElmPerRepeat, NORM, POST_UPDATE);
-                    vsts(VReg, dst, nElmPerRepeat, distValue, preg, POST_UPDATE);
-                }
-            }
-            return;
+    // 获取nLoop的 最高比特位-1 为循环次数, 等价于while(nLoop > 1)
+    uint16_t BinaryAccLoopTimes = nLoop > 0 ? 63 - __builtin_clzll(nLoop) : 0;
+    for (int i = 0; i < BinaryAccLoopTimes; ++i) {
+      remain = nLoop % 2;
+      nLoop /= 2;
+      for (int j = 0; j < nLoop; ++j) {
+        vlds(src0VReg, tmp, (2 * j) * TmpStride, NORM);
+        vlds(src1VReg, tmp, (2 * j + 1) * TmpStride, NORM);
+        vadd(dstVReg, src0VReg, src1VReg, pReg, MODE_ZEROING);
+        vsts(dstVReg, tmp, j * TmpStride, distValue, pReg);
+      }
+
+      if (remain) {
+        vlds(src0VReg, tmp, (nLoop - 1) * TmpStride, NORM);
+        vlds(src1VReg, tmp, (2 * nLoop) * TmpStride, NORM);
+        vadd(dstVReg, src0VReg, src1VReg, pReg, MODE_ZEROING);
+        vsts(dstVReg, tmp, (nLoop - 1) * TmpStride, distValue, pReg);
+      }
+    }
+  }
+
+  template <typename T, unsigned SrcStride, unsigned TmpStride, unsigned elmPerRpt>
+  __PTO_INSTR__ void TColSum_Binary(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp,
+    uint16_t validRow, int validCol, unsigned version) {
+    uint16_t repeatTimes = CeilDivision(validCol, elmPerRpt);
+    __VEC_SCOPE__
+    {
+      RegTensor<T> src0VReg;
+      RegTensor<T> src1VReg;
+      RegTensor<T> dstVReg;
+      MaskReg pReg;
+      uint32_t sreg = validCol;
+      uint16_t i, j;
+      // 相邻两行相加放入temp, nLoop为tmp有效数据行数
+      uint16_t nLoop = validRow / 2;
+      bool remain = validRow % 2;
+      constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>
+        (GetDistVst<T, DistVST::DIST_NORM>())>();
+
+      for (i = 0; i < repeatTimes; ++i) {
+        // sreg在每次执行CreatePredicate之后会累减nElmPerRepeat，直至0
+        pReg = CreatePredicate<T>(sreg);
+
+        // 将src数据进行初步运算并存入tmp
+        for (j = 0; j < nLoop; ++j) {
+          vlds(src0VReg, src, i * elmPerRpt + (2 * j) * SrcStride, NORM);
+          vlds(src1VReg, src, i * elmPerRpt + (2 * j + 1) * SrcStride, NORM);
+          vadd(dstVReg, src0VReg, src1VReg, pReg, MODE_ZEROING);
+          vsts(dstVReg, tmp, j * TmpStride, distValue, pReg);
         }
 
-        __ubuf__ T *dstP = dst;
-        __ubuf__ T *srcP = src;
-        if constexpr (isBinary) {
-            __ubuf__ T *tmp = (__ubuf__ T *)__cce_get_tile_ptr(tmpData);
-            __ubuf__ T *tmpP = tmp;
-            constexpr unsigned tmpRowStride = TileDataTmp::Cols;
-            __VEC_SCOPE__
-            {
-                RegTensor<T> src0VReg;
-                RegTensor<T> src1VReg;
-                RegTensor<T> tmpVReg;
-                MaskReg preg;
-                uint32_t sreg = validCol;
-                uint16_t nLoop;
-                uint16_t i, j, k;
-                uint16_t BinaryAccLoopTimes;
-                bool remain;
-                constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>
-                    (GetDistVst<T, DistVST::DIST_NORM>())>();
-
-                for (i = 0; i < repeatTimes; ++i) {
-                    // sreg在每次执行CreatePredicate之后会累减nElmPerRepeat，直至0
-                    preg = CreatePredicate<T>(sreg);
-
-                    // 相邻两行相加放入temp, nLoop为tmp有效数据行数
-                    nLoop = validRow / 2;
-                    remain = validRow % 2;
-                    for (j = 0; j < nLoop; ++j) {
-                        vlds(src0VReg, srcP, (2 * j) * srcRowStride, NORM);
-                        vlds(src1VReg, srcP, (2 * j + 1) * srcRowStride, NORM);
-                        vadd(tmpVReg, src0VReg, src1VReg, preg, MODE_ZEROING);
-                        vsts(tmpVReg, tmpP, j * tmpRowStride, distValue, preg);
-                    }
-
-                    if (remain) {
-                        // 最后剩余奇数行加入tmp最后一行
-                        vlds(src0VReg, srcP, (validRow - 1) * srcRowStride, NORM);
-                        vlds(src1VReg, tmpP, (nLoop - 1) * tmpRowStride, NORM);
-                        vadd(tmpVReg, src0VReg, src1VReg, preg, MODE_ZEROING);
-                        vsts(tmpVReg, tmpP, (nLoop - 1) * tmpRowStride, distValue, preg);
-                    }
-
-                    // 获取nLoop的 最高比特位-1 为循环次数, for(BinaryAccLoopTimes)等价于while(nLoop > 1)
-                    BinaryAccLoopTimes = nLoop > 0 ? 63 - __builtin_clzll(nLoop) : 0;
-                    for (j = 0; j < BinaryAccLoopTimes; ++j) {
-                        remain = nLoop % 2;
-                        nLoop = nLoop / 2;
-                        for (k = 0; k < nLoop; ++k) {
-                            vlds(src0VReg, tmpP, (2 * k) * tmpRowStride, NORM);
-                            vlds(src1VReg, tmpP, (2 * k + 1) * tmpRowStride, NORM);
-                            vadd(tmpVReg, src0VReg, src1VReg, preg, MODE_ZEROING);
-                            vsts(tmpVReg, tmpP, k * tmpRowStride, distValue, preg);
-                        }
-
-                        if (remain) {
-                            vlds(src0VReg, tmpP, (nLoop - 1) * tmpRowStride, NORM);
-                            vlds(src1VReg, tmpP, (2 * nLoop) * tmpRowStride, NORM);
-                            vadd(tmpVReg, src0VReg, src1VReg, preg, MODE_ZEROING);
-                            vsts(tmpVReg, tmpP, (nLoop - 1) * tmpRowStride, distValue, preg);
-                        }
-                    }
-
-                    // 最后一步vsts(tmpVReg, tmp)其实无作用, tmpVReg已经保存最终结果
-                    vsts(tmpVReg, dstP, nElmPerRepeat, distValue, preg, POST_UPDATE);   // dstP每次累加nElmPerRepeat
-                    srcP += nElmPerRepeat;
-                    tmpP += nElmPerRepeat;
-                }
-            } // end VF
-        } else {
-            __VEC_SCOPE__
-            {
-                RegTensor<T> src0VReg;
-                RegTensor<T> src1VReg;
-                RegTensor<T> tmpVReg;
-                RegTensor<T> dstVReg;
-                MaskReg preg;
-                uint32_t sreg = validCol;
-                uint16_t nLoop = (validRow - 1) / 2;    // 第一行copy 故-1
-                bool remain = (validRow - 1) % 2;
-                constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>
-                    (GetDistVst<T, DistVST::DIST_NORM>())>();
-                for (uint16_t i = 0; i < repeatTimes; ++i) {
-                    // sreg在每次执行CreatePredicate之后会累减nElmPerRepeat，直至0
-                    preg = CreatePredicate<T>(sreg);
-
-                    // 将src的第一行存入dst寄存器
-                    vlds(dstVReg, srcP, 0, NORM);
-
-                    // 读取第二行及以后的每行数据存入src寄存器，与dst寄存器相加后存入dst寄存器
-                    for (uint16_t j = 0; j < nLoop; ++j) {
-                        vlds(src0VReg, srcP, (2 * j + 1) * srcRowStride, NORM);
-                        vlds(src1VReg, srcP, (2 * j + 2) * srcRowStride, NORM);
-                        vadd(tmpVReg, src0VReg, src1VReg, preg, MODE_ZEROING);
-                        vadd(dstVReg, dstVReg, tmpVReg, preg, MODE_ZEROING);
-                    }
-                    if (remain) {
-                        vlds(src0VReg, srcP, (validRow - 1) * srcRowStride, NORM);
-                        vadd(dstVReg, dstVReg, src0VReg, preg, MODE_ZEROING);
-                    }
-                    vsts(dstVReg, dstP, nElmPerRepeat, distValue, preg, POST_UPDATE);   // dstP每次累加nElmPerRepeat
-                    srcP += nElmPerRepeat;
-                }
-            } // end VF
+        if (remain) {
+          // 最后剩余奇数行加入tmp最后一行
+          vlds(src0VReg, src, i * elmPerRpt + (validRow - 1) * SrcStride, NORM);
+          vlds(src1VReg, tmp, (nLoop - 1) * TmpStride, NORM);
+          vadd(dstVReg, src0VReg, src1VReg, pReg, MODE_ZEROING);
+          vsts(dstVReg, tmp, (nLoop - 1) * TmpStride, distValue, pReg);
         }
+        TColSum_Binary_TmpProc<T, TmpStride>(src0VReg, src1VReg, dstVReg, pReg, tmp, nLoop);
+        // 最后一步vsts(dstVReg, tmp)其实无作用, tmpVReg已经保存最终结果
+        vsts(dstVReg, dst, i * elmPerRpt, distValue, pReg);
+      }
+    } // end VF
+  }
+
+  template <typename T, typename TileDataOut, typename TileDataIn, typename TileDataTmp, bool isBinary>
+  __tf__ __PTO_INSTR__ void TColSum(typename TileDataOut::TileDType __out__ dstData,
+    typename TileDataIn::TileDType __in__ srcData, typename TileDataIn::TileDType __in__ tmpData,
+    uint16_t validRow, int validCol, unsigned version) {
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+
+    if constexpr (isBinary) {
+      __ubuf__ T *tmp = (__ubuf__ T *)__cce_get_tile_ptr(tmpData);
+      constexpr unsigned elmPerRpt = CCE_VL / sizeof(T);  // 每次repeat涉及多少个元素
+      TColSum_Binary<T, TileDataIn::Cols, TileDataTmp::Cols, elmPerRpt>(dst, src, tmp, validRow, validCol, version);
+    } else {
+      TColReduceInstr<TColSumOp<T>, T, TileDataIn>(dst, src, validRow, validCol, version);
+    }
+  }
+
+  template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
+  __PTO_INSTR__ void TCOLSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, bool isBinary) {
+    int validCol = src.GetValidCol();
+    int validRow = src.GetValidRow();
+    TColReduceCheck<TileDataOut, TileDataIn>(validRow, validCol, dst.GetValidRow());
+    if (validCol == 0 || validRow == 0) {
+      return;
     }
 
-    template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
-    __aicore__ PTO_INLINE void TCOLSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, bool isBinary) {
-        using T = typename TileDataIn::DType;
-        constexpr bool isTargetType =
-            std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, int8_t> ||
-            std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
-            std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, bfloat16_t>;
-        static_assert(isTargetType, "The input data type is not supported by this instruction.");
-
-        int validCol = src.GetValidCol();
-        int validRow = src.GetValidRow();
-        if (validCol == 0 || validRow == 0) {
-            return;
-        }
-
-        if (isBinary) {
-            TColSum<T, TileDataOut, TileDataIn, TileDataTmp, true>(dst.data(), src.data(), tmp.data(),
-                validRow, validCol);
-        } else {
-            TColSum<T, TileDataOut, TileDataIn, TileDataTmp, false>(dst.data(), src.data(), tmp.data(),
-                validRow, validCol);
-        }
+    using T = typename TileDataIn::DType;
+    if (isBinary) {
+      TColSum<T, TileDataOut, TileDataIn, TileDataTmp, true>(dst.data(), src.data(), tmp.data(),
+        validRow, validCol, VFImplKind::VFIMPL_DEFAULT);
+    } else {
+      TColSum<T, TileDataOut, TileDataIn, TileDataTmp, false>(dst.data(), src.data(), tmp.data(),
+        validRow, validCol, VFImplKind::VFIMPL_DEFAULT);
     }
+  }
 }
 #endif
