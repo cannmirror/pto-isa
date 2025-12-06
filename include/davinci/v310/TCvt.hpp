@@ -15,7 +15,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "common/utils.hpp"
 #include "common.hpp"
 #include "utils.hpp"
-#include <assert.h>
 #include <array>
 
 using namespace pto;
@@ -59,20 +58,21 @@ inline __aicore__ void cast32to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t&
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B16))) DST_VEC;
     SRC_VEC v_input_0, v_input_1;
     uint32_t len32 = ELE_CNT_B32;
+    uint32_t new_len = len * 2;
     vector_bool preg_f32 = plt_b32(len32, POST_UPDATE);
     
     FOR_ELEMENTS(ELE_CNT_B32*2)
         vlds(v_input_0, v_input_1, src, srcOffset, DINTLV_B32);
 
-        vector_bool preg_f16 = plt_b16(len, POST_UPDATE); // len should be subtructed here by ElementsNum
+        vector_bool preg_f16 = plt_b16(new_len, POST_UPDATE); // len should be subtructed here by ElementsNum
 
         DST_VEC v_output_odd, v_output_even, v_output;
         if constexpr (std::is_same<R, void>::value) {
-            vcvt(v_output_odd, v_input_1, preg_f16, RS_ENABLE, PART_ODD);
-            vcvt(v_output_even, v_input_0, preg_f16, RS_ENABLE, PART_EVEN);    
+            vcvt(v_output_odd, v_input_1, preg_f32, RS_ENABLE, PART_ODD);
+            vcvt(v_output_even, v_input_0, preg_f32, RS_ENABLE, PART_EVEN);    
         } else {
-            vcvt(v_output_odd, v_input_1, preg_f16, R(), RS_ENABLE, PART_ODD);
-            vcvt(v_output_even, v_input_0, preg_f16, R(), RS_ENABLE, PART_EVEN);
+            vcvt(v_output_odd, v_input_1, preg_f32, R(), RS_ENABLE, PART_ODD);
+            vcvt(v_output_even, v_input_0, preg_f32, R(), RS_ENABLE, PART_EVEN);
         }
 
         vor(v_output, v_output_even, v_output_odd, preg_f16);
@@ -179,12 +179,13 @@ inline __aicore__ void cast16to8(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& 
    
     uint32_t len16 = ELE_CNT_B16;
     vector_bool preg_f16 = plt_b16(len16, POST_UPDATE);
+    uint32_t new_len = len * 4;
 
     FOR_ELEMENTS(ELE_CNT_B8)
         SRC_VEC v_input_0, v_input_1;
         DST_VEC v_output_odd, v_output_even, v_output;
 
-        vector_bool preg_b8 = plt_b8(len, POST_UPDATE);
+        vector_bool preg_b8 = plt_b8(new_len, POST_UPDATE);
 
         vlds(v_input_0, v_input_1, src, srcOffset, DINTLV_B16);
         vcvt(v_output_odd, v_input_1, preg_f16, R(), RS_ENABLE, PART_ODD);
@@ -210,7 +211,7 @@ inline __aicore__ void cast8to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& 
         vector_bool preg_f16 = plt_b16(len, POST_UPDATE);
 
         vcvt(v_output, v_input_0, preg_b8, PART_EVEN);
-        vsts(v_output, dst, dstOffset, NORM_B16, preg_b8);
+        vsts(v_output, dst, dstOffset, NORM_B16, preg_f16);
     END_FOR_ELEMENTS
 }
 
@@ -451,9 +452,6 @@ __aicore__ void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
                 std::is_same<typename TileDataS::DType, float>::value) {
                 implTCVT<TileDataD,TileDataS,RoundOType>(dst,src);
             } 
-            // else {
-            //     assert(false && "Rounding type CAST_ODD is supported only for FP32->FP16 operation");
-            // }
             break;
         default:
             implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);

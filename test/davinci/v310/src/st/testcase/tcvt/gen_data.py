@@ -54,8 +54,9 @@ if __name__ == "__main__":
         "TCVTTest.case4",
         "TCVTTest.case5",
         "TCVTTest.case6",
-        "TCVTTest.case7"
-
+        "TCVTTest.case7",
+        "TCVTTest.case8",
+        "TCVTTest.case9"
     ]
 
     case_params_list = [
@@ -63,9 +64,11 @@ if __name__ == "__main__":
         tcvtParams(np.int32, np.float32, 256, 64, "RoundMode::CAST_RINT"),
         tcvtParams(np.float32, np.int16, 16, 32, "RoundMode::CAST_RINT"),
         tcvtParams(np.float32, np.int32, 32, 512, "RoundMode::CAST_RINT"),
-        tcvtParams(np.int32, np.int16, 2, 512, "RoundMode::CAST_RINT"),
-        tcvtParams(np.int32, np.float32, 4, 4096, "RoundMode::CAST_RINT"),
-        tcvtParams(np.int16, np.float32, 64, 64, "RoundMode::CAST_RINT")
+        tcvtParams(np.int16, np.int32, 2, 512, "RoundMode::CAST_RINT"),
+        tcvtParams(np.float32, np.int32, 4, 4096, "RoundMode::CAST_RINT"),
+        tcvtParams(np.int16, np.float32, 64, 64, "RoundMode::CAST_RINT"),
+        tcvtParams(np.float32, np.float16, 64, 64, "RoundMode::CAST_RINT"),
+        tcvtParams(np.float16, np.uint8, 64, 64, "RoundMode::CAST_RINT")
     ]
 
     for i, case_name in enumerate(case_name_list):

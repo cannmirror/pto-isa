@@ -10,7 +10,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <common/tile_tensor_impl.hpp>
 #include <common/pto_tile.hpp>
-#include <common/constants.hpp>
+#include <common/constants.hpp>s
+#include "acl/acl.h"
 
 using namespace std;
 using namespace pto;
@@ -18,7 +19,6 @@ using namespace pto;
 template <typename T, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 inline __aicore__ void runTCVT(__gm__ T __out__ *out, __gm__ S __in__ *src) {
 
-    //if (block_idx > 0) return;
 
     using DynShapeDim4 = pto::Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim4 = pto::Stride<1, 1, 1, kGCols_, 1>;
@@ -54,89 +54,23 @@ inline __aicore__ void runTCVT(__gm__ T __out__ *out, __gm__ S __in__ *src) {
     out = dstGlobal.data();
 }
 
+template <typename D, template S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void launchTCVT(D *dst, S *src, void stream) {
+    if constexpr ( std::is_same_v<D, aclFloat16> ) {
+        runTCVT<half, S, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>((half*) dst, src);
+    } else if constexpr ( std::is_same_v<S, aclFloat16> ) {
+        runTCVT<D, half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(dst, (half*)src);
+    } else {
+         runTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(dst, src);
+    }
+} 
 
-extern "C" __global__ __aicore__ void launchTCVT_1(__gm__ int *out, __gm__ float *src) {
-    constexpr uint32_t M = 128;
-    constexpr uint32_t N = 128;
-    constexpr uint32_t K = 128;
-    constexpr uint32_t L = 128;
-    runTCVT<int, float, M, N, K, L>(out, src);
-}
-
-
-extern "C" __global__ __aicore__ void launchTCVT_2(__gm__ float *out, __gm__ int *src) {
-    constexpr uint32_t M = 256;
-    constexpr uint32_t N = 64;
-    constexpr uint32_t K = 256;
-    constexpr uint32_t L = 64;
-    runTCVT<float, int, M, N, K, L>(out, src);
-}
-
-extern "C" __global__ __aicore__ void launchTCVT_3(__gm__ int16_t *out, __gm__ float *src) {
-    constexpr uint32_t M = 16;
-    constexpr uint32_t N = 32;
-    constexpr uint32_t K = 16;
-    constexpr uint32_t L = 32;
-    runTCVT<int16_t, float, M, N, K, L>(out, src);
-}
-
-extern "C" __global__ __aicore__ void launchTCVT_4(__gm__ int *out, __gm__ float *src) {
-    constexpr uint32_t M = 32;
-    constexpr uint32_t N = 512;
-    constexpr uint32_t K = 32;
-    constexpr uint32_t L = 512;
-    runTCVT<int, float, M, N, K, L>(out, src);
-}
-
-extern "C" __global__ __aicore__ void launchTCVT_5(__gm__ int16_t *out, __gm__ int *src) {
-    constexpr uint32_t M = 2;
-    constexpr uint32_t N = 512;
-    constexpr uint32_t K = 2;
-    constexpr uint32_t L = 512;
-    runTCVT<int16_t, int, M, N, K, L>(out, src);
-}
-
-extern "C" __global__ __aicore__ void launchTCVT_6(__gm__ float *out, __gm__ int *src) {
-    constexpr uint32_t M = 4;
-    constexpr uint32_t N = 4096;
-    constexpr uint32_t K = 4;
-    constexpr uint32_t L = 4096;
-    runTCVT<float, int, M, N, K, L>(out, src);
-}
-
-extern "C" __global__ __aicore__ void launchTCVT_7(__gm__ float *out, __gm__ int16_t *src) {
-    constexpr uint32_t M = 64;
-    constexpr uint32_t N = 64;
-    constexpr uint32_t K = 64;
-    constexpr uint32_t L = 64;
-    runTCVT<float, int16_t, M, N, K, L>(out, src);
-}
-
-
-void launchTCVT1(int *out, float *src, void *stream) {
-        launchTCVT_1<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT2(float *out, int *src, void *stream) {
-        launchTCVT_2<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT3(int16_t *out, float *src, void *stream) {
-        launchTCVT_3<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT4(int *out, float *src, void *stream){
-        launchTCVT_4<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT5(int16_t *out, int *src, void *stream){
-        launchTCVT_5<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT6(float *out, int *src, void *stream){
-        launchTCVT_6<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT7(float *out, int16_t *src, void *stream){
-        launchTCVT_7<<<1, nullptr, stream>>>(out, src);
-}
+template void launchTCVT<int32_t, float, 128, 128, 128, 128>(int32_t *dst, float src, void *stream);
+template void launchTCVT<float, int32_t, 256, 64, 256, 64>(float *dst, int32_t src, void *stream);
+template void launchTCVT<int16_t, float, 16, 32, 16, 32>(int16_t *dst, float src, void *stream);
+template void launchTCVT<int32_t, float, 32, 512, 32, 512>(int32_t *dst, float src, void *stream);
+template void launchTCVT<int32_t, int16_t, 2, 512, 2, 512>(int32_t *dst, int16_t src, void *stream);
+template void launchTCVT<int32_t, float, 4, 4096, 4, 4096>(int32_t *dst, float src, void *stream);
+template void launchTCVT<float, int16_t, 64, 64, 64, 64>(float *dst, int16_t src, void *stream);
+template void launchTCVT<aclFloat16, float, 64, 64, 64, 64>(aclFloat16 *dst, float src, void *stream);
+template void launchTCVT<uint8_t, aclFloat16, 64, 64, 64, 64>(uint8_t *dst, aclFloat16 src, void *stream);
