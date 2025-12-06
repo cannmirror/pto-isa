@@ -27,7 +27,7 @@
     </file_info>
     <file_info copy_type="source" src_path="" dst_path="pto_tile_lib/include/" install_path="$(TARGET_ENV)/include/pto/" install_type="all">
         <file value="common" install_mod="550" entity="true"/>
-        <file value="davinci" install_mod="550" entity="true"/>
+        <file value="npu" install_mod="550" entity="true"/>
     </file_info>
     <block_info dependtree="false" dst_path="pto_tile_lib" block_conf_path="ascend">
         <block name="EngineeringCommon"/>
@@ -37,8 +37,11 @@
         <path value="$(TARGET_ENV)/include"/>
         <path value="$(TARGET_ENV)/include/pto"/>
         <path value="$(TARGET_ENV)/include/pto/common"/>
-        <path value="$(TARGET_ENV)/include/pto/davinci"/>
-        <path value="$(TARGET_ENV)/include/pto/davinci/v220"/>
-        <path value="$(TARGET_ENV)/include/pto/davinci/v310"/>
+        <path value="$(TARGET_ENV)/include/pto/npu"/>
+        <path value="$(TARGET_ENV)/include/pto/npu/a2a3"/>
+        <path value="$(TARGET_ENV)/include/pto/npu/a5"/>
+        <path value="$(TARGET_ENV)/include/pto/cpu"/>
+        <path value="$(TARGET_ENV)/include/pto/gpu"/>
+        <path value="$(TARGET_ENV)/include/pto/gpu/h100"/>
     </dir_info>
 </config>

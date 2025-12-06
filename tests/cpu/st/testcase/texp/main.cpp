@@ -1,0 +1,92 @@
+#include "test_common.h"
+#include <pto-inst.hpp>
+#include <gtest/gtest.h>
+
+
+using namespace std;
+using namespace PtoTestCommon;
+
+class TEXPTest : public testing::Test {
+protected:
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
+};
+
+std::string GetGoldenDir() {
+    const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
+    const std::string caseName = testInfo->name();
+    std::string suiteName = testInfo->test_suite_name();
+    std::string fullPath = "../" + suiteName + "." + caseName;
+    return fullPath;
+}
+
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void LaunchTExp(T *out, T *src,  void *stream);
+
+template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void test_texp() {
+
+    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
+
+    aclInit(nullptr);
+    aclrtSetDevice(0);
+    aclrtStream stream;
+    aclrtCreateStream(&stream);
+
+    T *dstHost, *srcHost;
+    T *dstDevice, *srcDevice;
+
+    aclrtMallocHost((void **)(&dstHost), fileSize);
+    aclrtMallocHost((void **)(&srcHost), fileSize);
+
+    aclrtMalloc((void **)&dstDevice, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input1.bin", fileSize, srcHost, fileSize));
+
+    aclrtMemcpy(srcDevice, fileSize, srcHost, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    LaunchTExp<T, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, srcDevice, stream);
+
+    aclrtSynchronizeStream(stream);
+    aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, fileSize);
+
+    aclrtFree(dstDevice);
+    aclrtFree(srcDevice);
+
+    aclrtFreeHost(dstHost);
+    aclrtFreeHost(srcHost);
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(0);
+    aclFinalize();
+
+    std::vector<T> golden(fileSize);
+    std::vector<T> devFinal(fileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize));
+
+    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
+
+    EXPECT_TRUE(ret);
+}
+
+
+TEST_F(TEXPTest, case_float_64x64_64x64_64x64) {
+    test_texp<float, 64, 64, 64, 64>();
+}
+TEST_F(TEXPTest, case_half_64x64_64x64_64x64) {
+    test_texp<aclFloat16, 64, 64, 64, 64>();
+}
+TEST_F(TEXPTest, case_half_32x32_32x32_32x32) {
+    test_texp<aclFloat16, 32, 32, 32, 32>();
+}
+TEST_F(TEXPTest, case_float_32x32_32x32_32x32) {
+    test_texp<float, 32, 32, 32, 32>();
+}
+TEST_F(TEXPTest, case_float_32x16_32x16_32x16) {
+    test_texp<float, 32, 16, 32, 16>();
+}

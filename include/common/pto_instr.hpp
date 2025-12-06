@@ -162,7 +162,7 @@ __PTO_INSTR__ void TGATHER(DstTileData &dst, SrcTileData &src) {
   TGATHER_IMPL<DstTileData, SrcTileData, maskPattern>(dst, src);
 }
 
-// TODO: uncomment if TCOPY supported for v310
+// TODO: uncomment if TCOPY supported for a5
 // template <typename TileDataDst, typename TileDataSrc, TCopyMode copyMode>
 // __PTO_INSTR__ void TCOPY(TileDataDst &dst, TileDataSrc &src) {
 //   TCOPY_IMPL<TileDataDst, TileDataSrc, copyMode>(dst, src);
