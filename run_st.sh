@@ -331,6 +331,8 @@ if [ "$1" = "dailyBuild" ]; then
   # TSEL
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tsel
+  #  # A5
+  # python3 test/script/run_st.py -r sim -v a5 -t tsel
   
   # TLOAD
   # A3
@@ -590,6 +592,8 @@ else
   # TSEL
   # A3
   python3 test/script/run_st.py -r npu -v a3 -t tsel -g TSELTest.case1
+    # A5
+  # python3 test/script/run_st.py -r npu -v a5 -t tsel -g TSELTest.case1
 
   # TFILLPAD
   #A3

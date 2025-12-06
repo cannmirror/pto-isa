@@ -236,6 +236,11 @@ __PTO_INSTR__ void TSELS(TileData &dst, TileData &src0, TileData &src1, uint8_t 
   MAP_INSTR_IMPL(TSELS, dst, src0, src1, selectMode)
 }
 
+template <typename TileData, typename MaskTile>
+__PTO_INSTR__ void TSEL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1) {
+  MAP_INSTR_IMPL(TSEL, dst, selMask, src0, src1)
+}
+
 template <typename TileDataDst, typename TileDataSrc>
 __PTO_INSTR__ void TTRANS(TileDataDst &dst, TileDataSrc &src) {
   MAP_INSTR_IMPL(TTRANS, dst, src)
