@@ -1,10 +1,20 @@
+/**
+Copyright (c) 2025 Huawei Technologies Co., Ltd.
+This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+CANN Open Software License Agreement Version 2.0 (the "License").
+Please refer to the License for details. You may not use this file except in compliance with the License.
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+See LICENSE in the root of the software repository for the full text of the License.
+*/
+
 #ifndef TEXTRACT_HPP
 #define TEXTRACT_HPP
 
 namespace pto {
 
-constexpr const int32_t LOG2_BLOCK_BYTE_SIZE = 5;  // 2^5 = 32
-constexpr const int32_t LOG2_BLOCK_LEN = 4;        // 2^4 = 16
+constexpr const int32_t LOG2_BLOCK_BYTE_SIZE = 5; // 2^5 = 32
+constexpr const int32_t LOG2_BLOCK_LEN = 4;       // 2^4 = 16
 
 template <typename DstType, typename SrcType, int32_t srcRow, int32_t srcCol, int32_t dstRow, int32_t dstCol>
 __tf__ __aicore__ void TExtractToANonTranspose(
@@ -97,15 +107,15 @@ __tf__ __aicore__ void TExtractToBNonTranspose(
 {
     uint16_t dstGap = 0;
     constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(SrcType);
-    constexpr uint16_t dstRowNum = (dstRow * sizeof(DstType)) >> LOG2_BLOCK_BYTE_SIZE;  // 分型个数
+    constexpr uint16_t dstRowNum = (dstRow * sizeof(DstType)) >> LOG2_BLOCK_BYTE_SIZE; // 分型个数
     constexpr uint16_t dstColNum = dstCol >> LOG2_BLOCK_LEN;
     constexpr uint16_t srcColNum = srcCol >> LOG2_BLOCK_LEN;
     constexpr uint16_t srcRowNum = (srcRow * sizeof(SrcType)) >> LOG2_BLOCK_BYTE_SIZE;
     // 计算源矩阵、目标矩阵行列中512B小分型矩阵的个数
-    uint16_t blockNum = CUBE_BLOCK_SIZE >> (sizeof(SrcType) == 1      ? 0
-                                               : sizeof(SrcType) == 2 ? 1
-                                               : sizeof(SrcType) == 4 ? 2
-                                                                      : 0);
+    uint16_t blockNum = CUBE_BLOCK_SIZE >> (sizeof(SrcType) == 1    ? 0 :
+                                               sizeof(SrcType) == 2 ? 1 :
+                                               sizeof(SrcType) == 4 ? 2 :
+                                                                      0);
     uint16_t startIdx0 =
         (indexRow * sizeof(SrcType) * srcColNum >> LOG2_BLOCK_BYTE_SIZE) + (indexCol >> LOG2_BLOCK_LEN);
     if constexpr (dstRowNum >= dstColNum) {
@@ -227,5 +237,5 @@ __aicore__ void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t index
         }
     }
 }
-}  // namespace pto
-#endif  // TEXTRACT_HPP
+} // namespace pto
+#endif // TEXTRACT_HPP
