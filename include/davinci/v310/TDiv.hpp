@@ -46,6 +46,7 @@ namespace pto {
 
     template <typename TileData>
     __aicore__ void TDIV_IMPL(TileData &dst, TileData &src0, TileData &src1) {
+        static_assert(TileData::isRowMajor, "TDIV: not supported Layout type");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 
         constexpr unsigned rowStride = TileData::RowStride;

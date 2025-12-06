@@ -33,14 +33,14 @@ namespace pto {
         //scalar
         if(descending)
         {
-            for(int32_t j = 0; j < validCol; j++) {
-                *(dstPtr + j) = S - j;
+            for(int32_t i = 0; i < validCol; i++) {
+                *(dstPtr + i) = S - i;
             }
         }
         else
         {
-            for(int32_t j = 0; j < validCol; j++) {
-                *(dstPtr + j) = S + j;
+            for(int32_t i = 0; i < validCol; i++) {
+                *(dstPtr + i) = S + i;
             }
         }
     }
