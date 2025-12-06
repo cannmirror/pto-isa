@@ -13,97 +13,54 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include "common/constants.hpp"
 #include "common/utils.hpp"
+#include "npu/a2a3/TBinOp.hpp"
 
 namespace pto {
-    template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
-    __tf__ __aicore__ void TSub(typename TileData::TileDType __out__ dst,
-                                typename TileData::TileDType __in__ src0,
-                                typename TileData::TileDType __in__ src1,
-                                unsigned numRepeatPerLine,
-                                unsigned numRemainPerLine,
-                                unsigned validRow)
+
+template <typename T> struct SubOp {
+    __PTO_INSTR__ static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
     {
-        __ubuf__ typename TileData::DType *dstPtr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
-        __ubuf__ typename TileData::DType *src0Ptr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src0);
-        __ubuf__ typename TileData::DType *src1Ptr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src1);
-
-        if (numRepeatPerLine > 0) {
-            unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
-            unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
-            for (int i = 0; i < validRow; i++) {
-                if (numLoop) {
-                    for (int j = 0; j < numLoop; j++) {
-                        vsub(dstPtr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
-                             src0Ptr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
-                             src1Ptr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
-                             REPEAT_MAX, 1, 1, 1, 8, 8, 8);
-                    }
-                }
-                if (remainAfterLoop) {
-                    vsub(dstPtr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
-                         src0Ptr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
-                         src1Ptr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
-                         remainAfterLoop, 1, 1, 1, 8, 8, 8);
-                }   
-            }
-        }
-
-        dstPtr += numRepeatPerLine * elementsPerRepeat;
-        src0Ptr += numRepeatPerLine * elementsPerRepeat;
-        src1Ptr += numRepeatPerLine * elementsPerRepeat;
-
-        if (numRemainPerLine) {
-            unsigned numLoop = validRow / REPEAT_MAX;
-            unsigned remainAfterLoop = validRow % REPEAT_MAX;
-            bool strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
-            SetContinuousMask(numRemainPerLine);
-            if (numLoop) {
-                for (int i = 0; i < numLoop; i++) {
-                    if (strideOverFlag) {
-                        for (uint64_t j = 0; j < REPEAT_MAX; j++) {
-                            vsub(dstPtr + i * REPEAT_MAX * stride + j * stride,
-                                 src0Ptr + i * REPEAT_MAX * stride + j * stride,
-                                 src1Ptr + i * REPEAT_MAX * stride + j * stride,
-                                 1, 1, 1, 1, 1, 1, 1);
-                        }
-                    } else {
-                        vsub(dstPtr + i * REPEAT_MAX * stride,
-                             src0Ptr + i * REPEAT_MAX * stride,
-                             src1Ptr + i * REPEAT_MAX * stride,
-                             REPEAT_MAX, 1, 1, 1, stride / blockSizeElem, stride / blockSizeElem, stride / blockSizeElem);
-                    }
-                }
-            }
-            if (remainAfterLoop) {
-                if (strideOverFlag) {
-                    for (unsigned j = 0; j < remainAfterLoop; j++) {
-                        vsub(dstPtr + numLoop * REPEAT_MAX * stride + j * stride,
-                             src0Ptr + numLoop * REPEAT_MAX * stride + j * stride,
-                             src1Ptr + numLoop * REPEAT_MAX * stride + j * stride,
-                             1, 1, 1, 1, 1, 1, 1);
-                    }
-                } else {
-                    vsub(dstPtr + numLoop * REPEAT_MAX * stride,
-                         src0Ptr + numLoop * REPEAT_MAX * stride,
-                         src1Ptr + numLoop * REPEAT_MAX * stride,
-                         remainAfterLoop, 1, 1, 1, stride / blockSizeElem, stride / blockSizeElem, stride / blockSizeElem);
-                }
-            }
-            set_vector_mask(-1, -1);
-        }
+        vsub(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
     }
-
-    template <typename TileData>
-    __aicore__ void TSUB_IMPL(TileData &dst, TileData &src0, TileData &src1) {
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-        unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat;
-        unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
-        constexpr unsigned stride = TileData::RowStride;
-        unsigned validRow = dst.GetValidRow();
-
-        TSub<TileData, elementsPerRepeat, blockSizeElem, stride>(dst.data(), src0.data(), src1.data(),
-                                                                numRepeatPerLine, numRemainPerLine, validRow);
+    __PTO_INSTR__ static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
+                                uint8_t dstRepeatStride, uint8_t src0RepeatStride, uint8_t src1RepeatStride)
+    {
+        vsub(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, src1RepeatStride);
     }
+};
+
+template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
+__tf__ __PTO_INSTR__ void TSub(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0, 
+    typename TileData::TileDType __in__ src1, unsigned validRow, unsigned validCol)
+{    
+    using T = typename TileData::DType;
+    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
+    __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
+    __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
+    BinaryInstr<SubOp<T>, TileData, elementsPerRepeat, blockSizeElem, rowStride>(
+                dstPtr, src0Ptr, src1Ptr, validRow, validCol);
 }
+
+template <typename TileData>
+__PTO_INSTR__ void TSUB_IMPL(TileData &dst, TileData &src0, TileData &src1)
+{
+    static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
+                  std::is_same<typename TileData::DType, int>::value ||
+                  std::is_same<typename TileData::DType, int16_t>::value ||
+                  std::is_same<typename TileData::DType, half>::value ||
+                  std::is_same<typename TileData::DType, float16_t>::value ||
+                  std::is_same<typename TileData::DType, float>::value ||
+                  std::is_same<typename TileData::DType, float32_t>::value,
+                  "TSUB: Invalid data type.");
+    static_assert(TileData::isRowMajor, "TSUB: not supported BLayout type.");
+    constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(typename TileData::DType);
+    constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
+    constexpr unsigned rowStride = TileData::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    TSub<TileData, elementsPerRepeat, blockSizeElem, rowStride>
+        (dst.data(), src0.data(), src1.data(), validRow, validCol);
+}
+}  // namespace pto
 #endif
