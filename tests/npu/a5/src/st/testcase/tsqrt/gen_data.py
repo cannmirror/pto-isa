@@ -14,7 +14,7 @@ import os
 import numpy as np
 np.random.seed(19)
 
-def gen_golden_data_tsqrt(case_name, param):
+def gen_golden_data(case_name, param):
     dtype = param.dtype
 
     H, W = [param.tile_row, param.tile_col]
@@ -23,7 +23,7 @@ def gen_golden_data_tsqrt(case_name, param):
     # Generate random input arrays
     input1 = np.random.random(size=(H,W)).astype(dtype)
 
-    # Perform the addbtraction
+    # Perform the operation
     golden = np.sqrt(input1)
 
     # Apply valid region constraints
@@ -39,8 +39,8 @@ def gen_golden_data_tsqrt(case_name, param):
 
     return output, input1, golden
 
-class tsqrtParams:
-    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
+class tunaryParams:
+    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col, in_place = False):
         self.dtype = dtype
         self.global_row = global_row
         self.global_col = global_col
@@ -48,6 +48,7 @@ class tsqrtParams:
         self.tile_col = tile_col
         self.valid_row = valid_row
         self.valid_col = valid_col
+        self.in_place = in_place
 
 def generate_case_name(param):
     dtype_str = {
@@ -57,7 +58,7 @@ def generate_case_name(param):
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TSQRTTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+    return f"TSQRTTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}_inPlace_{param.in_place}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -69,8 +70,10 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tsqrtParams(np.float32, 64, 64, 64, 64, 64, 64),
-        tsqrtParams(np.float16, 64, 64, 64, 64, 64, 64),
+        tunaryParams(np.float32, 64, 64, 64, 64, 64, 64, True),
+        tunaryParams(np.float32, 64, 64, 64, 64, 64, 64, False),
+        tunaryParams(np.float16, 64, 64, 64, 64, 64, 64, True),
+        tunaryParams(np.float16, 64, 64, 64, 64, 64, 64, False),
     ]
 
     for i, param in enumerate(case_params_list):
@@ -79,5 +82,5 @@ if __name__ == "__main__":
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data_tsqrt(case_name, param)
+        gen_golden_data(case_name, param)
         os.chdir(original_dir)
