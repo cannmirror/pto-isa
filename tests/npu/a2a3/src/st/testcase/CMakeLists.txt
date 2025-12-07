@@ -94,6 +94,7 @@ tsel
 tsub
 tmins
 tmin
+tmax
 tload_gm2mat
 tstore_acc2gm
 trsqrt

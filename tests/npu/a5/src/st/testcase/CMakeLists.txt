@@ -119,6 +119,7 @@ set(ALL_TESTCASES
     tpartadd
     tfillpad
     tmin
+    tmax
     tmins
     tmov
     tcmps
