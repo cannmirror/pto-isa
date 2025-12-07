@@ -34,12 +34,11 @@ std::string GetGoldenDir() {
 }
 
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, bool isInPlace = false>
 void LaunchTSqrt(T *out, T *src, void *stream);
 
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, bool isInPlace = false>
 void test_tsqrt() {
-
     size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
 
     aclInit(nullptr);
@@ -59,7 +58,7 @@ void test_tsqrt() {
     ReadFile(GetGoldenDir() + "/input1.bin", fileSize, srcHost, fileSize);
 
     aclrtMemcpy(srcDevice, fileSize, srcHost, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTSqrt<T, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, srcDevice, stream);
+    LaunchTSqrt<T, kGRows_, kGCols_, kTRows_, kTCols_, isInPlace>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -79,15 +78,27 @@ void test_tsqrt() {
     std::vector<T> devFinal(fileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize);
     ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize);
-
-    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
+ 
+    float eps = 0.0f;
+    if constexpr (std::is_same_v<T, float>) {
+        eps = 0.0001f;
+    } else if constexpr (std::is_same_v<T, aclFloat16>) {
+        eps = 0.001f;
+    }
+    bool ret = ResultCmp<T>(golden, devFinal, eps);
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TSQRTTest, case_float_64x64_64x64_64x64) {
-    test_tsqrt<float, 64, 64, 64, 64>();
+TEST_F(TSQRTTest, case_float_64x64_64x64_64x64_inPlace_True) {
+    test_tsqrt<float, 64, 64, 64, 64, true>();
 }
-TEST_F(TSQRTTest, case_half_64x64_64x64_64x64) {
-    test_tsqrt<aclFloat16, 64, 64, 64, 64>();
+TEST_F(TSQRTTest, case_float_64x64_64x64_64x64_inPlace_False) {
+    test_tsqrt<float, 64, 64, 64, 64, false>();
+}
+TEST_F(TSQRTTest, case_half_64x64_64x64_64x64_inPlace_True) {
+    test_tsqrt<aclFloat16, 64, 64, 64, 64, true>();
+}
+TEST_F(TSQRTTest, case_half_64x64_64x64_64x64_inPlace_False) {
+    test_tsqrt<aclFloat16, 64, 64, 64, 64, false>();
 }

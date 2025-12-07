@@ -456,6 +456,28 @@ if [ "$1" = "dailyBuild" ]; then
   python3 tests/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_int8_2x256_2x8_2x256
   python3 tests/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_int8_2x32768_2x1024_2x32768
   python3 tests/script/run_st.py -r sim -v a5 -t tgatherb -g TGATHERBTest.case_uint8_2x32768_2x1024_2x32768
+
+  # TEXP
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t texp
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t texp -g TEXPTest.case_float_64x64_64x64_64x64_inPlace_False
+  python3 test/script/run_st.py -r sim -v a5 -t texp -g TEXPTest.case_half_64x64_64x64_64x64_inPlace_False
+
+  # TRSQRT
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t trsqrt
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
+  python3 test/script/run_st.py -r sim -v a5 -t trsqrt -g TRSQRTTest.case_half_64x64_64x64_64x64_inPlace_False
+
+  # TSQRT
+  # A3
+  python3 test/script/run_st.py -r npu -v a3 -t tsqrt
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
+  python3 test/script/run_st.py -r sim -v a5 -t tsqrt -g TSQRTTest.case_half_64x64_64x64_64x64_inPlace_False
+
 else
   echo "==================simple build, run one case================="
   # TGATHERB
@@ -614,21 +636,21 @@ else
 
   # TRSQRT
   # A3
-  python3 tests/script/run_st.py -r npu -v a3 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64
+  python3 tests/script/run_st.py -r npu -v a3 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
   # A5
-  # python3 tests/script/run_st.py -r sim -v a5 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64
+  # python3 tests/script/run_st.py -r sim -v a5 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
 
   # TSQRT
   # A3
-  python3 tests/script/run_st.py -r npu -v a3 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64
+  python3 tests/script/run_st.py -r npu -v a3 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
   # A5
-  # python3 tests/script/run_st.py -r sim -v a5 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64
+  # python3 tests/script/run_st.py -r sim -v a5 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
 
   # TEXP
   # A3
-  python3 tests/script/run_st.py -r npu -v a3 -t texp -g TEXPTest.case_float_64x64_64x64_64x64
+  python3 tests/script/run_st.py -r npu -v a3 -t texp -g TEXPTest.case_float_64x64_64x64_64x64_inPlace_False
   # A5
-  # python3 tests/script/run_st.py -r sim -v a5 -t texp -g TEXPTest.case_float_64x64_64x64_64x64
+  # python3 tests/script/run_st.py -r sim -v a5 -t texp -g TEXPTest.case_float_64x64_64x64_64x64_inPlace_False
 
   #TDIVS
   #A3
