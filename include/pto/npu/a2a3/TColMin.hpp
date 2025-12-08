@@ -8,40 +8,40 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#ifndef TCOLMAX_HPP
-#define TCOLMAX_HPP
+#ifndef TCOLMIN_HPP
+#define TCOLMIN_HPP
 
 #include "TColReduceOps.hpp"
 
 namespace pto {
     template <typename T>
-    struct COLMAXOp
+    struct COLMINOp
     {
-        __PTO_INSTR__ static void ReduceInstr(__ubuf__ T *dst, __ubuf__ T *src0, 
+        __PTO_INSTR__ static void ReduceInstr(__ubuf__ T *dst, __ubuf__ T *src0,
                                               __ubuf__ T *src1, uint8_t repeats,
                                               uint8_t dstRepeatStride,
                                               uint8_t src0RepeatStride,
                                               uint8_t src1RepeatStride)
         {
-            vmax(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, 
+            vmin(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride,
                  src0RepeatStride, src1RepeatStride);
         }
     };
 
-    template <typename T, typename TileDataDst, typename TileDataSrc, unsigned srcstride>
-    __tf__ __aicore__ PTO_INLINE void TColMax(typename TileDataDst::TileDType __out__ dst,
+    template <typename T, typename TileDataDst, typename TileDataSrc, int srcstride>
+    __tf__ __aicore__ PTO_INLINE void TColMin(typename TileDataDst::TileDType __out__ dst,
                                               typename TileDataSrc::TileDType __in__ src,
                                               int validRow, int validCol)
     {
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
 
-        ColReduceInstr<COLMAXOp<T>, T, TileDataDst, TileDataSrc, srcstride>(
+        ColReduceInstr<COLMINOp<T>, T, TileDataDst, TileDataSrc, srcstride>(
             dstPtr, srcPtr, validRow, validCol);
     }
 
     template <typename TileDataOut, typename TileDataIn>
-    __aicore__ PTO_INLINE void TCOLMAX_IMPL(TileDataOut &dst, TileDataIn &src) {
+    __aicore__ PTO_INLINE void TCOLMIN_IMPL(TileDataOut &dst, TileDataIn &src) {
         using T = typename TileDataIn::DType;
         int ValidRow = src.GetValidRow();
         int ValidCol = src.GetValidCol();
@@ -50,7 +50,7 @@ namespace pto {
             return;
         }
         constexpr int srcstride = TileDataIn::RowStride;
-        TColMax<T, TileDataOut, TileDataIn, srcstride>(dst.data(), src.data(), ValidRow, ValidCol);
+        TColMin<T, TileDataOut, TileDataIn, srcstride>(dst.data(), src.data(), ValidRow, ValidCol);
     }
 }
 #endif
