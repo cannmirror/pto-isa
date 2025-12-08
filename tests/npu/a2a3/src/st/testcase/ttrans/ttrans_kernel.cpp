@@ -8,14 +8,14 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
-#include <pto/common/pto_tile.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
+#include "acl/acl.h"
 
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-__aicore__ PTO_INLINE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols) {
+__global__ __aicore__ void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols) {
     using DynShapeSrc = pto::Shape<-1, -1, -1, -1, -1>;
     using DynStrideSrc = pto::Stride<-1, -1, -1, -1, -1>;
     using GlobalDataSrc = GlobalTensor<T, DynShapeSrc, DynStrideSrc>;
@@ -50,114 +50,19 @@ __aicore__ PTO_INLINE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src
     TSTORE(dstGlobal, dstTile);
 }
 
-extern "C" __global__ __aicore__ void launchTTRANS_1(__gm__ uint8_t *out, __gm__ uint8_t *src)
+template <typename T, int tRows, int tCols, int vRows, int vCols>
+void LaunchTTRANS(T *out, T *src, void *stream)
 {
-    constexpr int KG_ROWS    = 16;
-    constexpr int KG_COLS    = 8;
-    constexpr int KT_ROWS    = 16;
-    constexpr int KT_COLS    = 8;
-    constexpr int VALID_ROWS = 16;
-    constexpr int VALID_COLS = 8;
-    typedef float IN_DTYPE;
-
-    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
-                                                            reinterpret_cast<__gm__ IN_DTYPE*>(src), 
-                                                            VALID_ROWS, VALID_COLS);
-}
-
-extern "C" __global__ __aicore__ void launchTTRANS_2(__gm__ uint8_t *out, __gm__ uint8_t *src)
-{
-    constexpr int KG_ROWS    = 16;
-    constexpr int KG_COLS    = 16;
-    constexpr int KT_ROWS    = 16;
-    constexpr int KT_COLS    = 16;
-    constexpr int VALID_ROWS = 16;
-    constexpr int VALID_COLS = 16;
-
-    typedef half IN_DTYPE;
-    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
-                                                            reinterpret_cast<__gm__ IN_DTYPE*>(src), 
-                                                            VALID_ROWS, VALID_COLS);
-}
-
-extern "C" __global__ __aicore__ void launchTTRANS_3(__gm__ uint8_t *out, __gm__ uint8_t *src)
-{
-    constexpr int KG_ROWS    = 32;
-    constexpr int KG_COLS    = 32;
-    constexpr int KT_ROWS    = 32;
-    constexpr int KT_COLS    = 32;
-    constexpr int VALID_ROWS = 32;
-    constexpr int VALID_COLS = 32;
-    typedef int8_t IN_DTYPE;
-    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
-                                                            reinterpret_cast<__gm__ IN_DTYPE*>(src), 
-                                                            VALID_ROWS, VALID_COLS);
-}
-
-extern "C" __global__ __aicore__ void launchTTRANS_11(__gm__ uint8_t *out, __gm__ uint8_t *src)
-{
-    constexpr int KG_ROWS    = 32;
-    constexpr int KG_COLS    = 16;
-    constexpr int KT_ROWS    = 32;
-    constexpr int KT_COLS    = 16;
-    constexpr int VALID_ROWS = 31;
-    constexpr int VALID_COLS = 15;
-
-    typedef float IN_DTYPE;
-    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
-                                                            reinterpret_cast<__gm__ IN_DTYPE*>(src), 
-                                                            VALID_ROWS, VALID_COLS);
-}
-
-extern "C" __global__ __aicore__ void launchTTRANS_12(__gm__ uint8_t *out, __gm__ uint8_t *src)
-{
-    constexpr int KG_ROWS    = 32;
-    constexpr int KG_COLS    = 32;
-    constexpr int KT_ROWS    = 32;
-    constexpr int KT_COLS    = 33;
-    constexpr int VALID_ROWS = 31;
-    constexpr int VALID_COLS = 31;
-    typedef half IN_DTYPE;
-    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
-                                                            reinterpret_cast<__gm__ IN_DTYPE*>(src), 
-                                                            VALID_ROWS, VALID_COLS);
-}
-
-extern "C" __global__ __aicore__ void launchTTRANS_13(__gm__ uint8_t *out, __gm__ uint8_t *src)
-{
-    constexpr int KG_ROWS    = 64;
-    constexpr int KG_COLS    = 64;
-    constexpr int KT_ROWS    = 64;
-    constexpr int KT_COLS    = 64;
-    constexpr int VALID_ROWS = 22;
-    constexpr int VALID_COLS = 63;
-    typedef int8_t IN_DTYPE;
-    runTTRANS<IN_DTYPE, KG_ROWS, KG_COLS, KT_ROWS, KT_COLS>(reinterpret_cast<__gm__ IN_DTYPE*>(out),
-                                                            reinterpret_cast<__gm__ IN_DTYPE*>(src), 
-                                                            VALID_ROWS, VALID_COLS);
-}
-
-template <int32_t tilingKey>
-void launchTTRANS_demo(uint8_t *out, uint8_t *src, void *stream)
-{
-    if constexpr (tilingKey == 1) {
-        launchTTRANS_1<<<1, nullptr, stream>>>(out, src);
-    } else if constexpr (tilingKey == 2) {
-        launchTTRANS_2<<<1, nullptr, stream>>>(out, src);
-    } else if constexpr (tilingKey == 3) {
-        launchTTRANS_3<<<1, nullptr, stream>>>(out, src);
-    } else if constexpr (tilingKey == 11) {
-        launchTTRANS_11<<<1, nullptr, stream>>>(out, src);
-    } else if constexpr (tilingKey == 12) {
-        launchTTRANS_12<<<1, nullptr, stream>>>(out, src);
-    } else if constexpr (tilingKey == 13) {
-        launchTTRANS_13<<<1, nullptr, stream>>>(out, src);
+    if constexpr ( std::is_same_v<T, aclFloat16> ){
+        runTTRANS<half, tRows, tCols, vRows, vCols><<<1, nullptr, stream>>>((half*)(out), (half*)(src), vRows, vCols);
+    }else {
+        runTTRANS<T, tRows, tCols, vRows, vCols><<<1, nullptr, stream>>>(out, src, vRows, vCols);
     }
 }
 
-template void launchTTRANS_demo<1>(uint8_t *out, uint8_t *src, void *stream);
-template void launchTTRANS_demo<2>(uint8_t *out, uint8_t *src, void *stream);
-template void launchTTRANS_demo<3>(uint8_t *out, uint8_t *src, void *stream);
-template void launchTTRANS_demo<11>(uint8_t *out, uint8_t *src, void *stream);
-template void launchTTRANS_demo<12>(uint8_t *out, uint8_t *src, void *stream);
-template void launchTTRANS_demo<13>(uint8_t *out, uint8_t *src, void *stream);
+template void LaunchTTRANS<float, 16, 8, 16, 8>(float *out, float *src, void *stream);
+template void LaunchTTRANS<aclFloat16, 16, 16, 16, 16>(aclFloat16 *out, aclFloat16 *src, void *stream);
+template void LaunchTTRANS<uint8_t, 32, 32, 32, 32>(uint8_t *out, uint8_t *src, void *stream);
+template void LaunchTTRANS<float, 32, 16, 31, 15>(float *out, float *src, void *stream);
+template void LaunchTTRANS<aclFloat16, 32, 32, 31, 31>(aclFloat16 *out, aclFloat16 *src, void *stream);
+template void LaunchTTRANS<uint8_t, 64, 64, 22, 63>(uint8_t *out, uint8_t *src, void *stream);

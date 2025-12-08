@@ -15,15 +15,14 @@ import os
 import numpy as np
 np.random.seed(19)
 
-def gen_golden_data(case_name, param):
-    src_dtype = param.src_dtype
-    dst_dtype = param.dst_dtype
+def gen_golden_trans_data(case_name, param):
+    dtype = param.dtype
 
     H, W = [param.tile_row, param.tile_col]
     h_valid, w_valid = [param.valid_row, param.valid_col]
-    src = np.random.randint(1, 10, size=[H, W]).astype(src_dtype)
-    golden = src.transpose((1, 0)).astype(dst_dtype)
-    output = np.zeros([W, H]).astype(dst_dtype)
+    src = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+    golden = src.transpose((1, 0)).astype(dtype)
+    output = np.zeros([W, H]).astype(dtype)
     for h in range(H):
         for w in range(W):
             if h >= h_valid or w >= w_valid:
@@ -34,39 +33,46 @@ def gen_golden_data(case_name, param):
     return output, src, golden
 
 class TTRANSParams:
-    def __init__(self, src_dtype, dst_dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
-        self.src_dtype = src_dtype
-        self.dst_dtype = dst_dtype
-        self.gloal_row = global_row
-        self.gloal_col = global_col
+    def __init__(self, dtype, tile_row, tile_col, valid_row, valid_col):
+        self.dtype = dtype 
         self.tile_row = tile_row
         self.tile_col = tile_col
         self.valid_row = valid_row
         self.valid_col = valid_col
+    
+def generate_case_name(idx, param):
+    dtype_str = {
+        np.float32: 'float',
+        np.float16: 'half',
+        np.int8: 'int8',
+        np.int32: 'int32',
+        np.int16: 'int16'
+    }[param.dtype]
+    return f"TTRANSTest.case{idx}_{dtype_str}_{param.tile_row}_{param.tile_col}_{param.valid_row}_{param.valid_col}"
 
 if __name__ == "__main__":
-    case_name_list = [
-        "TTRANSTest.case1_float_16_8_16_8_param",
-        "TTRANSTest.case2_half_16_16_16_16_param",
-        "TTRANSTest.case3_int8_32_32_32_32_param",
-        "TTRANSTest.case4_float_32_16_31_15_param",
-        "TTRANSTest.case5_half_32_32_31_31_param",
-        "TTRANSTest.case6_int8_64_64_22_63_param",
-    ]
+    # Get the absolute path of the script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    testcases_dir = os.path.join(script_dir, "testcases")
+
+    # Ensure the testcases directory exists
+    if not os.path.exists(testcases_dir):
+        os.makedirs(testcases_dir)
 
     case_params_list = [
-        TTRANSParams(np.float32, np.float32, 16, 8, 16, 8, 16, 8),
-        TTRANSParams(np.float16, np.float16, 16, 16, 16, 16, 16, 16),
-        TTRANSParams(np.int8, np.int8, 32, 32, 32, 32, 32, 32),
-        TTRANSParams(np.float32, np.float32, 32, 16, 32, 16, 31, 15),
-        TTRANSParams(np.float16, np.float16, 32, 32, 32, 32, 31, 31),
-        TTRANSParams(np.int8, np.int8, 64, 64, 64, 64, 22, 63),
+        TTRANSParams(np.float32, 16, 8, 16, 8),
+        TTRANSParams(np.float16, 16, 16, 16, 16),
+        TTRANSParams(np.int8, 32, 32, 32, 32),
+        TTRANSParams(np.float32, 32, 16, 31, 15),
+        TTRANSParams(np.float16, 32, 32, 31, 31),
+        TTRANSParams(np.int8, 64, 64, 22, 63),
     ]
 
-    for i, case_name in enumerate(case_name_list):
+    for i, param in enumerate(case_params_list):
+        case_name = generate_case_name(i+1, param)
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data(case_name, case_params_list[i])
+        gen_golden_trans_data(case_name, param)
         os.chdir(original_dir)

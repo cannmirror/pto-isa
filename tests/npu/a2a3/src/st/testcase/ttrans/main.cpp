@@ -15,8 +15,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-template <int32_t tilingKey>
-void launchTTRANS_demo(uint8_t *out, uint8_t *src, void *stream);
+template <typename T, int tRows, int tCols, int vRows, int vCols>
+void LaunchTTRANS(T *out, T *src, void *stream);
 
 class TTRANSTest : public testing::Test {
 protected:
@@ -34,22 +34,21 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-TEST_F(TTRANSTest, case1_float_16_8_16_8_param) 
+template<typename T, int tRows, int tCols, int vRows, int vCols>
+void test_ttrans()
 {
-    uint32_t M = 16;
-    uint32_t N = 8;
-    typedef float IN_OUT_DATA_TYPE;
-
-    size_t srcFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-    size_t dstFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
+    uint32_t M = tRows;
+    uint32_t N = tCols;
+    size_t srcFileSize = M * N * sizeof(T);
+    size_t dstFileSize = M * N * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    uint8_t *dstHost, *srcHost;
-    uint8_t *dstDevice, *srcDevice;
+    T *dstHost, *srcHost;
+    T *dstDevice, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
     aclrtMallocHost((void **)(&srcHost), srcFileSize);
@@ -60,7 +59,7 @@ TEST_F(TTRANSTest, case1_float_16_8_16_8_param)
     ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTTRANS_demo<1>(dstDevice, srcDevice, stream);
+    LaunchTTRANS<T, tRows, tCols, vRows, vCols>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -76,8 +75,8 @@ TEST_F(TTRANSTest, case1_float_16_8_16_8_param)
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<IN_OUT_DATA_TYPE> golden(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    std::vector<IN_OUT_DATA_TYPE> result(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
+    std::vector<T> golden(dstFileSize / sizeof(T));
+    std::vector<T> result(dstFileSize / sizeof(T));
     ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, result.data(), dstFileSize);
 
@@ -86,262 +85,21 @@ TEST_F(TTRANSTest, case1_float_16_8_16_8_param)
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TTRANSTest, case2_half_16_16_16_16_param) 
-{
-    uint32_t M = 16;
-    uint32_t N = 16;
-    typedef uint16_t IN_OUT_DATA_TYPE;
-
-    size_t srcFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-    size_t dstFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *srcHost;
-    uint8_t *dstDevice, *srcDevice;
-
-    aclrtMallocHost((void **)(&dstHost), dstFileSize);
-    aclrtMallocHost((void **)(&srcHost), srcFileSize);
-
-    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
-
-    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTTRANS_demo<2>(dstDevice, srcDevice, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(srcDevice);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(srcHost);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<IN_OUT_DATA_TYPE> golden(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    std::vector<IN_OUT_DATA_TYPE> result(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, result.data(), dstFileSize);
-
-    bool ret = ResultCmp(golden, result, 0.001f);
-
-    EXPECT_TRUE(ret);
+TEST_F(TTRANSTest, case1_float_16_8_16_8){
+    test_ttrans<float, 16, 8, 16, 8>();
 }
-
-TEST_F(TTRANSTest, case3_int8_32_32_32_32_param) 
-{
-    uint32_t M = 32;
-    uint32_t N = 32;
-    typedef int8_t IN_OUT_DATA_TYPE;
-
-    size_t srcFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-    size_t dstFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *srcHost;
-    uint8_t *dstDevice, *srcDevice;
-
-    aclrtMallocHost((void **)(&dstHost), dstFileSize);
-    aclrtMallocHost((void **)(&srcHost), srcFileSize);
-
-    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
-
-    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTTRANS_demo<3>(dstDevice, srcDevice, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(srcDevice);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(srcHost);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<IN_OUT_DATA_TYPE> golden(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    std::vector<IN_OUT_DATA_TYPE> result(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, result.data(), dstFileSize);
-
-    bool ret = ResultCmp(golden, result, 0.001f);
-
-    EXPECT_TRUE(ret);
+TEST_F(TTRANSTest, case2_half_16_16_16_16){
+    test_ttrans<aclFloat16, 16, 16, 16, 16>();
 }
-
-TEST_F(TTRANSTest, case4_float_32_16_31_15_param) 
-{
-    uint32_t M = 32;
-    uint32_t N = 16;
-    typedef float IN_OUT_DATA_TYPE;
-
-    size_t srcFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-    size_t dstFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *srcHost;
-    uint8_t *dstDevice, *srcDevice;
-
-    aclrtMallocHost((void **)(&dstHost), dstFileSize);
-    aclrtMallocHost((void **)(&srcHost), srcFileSize);
-
-    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
-
-    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTTRANS_demo<11>(dstDevice, srcDevice, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(srcDevice);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(srcHost);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<IN_OUT_DATA_TYPE> golden(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    std::vector<IN_OUT_DATA_TYPE> result(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, result.data(), dstFileSize);
-
-    bool ret = ResultCmp(golden, result, 0.001f);
-
-    EXPECT_TRUE(ret);
+TEST_F(TTRANSTest, case3_int8_32_32_32_32){
+    test_ttrans<uint8_t, 32, 32, 32, 32>();
 }
-
-TEST_F(TTRANSTest, case5_half_32_32_31_31_param) 
-{
-    uint32_t M = 32;
-    uint32_t N = 32;
-    typedef uint16_t IN_OUT_DATA_TYPE;
-
-    size_t srcFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-    size_t dstFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *srcHost;
-    uint8_t *dstDevice, *srcDevice;
-
-    aclrtMallocHost((void **)(&dstHost), dstFileSize);
-    aclrtMallocHost((void **)(&srcHost), srcFileSize);
-
-    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
-
-    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTTRANS_demo<12>(dstDevice, srcDevice, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(srcDevice);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(srcHost);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<IN_OUT_DATA_TYPE> golden(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    std::vector<IN_OUT_DATA_TYPE> result(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, result.data(), dstFileSize);
-
-    bool ret = ResultCmp(golden, result, 0.001f);
-
-    EXPECT_TRUE(ret);
+TEST_F(TTRANSTest, case4_float_32_16_31_15){
+    test_ttrans<float, 32, 16, 31, 15>();
 }
-
-TEST_F(TTRANSTest, case6_int8_64_64_22_63_param) 
-{
-    uint32_t M = 64;
-    uint32_t N = 64;
-    typedef int8_t IN_OUT_DATA_TYPE;
-
-    size_t srcFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-    size_t dstFileSize = M * N * sizeof(IN_OUT_DATA_TYPE);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *srcHost;
-    uint8_t *dstDevice, *srcDevice;
-
-    aclrtMallocHost((void **)(&dstHost), dstFileSize);
-    aclrtMallocHost((void **)(&srcHost), srcFileSize);
-
-    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
-
-    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTTRANS_demo<13>(dstDevice, srcDevice, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(srcDevice);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(srcHost);
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<IN_OUT_DATA_TYPE> golden(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    std::vector<IN_OUT_DATA_TYPE> result(dstFileSize / sizeof(IN_OUT_DATA_TYPE));
-    ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, result.data(), dstFileSize);
-
-    bool ret = ResultCmp(golden, result, 0.001f);
-
-    EXPECT_TRUE(ret);
+TEST_F(TTRANSTest, case5_half_32_32_31_31){
+    test_ttrans<aclFloat16, 32, 32, 31, 31>();
+}
+TEST_F(TTRANSTest, case6_int8_64_64_22_63){
+    test_ttrans<uint8_t, 64, 64, 22, 63>();
 }
