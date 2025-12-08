@@ -308,6 +308,11 @@ __PTO_INSTR__ void TDIVS(TileData &dst, typename TileData::DType scalar, TileDat
   MAP_INSTR_IMPL(TDIVS, dst, scalar, src0)
 }
 
+template <typename TileDataOut, typename TileDataIn>
+__PTO_INSTR__ void TCOLMIN(TileDataOut &dst, TileDataIn &src) {
+  MAP_INSTR_IMPL(TCOLMIN, dst, src)
+}
+
 #ifdef __CPU_SIM
 template <typename TileData>
 __PTO_INSTR__ void TDIV(TileData &dst, TileData &src0, TileData &src1) {

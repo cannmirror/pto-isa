@@ -25,6 +25,14 @@ if [ "$1" = "dailyBuild" ]; then
   # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case6
   # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case7
 
+  # TCOLMAX
+  # A3
+  python3 tests/script/run_st.py -r npu -v a3 -t tcolmax
+  
+  # TCOLMIN
+  # A3
+  python3 tests/script/run_st.py -r npu -v a3 -t tcolmin
+
   # TMATMUL
   # A3
   python3 tests/script/run_st.py -r sim -v a3 -t tmatmul
@@ -671,4 +679,12 @@ else
   python3 tests/script/run_st.py -r npu -v a3 -t tadds -g TADDSTest.case1
   # A5
   # python3 tests/script/run_st.py -r sim -v a5 -t tadds -g TADDSTest.case1
+
+  # TCOLMAX
+  #A3
+  python3 tests/script/run_st.py -r npu -v a3 -t tcolmax -g TCOLMAXTest.case1
+
+  # TCOLMIN
+  #A3
+  python3 tests/script/run_st.py -r npu -v a3 -t tcolmin -g TCOLMINTest.case1
 fi
