@@ -422,9 +422,9 @@ namespace pto{
         if (numRepeatPerLine > 0) {
             unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
             unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
-            for (int i = 0; i < validRow; i++) {
-                if (numLoop) {
-                    for (int j = 0; j < numLoop; j++) {
+            for (uint32_t i = 0; i < validRow; i++) {
+                if (numLoop > 0) {
+                    for (uint32_t j = 0; j < numLoop; j++) {
                         GenCastCall<TileDataD, TileDataS>(dstPtr + i * DS + j * elementsPerRepeat * REPEAT_MAX,
                             srcPtr + i * SS + j * elementsPerRepeat * REPEAT_MAX,
                             (uint8_t)REPEAT_MAX,
@@ -435,7 +435,7 @@ namespace pto{
                             (uint16_t)srcRepeatStride);
                     }
                 }
-                if (remainAfterLoop) {
+                if (remainAfterLoop > 0) {
                     GenCastCall<TileDataD, TileDataS>(dstPtr + i * DS + numLoop * elementsPerRepeat * REPEAT_MAX,
                         srcPtr + i * SS + numLoop * elementsPerRepeat * REPEAT_MAX,
                         (uint8_t)remainAfterLoop,
@@ -451,12 +451,12 @@ namespace pto{
         dstPtr += numRepeatPerLine * elementsPerRepeat;
         srcPtr += numRepeatPerLine * elementsPerRepeat;
 
-        if (numRemainPerLine) {
+        if (numRemainPerLine > 0) {
             unsigned numLoop = validRow / REPEAT_MAX;
             unsigned remainAfterLoop = validRow % REPEAT_MAX;
             SetContinuousMask(numRemainPerLine);
-            if (numLoop) {
-                for (int j = 0; j < numLoop; j++) {
+            if (numLoop > 0) {
+                for (uint32_t j = 0; j < numLoop; j++) {
                     GenCastCall<TileDataD, TileDataS>(dstPtr + j * DS * REPEAT_MAX,
                         srcPtr + j * SS * REPEAT_MAX,
                         (uint8_t)REPEAT_MAX,
@@ -467,7 +467,7 @@ namespace pto{
                         (uint16_t)SS / srcNElemPerBlock);
                 }
             }
-            if (remainAfterLoop) {
+            if (remainAfterLoop > 0) {
                 GenCastCall<TileDataD, TileDataS>(dstPtr + numLoop * DS * REPEAT_MAX,
                     srcPtr + numLoop * SS * REPEAT_MAX,
                     (uint8_t)remainAfterLoop,
