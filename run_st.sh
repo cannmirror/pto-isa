@@ -126,6 +126,75 @@ if [ "$1" = "dailyBuild" ]; then
   python3 tests/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_2
   python3 tests/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_3
   python3 tests/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_4
+  python3 test/script/run_st.py -r sim -v a3 -t tmov
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case1
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case2
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case3
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case4
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case5
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case6
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case7
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case8
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case9
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case10
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case11
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case12
+  python3 test/script/run_st.py -r sim -v a5 -t textract -g TMOVTest.case13
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic6
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic7
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_bias_dynamic8
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov -g TMOVTest.case_fixpipe5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_6
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_7
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_8
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_6
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_7
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_8
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_9
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_10
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_scalar_quant_pre_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_scalar_quant_pre_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_scalar_quant_pre_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_scalar_quant_pre_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_4
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_vector_quant_5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_1
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_2
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_3
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_scalar_quant_4
+  
+  # TMOV_VEC
+  # A3
+  python3 test/script/run_st.py -r sim -v a3 -t tmov_vect
+  # A5
+  python3 test/script/run_st.py -r sim -v a5 -t tmov_vect
   # TEXTRACT
   # A3
   python3 tests/script/run_st.py -r sim -v a3 -t textract
