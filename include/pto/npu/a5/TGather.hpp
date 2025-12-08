@@ -43,19 +43,19 @@ __tf__ __aicore__ void TGather_b32(typename TileDataD::TileDType __out__ dst,
     unsigned TShape1 = TileDataD::Cols;
     __VEC_SCOPE__
     {
-        uint16_t batch_size = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
-        uint16_t innerLoopNum = CEIL(validCol, batch_size);
+        uint16_t batchSize = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
+        uint16_t innerLoopNum = CEIL(validCol, batchSize);
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < innerLoopNum; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TShape1 + j * batch_size), NORM);
+                vlds(index, src1Ptr, (i * TShape1 + j * batchSize), NORM);
 
-                uint32_t count = ((j + 1) * batch_size >= validCol ? validCol - j * batch_size : batch_size);
+                uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = CreatePredicate<typename TileDataS1::DType>(count);
 
                 RegTensor<typename TileDataD::DType> v_output;
                 vgather2(v_output, src0Ptr, (vector_u32 &)index, preg);
-                vsts(v_output, dstPtr, (i * TShape1 + j * batch_size), NORM_B32, preg);
+                vsts(v_output, dstPtr, (i * TShape1 + j * batchSize), NORM_B32, preg);
             }
         }
     }
@@ -72,19 +72,19 @@ __tf__ __aicore__ void TGather_b16(typename TileDataD::TileDType __out__ dst,
     unsigned TShape1 = TileDataD::Cols;
     __VEC_SCOPE__
     {
-        uint16_t batch_size = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
-        uint16_t loop_num = CEIL(validCol, batch_size);
+        uint16_t batchSize = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
+        uint16_t loop_num = CEIL(validCol, batchSize);
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < loop_num; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TShape1 + j * batch_size), NORM);
+                vlds(index, src1Ptr, (i * TShape1 + j * batchSize), NORM);
 
-                uint32_t count = ((j + 1) * batch_size >= validCol ? validCol - j * batch_size : batch_size);
+                uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = CreatePredicate<typename TileDataS1::DType>(count);
 
                 RegTensor<typename TileDataD::DType> vOutput;
                 vgather2(vOutput, src0Ptr, (vector_u16 &)index, preg);
-                vsts(vOutput, dstPtr, (i * TShape1 + j * batch_size), NORM_B16, preg);
+                vsts(vOutput, dstPtr, (i * TShape1 + j * batchSize), NORM_B16, preg);
             }
         }
     }
@@ -101,19 +101,19 @@ __tf__ __aicore__ void TGather_b16_bc(typename TileDataD::TileDType __out__ dst,
     unsigned TShapeDst = TileDataD::Cols;
     __VEC_SCOPE__
     {
-        uint16_t batch_size = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
-        uint16_t loop_num = CEIL(validCol, batch_size);
+        uint16_t batchSize = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
+        uint16_t loop_num = CEIL(validCol, batchSize);
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < loop_num; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TShapeDst + j * batch_size), NORM);
+                vlds(index, src1Ptr, (i * TShapeDst + j * batchSize), NORM);
 
-                uint32_t count = ((j + 1) * batch_size >= validCol ? validCol - j * batch_size : batch_size);
+                uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = CreatePredicate<typename TileDataS1::DType>(count);
 
                 RegTensor<typename TileDataD::DType> v_output;
                 vgather2_bc(v_output, src0Ptr, (vector_u32 &)index, preg);
-                vsts(v_output, dstPtr, (i * TShapeDst + j * batch_size), PK_B32, preg);
+                vsts(v_output, dstPtr, (i * TShapeDst + j * batchSize), PK_B32, preg);
             }
         }
     }
@@ -130,19 +130,19 @@ __tf__ __aicore__ void TGather_fp8_e4m3(typename TileDataD::TileDType __out__ ds
     unsigned TDstShape = TileDataD::Cols;
     __VEC_SCOPE__
     {
-        uint16_t batch_size = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
-        uint16_t loopNum = CEIL(validCol, batch_size);
+        uint16_t batchSize = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
+        uint16_t loopNum = CEIL(validCol, batchSize);
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < loopNum; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TDstShape + j * batch_size), NORM);
+                vlds(index, src1Ptr, (i * TDstShape + j * batchSize), NORM);
 
-                uint32_t count = ((j + 1) * batch_size >= validCol ? validCol - j * batch_size : batch_size);
+                uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = plt_b16(count, POST_UPDATE);
 
                 vector_f8e4m3 vOutput;
                 vgather2(vOutput, src0Ptr, (vector_u16 &)index, preg);
-                vsts((vector_u8)vOutput, (__ubuf__ uint8_t *)dstPtr, (i * TDstShape + j * batch_size), PK_B16, preg);
+                vsts((vector_u8)vOutput, (__ubuf__ uint8_t *)dstPtr, (i * TDstShape + j * batchSize), PK_B16, preg);
             }
         }
     }

@@ -147,8 +147,8 @@ TEST_F(TGATHERTest, case2_int32)
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<int32> golden(dstFileSize);
-    std::vector<int32> devFinal(dstFileSize);
+    std::vector<int32_t> golden(dstFileSize);
+    std::vector<int32_t> devFinal(dstFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, devFinal.data(), dstFileSize);
 
