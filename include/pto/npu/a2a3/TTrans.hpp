@@ -219,7 +219,7 @@ __PTO_INSTR__ void TransposeXTailSubtiles(
         TransposeFullSubTiles<Op, T, blockElemSize, tmpStride, srcStride>(
             tmpPtr, (srcPtr + iter * tmpStride * srcStride), 1, tmpSubtilesMax);
         pipe_barrier(PIPE_V);
-        copy_ubuf_to_ubuf((dstPtr + iter * tmpStride), tmpPtr, numTailX, fullBurst, 0, dstFullGap);
+        copy_ubuf_to_ubuf((dstPtr + iter * tmpStride), tmpPtr, 0, numTailX, fullBurst, 0, dstFullGap);
         pipe_barrier(PIPE_V);
     }
 
@@ -232,7 +232,7 @@ __PTO_INSTR__ void TransposeXTailSubtiles(
         TransposeFullSubTiles<Op, T, blockElemSize, tmpStride, srcStride>(
             tmpPtr, (srcPtr + fullIterNum * tmpStride * srcStride), 1, tmpSubtilesTail);
         pipe_barrier(PIPE_V);
-        copy_ubuf_to_ubuf((dstPtr + fullIterNum * tmpStride), tmpPtr, numTailX, tailBurst, tmpTailGap, dstTailGap);
+        copy_ubuf_to_ubuf((dstPtr + fullIterNum * tmpStride), tmpPtr, 0, numTailX, tailBurst, tmpTailGap, dstTailGap);
         pipe_barrier(PIPE_V);
     }
 }

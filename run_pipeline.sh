@@ -22,13 +22,14 @@ python3 tests/script/run_st.py -r npu -v a3 -t tstore_acc2gm -g TStoreAcc2gmTest
 python3 tests/script/build_st.py -r npu -v a3 -t trowsum -g TROWSUMTest.case1
 python3 tests/script/build_st.py -r npu -v a3 -t tgather -g TGATHERTest.case1_float_P0101
 python3 tests/script/build_st.py -r npu -v a3 -t tsort32 -g TSort32Test.case1
-python3 tests/script/build_st.py -r npu -v a3 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
+python3 tests/script/build_st.py -r npu -v a3 -t tadd -g TADDTest.case1_float_64x64_64x64
 python3 tests/script/build_st.py -r npu -v a3 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
 python3 tests/script/build_st.py -r npu -v a3 -t tsub -g TSUBTest.case_float_64x64_64x64_64x64
 python3 tests/script/build_st.py -r npu -v a3 -t tci -g TCITest.case1_int32
 python3 tests/script/build_st.py -r npu -v a3 -t tfillpad -g TFILLPADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX
 python3 tests/script/build_st.py -r npu -v a3 -t tpartmin -g TPARTMINTest.test0
 python3 tests/script/build_st.py -r npu -v a3 -t tpartmax -g TPARTMAXTest.test0
+python3 tests/script/build_st.py -r npu -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8
 
 python3 tests/script/build_st.py -r npu -v a5 -t tcvt -g TCVTTest.case1
 python3 tests/script/build_st.py -r npu -v a5 -t tmatmul -g TMATMULTest.case1

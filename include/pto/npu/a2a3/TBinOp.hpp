@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-#define SMALL_RPT (4)
+constexpr unsigned SMALL_RPT = 4;
 
 template <typename Op, typename T>
 __PTO_INSTR__ void Bin1LCountMode(

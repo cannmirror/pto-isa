@@ -34,13 +34,13 @@ std::string GetGoldenDir() {
 }
 
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
 void LaunchTAdd(T *out, T *src0, T *src1, void *stream);
 
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template<typename T, int kTRows_, int kTCols_, int vRows, int vCols>
 void test_tadd() {
 
-    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
+    size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -63,7 +63,7 @@ void test_tadd() {
 
     aclrtMemcpy(src0Device, fileSize, src0Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, fileSize, src1Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTAdd<T, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, src0Device, src1Device, stream);
+    LaunchTAdd<T, kTRows_, kTCols_, vRows, vCols>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -91,15 +91,15 @@ void test_tadd() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TADDTest, case_float_64x64_64x64_64x64) {
+TEST_F(TADDTest, case1_float_64x64_64x64) {
     test_tadd<float, 64, 64, 64, 64>();
 }
-TEST_F(TADDTest, case_int32_64x64_64x64_64x64) {
+TEST_F(TADDTest, case2_int32_64x64_64x64) {
     test_tadd<int32_t, 64, 64, 64, 64>();
 }
-TEST_F(TADDTest, case_int16_64x64_64x64_64x64) {
+TEST_F(TADDTest, case3_int16_64x64_64x64) {
     test_tadd<int16_t, 64, 64, 64, 64>();
 }
-TEST_F(TADDTest, case_half_16x256_16x256_16x256) {
+TEST_F(TADDTest, case4_half_16x256_16x256) {
     test_tadd<aclFloat16, 16, 256, 16, 256>();
 }

@@ -42,16 +42,16 @@ def gen_golden_data_tadd(case_name, param):
     return output, input1, input2, golden
 
 class taddParams:
-    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
+    def __init__(self, dtype, gm_row, gm_col, tile_row, tile_col, valid_row, valid_col):
         self.dtype = dtype
-        self.global_row = global_row
-        self.global_col = global_col
+        self.tile_row = gm_row
+        self.tile_col = gm_col
         self.tile_row = tile_row
         self.tile_col = tile_col
         self.valid_row = valid_row
         self.valid_col = valid_col
 
-def generate_case_name(param):
+def generate_case_name(idx, param):
     dtype_str = {
         np.float32: 'float',
         np.float16: 'half',
@@ -59,7 +59,7 @@ def generate_case_name(param):
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TADDTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+    return f"TADDTest.case{idx}_{dtype_str}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     ]
 
     for i, param in enumerate(case_params_list):
-        case_name = generate_case_name(param)
+        case_name = generate_case_name(i+1, param)
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()
