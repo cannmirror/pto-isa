@@ -93,6 +93,13 @@ constexpr const uint64_t NUM_BITS_IN_BYTE = 8;
 
     template <typename TileDataDst, typename TileDataSrc0, typename T>
     __aicore__ void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
+        static_assert(TileDataSrc0::Loc == Location::Vec, "Location of src tiles must be Location::Vec.");
+        static_assert(TileDataDst::Loc == Location::Vec, "Location of dst tiles must be Location::Vec.");
+        static_assert(TileDataSrc0::ValidCol <= TileDataSrc0::Cols, "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataSrc0::ValidRow <= TileDataSrc0::Rows, "Number of valid rows must not be greater than number of tile rows.");
+        
+        PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
+        PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc0::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataSrc0::DType);
         unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat + 1;
