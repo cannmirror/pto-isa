@@ -10,7 +10,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifndef TLOAD_HPP
 #define TLOAD_HPP
-#include "pto/common.hpp"
+#include "common.hpp"
 
 namespace pto {
 template <typename TileData, typename GlobalData>

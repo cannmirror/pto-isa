@@ -12,7 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TGATHER_HPP
 
 #include <pto/common/constants.hpp>
-#include "pto/common.hpp"
+#include "common.hpp"
 
 namespace pto {
     __aicore__ PTO_INLINE int CEIL(int a, int b) {

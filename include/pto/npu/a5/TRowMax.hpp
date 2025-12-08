@@ -11,9 +11,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TROWMAX_HPP
 #define TROWMAX_HPP
 
-#include "pto/common.hpp"
 #include <pto/common/constants.hpp>
 #include <pto/common/utils.hpp>
+#include "common.hpp"
 #include "math.h"
 #include "utils.hpp"
 

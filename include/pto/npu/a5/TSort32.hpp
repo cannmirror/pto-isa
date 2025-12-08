@@ -12,8 +12,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TSORT32_HPP
 
 #include <pto/common/constants.hpp>
-#include "pto/common.hpp"
 #include <limits>
+#include "common.hpp"
 
 #define PTO_CEIL(x,y)        ((((x)+(y)-1)/(y)) * (y))
 #define PTO_DIV_ROUNDUP(x,y) ((((x)+(y)-1)/(y)))
