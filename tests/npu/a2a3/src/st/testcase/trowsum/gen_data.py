@@ -12,7 +12,8 @@
 
 import os
 import numpy as np
-np.random.seed(23)
+np.random.seed(42)
+
 
 def gen_golden_data(param):
     data_type = param.data_type
@@ -32,7 +33,8 @@ def gen_golden_data(param):
     input_arr.tofile('input.bin')
     output_arr.tofile('golden.bin')
 
-class trowsumParams:
+
+class TRowSumParams:
     def __init__(self, name, data_type, row, valid_row, col, valid_col):
         self.name = name
         self.data_type = data_type
@@ -43,15 +45,15 @@ class trowsumParams:
 
 if __name__ == "__main__":
     case_params_list = [
-        trowsumParams("TROWSUMTest.case1", np.float32, 127, 127, 64, 64 - 1),
-        trowsumParams("TROWSUMTest.case2", np.float32, 63, 63, 64, 64),
-        trowsumParams("TROWSUMTest.case3", np.float32, 31, 31, 64 * 2, 64 * 2 - 1),
-        trowsumParams("TROWSUMTest.case4", np.float32, 15, 15, 64 * 3, 64 * 3),
-        trowsumParams("TROWSUMTest.case5", np.float32, 7, 7, 64 * 7, 64 * 7 - 1),
-        trowsumParams("TROWSUMTest.case6", np.float16, 256, 256, 16, 16 - 1)
+        TRowSumParams("TROWSUMTest.case1", np.float32, 127, 127, 64, 64 - 1),
+        TRowSumParams("TROWSUMTest.case2", np.float32, 63, 63, 64, 64),
+        TRowSumParams("TROWSUMTest.case3", np.float32, 31, 31, 64 * 2, 64 * 2 - 1),
+        TRowSumParams("TROWSUMTest.case4", np.float32, 15, 15, 64 * 3, 64 * 3),
+        TRowSumParams("TROWSUMTest.case5", np.float32, 7, 7, 64 * 7, 64 * 7 - 1),
+        TRowSumParams("TROWSUMTest.case6", np.float16, 256, 256, 16, 16 - 1)
     ]
 
-    for i, case in enumerate(case_params_list):
+    for _, case in enumerate(case_params_list):
         if not os.path.exists(case.name):
             os.makedirs(case.name)
         original_dir = os.getcwd()

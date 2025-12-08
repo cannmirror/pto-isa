@@ -1,6 +1,6 @@
-#include <pto-inst.hpp>
-#include <common/tile_tensor_impl.hpp>
-#include <common/constants.hpp>
+#include <pto/pto-inst.hpp>
+#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/common/constants.hpp>
 
 using namespace pto;
 

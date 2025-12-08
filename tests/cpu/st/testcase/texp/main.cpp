@@ -1,5 +1,5 @@
 #include "test_common.h"
-#include <pto-inst.hpp>
+#include <pto/pto-inst.hpp>
 #include <gtest/gtest.h>
 
 

@@ -20,9 +20,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <cmath>
 #include <sys/stat.h>
 #ifndef __CPU_SIM
-    #include "acl/acl.h"
+#include "acl/acl.h"
 #endif
-#include "common/type.hpp"
+#include <pto/common/type.hpp>
 
 namespace PtoTestCommon {
 

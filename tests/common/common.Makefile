@@ -50,7 +50,7 @@ CC_O += -fPIC
 CC_LINK += -shared
 endif
 
-INCLUDE += -I$(ROOT)/include -I$(ROOT)/include/common -I$(ROOT)/test/common -I$(ROOT)/test/kernels/src
+INCLUDE += -I$(ROOT)/include -I$(ROOT)/test/common -I$(ROOT)/test/kernels/src
 
 CC_O_ALL = $(CC_O) $(CC_VER) $(CC_OPTS)
 # $(info ROOT:		$(ROOT))

@@ -23,15 +23,16 @@ def gen_golden_data(param):
     rows = param.row
     cols = param.col
 
-    input_arr = np.random.uniform(low=-8, high=8, size=(rows,cols)).astype(src_type)
+    input_arr = np.random.uniform(low=-8, high=8, size=(rows, cols)).astype(src_type)
     result_arr = input_arr.sum(axis=1, keepdims=True)
-    output_arr = np.zeros((rows,cols), dtype=dst_type)
+    output_arr = np.zeros((rows, cols), dtype=dst_type)
     for i in range(cols):
-        output_arr[i,0]=result_arr[i,0]
+        output_arr[i, 0]=result_arr[i, 0]
     input_arr.tofile('input0.bin')
     output_arr.tofile('golden.bin')
 
-class trowsumParams:
+
+class TrowsumParams:
     def __init__(self, name, datatype, row, col):
         self.name = name
         self.datatype = datatype
@@ -40,9 +41,9 @@ class trowsumParams:
 
 if __name__ == "__main__":
     case_list = [
-        trowsumParams("TROWSUMTest.test1", np.float32, 16, 16),
-        trowsumParams("TROWSUMTest.test2", np.float16, 16, 16),
-        trowsumParams("TROWSUMTest.test3", np.float32, 666, 666)
+        TrowsumParams("TROWSUMTest.test1", np.float32, 16, 16),
+        TrowsumParams("TROWSUMTest.test2", np.float16, 16, 16),
+        TrowsumParams("TROWSUMTest.test3", np.float32, 666, 666)
     ]
 
     for case in case_list:
