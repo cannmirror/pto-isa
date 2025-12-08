@@ -79,7 +79,7 @@ if __name__ == "__main__":
         tselParams("TSELTest.case10", np.int32, 2, 128, 2, 128),
         tselParams("TSELTest.case11", np.int16, 2, 128, 2, 128),
         tselParams("TSELTest.case12", np.float32, 2, 8, 2, 8),
-        tselParams("TSELTest.case13", np.float16, 2, 16, 2, 16),
+        tselParams("TSELTest.case13", np.float16, 2, 16, 2, 8),
     ]
 
     for i, param in enumerate(case_params_list):

@@ -13,230 +13,87 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/constants.hpp>
 #include <pto/common/utils.hpp>
+#include <pto/npu/a2a3/TPartOp.hpp>
 
 namespace pto {
-    template <bool isMax, typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1,
-        unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstStride, unsigned src0Stride,
-        unsigned src1Stride>
-    __aicore__ PTO_INLINE void TPartMinMaxInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
-        unsigned validRow, unsigned validCol) {
-        unsigned numRepeatPerLine = validCol / elementsPerRepeat;
-        unsigned numRemainPerLine = validCol % elementsPerRepeat;
-
-        if (numRepeatPerLine > 0U) {
-            unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
-            unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
-            for (int i = 0; i < validRow; i++) {
-                if (numLoop) {
-                    for (int j = 0; j < numLoop; j++) {
-                        if constexpr (isMax) {
-                            vmax(dstPtr + i * dstStride + j * REPEAT_MAX * elementsPerRepeat,
-                                src0Ptr + i * src0Stride + j * REPEAT_MAX * elementsPerRepeat,
-                                src1Ptr + i * src1Stride + j * REPEAT_MAX * elementsPerRepeat,
-                                REPEAT_MAX, 1, 1, 1, 8, 8, 8);
-                        } else {
-                            vmin(dstPtr + i * dstStride + j * REPEAT_MAX * elementsPerRepeat,
-                                src0Ptr + i * src0Stride + j * REPEAT_MAX * elementsPerRepeat,
-                                src1Ptr + i * src1Stride + j * REPEAT_MAX * elementsPerRepeat,
-                                REPEAT_MAX, 1, 1, 1, 8, 8, 8);
-                        }
-                    }
-                }
-                if (remainAfterLoop) {
-                    if constexpr (isMax) {
-                        vmax(dstPtr + i * dstStride + numLoop * REPEAT_MAX * elementsPerRepeat,
-                            src0Ptr + i * src0Stride + numLoop * REPEAT_MAX * elementsPerRepeat,
-                            src1Ptr + i * src1Stride + numLoop * REPEAT_MAX * elementsPerRepeat,
-                            remainAfterLoop, 1, 1, 1, 8, 8, 8);
-                    } else {
-                        vmin(dstPtr + i * dstStride + numLoop * REPEAT_MAX * elementsPerRepeat,
-                            src0Ptr + i * src0Stride + numLoop * REPEAT_MAX * elementsPerRepeat,
-                            src1Ptr + i * src1Stride + numLoop * REPEAT_MAX * elementsPerRepeat,
-                            remainAfterLoop, 1, 1, 1, 8, 8, 8);
-                    }
-                }
-            }
-        }
-
-        dstPtr += numRepeatPerLine * elementsPerRepeat;
-        src0Ptr += numRepeatPerLine * elementsPerRepeat;
-        src1Ptr += numRepeatPerLine * elementsPerRepeat;
-
-        if (numRemainPerLine) {
-            unsigned numLoop = validRow / REPEAT_MAX;
-            unsigned remainAfterLoop = validRow % REPEAT_MAX;
-            bool constexpr strideOverFlag = ((src0Stride / blockSizeElem > REPEAT_STRIDE_MAX) ||
-                                            (src1Stride / blockSizeElem > REPEAT_STRIDE_MAX) ||
-                                            (dstStride / blockSizeElem > REPEAT_STRIDE_MAX));
-            SetContinuousMask(numRemainPerLine);
-            if (numLoop) {
-                for (unsigned i = 0; i < numLoop; i++) {
-                    if constexpr (strideOverFlag) {
-                        for (unsigned j = 0; j < REPEAT_MAX; j++) {
-                            if constexpr (isMax) {
-                                vmax(dstPtr + i * REPEAT_MAX * dstStride + j * dstStride,
-                                    src0Ptr + i * REPEAT_MAX * src0Stride + j * src0Stride,
-                                    src1Ptr + i * REPEAT_MAX * src1Stride + j * src1Stride,
-                                    1, 1, 1, 1, 1, 1, 1);
-                            } else {
-                                vmin(dstPtr + i * REPEAT_MAX * dstStride + j * dstStride,
-                                    src0Ptr + i * REPEAT_MAX * src0Stride + j * src0Stride,
-                                    src1Ptr + i * REPEAT_MAX * src1Stride + j * src1Stride,
-                                    1, 1, 1, 1, 1, 1, 1);
-                            }
-                        }
-                    } else {
-                        if constexpr (isMax) {
-                            vmax(dstPtr + i * REPEAT_MAX * dstStride,
-                                src0Ptr + i * REPEAT_MAX * src0Stride,
-                                src1Ptr + i * REPEAT_MAX * src1Stride,
-                                REPEAT_MAX, 1, 1, 1,
-                                dstStride / blockSizeElem, src0Stride / blockSizeElem, src1Stride / blockSizeElem);
-                        } else {
-                            vmin(dstPtr + i * REPEAT_MAX * dstStride,
-                                src0Ptr + i * REPEAT_MAX * src0Stride,
-                                src1Ptr + i * REPEAT_MAX * src1Stride,
-                                REPEAT_MAX, 1, 1, 1,
-                                dstStride / blockSizeElem, src0Stride / blockSizeElem, src1Stride / blockSizeElem);
-                        }
-                    }
-                }
-            }
-            if (remainAfterLoop) {
-                if constexpr (strideOverFlag) {
-                    for (unsigned j = 0; j < remainAfterLoop; j++) {
-                        if constexpr (isMax) {
-                            vmax(dstPtr + numLoop * REPEAT_MAX * dstStride + j * dstStride,
-                                src0Ptr + numLoop * REPEAT_MAX * src0Stride + j * src0Stride,
-                                src1Ptr + numLoop * REPEAT_MAX * src1Stride + j * src1Stride,
-                                1, 1, 1, 1, 1, 1, 1);
-                        } else {
-                            vmin(dstPtr + numLoop * REPEAT_MAX * dstStride + j * dstStride,
-                                src0Ptr + numLoop * REPEAT_MAX * src0Stride + j * src0Stride,
-                                src1Ptr + numLoop * REPEAT_MAX * src1Stride + j * src1Stride,
-                                1, 1, 1, 1, 1, 1, 1);
-                        }
-                    }
-                } else {
-                    if constexpr (isMax) {
-                        vmax(dstPtr + numLoop * REPEAT_MAX * dstStride,
-                            src0Ptr + numLoop * REPEAT_MAX * src0Stride,
-                            src1Ptr + numLoop * REPEAT_MAX * src1Stride,
-                            remainAfterLoop, 1, 1, 1,
-                            dstStride / blockSizeElem, src0Stride / blockSizeElem, src1Stride / blockSizeElem);
-                    } else {
-                        vmin(dstPtr + numLoop * REPEAT_MAX * dstStride,
-                            src0Ptr + numLoop * REPEAT_MAX * src0Stride,
-                            src1Ptr + numLoop * REPEAT_MAX * src1Stride,
-                            remainAfterLoop, 1, 1, 1,
-                            dstStride / blockSizeElem, src0Stride / blockSizeElem, src1Stride / blockSizeElem);
-                    }
-                }
-            }
-            set_vector_mask(-1, -1);
-        }
-    }
-
-    template <bool isMax, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
-            unsigned blockSizeElem, unsigned dstRowStride, unsigned src0RowStride, unsigned src1RowStride>
-    __tf__ __aicore__ PTO_INLINE void TPartMaxMin(typename TileDataDst::TileDType __out__ dst,
-        typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned src0ValidRow,
-        unsigned src0ValidCol, unsigned src1ValidRow, unsigned src1ValidCol, unsigned dstValidRow, unsigned dstValidCol)
+template <typename T>
+struct PartMaxOp {
+    __PTO_INSTR__ static void PartInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
     {
-        if (dstValidRow == 0 || dstValidCol == 0) {
-            return;
-        }
-        using T = typename TileDataDst::DType;
-        __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-        __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-        __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
-        bool condSrc0EqDst = (src0ValidRow == dstValidRow && src0ValidCol == dstValidCol);
-        bool condSrc0RowLtDst = (src0ValidRow < dstValidRow && src0ValidCol == dstValidCol);
-        bool condSrc0ColLtDst = (src0ValidRow == dstValidRow && src0ValidCol < dstValidCol);
-        bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
-        bool condSrc1RowLtDst = (src1ValidRow < dstValidRow && src1ValidCol == dstValidCol);
-        bool condSrc1ColLtDst = (src1ValidRow == dstValidRow && src1ValidCol < dstValidCol);
-
-        if (condSrc0EqDst && condSrc1EqDst) {  // src0 == src1 == dst
-            TPartMinMaxInstr<isMax, T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
-                dstRowStride, src0RowStride, src1RowStride>(
-                dstPtr, src0Ptr, src1Ptr, dstValidRow, dstValidCol);
-        } else if (condSrc0ColLtDst && condSrc1EqDst) {  // src0Col < dstCol
-            TPartCopyInstr<T, TileDataDst, TileDataSrc1, blockSizeElem, dstRowStride, src1RowStride>(
-                dstPtr, src1Ptr, src1ValidRow, dstValidCol, 0);
-            if (src0ValidCol != 0) {
-                pipe_barrier(PIPE_V);
-                TPartMinMaxInstr<isMax, T, TileDataDst, TileDataSrc0, TileDataDst, elementsPerRepeat, blockSizeElem,
-                    dstRowStride, src0RowStride, dstRowStride>(
-                    dstPtr, src0Ptr, dstPtr, src0ValidRow, src0ValidCol);
-            }
-        } else if (condSrc0RowLtDst && condSrc1EqDst) {  // src0Row < dstRow
-            if (src0ValidRow != 0) {
-                TPartMinMaxInstr<isMax, T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
-                    dstRowStride, src0RowStride, src1RowStride>(
-                    dstPtr, src0Ptr, src1Ptr, src0ValidRow, src0ValidCol);
-                pipe_barrier(PIPE_V);
-            }
-            TPartCopyInstr<T, TileDataDst, TileDataSrc1, blockSizeElem, dstRowStride, src1RowStride>(
-                dstPtr, src1Ptr, src1ValidRow, dstValidCol, src0ValidRow);    
-        } else if (condSrc1ColLtDst && condSrc0EqDst) {  // src1Col < dstCol
-            TPartCopyInstr<T, TileDataDst, TileDataSrc0, blockSizeElem, dstRowStride, src0RowStride>(
-                dstPtr, src0Ptr, src0ValidRow, dstValidCol, 0);
-            if (src1ValidCol != 0) {
-                pipe_barrier(PIPE_V);
-                TPartMinMaxInstr<isMax, T, TileDataDst, TileDataSrc1, TileDataDst, elementsPerRepeat, blockSizeElem,
-                    dstRowStride, src1RowStride, dstRowStride>(
-                    dstPtr, src1Ptr, dstPtr, src1ValidRow, src1ValidCol);
-            }
-        } else if (condSrc1RowLtDst && condSrc0EqDst) {  // src1Row < dstRow
-            if (src1ValidRow != 0) {
-                TPartMinMaxInstr<isMax, T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
-                    dstRowStride, src0RowStride, src1RowStride>(
-                    dstPtr, src0Ptr, src1Ptr, src1ValidRow, src1ValidCol);
-                pipe_barrier(PIPE_V);
-            }
-            TPartCopyInstr<T, TileDataDst, TileDataSrc0, blockSizeElem, dstRowStride, src0RowStride>(
-                dstPtr, src0Ptr, src0ValidRow, dstValidCol, src1ValidRow);    
-        }  // unsupport other conditions
+        vmax(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
     }
-
-    template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-    __aicore__ PTO_INLINE void TPARTMAX_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
+    __PTO_INSTR__ static void PartInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
+        uint8_t dstRepeatStride, uint8_t src0RepeatStride, uint8_t src1RepeatStride)
     {
-        static_assert(std::is_same<typename TileDataDst::DType, typename TileDataSrc0::DType>::value &&
-                      std::is_same<typename TileDataDst::DType, typename TileDataSrc1::DType>::value,
-                      "TPARTMAX: src and dst data type is different!");
-        static_assert((std::is_same<typename TileDataDst::DType, int32_t>::value) ||
-                      (std::is_same<typename TileDataDst::DType, int>::value) ||
-                      (std::is_same<typename TileDataDst::DType, int16_t>::value) ||
-                      (std::is_same<typename TileDataDst::DType, half>::value) ||
-                      (std::is_same<typename TileDataDst::DType, float16_t>::value) ||
-                      (std::is_same<typename TileDataDst::DType, float>::value) ||
-                      (std::is_same<typename TileDataDst::DType, float32_t>::value),
-                      "TPARTMAX: Invalid data type.");
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
-        unsigned src0ValidRow = src0.GetValidRow();
-        unsigned src0ValidCol = src0.GetValidCol();
-        unsigned src1ValidRow = src1.GetValidRow();
-        unsigned src1ValidCol = src1.GetValidCol();
-        unsigned dstValidRow = dst.GetValidRow();
-        unsigned dstValidCol = dst.GetValidCol();
-        constexpr unsigned dstRowStride = TileDataDst::RowStride;
-        constexpr unsigned src0RowStride = TileDataSrc0::RowStride;
-        constexpr unsigned src1RowStride = TileDataSrc1::RowStride;
+        vmax(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, src1RepeatStride);
+    }
+};
 
-        TPartMaxMin<true, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride,
-                 src1RowStride>(dst.data(),
-            src0.data(),
-            src1.data(),
-            src0ValidRow,
-            src0ValidCol,
-            src1ValidRow,
-            src1ValidCol,
-            dstValidRow,
-            dstValidCol);
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
+          unsigned blockSizeElem, unsigned dstRowStride, unsigned src0RowStride, unsigned src1RowStride>
+__tf__
+__PTO_INSTR__
+void TPartMax(typename TileDataDst::TileDType __out__ dst,
+    typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned src0ValidRow,
+    unsigned src0ValidCol, unsigned src1ValidRow, unsigned src1ValidCol, unsigned dstValidRow, unsigned dstValidCol)
+{
+    using T = typename TileDataDst::DType;
+    bool condSrc0EqDst = (src0ValidRow == dstValidRow && src0ValidCol == dstValidCol);
+    bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
+    PTO_ASSERT(condSrc0EqDst || condSrc1EqDst,
+        "TPARTMAX: At most one entry in the rows and cols of src0 and src1 is smaller than dst.");
+    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
+    __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
+    __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
+    constexpr int dstCol = TileDataDst::Cols;
+    constexpr int src0Col = TileDataSrc0::Cols;
+    constexpr int src1Col = TileDataSrc1::Cols;
+    constexpr int dstRow = TileDataDst::Rows;
+    if (condSrc0EqDst) {
+        TPartInstr<PartMaxOp<T>, T, dstCol, src0Col, dstRow, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride,
+             src1RowStride>(dstPtr, src0Ptr, src1Ptr, src0ValidRow, src0ValidCol, src1ValidRow, src1ValidCol,
+             dstValidRow, dstValidCol);
+    } else {
+        TPartInstr<PartMaxOp<T>, T, dstCol, src1Col, dstRow, elementsPerRepeat, blockSizeElem, dstRowStride, src1RowStride,
+             src0RowStride>(dstPtr, src1Ptr, src0Ptr, src1ValidRow, src1ValidCol, src0ValidRow, src0ValidCol,
+             dstValidRow, dstValidCol);
     }
 }
 
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+__PTO_INSTR__
+void TPARTMAX_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
+{
+    static_assert(std::is_same_v<typename TileDataDst::DType, typename TileDataSrc0::DType> &&
+                  std::is_same_v<typename TileDataDst::DType, typename TileDataSrc1::DType>,
+                  "TPARTMAX: src and dst data type is different!");
+    static_assert(std::is_same_v<typename TileDataDst::DType, int32_t> ||
+                  std::is_same_v<typename TileDataDst::DType, int> ||
+                  std::is_same_v<typename TileDataDst::DType, int16_t> ||
+                  std::is_same_v<typename TileDataDst::DType, half> ||
+                  std::is_same_v<typename TileDataDst::DType, float16_t> ||
+                  std::is_same_v<typename TileDataDst::DType, float> ||
+                  std::is_same_v<typename TileDataDst::DType, float32_t>,
+                  "TPARTMAX: Invalid data type.");
+    static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
+                  "TPARTMAX: not supported BLayout type.");
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+    unsigned src0ValidRow = src0.GetValidRow();
+    unsigned src0ValidCol = src0.GetValidCol();
+    unsigned src1ValidRow = src1.GetValidRow();
+    unsigned src1ValidCol = src1.GetValidCol();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    PTO_ASSERT(dstValidRow != static_cast<unsigned>(0) && dstValidCol != static_cast<unsigned>(0),
+        "TPARTMAX: invalid dst valid shape.");
+    constexpr unsigned dstRowStride = TileDataDst::RowStride;
+    constexpr unsigned src0RowStride = TileDataSrc0::RowStride;
+    constexpr unsigned src1RowStride = TileDataSrc1::RowStride;
+
+    TPartMax<TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride,
+        src1RowStride>(dst.data(), src0.data(), src1.data(), src0ValidRow, src0ValidCol, src1ValidRow, src1ValidCol,
+        dstValidRow, dstValidCol);
+}
+}  // namespace pto
 #endif
