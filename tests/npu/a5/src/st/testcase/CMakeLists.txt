@@ -122,6 +122,8 @@ set(ALL_TESTCASES
     tmax
     tmins
     tmov
+    tmul
+    tdiv
     tcmps
     tmov_l0c2ub
     tsel
