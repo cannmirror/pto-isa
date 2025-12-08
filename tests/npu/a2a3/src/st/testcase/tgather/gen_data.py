@@ -65,7 +65,7 @@ FLOAT_P1111_COL = 320
 
 class TGatherParamsBase:
     def __init__(self, name):
-        self.testName = name
+        self.testname = name
 
 class TGatherParamsMasked(TGatherParamsBase):
     def __init__(self, name, dstType, srcType, row, col, pattern):
@@ -132,7 +132,8 @@ def gen_golden_data(param: TGatherParamsBase):
         pass
 
 class tgatherParams:
-    def __init__(self, dsttype, srctype, row, col, pattern):
+    def __init__(self, testname, dsttype, srctype, row, col, pattern):
+        self.testname = testname
         self.dsttype = dsttype
         self.srctype = srctype
         self.row = row
@@ -171,10 +172,10 @@ if __name__ == "__main__":
         TGatherParams1D("TGATHERTest.case_1D_int16_32x256_32x64", np.int16, 32, 256, 32, 64),
     ]
 
-    for case in enumerate(case_params_list):
-        if not os.path.exists(case.testName):
-            os.makedirs(case.testName)
+    for case in case_params_list:
+        if not os.path.exists(case.testname):
+            os.makedirs(case.testname)
         original_dir = os.getcwd()
-        os.chdir(case.testName)
+        os.chdir(case.testname)
         gen_golden_data(case)
         os.chdir(original_dir)
