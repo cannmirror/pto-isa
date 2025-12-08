@@ -107,6 +107,7 @@ tgatherb
 tci
 tcolmax
 tcolmin
+texpands
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

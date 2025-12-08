@@ -47,6 +47,10 @@ __PTO_INSTR__ void TMAX(TileData &dst, TileData &src0, TileData &src1) {
   MAP_INSTR_IMPL(TMAX, dst, src0, src1)
 }
 
+template <typename TileData>
+__PTO_INSTR__ void TEXPANDS(TileData &dst, typename TileData::DType scalar) {
+  MAP_INSTR_IMPL(TEXPANDS, dst, scalar)
+}
 
 template <typename TileData, typename GlobalData>
 __PTO_INSTR__ void TLOAD(TileData &dst, GlobalData &src) {
