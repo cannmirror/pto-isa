@@ -71,6 +71,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tdivs -g TDIVSTest.case5
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tmuls -g TMULSTest.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tadds -g TADDSTest.case1
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t texpands -g TEXPANDSTest.case_float_64x64_64x64_64x64_PAD_VALUE_NULL
 
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
@@ -100,6 +101,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 test/script/run_st.py -r $RUN_TYPE -v a3 -t texp
     python3 test/script/run_st.py -r $RUN_TYPE -v a3 -t trsqrt
     python3 test/script/run_st.py -r $RUN_TYPE -v a3 -t tsqrt
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t texpands
   fi
 fi
 
