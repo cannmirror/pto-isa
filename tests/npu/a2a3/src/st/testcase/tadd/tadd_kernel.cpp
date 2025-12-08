@@ -8,30 +8,28 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
 __global__ __aicore__ void runTAdd( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
-    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using DynStridDim5 = Stride<1, 1, 1, kGCols_, 1>;
+    using DynShapeDim5 = Shape<1, 1, 1, vRows, vCols>;
+    using DynStridDim5 = Stride<1, 1, 1, kTCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
-    TileData src0Tile(kTRows_, kTCols_);
-    TileData src1Tile(kTRows_, kTCols_);
-    TileData dstTile(kTRows_, kTCols_);
-    TASSIGN(src0Tile, 0x0 + 0x400 * block_idx);
-    TASSIGN(src1Tile, 0x4000 + 0x400 * block_idx);
-    TASSIGN(dstTile, 0x8000 + 0x400 * block_idx);
-
-    int offset = (block_idx / 4) * (64 * 16) + (block_idx % 4) * 16;
-    GlobalData src0Global(src0 + offset);
-    GlobalData src1Global(src1 + offset);
-    GlobalData dstGlobal(out + offset);
+    TileData src0Tile(vRows, vCols);
+    TileData src1Tile(vRows, vCols);
+    TileData dstTile(vRows, vCols);
+    TASSIGN(src0Tile, 0x0);
+    TASSIGN(src1Tile, 0x10000);
+    TASSIGN(dstTile, 0x20000);
+    
+    GlobalData src0Global(src0);
+    GlobalData src1Global(src1);
+    GlobalData dstGlobal(out);
 
     TLOAD(src0Tile, src0Global);
     TLOAD(src1Tile, src1Global);
@@ -44,15 +42,15 @@ __global__ __aicore__ void runTAdd( __gm__ T __out__ *out, __gm__ T __in__ *src0
     out = dstGlobal.data();
 }
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
 void LaunchTAdd(T *out, T *src0, T *src1, void *stream)
 {
     if constexpr ( std::is_same_v<T, aclFloat16> )
-        runTAdd<half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>((half*)(out),
-                                                                                  (half*)(src0),
-                                                                                  (half*)(src1));
+        runTAdd<half, kTRows_, kTCols_, vRows, vCols><<<1, nullptr, stream>>>((half*)(out),
+                                                                            (half*)(src0),
+                                                                            (half*)(src1));
     else 
-        runTAdd<T, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(out, src0, src1);
+        runTAdd<T, kTRows_, kTCols_, vRows, vCols><<<1, nullptr, stream>>>(out, src0, src1);
 }
 
 template void LaunchTAdd<float, 64, 64, 64, 64>(float *out, float *src0, float *src1, void *stream);

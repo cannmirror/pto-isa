@@ -658,7 +658,7 @@ else
 
   # TTRANS
   # A3
-  python3 tests/script/run_st.py -r npu -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8_param
+  python3 tests/script/run_st.py -r npu -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8
   #A5
   # python3 tests/script/run_st.py -r sim -v a5 -t ttrans -g TTRANSTest.case1
 
@@ -678,7 +678,7 @@ else
 
   # TADD
   # A3
-  python3 tests/script/run_st.py -r npu -v a3 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
+  python3 tests/script/run_st.py -r npu -v a3 -t tadd -g TADDTest.case1_float_64x64_64x64
   # A5
   # python3 tests/script/run_st.py -r sim -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
 
