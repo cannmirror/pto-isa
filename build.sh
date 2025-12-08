@@ -60,12 +60,15 @@ checkopts() {
   ENABLE_BUILD_ALL=FALSE
   ENABLE_RUN_EXAMPLE=FALSE
   ENABLE_PACKAGE=FALSE
+  ENABLE_A3=FALSE
+  ENABLE_A5=FALSE
+  RUN_TYPE=""
   EXAMPLE_NAME=""
   EXAMPLE_MODE=""
   PLATFORM_MODE=""
   INST_NAME=""
 
-  parsed_args=$(getopt -a -o j:hvuO: -l help,verbose,cov,make_clean,noexec,pkg,run_all,run_simple,cann_3rd_lib_path: -- "$@") || {
+  parsed_args=$(getopt -a -o j:hvuO: -l help,verbose,cov,make_clean,noexec,pkg,run_all,a3,a5,sim,npu,run_simple,cann_3rd_lib_path: -- "$@") || {
   usage
   exit 1
   }
@@ -90,6 +93,22 @@ checkopts() {
         ENABLE_PACKAGE=TRUE
         shift
         ;;
+      --a3)
+        ENABLE_A3=TRUE
+        shift
+        ;;
+      --a5)
+        ENABLE_A5=TRUE
+        shift
+        ;;
+      --sim)
+        RUN_TYPE=SIM
+        shift
+        ;;
+      --npu)
+        RUN_TYPE=NPU
+        shift
+        ;;
       --)
         shift
         break
@@ -106,7 +125,15 @@ run_simple_st() {
   echo $dotted_line
   echo "Start to run simple st"
   chmod +x run_st.sh
-  ./run_st.sh run_simple
+  if [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "FALSE" ]; then
+    ./run_st.sh a3 $RUN_TYPE simple
+  elif [ "$ENABLE_A3" = "FALSE"] && [ "$ENABLE_A5" = "TRUE" ]; then
+    ./run_st.sh a5 $RUN_TYPE simple
+  elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
+    ./run_st.sh a3_a5 $RUN_TYPE simple
+  else
+    ./run_st.sh a3 npu simple
+  fi
   echo "execute samples success"
 }
 
@@ -114,7 +141,15 @@ run_all_st() {
   echo $dotted_line
   echo "Start to run all st"
   chmod +x run_st.sh
-  ./run_st.sh dailyBuild
+  if [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "FALSE" ]; then
+    ./run_st.sh a3 $RUN_TYPE all
+  elif [ "$ENABLE_A3" = "FALSE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
+    ./run_st.sh a5 $RUN_TYPE all
+  elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
+    ./run_st.sh a3_a5 $RUN_TYPE all
+  else
+    ./run_st.sh a3 sim all
+  fi
   echo "execute samples success"
 }
 
@@ -129,6 +164,7 @@ clean_build_out() {
     rm -rf ${BUILD_OUT_PATH}
   fi
 }
+
 
 build_package() {
   echo "---------------package start-----------------"
