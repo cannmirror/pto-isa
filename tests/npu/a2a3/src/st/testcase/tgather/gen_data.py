@@ -165,14 +165,13 @@ if __name__ == "__main__":
         TGatherParamsMasked("TGATHERTest.case1_I32_P1111", np.int32, np.int32, FLOAT_P1111_ROW, FLOAT_P1111_COL, P1111),
 
         # Test cases for Tgather1D
-        # TGatherParams1D("TGATHERTest.TestName", datatype, srcrow, srccol, dstRow, dstCol)
         TGatherParams1D("TGATHERTest.case_1D_float_32x1024_16x64", np.float32, 32, 1024, 16, 64),
         TGatherParams1D("TGATHERTest.case_1D_int32_32x512_16x256", np.int32, 32, 512, 16, 256),
         TGatherParams1D("TGATHERTest.case_1D_half_16x1024_16x128", np.float16, 16, 1024, 16, 128),
         TGatherParams1D("TGATHERTest.case_1D_int16_32x256_32x64", np.int16, 32, 256, 32, 64),
     ]
 
-    for i, case in enumerate(case_params_list):
+    for case in enumerate(case_params_list):
         if not os.path.exists(case.testName):
             os.makedirs(case.testName)
         original_dir = os.getcwd()
