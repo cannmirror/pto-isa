@@ -11,8 +11,8 @@
 #ifndef T_COL_REDUCE_OPS_HPP
 #define T_COL_REDUCE_OPS_HPP
 
-#include <common/utils.hpp>
-#include <common/type.hpp>
+#include <pto/common/utils.hpp>
+#include <pto/common/type.hpp>
 
 namespace pto {
     template <typename T, typename InstrOp>
