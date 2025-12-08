@@ -15,8 +15,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-template <typename D, template S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-void launchTCVT(D *dst, S *src, void stream);
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void launchTCVT(D *dst, S *src, void *stream);
 
 class TCVTTest : public testing::Test {
 protected:
@@ -34,7 +34,7 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <typename D, template S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void test_tcvt()
 {
     uint32_t M = kGRows_;
@@ -48,8 +48,8 @@ void test_tcvt()
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    int *dstHost, *dstDevice;
-    float *srcHost, *srcDevice;
+    D *dstHost, *dstDevice;
+    S *srcHost, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
     aclrtMallocHost((void **)(&srcHost), srcFileSize);
@@ -60,7 +60,7 @@ void test_tcvt()
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, srcDevice, stream)
+    launchTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);

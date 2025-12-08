@@ -17,13 +17,15 @@ if [ "$1" = "dailyBuild" ]; then
   echo "==================daily build, run all case================="
   python3 tests/script/run_st.py -r sim -v a3 -t tcvt
   # A5
-  # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case1
-  # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case2
-  # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case3
-  # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case4
-  # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case5
-  # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case6
-  # python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case7
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case1
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case2
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case3
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case4
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case5
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case6
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case7
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case8
+  python3 tests/script/run_st.py -r sim -v a5 -t tcvt -g TCVTTest.case9
 
   # TCOLMAX
   # A3

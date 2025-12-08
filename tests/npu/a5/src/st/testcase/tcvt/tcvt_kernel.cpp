@@ -17,7 +17,7 @@ using namespace std;
 using namespace pto;
 
 template <typename T, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-inline __aicore__ void runTCVT(__gm__ T *out, __gm__ S *src) {
+__global__ __aicore__ void runTCVT(__gm__ T *out, __gm__ S *src) {
 
 
     using DynShapeDim4 = pto::Shape<1, 1, 1, kGRows_, kGCols_>;

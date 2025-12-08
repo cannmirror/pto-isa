@@ -11,7 +11,7 @@
 
 set -e
 
-# python3 tests/script/build_st.py -r npu -v a3 -t tcvt -g TCVTTest.case1
+python3 tests/script/build_st.py -r npu -v a3 -t tcvt -g TCVTTest.case1
 python3 tests/script/build_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
 python3 tests/script/build_st.py -r npu -v a3 -t textract -g TEXTRACTTest.case31_float_1_1_29_29_36_param
 python3 tests/script/build_st.py -r npu -v a3 -t tmov -g TMOVTest.case4_bias_dynamic_half_half_0_1_1_0_0_param
@@ -30,7 +30,7 @@ python3 tests/script/build_st.py -r npu -v a3 -t tfillpad -g TFILLPADTest.case_f
 python3 tests/script/build_st.py -r npu -v a3 -t tpartmin -g TPARTMINTest.test0
 python3 tests/script/build_st.py -r npu -v a3 -t tpartmax -g TPARTMAXTest.test0
 
-# python3 tests/script/build_st.py -r npu -v a5 -t tcvt -g TCVTTest.case1
+python3 tests/script/build_st.py -r npu -v a5 -t tcvt -g TCVTTest.case1
 python3 tests/script/build_st.py -r npu -v a5 -t tmatmul -g TMATMULTest.case1
 python3 tests/script/build_st.py -r npu -v a5 -t textract -g TEXTRACTTest.case1
 python3 tests/script/build_st.py -r npu -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
