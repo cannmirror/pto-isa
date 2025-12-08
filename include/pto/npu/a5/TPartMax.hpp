@@ -25,49 +25,11 @@ template <typename T> struct TPartMaxOp {
 };
 
 template <typename DstTileData, typename Src0TileData, typename Src1TileData> 
-__aicore__ PTO_INLINE void TPARTMAX_IMPL(DstTileData &dst, Src0TileData& src0, Src1TileData& src1)
+__aicore__ PTO_INLINE void TPARTMAX_IMPL(DstTileData &dst, Src0TileData& src0, Src1TileData& src1,
+    BinOpsImpl version = BinOpsImpl::BinOpsIMPL_DEFAULT)
 {
-
-    using T  = typename DstTileData::DType;
-    using S0 = typename Src0TileData::DType;
-    using S1 = typename Src1TileData::DType;
-
-    static_assert (std::is_same_v<T, S0> && std::is_same_v<T, S1>, "TPARTMAX: Input and output types should match" );
-
-    static_assert (std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t>  || std::is_same_v<T, uint16_t> || 
-                   std::is_same_v<T, int16_t> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> ||
-                   std::is_same_v<T, half>    || std::is_same_v<T, float>   || std::is_same_v<T, bfloat16_t>,
-                   "TPARTMAX: Invalid data type."
-    );
-
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
-
-    constexpr unsigned DstRowStride  = DstTileData::RowStride;
-    constexpr unsigned Src0RowStride = Src0TileData::RowStride;
-    constexpr unsigned Src1RowStride = Src1TileData::RowStride;
-
-    unsigned src0ValidRow = src0.GetValidRow(), src0ValidCol = src0.GetValidCol();
-    unsigned src1ValidRow = src1.GetValidRow(), src1ValidCol = src1.GetValidCol();
-    unsigned dstValidRow  = dst.GetValidRow(),  dstValidCol  = dst.GetValidCol();
-
-    if (src0ValidRow <= 0 || src0ValidCol <= 0 || src1ValidRow <= 0 || src1ValidCol <= 0 || dstValidRow <= 0 || dstValidCol <= 0)
-        return;
-    
-    bool condSrc0EqDst = (src0ValidRow == dstValidRow && src0ValidCol == dstValidCol);
-    bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
-
-    // dst has to be larger than or equal to both sources
-    bool condDstgeSrc = (src1ValidRow <= dstValidRow && src1ValidCol <= dstValidCol) &&
-                        (src0ValidRow <= dstValidRow && src0ValidCol <= dstValidCol);
-                   
-                        
-    if (condSrc0EqDst && condSrc1EqDst) { // src0 == src1 == dst
-        TBinOper<TPartMaxOp<typename DstTileData::DType>, DstTileData, elementsPerRepeat>(dst.data(), src0.data(), src1.data(), dstValidRow, dstValidCol);
-    } else if (condDstgeSrc){             // src0 <= dst && src1 <= dst
-        TCopyPadOp<TPartMaxOp<typename DstTileData::DType>, DstTileData, elementsPerRepeat, Src0RowStride, Src1RowStride, DstRowStride>
-            (dst.data(), src0.data(), src1.data(), src0ValidRow, src0ValidCol, 
-             src1ValidRow, src1ValidCol, dstValidRow, dstValidCol);
-    }  // other conditions not supported
+    TPartMasterImpl<TPartMaxOp<typename DstTileData::DType>, DstTileData, Src0TileData, Src1TileData>
+        (dst, src0, src1, version);
 }
 }  // namespace pto
 #endif
