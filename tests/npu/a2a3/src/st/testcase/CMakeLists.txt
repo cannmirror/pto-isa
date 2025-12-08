@@ -84,7 +84,6 @@ tcmps
 tstore
 tsels
 tdiv
-tcopy
 tmov_vect
 trowexpand
 tcvt

@@ -136,6 +136,7 @@ set(ALL_TESTCASES
     tgatherb
     tpartmin
     tpartmax
+    tmov_vect
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

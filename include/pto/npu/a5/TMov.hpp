@@ -11,6 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TMOV_HPP
 #define TMOV_HPP
 #include "TExtract.hpp"
+#include "TCopy.hpp"
 
 namespace pto {
 template <typename DstTileData, typename SrcTileData>
@@ -204,6 +205,21 @@ __aicore__ PTO_INLINE void CheckTMovL0cToUBValid()
 }
 
 template <typename DstTileData, typename SrcTileData>
+__aicore__ void TMovToVec(DstTileData &dst, SrcTileData &src) {
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename SrcTileData::DType);
+    constexpr unsigned srcStride = SrcTileData::RowStride;
+    constexpr unsigned dstStride = DstTileData::RowStride;
+    uint64_t validSrcRow = src.GetValidRow();
+    uint64_t validSrcCol = src.GetValidCol();
+    uint64_t validDstRow = dst.GetValidRow();
+    uint64_t validDstCol = dst.GetValidCol();
+    uint64_t validRow = (validSrcRow < validDstRow) ? validSrcRow : validDstRow;
+    uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
+    TCopy<DstTileData, SrcTileData, blockSizeElem, srcStride, dstStride>(dst.data(), src.data(), validRow, validCol);
+}
+
+
+template <typename DstTileData, typename SrcTileData>
 __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     if constexpr (SrcTileData::Loc == Location::Mat) {
@@ -242,6 +258,8 @@ __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
             uint16_t n = src.GetValidCol();
             TMovL0cToUB<DstTileData, SrcTileData, L0cToUBMode::SingleModeUB0, quantPre>(dst.data(), src.data(), m, n);
         }
+    } else if constexpr (SrcTileData::Loc == Location::Vec && DstTileData::Loc == Location::Vec) {
+        TMovToVec<DstTileData, SrcTileData>(dst, src);
     }
 }
 
