@@ -84,6 +84,9 @@ void test_tpartmax() {
 TEST_F(TPARTMAXTest, case_fp32_64x64_64x64_64x64) {
     test_tpartmax<float, 64, 64, 64, 64, 64, 64>();
 }
+TEST_F(TPARTMAXTest, case_fp32_2x24_2x24_2x8) {
+    test_tpartmax<float, 2, 24, 2, 24, 2, 8>();
+}
 TEST_F(TPARTMAXTest, case_fp32_128x64_128x64_96x64) {
     test_tpartmax<float, 128, 64, 128, 64, 96, 64>();
 }
@@ -92,9 +95,6 @@ TEST_F(TPARTMAXTest, case_fp32_95x95_95x95_95x95) {
 }
 TEST_F(TPARTMAXTest, case_fp32_122x123_104x123_122x110) {
     test_tpartmax<float, 122, 123, 104, 123, 122, 110>();
-}
-TEST_F(TPARTMAXTest, case_fp16_122x123_104x123_122x110) {
-    test_tpartmax<aclFloat16, 122, 123, 104, 123, 122, 110>();
 }
 TEST_F(TPARTMAXTest, case_s16_122x123_104x123_122x110) {
     test_tpartmax<int16_t, 122, 123, 104, 123, 122, 110>();

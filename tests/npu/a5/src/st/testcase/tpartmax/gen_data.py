@@ -9,7 +9,7 @@ np.random.seed(19)
 def gen_golden_data_tpartmax(case_name, param):
     dtype = param.dtype
 
-    dst_rows,  dst_cols  = [param.dstVR,  param.dstVC]
+    dst_rows, dst_cols = [param.dstVR, param.dstVC]
     src0_rows, src0_cols = [param.src0VR, param.src0VC]
     src1_rows, src1_cols = [param.src1VR, param.src1VC]
 
@@ -89,18 +89,18 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tpartmaxParams(np.float32, 64,  64,  64,  64,  64,  64),
-        tpartmaxParams(np.float32, 128, 64,  128, 64,  96,  64),
-        tpartmaxParams(np.float32, 95,  95,  95,  95,  95,  95),
+        tpartmaxParams(np.float32, 64, 64, 64, 64, 64, 64),
+        tpartmaxParams(np.float32, 2, 24, 2, 24, 2, 8),
+        tpartmaxParams(np.float32, 128, 64, 128, 64, 96, 64),
+        tpartmaxParams(np.float32, 95, 95, 95, 95, 95, 95),
         tpartmaxParams(np.float32, 122, 123, 104, 123, 122, 110),
         tpartmaxParams(np.float16, 122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.int8,    122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.int16,   122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.int32,   122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.uint8,   122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.uint16,  122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.uint32,  122, 123, 104, 123, 122, 110),
-        # tpartmaxParams(bfloat16,  122, 123, 104, 123, 122, 110)
+        tpartmaxParams(np.int8, 122, 123, 104, 123, 122, 110),
+        tpartmaxParams(np.int16, 122, 123, 104, 123, 122, 110),
+        tpartmaxParams(np.int32, 122, 123, 104, 123, 122, 110),
+        tpartmaxParams(np.uint8, 122, 123, 104, 123, 122, 110),
+        tpartmaxParams(np.uint16, 122, 123, 104, 123, 122, 110),
+        tpartmaxParams(np.uint32, 122, 123, 104, 123, 122, 110)
     ]
 
     for i, param in enumerate(case_params_list):
@@ -109,5 +109,5 @@ if __name__ == "__main__":
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data_tpartadd(case_name, param)
+        gen_golden_data_tpartmax(case_name, param)
         os.chdir(original_dir)

@@ -9,7 +9,7 @@ np.random.seed(19)
 def gen_golden_data_tpartmin(case_name, param):
     dtype = param.dtype
 
-    dst_rows,  dst_cols  = [param.dstVR,  param.dstVC]
+    dst_rows, dst_cols = [param.dstVR, param.dstVC]
     src0_rows, src0_cols = [param.src0VR, param.src0VC]
     src1_rows, src1_cols = [param.src1VR, param.src1VC]
 
@@ -89,18 +89,18 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tpartminParams(np.float32, 64,  64,  64,  64,  64,  64),
-        tpartminParams(np.float32, 128, 64,  128, 64,  96,  64),
-        tpartminParams(np.float32, 95,  95,  95,  95,  95,  95),
+        tpartminParams(np.float32, 64, 64, 64, 64, 64, 64),
+        tpartminParams(np.float32, 2, 24, 2, 24, 2, 8),
+        tpartminParams(np.float32, 128, 64, 128, 64, 96, 64),
+        tpartminParams(np.float32, 95, 95, 95, 95, 95, 95),
         tpartminParams(np.float32, 122, 123, 104, 123, 122, 110),
         tpartminParams(np.float16, 122, 123, 104, 123, 122, 110),
-        tpartminParams(np.int8,    122, 123, 104, 123, 122, 110),
-        tpartminParams(np.int16,   122, 123, 104, 123, 122, 110),
-        tpartminParams(np.int32,   122, 123, 104, 123, 122, 110),
-        tpartminParams(np.uint8,   122, 123, 104, 123, 122, 110),
-        tpartminParams(np.uint16,  122, 123, 104, 123, 122, 110),
-        tpartminParams(np.uint32,  122, 123, 104, 123, 122, 110),
-        # tpartminParams(bfloat16,  122, 123, 104, 123, 122, 110)
+        tpartminParams(np.int8, 122, 123, 104, 123, 122, 110),
+        tpartminParams(np.int16, 122, 123, 104, 123, 122, 110),
+        tpartminParams(np.int32, 122, 123, 104, 123, 122, 110),
+        tpartminParams(np.uint8, 122, 123, 104, 123, 122, 110),
+        tpartminParams(np.uint16, 122, 123, 104, 123, 122, 110),
+        tpartminParams(np.uint32, 122, 123, 104, 123, 122, 110)
     ]
 
     for i, param in enumerate(case_params_list):
@@ -109,5 +109,5 @@ if __name__ == "__main__":
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data_tpartadd(case_name, param)
+        gen_golden_data_tpartmin(case_name, param)
         os.chdir(original_dir)
