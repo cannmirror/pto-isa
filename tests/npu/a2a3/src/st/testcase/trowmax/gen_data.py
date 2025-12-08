@@ -1,5 +1,14 @@
 #!/usr/bin/python3
 # coding=utf-8
+# --------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# --------------------------------------------------------------------------------
 
 import os
 import numpy as np
@@ -22,7 +31,8 @@ def gen_golden_data(param):
     input_arr.tofile('input.bin')
     output_arr.tofile('golden.bin')
 
-class trowmaxParams:
+
+class TRowMaxParams:
     def __init__(self, name, data_type, row, valid_row, col, valid_col):
         self.name = name
         self.data_type = data_type
@@ -31,22 +41,23 @@ class trowmaxParams:
         self.col = col
         self.valid_col = valid_col
 
+
 if __name__ == "__main__":
     case_params_list = [
-        trowmaxParams("TROWMAXTest.case1", np.float32, 127, 127, 64, 64 - 1),
-        trowmaxParams("TROWMAXTest.case2", np.float32, 63, 63, 64, 64),
-        trowmaxParams("TROWMAXTest.case3", np.float32, 31, 31, 64 * 2, 64 * 2 - 1),
-        trowmaxParams("TROWMAXTest.case4", np.float32, 15, 15, 64 * 3, 64 * 3),
-        trowmaxParams("TROWMAXTest.case5", np.float32, 7, 7, 64 * 7, 64 * 7 - 1),
-        trowmaxParams("TROWMAXTest.case6", np.float16, 256, 256, 16, 16 - 1),
-        trowmaxParams("TROWMAXTest.case7", np.float32, 30, 30, 216, 216),
-        trowmaxParams("TROWMAXTest.case8", np.float32, 30, 30, 216, 24),
-        trowmaxParams("TROWMAXTest.case9", np.float32, 30, 11, 216, 216),
-        trowmaxParams("TROWMAXTest.case10", np.float32, 30, 11, 216, 24),
-        trowmaxParams("TROWMAXTest.case11", np.float32, 238, 238, 40, 40),
-        trowmaxParams("TROWMAXTest.case12", np.float32, 238, 238, 40, 16),
-        trowmaxParams("TROWMAXTest.case13", np.float32, 238, 121, 40, 40),
-        trowmaxParams("TROWMAXTest.case14", np.float32, 238, 121, 40, 16)
+        TRowMaxParams("TROWMAXTest.case1", np.float32, 127, 127, 64, 64 - 1),
+        TRowMaxParams("TROWMAXTest.case2", np.float32, 63, 63, 64, 64),
+        TRowMaxParams("TROWMAXTest.case3", np.float32, 31, 31, 64 * 2, 64 * 2 - 1),
+        TRowMaxParams("TROWMAXTest.case4", np.float32, 15, 15, 64 * 3, 64 * 3),
+        TRowMaxParams("TROWMAXTest.case5", np.float32, 7, 7, 64 * 7, 64 * 7 - 1),
+        TRowMaxParams("TROWMAXTest.case6", np.float16, 256, 256, 16, 16 - 1),
+        TRowMaxParams("TROWMAXTest.case7", np.float32, 30, 30, 216, 216),
+        TRowMaxParams("TROWMAXTest.case8", np.float32, 30, 30, 216, 24),
+        TRowMaxParams("TROWMAXTest.case9", np.float32, 30, 11, 216, 216),
+        TRowMaxParams("TROWMAXTest.case10", np.float32, 30, 11, 216, 24),
+        TRowMaxParams("TROWMAXTest.case11", np.float32, 238, 238, 40, 40),
+        TRowMaxParams("TROWMAXTest.case12", np.float32, 238, 238, 40, 16),
+        TRowMaxParams("TROWMAXTest.case13", np.float32, 238, 121, 40, 40),
+        TRowMaxParams("TROWMAXTest.case14", np.float32, 238, 121, 40, 16)
     ]
 
     for i, case in enumerate(case_params_list):

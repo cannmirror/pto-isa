@@ -41,7 +41,7 @@ function(pto_cube_st NAME)
     add_library(${NAME}_kernel SHARED ${NAME}_kernel.cpp)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c220-cube -D__DAV_V220 -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE
-        ${PROJECT_SOURCE_DIR}/../../../../../include/
+        ${PROJECT_SOURCE_DIR}/../../../../../include
     )
     target_link_options(${NAME}_kernel PRIVATE --cce-fatobj-link)
 
@@ -71,6 +71,7 @@ set(ALL_TESTCASES
 tmatmul
 trowsum
 trowmax
+trowmin
 textract
 tmov
 tload

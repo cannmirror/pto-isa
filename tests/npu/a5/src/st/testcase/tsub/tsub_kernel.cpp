@@ -8,9 +8,9 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <common/tile_tensor_impl.hpp>
-#include <common/pto_tile.hpp>
-#include <common/constants.hpp>
+#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/common/pto_tile.hpp>
+#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;

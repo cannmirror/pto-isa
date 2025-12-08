@@ -102,7 +102,7 @@ function(pack_built_in)
 
   set(pto_source ${CMAKE_SOURCE_DIR}/include)
   install(DIRECTORY ${pto_source}/
-      DESTINATION pto_tile_lib/include
+      DESTINATION pto_tile_lib/include/pto
       FILE_PERMISSIONS
       OWNER_READ OWNER_WRITE
       GROUP_READ GROUP_EXECUTE

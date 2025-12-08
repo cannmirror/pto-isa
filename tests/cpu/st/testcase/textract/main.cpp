@@ -1,8 +1,8 @@
-#include <pto-inst.hpp>
+#include <pto/pto-inst.hpp>
 #include "test_common.h"
 #include <gtest/gtest.h>
-#include <common/tile_tensor_impl.hpp>
-#include <common/constants.hpp>
+#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/common/constants.hpp>
 
 using namespace std;
 using namespace PtoTestCommon;
