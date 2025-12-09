@@ -31,7 +31,7 @@ __tf__ __aicore__ PTO_INLINE void TRowExpand(typename TileDataOut::TileDType __o
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
 
     uint16_t repeatTimes = CeilDivision(kValidCols, eleCntReg);
-    constexpr auto eleCntValue = eleCntReg;
+    constexpr auto eleCntValue = CCE_VL /sizeof(T);
     constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
     __VEC_SCOPE__
     {
