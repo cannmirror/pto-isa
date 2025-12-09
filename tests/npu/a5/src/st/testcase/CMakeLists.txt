@@ -139,6 +139,7 @@ set(ALL_TESTCASES
     tpartmin
     tpartmax
     tmov_vect
+    texpands
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
