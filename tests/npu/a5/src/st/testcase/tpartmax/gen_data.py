@@ -1,5 +1,14 @@
 #!/usr/bin/python3
 # coding=utf-8
+# --------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# --------------------------------------------------------------------------------
 
 import os
 import numpy as np
@@ -17,17 +26,15 @@ def gen_golden_data_tpartmax(case_name, param):
     src0_in = np.random.uniform(low=-255, high=255, size=(src0_rows, src0_cols)).astype(dtype)
     src1_in = np.random.uniform(low=-255, high=255, size=(src1_rows, src1_cols)).astype(dtype)
 
-
     pad_value = {
         np.float32: np.float32(-np.inf),
         np.float16: np.float16(-np.inf),
-        #bfloat16:  np.float32(-np.inf),
-        np.uint8:   np.iinfo(np.uint8).min,
-        np.int8:    np.iinfo(np.int8).min,
-        np.uint16:  np.iinfo(np.uint16).min,
-        np.int16:   np.iinfo(np.int16).min,
-        np.uint32:  np.iinfo(np.uint32).min,
-        np.int32:   np.iinfo(np.int32).min,
+        np.uint8: np.iinfo(np.uint8).min,
+        np.int8: np.iinfo(np.int8).min,
+        np.uint16: np.iinfo(np.uint16).min,
+        np.int16: np.iinfo(np.int16).min,
+        np.uint32: np.iinfo(np.uint32).min,
+        np.int32: np.iinfo(np.int32).min,
     }.get(dtype)
 
     if src0_rows < dst_rows or src0_cols < dst_cols:
@@ -41,7 +48,6 @@ def gen_golden_data_tpartmax(case_name, param):
         padded_src1[:src1_rows, :src1_cols] = src1_in
     else:
         padded_src1 = src1_in
-
 
     # Save the input and golden data to binary files
     src0_in.tofile("input1.bin")
@@ -69,13 +75,12 @@ def generate_case_name(param):
     dtype_str = {
         np.float32: 'fp32',
         np.float16: 'fp16',
-        np.int8:    's8',
-        np.int16:   's16',
-        np.int32:   's32',
-        np.uint8:   'u8',
-        np.uint16:  'u16',
-        np.uint32:  'u32',
-        # bfloat16, 'bf16'
+        np.int8: 's8',
+        np.int16: 's16',
+        np.int32: 's32',
+        np.uint8: 'u8',
+        np.uint16: 'u16',
+        np.uint32: 'u32',
     }[param.dtype]
     return f"TPARTMAXTest.case_{dtype_str}_{param.dstVR}x{param.dstVC}_{param.src0VR}x{param.src0VC}_{param.src1VR}x{param.src1VC}"
 
@@ -103,7 +108,7 @@ if __name__ == "__main__":
         tpartmaxParams(np.uint32, 122, 123, 104, 123, 122, 110)
     ]
 
-    for i, param in enumerate(case_params_list):
+    for param in case_params_list:
         case_name = generate_case_name(param)
         if not os.path.exists(case_name):
             os.makedirs(case_name)
