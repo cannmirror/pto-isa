@@ -36,7 +36,6 @@ std::string GetGoldenDir() {
 
 template <typename T, int Rows, int Cols, int ValidRows, int ValidCols>
 void test_tsel() {
-
     size_t fileSize = Rows * Cols * sizeof(T);
     size_t maskFileSize = Rows * Cols * sizeof(uint8_t);
 
