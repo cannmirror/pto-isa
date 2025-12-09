@@ -40,6 +40,9 @@ fi
 
 if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
   if [ "$ENABLE_SIMPLE" = "true" ]; then           # 单个用例
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcolsum -g TCOLSUMTest.case1
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcolmax -g TCOLMAXTest.case1
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcolmin -g TCOLMINTest.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tgatherb -g TGATHERBTest.case_float_2x128_2x16_2x128
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tci -g TCITest.case1_int32
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcvt -g TCVTTest.case1
@@ -75,6 +78,9 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
 
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcolsum
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcolmax
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcolmin
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcvt
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tmatmul
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tmov
