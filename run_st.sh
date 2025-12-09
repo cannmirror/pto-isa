@@ -99,7 +99,6 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tload
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tadd
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tsels
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tcopy
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tmins
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tsub
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tci

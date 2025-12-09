@@ -1,5 +1,14 @@
 #!/usr/bin/python3
 # coding=utf-8
+# --------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# --------------------------------------------------------------------------------
 
 import os
 import numpy as np
@@ -8,11 +17,11 @@ np.random.seed(19)
 def gen_golden_data_trowmax(case_name, param):
     dtype = param.dtype
 
-    H, W = [param.tile_row, param.tile_col]
-    h_valid, w_valid = [min(H, param.valid_row), min(W, param.valid_col)]
+    row, col = [param.tile_row, param.tile_col]
+    h_valid, w_valid = [min(row, param.valid_row), min(col, param.valid_col)]
 
     # Generate random input array
-    input1 = np.random.uniform(low=-16, high=16, size=[H, W]).astype(dtype)
+    input1 = np.random.uniform(low=-16, high=16, size=[row, col]).astype(dtype)
 
     # Apply valid region constraints
     golden = np.full((h_valid), np.finfo(dtype).min, dtype=dtype)
@@ -26,7 +35,8 @@ def gen_golden_data_trowmax(case_name, param):
 
     return input1, golden
 
-class trowmaxParams:
+
+class TRowmaxParams:
     def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
         self.dtype = dtype
         self.global_row = global_row
@@ -36,6 +46,7 @@ class trowmaxParams:
         self.valid_row = valid_row
         self.valid_col = valid_col
 
+
 def generate_case_name(param):
     dtype_str = {
         np.float32: 'float',
@@ -44,7 +55,17 @@ def generate_case_name(param):
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TROWMAXTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+
+    def substring(a, b) -> str:
+        return f"_{a}x{b}"
+        
+    name = f"TADDTest.case_{dtype_str}" 
+    name += substring(param.global_row, param.global_col)
+    name += substring(param.tile_row, param.tile_col)
+    name += substring(param.valid_row, param.valid_col)
+    
+    return name
+
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -56,11 +77,11 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        trowmaxParams(np.float32, 64, 64, 64, 64, 64, 64),
-        trowmaxParams(np.float16, 64, 64, 64, 64, 64, 64),
-        trowmaxParams(np.float16, 161, 161, 32, 32, 161, 161),
-        trowmaxParams(np.float32, 77, 81, 32, 16, 77, 81),
-        trowmaxParams(np.float32, 32 ,32, 32, 16, 32, 32),
+        TRowmaxParams(np.float32, 64, 64, 64, 64, 64, 64),
+        TRowmaxParams(np.float16, 64, 64, 64, 64, 64, 64),
+        TRowmaxParams(np.float16, 161, 161, 32, 32, 161, 161),
+        TRowmaxParams(np.float32, 77, 81, 32, 16, 77, 81),
+        TRowmaxParams(np.float32, 32, 32, 32, 16, 32, 32)
     ]
 
     for i, param in enumerate(case_params_list):
