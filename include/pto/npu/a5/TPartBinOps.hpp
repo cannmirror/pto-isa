@@ -113,7 +113,6 @@ __tf__ __aicore__ PTO_INLINE void TCopyPadOp(typename TileData::TileDType __out_
     uint64_t DstvalidRow, uint64_t DstvalidCol)
 {
     using T = typename TileData::DType;
-    
     __ubuf__ T * src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
     __ubuf__ T * src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
     __ubuf__ T * dstPtr  = (__ubuf__ T *)__cce_get_tile_ptr(dst);
@@ -122,21 +121,19 @@ __tf__ __aicore__ PTO_INLINE void TCopyPadOp(typename TileData::TileDType __out_
 
     __VEC_SCOPE__
     {
-        //PAD (dst with pad value)
         MaskReg preg;
         RegTensor<T> vreg0;
         RegTensor<T> vreg1;
         RegTensor<T> vreg2;
-        RegTensor<T> vreg_pad;
         constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-        
+
         uint16_t repeatTimes = CeilDivision(DstvalidCol, elementsPerRepeat);
-        vbr(vreg_pad, Op::PadVal);
+        vbr(vreg0, Op::PadVal);
         for (uint16_t i = 0; i < (uint16_t)DstvalidRow; ++i){
             uint32_t sreg = (uint32_t)(DstvalidCol);
             for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j){
                 preg = CreatePredicate<T>(sreg);
-                vsts((RegTensor<T> &)vreg_pad, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
+                vsts((RegTensor<T> &)vreg0, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
             }
         }
 
@@ -155,7 +152,7 @@ __tf__ __aicore__ PTO_INLINE void TCopyPadOp(typename TileData::TileDType __out_
 
         mem_bar(VST_VLD);
 
-        // MAX (between the dst anmd source 1)
+        // MAX (between the dst and source 1)
         repeatTimes = CeilDivision(Src1validCol, elementsPerRepeat);
         for (uint16_t i = 0; i < (uint16_t)Src1validRow; ++i){
             uint32_t sreg = (uint32_t)(Src1validCol);
@@ -167,8 +164,7 @@ __tf__ __aicore__ PTO_INLINE void TCopyPadOp(typename TileData::TileDType __out_
                 vsts(vreg2, dstPtr  + i * dstStride, j * elementsPerRepeat, distValue, preg);
             } 
         }
-
-    } // end VF
+    } // end __VEC_SCOPE__
 }
 
 template <typename Op, typename DstTileData, typename Src0TileData, typename Src1TileData> 
