@@ -138,7 +138,8 @@ __aicore__ PTO_INLINE void TLoadGm2ubDn2dn(__ubuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void CheckNzFormat(int gShape0, int gShape1, int gShape2, int gShape3, int gShape4)
+__aicore__ PTO_INLINE void CheckNzFormat(
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int validRow, int validCol)
 {
     static_assert(GlobalData::staticShape[3] == FRACTAL_NZ_ROW &&
                       GlobalData::staticShape[4] == C0_SIZE_BYTE / sizeof(typename TileData::DType),
@@ -153,7 +154,7 @@ __aicore__ PTO_INLINE void TLoadGm2ubNz2nz(__ubuf__ typename TileData::DType *ds
     typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
     int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
-    CheckNzFormat<TileData, GlobalData>(gShape0, gShape1, gShape2, gShape3, gShape4);
+    CheckNzFormat<TileData, GlobalData>(gShape0, gShape1, gShape2, gShape3, gShape4, validRow, validCol);
     uint16_t nBurst = gShape1;
     uint32_t lenBurst = validRow * C0_SIZE_BYTE;
     uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType);
@@ -262,7 +263,7 @@ __aicore__ PTO_INLINE void TLoadGm2L1Nz2nz(__cbuf__ typename TileData::DType *ds
     typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
     int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
-    CheckNzFormat<TileData, GlobalData>(gShape0, gShape1, gShape2, gShape3, gShape4);
+    CheckNzFormat<TileData, GlobalData>(gShape0, gShape1, gShape2, gShape3, gShape4, validRow, validCol);
     uint16_t nBurst = gShape1;
     uint32_t lenBurst = validRow;
     uint32_t gmGap = ((gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
