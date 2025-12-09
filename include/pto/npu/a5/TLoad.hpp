@@ -151,13 +151,13 @@ __tf__ __aicore__ PTO_INLINE void TLoad(typename TileData::TileDType __out__ dst
     if constexpr (enableUBPad) {
         set_mov_pad_val(GetPadValue<TileData>());
     }
-    if constexpr (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
+    if constexpr (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)) {
         TLoadVecND2ND<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol, enableUBPad);
-    } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
+    } else if constexpr (!TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)) {
         TLoadVecDN2DN<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol, enableUBPad);
-    } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
+    } else if constexpr (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor)) {
         TLoadVecNZ2NZ<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
@@ -187,7 +187,7 @@ __aicore__ PTO_INLINE void TLoadCubeCheck()
 
     // ND2NZ or DN2NZ
     if constexpr ((GlobalData::layout == pto::Layout::ND || GlobalData::layout == pto::Layout::DN) &&
-                  (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor))) {
+                  (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))) {
         static_assert(TileData::SFractalSize == 512, "TileData SFractalSize must be 512 of NZ format in L1");
         static_assert(sizeof(typename TileData::DType) != 8, "DType not support b64 in ND2NZ or DN2NZ");
         // globaltensor only support 2 dim
@@ -204,7 +204,7 @@ __aicore__ PTO_INLINE void TLoadCubeCheck()
 
     // NZ2NZ
     if constexpr ((GlobalData::layout == pto::Layout::NZ) &&
-                  (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor))) {
+                  (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))) {
         if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
                       std::is_same<typename TileData::DType, float4_e2m1x2_t>::value) {
             static_assert(BLOCK_BYTE_SIZE * 2 == GlobalData::staticShape[4] && BLOCK_LEN == GlobalData::staticShape[3],
@@ -471,26 +471,26 @@ __tf__ __aicore__ PTO_INLINE void TLoadCube(typename TileData::TileDType __out__
 
     // ND2NZ or DN2NZ
     if constexpr ((GlobalData::layout == pto::Layout::ND || GlobalData::layout == pto::Layout::DN) &&
-                  (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor))) {
+                  (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))) {
         TLoadCubeND2NZ<TileData, GlobalData>(dstAddr, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
 
     } else if constexpr ((GlobalData::layout == pto::Layout::NZ) &&
-                         (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor))) {
+                         (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))) {
         TLoadCubeNZ2NZ<TileData, GlobalData>(dstAddr, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr ((GlobalData::layout == pto::Layout::ND &&
-                             (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)))) {
+                             (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)))) {
         // ND2ND support cols padding
         TLoadCubeND2ND<TileData, GlobalData>(dstAddr, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::DN &&
-                         (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox))) {
+                         (!TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox))) {
         // dn support rows padding
         TLoadCubeDN2DN<TileData, GlobalData>(dstAddr, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::DN &&
-                         (TileData::isRowMajor & (TileData::SFractal == SLayout::ColMajor))) {
+                         (TileData::isRowMajor && (TileData::SFractal == SLayout::ColMajor))) {
         TLoadCubeDN2ZN<TileData, GlobalData>(dstAddr, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
@@ -520,7 +520,7 @@ __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
                           ((GlobalData::layout == pto::Layout::NZ) &&
                               (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))),
             "Src and dst layout must be same!");
-        if constexpr (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
+        if constexpr (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)) {
             if constexpr (TileData::ValidCol > 0 && GlobalData::staticShape[4] > 0) {
                 static_assert(TileData::ValidCol == GlobalData::staticShape[4],
                     "Src GlobalTensor Col and Tile ValidCol must be the same!");
