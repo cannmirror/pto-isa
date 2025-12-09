@@ -8,7 +8,6 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 #include "acl/acl.h"
@@ -16,13 +15,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, CmpMode cmpMode>
-__global__ __aicore__ void runTCmps( __gm__ uint32_t __out__ *out, __gm__ T __in__ *src0,  T src1) {
+__global__ AICORE void runTCmps( __gm__ uint32_t __out__ *out, __gm__ T __in__ *src0,  T src1) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kTCols_, 1>;
     using GlobalData_src0 = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using GlobalData_dst = GlobalTensor<uint32_t, DynShapeDim5, DynStridDim5>;
-    using TileData_src0 = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
-    using TileData_dst = Tile<Location::Vec, uint32_t, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData_src0 = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData_dst = Tile<TileType::Vec, uint32_t, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
     TileData_src0 src0Tile(kTRows_, kTCols_);
     TileData_dst dstTile(kTRows_, kTCols_);
     TASSIGN(src0Tile, 0x0 + 0x400 * block_idx);

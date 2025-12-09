@@ -30,7 +30,7 @@ enum class BinOpsImpl : uint8_t {
 };
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TBinOps_1D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *src0Ptr, 
                     __ubuf__ typename TileData::DType *src1Ptr,
@@ -59,7 +59,7 @@ void TBinOps_1D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TBinOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *src0Ptr, 
                     __ubuf__ typename TileData::DType *src1Ptr,
@@ -88,7 +88,7 @@ void TBinOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TBinOps_2D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *src0Ptr, 
                     __ubuf__ typename TileData::DType *src1Ptr,
@@ -118,7 +118,7 @@ void TBinOps_2D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TBinOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *src0Ptr, 
                     __ubuf__ typename TileData::DType *src1Ptr,
@@ -148,7 +148,7 @@ void TBinOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE void BinaryInstr(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1,
+PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1,
                             unsigned kValidRows, unsigned kValidCols, BinOpsImpl version) {
     using T = typename TileData::DType;
     if constexpr (TileData::ValidCol == TileData::Cols) {

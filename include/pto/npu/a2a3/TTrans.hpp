@@ -18,7 +18,7 @@ namespace pto {
 
 template <typename T> 
 struct TransOp {
-    __PTO_INSTR__ static void TransB8Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
+    PTO_INTERNAL static void TransB8Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
     {
         scatter_vnchwconv_b8(VA0, VA2, repeat, dstStride, srcStride, false, false);
         scatter_vnchwconv_b8(VA6, VA2, repeat, dstStride, srcStride, false, true);
@@ -26,23 +26,23 @@ struct TransOp {
         scatter_vnchwconv_b8(VA6, VA4, repeat, dstStride, srcStride, true, true);
     }
 
-    __PTO_INSTR__ static void TransB16Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
+    PTO_INTERNAL static void TransB16Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
     {
         scatter_vnchwconv_b16(VA0, VA2, repeat, dstStride, srcStride);
     }
 
-    __PTO_INSTR__ static void TransB32Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
+    PTO_INTERNAL static void TransB32Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
     {
         scatter_vnchwconv_b32(VA0, VA2, repeat, dstStride, srcStride);
     }
 
-    __PTO_INSTR__ static void CopyInstr(__ubuf__ uint32_t *dstPtr, __ubuf__ uint32_t *srcPtr, uint8_t repeat, 
+    PTO_INTERNAL static void CopyInstr(__ubuf__ uint32_t *dstPtr, __ubuf__ uint32_t *srcPtr, uint8_t repeat,
                                         uint16_t dstRepeatStride, uint16_t srcRepeatStride)
     {
         vcopy(dstPtr, srcPtr, repeat, 1, 1, dstRepeatStride, srcRepeatStride);
     }
 
-    __PTO_INSTR__ static void CopyInstr(__ubuf__ uint16_t *dstPtr, __ubuf__ uint16_t *srcPtr, uint8_t repeat, 
+    PTO_INTERNAL static void CopyInstr(__ubuf__ uint16_t *dstPtr, __ubuf__ uint16_t *srcPtr, uint8_t repeat,
                                         uint16_t dstRepeatStride, uint16_t srcRepeatStride)
     {
         vcopy(dstPtr, srcPtr, repeat, 1, 1, dstRepeatStride, srcRepeatStride);
@@ -50,7 +50,7 @@ struct TransOp {
 };
 
 template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__ void TransposeB32(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
+PTO_INTERNAL void TransposeB32(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
 {
     // numSubtileY can reach REPEAT_MAX = 255 in b32 case
     // 1 subtile = 16 * 32B = 0.5KB, UB = 192KB, so UB can contain 384 subtiles at most
@@ -80,7 +80,7 @@ __PTO_INSTR__ void TransposeB32(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned
 }
 
 template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__ void TransposeB16(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
+PTO_INTERNAL void TransposeB16(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
 {
     // numSubtileY can reach REPEAT_MAX = 255 in b16 case
     // 1 subtile = 16 * 32B = 0.5KB, UB = 192KB, so UB can contain 384 subtiles at most
@@ -110,7 +110,7 @@ __PTO_INSTR__ void TransposeB16(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned
 }
 
 template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__ void TransposeB8(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
+PTO_INTERNAL void TransposeB8(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
 {
     // numSubtileY couldn't reach REPEAT_MAX = 255 in b8 case
     // 1 subtile = 32 * 32B = 1KB, UB = 192KB, so UB can contain 192 subtiles at most
@@ -142,7 +142,7 @@ __PTO_INSTR__ void TransposeB8(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned 
 }
 
 template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__ void TransposeFullSubTiles(
+PTO_INTERNAL void TransposeFullSubTiles(
     __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
 {
     if (numSubtileX == 0 || numSubtileY == 0) {
@@ -161,7 +161,7 @@ __PTO_INSTR__ void TransposeFullSubTiles(
 }
 
 template <typename Op, typename T, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__ void CopyRowsWithMask(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numRow, unsigned numTail)
+PTO_INTERNAL void CopyRowsWithMask(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numRow, unsigned numTail)
 {
     if (numRow == 0 || numTail == 0) {
         return;
@@ -200,7 +200,7 @@ __PTO_INSTR__ void CopyRowsWithMask(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsi
 }
 
 template <typename Op, typename T, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__ void TransposeXTailSubtiles(
+PTO_INTERNAL void TransposeXTailSubtiles(
     __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numTailX, unsigned numSubtileY)
 {
     if (numTailX == 0 || numSubtileY == 0) {
@@ -238,7 +238,7 @@ __PTO_INSTR__ void TransposeXTailSubtiles(
 }
 
 template <typename Op, typename T, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__ void TransposeYTailSubtiles(
+PTO_INTERNAL void TransposeYTailSubtiles(
     __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numTailY)
 {
     if (numSubtileX == 0 || numTailY == 0) {
@@ -276,7 +276,7 @@ __PTO_INSTR__ void TransposeYTailSubtiles(
 }
 
 template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__ void TransposeXYTailSubtile(
+PTO_INTERNAL void TransposeXYTailSubtile(
     __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numTailX, unsigned numTailY)
 {
     if (numTailX == 0 || numTailY == 0) {
@@ -293,7 +293,7 @@ __PTO_INSTR__ void TransposeXYTailSubtile(
 }
 
 template <typename TileData, unsigned dstStride, unsigned srcStride>
-__tf__ __PTO_INSTR__ void TTrans(typename TileData::TileDType __out__ dst, 
+__tf__ PTO_INTERNAL void TTrans(typename TileData::TileDType __out__ dst,
     typename TileData::TileDType __in__ src, unsigned validRow, unsigned validCol)
 {
     using T = typename TileData::DType;
@@ -323,7 +323,7 @@ __tf__ __PTO_INSTR__ void TTrans(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileDataDst, typename TileDataSrc>
-__PTO_INSTR__ void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src)
+PTO_INTERNAL void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src)
 {
     using T = typename TileDataSrc::DType;
     static_assert( sizeof(T) == sizeof(typename TileDataDst::DType), "TTRANS: Inconsistent data types.");

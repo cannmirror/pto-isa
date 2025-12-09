@@ -20,7 +20,7 @@ namespace pto {
 
     template <typename TileDataDst, typename TileDataSrc, 
              unsigned blockSizeElem, unsigned srcStride, unsigned dstStride>
-    __tf__ __aicore__ PTO_INLINE void TCopy(typename TileDataDst::TileDType __out__ dst,
+    __tf__ PTO_INTERNAL void TCopy(typename TileDataDst::TileDType __out__ dst,
                                             typename TileDataSrc::TileDType __in__ src,
                                             uint64_t validRow,
                                             uint64_t validCol){

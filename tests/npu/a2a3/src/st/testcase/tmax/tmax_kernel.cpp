@@ -25,16 +25,16 @@ struct TileDataSelector;
 
 template <typename T, int kTRows_, int kTCols_>
 struct TileDataSelector<T, kTRows_, kTCols_, PAD_VALUE_NULL> {
-    using Type = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, SFRACTAL_SIZE, PadValue::Null>;
+    using Type = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, SFRACTAL_SIZE, PadValue::Null>;
 };
 
 template <typename T, int kTRows_, int kTCols_>
 struct TileDataSelector<T, kTRows_, kTCols_, PAD_VALUE_MAX> {
-    using Type = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, SFRACTAL_SIZE, PadValue::Max>;
+    using Type = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, SFRACTAL_SIZE, PadValue::Max>;
 };
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int padValueType>
-__global__ __aicore__ void runTMAX( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
+__global__ AICORE void runTMAX( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;

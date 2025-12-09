@@ -45,7 +45,7 @@ namespace pto{
     }
 
     template <typename TileDataDst, typename TileDataSrc, bool inplace>
-    __aicore__ PTO_INLINE void TFILLPAD_IMPL(TileDataDst &dst, TileDataSrc &src) {
+    PTO_INTERNAL void TFILLPAD_IMPL(TileDataDst &dst, TileDataSrc &src) {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc::DType);
         constexpr unsigned srcStride = TileDataSrc::RowStride;
         constexpr unsigned dstStride = TileDataDst::RowStride;
@@ -71,7 +71,7 @@ namespace pto{
     }
 
     template <typename TileDataDst, typename TileDataSrc>
-    __aicore__ PTO_INLINE void TFILLPAD(TileDataDst &dst, TileDataSrc &src) {
+    PTO_INTERNAL void TFILLPAD(TileDataDst &dst, TileDataSrc &src) {
         static_assert(TileDataDst::Cols == TileDataSrc::Cols && TileDataDst::Rows == TileDataSrc::Rows, 
         "TFillPad: dst and src should have the same rows/cols!");
 
@@ -79,7 +79,7 @@ namespace pto{
     }
 
     template <typename TileDataDst, typename TileDataSrc>
-    __aicore__ PTO_INLINE void TFILLPAD_INPLACE(TileDataDst &dst, TileDataSrc &src) {
+    PTO_INTERNAL void TFILLPAD_INPLACE(TileDataDst &dst, TileDataSrc &src) {
         static_assert(TileDataDst::Cols == TileDataSrc::Cols && TileDataDst::Rows == TileDataSrc::Rows, 
         "TFillPad: dst and src should have the same rows/cols!");
 
@@ -87,7 +87,7 @@ namespace pto{
     }
 
     template <typename TileDataDst, typename TileDataSrc>
-    __aicore__ PTO_INLINE void TFILLPAD_EXPAND(TileDataDst &dst, TileDataSrc &src) {
+    PTO_INTERNAL void TFILLPAD_EXPAND(TileDataDst &dst, TileDataSrc &src) {
         static_assert(TileDataDst::Cols >= TileDataSrc::Cols && TileDataDst::Rows >= TileDataSrc::Rows, 
         "TFillPad: dst and src should have the same rows/cols!");
 

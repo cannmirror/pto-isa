@@ -15,16 +15,16 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, uint64_t dstS1, uint64_t dstS0, uint64_t offsetS1, uint64_t offsetS0, uint64_t srcS1, uint64_t srcS0>
-__global__ __aicore__ void runTGATHERB(__gm__ T __out__ *out, __gm__ T __in__ *src, __gm__ uint32_t __in__ *offset) {
+__global__ AICORE void runTGATHERB(__gm__ T __out__ *out, __gm__ T __in__ *src, __gm__ uint32_t __in__ *offset) {
     using GlobalDataDst = GlobalTensor<T, pto::Shape<1, 1, 1, dstS1, dstS0>, pto::Stride<1, 1, 1, dstS0, 1>>;
 
     constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
     using GlobalDataOffset = GlobalTensor<uint32_t, pto::Shape<1, 1, 1, offsetS1, offsetS0>, pto::Stride<1, 1, 1, offsetS0, 1>>;
     using GlobalDataSrc = GlobalTensor<T, pto::Shape<1, 1, 1, srcS1, srcS0>, pto::Stride<1, 1, 1, srcS0, 1>>;
 
-    using TileDataDst = Tile<Location::Vec, T, dstS1, dstS0, BLayout::RowMajor, dstS1, dstS0>;
-    using TileDataOffset = Tile<Location::Vec, uint32_t, offsetS1, offsetS0, BLayout::RowMajor, offsetS1, offsetS0>;
-    using TileDataSrc = Tile<Location::Vec, T, srcS1, srcS0, BLayout::RowMajor, srcS1, srcS0>;
+    using TileDataDst = Tile<TileType::Vec, T, dstS1, dstS0, BLayout::RowMajor, dstS1, dstS0>;
+    using TileDataOffset = Tile<TileType::Vec, uint32_t, offsetS1, offsetS0, BLayout::RowMajor, offsetS1, offsetS0>;
+    using TileDataSrc = Tile<TileType::Vec, T, srcS1, srcS0, BLayout::RowMajor, srcS1, srcS0>;
 
     TileDataSrc srcTile;
     TileDataOffset offsetTile;

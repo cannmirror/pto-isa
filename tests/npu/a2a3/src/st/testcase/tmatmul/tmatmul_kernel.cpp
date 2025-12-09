@@ -1,12 +1,12 @@
 #include <pto/common/constants.hpp>
 #include <pto/common/pto_tile.hpp>
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
 
 template <typename T, typename U, typename S, typename B, int M, int K, int N, int validM, int validK, int validN,
     bool isBias>
-__aicore__ inline void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2) {
+AICORE inline void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2) {
     // static shape
     using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
@@ -22,14 +22,14 @@ __aicore__ inline void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1,
         GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>, pto::Stride<validN, validN, validN, validN, 1>>;
     GlobalDataSrc2 src2Global(src2);
 
-    using TileMatAData = Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<Location::Mat, B, 1, N, BLayout::RowMajor, 1, N>;
+    using TileMatAData = Tile<TileType::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
+    using TileBiasData = Tile<TileType::Mat, B, 1, N, BLayout::RowMajor, 1, N>;
 
     using LeftTile = TileLeft<U, M, K, validM, validK>;
     using RightTile = TileRight<S, K, N, validK, validN>;
     using AccTile = TileAcc<T, M, N, validM, validN>;
-    using BiasTile = Tile<Location::Bias, B, 1, N, BLayout::RowMajor, 1, N>;
+    using BiasTile = Tile<TileType::Bias, B, 1, N, BLayout::RowMajor, 1, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -83,7 +83,7 @@ __aicore__ inline void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1,
 
 template <typename T, typename U, typename S, typename B, int M, int K, int N, int validM, int validK, int validN,
     bool isBias>
-__aicore__ inline void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2) {
+AICORE inline void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2) {
     constexpr int BASEK = 32;
     // static shape
     using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, BASEK>,
@@ -98,14 +98,14 @@ __aicore__ inline void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S 
     using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, N>, pto::Stride<N, N, N, N, 1>>;
     GlobalDataSrc2 src2Global(src2);
 
-    using TileMatAData = Tile<Location::Mat, U, M, BASEK, BLayout::ColMajor, M, BASEK, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, S, BASEK, N, BLayout::ColMajor, BASEK, N, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<Location::Mat, B, 1, N, BLayout::RowMajor, 1, N>;
+    using TileMatAData = Tile<TileType::Mat, U, M, BASEK, BLayout::ColMajor, M, BASEK, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, S, BASEK, N, BLayout::ColMajor, BASEK, N, SLayout::RowMajor, 512>;
+    using TileBiasData = Tile<TileType::Mat, B, 1, N, BLayout::RowMajor, 1, N>;
 
     using LeftTile = TileLeft<U, M, BASEK, validM, BASEK>;
     using RightTile = TileRight<S, BASEK, N, BASEK, validN>;
     using AccTile = TileAcc<T, M, N, validM, validN>;
-    using BiasTile = Tile<Location::Bias, B, 1, N, BLayout::RowMajor, 1, validN>;
+    using BiasTile = Tile<TileType::Bias, B, 1, N, BLayout::RowMajor, 1, validN>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -172,7 +172,7 @@ __aicore__ inline void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S 
     out = dstGlobal.data();
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMUL_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
+extern "C" __global__ AICORE void LaunchTMATMUL_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -181,7 +181,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMUL_1(__gm__ uint8_t *out, __gm_
         reinterpret_cast<__gm__ half *>(src0), reinterpret_cast<__gm__ half *>(src1), nullptr);
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMUL_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
+extern "C" __global__ AICORE void LaunchTMATMUL_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -190,7 +190,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMUL_2(__gm__ uint8_t *out, __gm_
         reinterpret_cast<__gm__ int8_t *>(src0), reinterpret_cast<__gm__ int8_t *>(src1), nullptr);
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMUL_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
+extern "C" __global__ AICORE void LaunchTMATMUL_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -203,7 +203,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMUL_3(__gm__ uint8_t *out, __gm_
         reinterpret_cast<__gm__ half *>(src1), nullptr);
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_1(
+extern "C" __global__ AICORE void LaunchTMATMULBIAS_1(
     __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -214,7 +214,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_1(
         reinterpret_cast<__gm__ float *>(src2));
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_2(
+extern "C" __global__ AICORE void LaunchTMATMULBIAS_2(
     __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -226,7 +226,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_2(
         reinterpret_cast<__gm__ float *>(src2));
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_3(
+extern "C" __global__ AICORE void LaunchTMATMULBIAS_3(
     __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
     constexpr uint32_t M = 16;
     constexpr uint32_t N = 16;
@@ -239,7 +239,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_3(
         reinterpret_cast<__gm__ float *>(src2));
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_4(
+extern "C" __global__ AICORE void LaunchTMATMULBIAS_4(
     __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -253,7 +253,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_4(
         reinterpret_cast<__gm__ int8_t *>(src1), reinterpret_cast<__gm__ int32_t *>(src2));
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_5(
+extern "C" __global__ AICORE void LaunchTMATMULBIAS_5(
     __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -264,7 +264,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_5(
         reinterpret_cast<__gm__ float *>(src2));
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_6(
+extern "C" __global__ AICORE void LaunchTMATMULBIAS_6(
     __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -275,7 +275,7 @@ extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_6(
         reinterpret_cast<__gm__ int32_t *>(src2));
 }
 
-extern "C" __global__ __aicore__ void LaunchTMATMULBIAS_7(
+extern "C" __global__ AICORE void LaunchTMATMULBIAS_7(
     __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;

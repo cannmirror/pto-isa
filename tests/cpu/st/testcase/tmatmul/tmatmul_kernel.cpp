@@ -9,13 +9,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 */
 
 #include <pto/pto-inst.hpp>
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/common/constants.hpp>
 
 using namespace pto;
 
 template <typename T, typename U, typename S, int M, int K, int N>
-__aicore__ inline void runTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
+AICORE inline void runTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
     using GlobalDataSrc0 = GlobalTensor<U, Shape<1, 1, 1, M, K>, Stride<1 * M * K, 1 * M * K, M * K, K, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, Shape<1, 1, 1, K, N>, Stride<1 * K * N, 1 * K * N, K * N, N, 1>>;
@@ -27,8 +26,8 @@ __aicore__ inline void runTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData =
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>; // L1上都是大n小z
-    using TileMatBData = Tile<Location::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
+        Tile<TileType::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>; // L1上都是大n小z
+    using TileMatBData = Tile<TileType::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
 
     using LeftTile = TileLeft<U, M, K, M, K>;
     using RightTile = TileRight<S, K, N, K, N>;
@@ -71,7 +70,7 @@ __aicore__ inline void runTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 }   
 
 template <typename T, typename U, typename S, int M, int K, int N>
-__aicore__ inline void runTMATMUL_SPLIT_K(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, uint32_t numRepeats)
+AICORE inline void runTMATMUL_SPLIT_K(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, uint32_t numRepeats)
 {
     using GlobalDataSrc0 = GlobalTensor<U, Shape<1, 1, 1, M, K>, Stride<1 * M * K, 1 * M * K, M * K, K, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, Shape<1, 1, 1, K, N>, Stride<1 * K * N, 1 * K * N, K * N, N, 1>>;
@@ -80,8 +79,8 @@ __aicore__ inline void runTMATMUL_SPLIT_K(__gm__ T *out, __gm__ U *src0, __gm__ 
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData =
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>; // L1上都是大n小z
-    using TileMatBData = Tile<Location::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
+        Tile<TileType::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>; // L1上都是大n小z
+    using TileMatBData = Tile<TileType::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
 
     using LeftTile = TileLeft<U, M, K, M, K>;
     using RightTile = TileRight<S, K, N, K, N>;
@@ -123,7 +122,7 @@ __aicore__ inline void runTMATMUL_SPLIT_K(__gm__ T *out, __gm__ U *src0, __gm__ 
     out = dstGlobal.data();
 }
 
-extern "C" __global__ __aicore__ void launchTMATMUL_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMATMUL_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -134,7 +133,7 @@ extern "C" __global__ __aicore__ void launchTMATMUL_2(__gm__ uint8_t *out, __gm_
         reinterpret_cast<__gm__ int8_t *>(src1));
 }
 
-extern "C" __global__ __aicore__ void launchTMATMUL_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMATMUL_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -145,7 +144,7 @@ extern "C" __global__ __aicore__ void launchTMATMUL_1(__gm__ uint8_t *out, __gm_
         reinterpret_cast<__gm__ half *>(src1));
 }
 
-extern "C" __global__ __aicore__ void launchTMATMUL_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMATMUL_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
@@ -157,7 +156,7 @@ extern "C" __global__ __aicore__ void launchTMATMUL_3(__gm__ uint8_t *out, __gm_
         reinterpret_cast<__gm__ half *>(src1),
         repeats);
 }
-extern "C" __global__ __aicore__ void launchTMATMUL_4(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMATMUL_4(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 32;
     constexpr uint32_t K = 16;    

@@ -1,5 +1,4 @@
 #include <pto/pto-inst.hpp>
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/common/constants.hpp>
 #include <limits>
 
@@ -114,13 +113,13 @@ void runTFILLPAD( T *out,  T *src, int gShape0, int gShape1, int gShape2, int gR
 
     volatile uint64_t t0, t1, t2;
 
-    using TileDataP = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, kTCols_, SLayout::NoneBox, 512, FillPadVal_>;
+    using TileDataP = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, kTCols_, SLayout::NoneBox, 512, FillPadVal_>;
     TileDataP vecTileP(kTRows_);
     TASSIGN(vecTileP, (uint64_t)ubaddr1);
 
     if constexpr (expand)
     {
-        using TileData = Tile<Location::Vec, T, kTRows_, shape4_aligned, BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, LoadPadVal_>;
+        using TileData = Tile<TileType::Vec, T, kTRows_, shape4_aligned, BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, LoadPadVal_>;
 
         TileData vecTile(shape3, shape4);
         TASSIGN(vecTile, (uint64_t)ubaddr0);
@@ -130,7 +129,7 @@ void runTFILLPAD( T *out,  T *src, int gShape0, int gShape1, int gShape2, int gR
     }
     else
     {
-        using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, LoadPadVal_>;
+        using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, LoadPadVal_>;
         
         TileData vecTile(shape3, shape4);
         TASSIGN(vecTile, (uint64_t)ubaddr0);

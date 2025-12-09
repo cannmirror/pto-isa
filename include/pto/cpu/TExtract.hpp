@@ -6,7 +6,7 @@
 namespace pto
 {
     template <typename DstTileData, typename SrcTileData>
-    __aicore__ void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t idxRow = 0, uint32_t idxCol = 0) {
+    AICORE void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t idxRow = 0, uint32_t idxCol = 0) {
         assert(src.GetValidRow() - idxRow == dst.GetValidRow() && src.GetValidCol() - idxCol == dst.GetValidCol());
         for(size_t c = idxCol; c < src.GetValidCol(); c++) {
             const size_t subTileSrcC = c / SrcTileData::InnerCols;

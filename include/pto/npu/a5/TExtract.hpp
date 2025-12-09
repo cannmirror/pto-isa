@@ -17,7 +17,7 @@ constexpr const int LOG2_BLOCK_LEN = 4; // 2^4 = 16
 constexpr const int LOG2_BLOCK_BYTE_SIZE = 5; // 2^5 = 32
 
 template <typename DstTileData, typename SrcTileData, bool Transpose>
-__tf__ __aicore__ void TExtractToA(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+__tf__ AICORE void TExtractToA(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
     uint16_t indexRow, uint16_t indexCol) 
 {
     constexpr int32_t srcRow = SrcTileData::Rows;
@@ -62,7 +62,7 @@ __tf__ __aicore__ void TExtractToA(typename DstTileData::TileDType __out__ dst, 
 }
 
 template <typename DstTileData, typename SrcTileData, bool Transpose>
-__tf__ __aicore__ void TExtractToB(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+__tf__ AICORE void TExtractToB(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
     uint16_t indexRow, uint16_t indexCol) 
 {
     using DataType = typename SrcTileData::DType;
@@ -118,7 +118,7 @@ constexpr bool is_textract_supported_type = std::disjunction_v<
 >;
 
 template <typename DstTileData, typename SrcTileData>
-__aicore__ void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol) 
+AICORE void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol)
 {
     static_assert(is_textract_supported_type<typename DstTileData::DType>,
         "Unsupported data type! Supported types: int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
@@ -131,7 +131,7 @@ __aicore__ void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t index
                     (SrcTileData::SFractal == SLayout::RowMajor && !SrcTileData::isRowMajor), 
                     "TExtract: SrcTile Invalid Fractal");
 
-    if constexpr (DstTileData::Loc == Location::Left) {
+    if constexpr (DstTileData::Loc == TileType::Left) {
         static_assert(DstTileData::SFractal == SLayout::RowMajor && !DstTileData::isRowMajor,
             "TExtract: DstTile Invalid Fractal");
         if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
@@ -139,7 +139,7 @@ __aicore__ void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t index
         } else {
             TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
         }
-    } else if constexpr (DstTileData::Loc == Location::Right){
+    } else if constexpr (DstTileData::Loc == TileType::Right){
         static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
             "TExtract: DstTile Invalid Fractal");
         if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {

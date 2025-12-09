@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto{
     template <typename TileDataD, typename TileDataS>
-    __aicore__ void GenCastCall(__ubuf__ typename TileDataD::DType *dst, __ubuf__ typename TileDataS::DType *src,
+    AICORE void GenCastCall(__ubuf__ typename TileDataD::DType *dst, __ubuf__ typename TileDataS::DType *src,
         uint8_t repeatNum, RoundMode mode, uint16_t dstBlockStride, uint16_t srcBlockStride, uint16_t dstRepeatStride,
         uint16_t srcRepeatStride)
     {
@@ -409,7 +409,7 @@ namespace pto{
     }
 
     template <typename TileDataD, typename TileDataS, unsigned SS, unsigned DS>
-    __tf__ __aicore__ void TCvt(typename TileDataD::TileDType __out__ dst, typename TileDataS::TileDType __in__ src,
+    __tf__ AICORE void TCvt(typename TileDataD::TileDType __out__ dst, typename TileDataS::TileDType __in__ src,
         RoundMode mode, unsigned numRepeatPerLine, unsigned numRemainPerLine, unsigned validRow, unsigned elementsPerRepeat,
         unsigned dstRepeatStride, unsigned srcRepeatStride)
     {
@@ -482,7 +482,7 @@ namespace pto{
     }
 
     template <typename TileDataD, typename TileDataS>
-    __aicore__ void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
+    AICORE void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
     {
         uint64_t repeatWidth = 
             static_cast<uint64_t>(max(sizeof(typename TileDataD::DType), sizeof(typename TileDataS::DType)));

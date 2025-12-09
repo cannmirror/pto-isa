@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
     template <typename GlobalData, typename TileData>
-    __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+    __tf__ AICORE void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
         int gStride3, int gStride4, int validRow, int validCol)
     {
@@ -94,7 +94,7 @@ namespace pto {
     }
 
     template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
-    __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src)
+    AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
     {
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
                       "Source dtype must be same with dst dtype!");

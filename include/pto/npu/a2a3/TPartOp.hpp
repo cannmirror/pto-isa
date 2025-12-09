@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename T, int dstCols, int srcCols, unsigned dstStride, unsigned srcStride>
-__PTO_INSTR__
+PTO_INTERNAL
 void TPartCopyInstr(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, uint64_t validRow, uint64_t validCol, uint64_t startRow)
 {
     validRow -= startRow;
@@ -41,7 +41,7 @@ void TPartCopyInstr(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, uint64_t validRow, u
 }
 
 template <typename Op, typename T, unsigned dstStride, unsigned src0Stride, unsigned src1Stride>
-__PTO_INSTR__
+PTO_INTERNAL
 void PartCountMode(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol)
 {
     set_mask_count();
@@ -55,7 +55,7 @@ void PartCountMode(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
 
 template <typename Op, typename T, int dstRow, unsigned elementsPerRepeat, unsigned blockSizeElem,
     unsigned dstStride, unsigned src0Stride, unsigned src1Stride>
-__PTO_INSTR__
+PTO_INTERNAL
 void PartNormModeTail(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol)
 {
     unsigned numRepeatPerCol = validRow / REPEAT_MAX;
@@ -87,7 +87,7 @@ void PartNormModeTail(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1P
 
 template <typename Op, typename T, int dstRow, int dstCol, unsigned elementsPerRepeat, unsigned blockSizeElem,
     unsigned dstStride, unsigned src0Stride, unsigned src1Stride>
-__PTO_INSTR__
+PTO_INTERNAL
 void PartNormMode(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol)
 {
     unsigned numRepeatPerLine = validCol / elementsPerRepeat;
@@ -130,7 +130,7 @@ void PartNormMode(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, 
 
 template <typename Op, typename T, int dstRow, int dstCol, unsigned elementsPerRepeat, unsigned blockSizeElem,
     unsigned dstStride, unsigned src0Stride, unsigned src1Stride>
-__PTO_INSTR__
+PTO_INTERNAL
 void TPartOps(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
     bool constexpr strideOverFlag = ((src0Stride / blockSizeElem > REPEAT_STRIDE_MAX) ||
                                      (src1Stride / blockSizeElem > REPEAT_STRIDE_MAX) ||
@@ -149,7 +149,7 @@ void TPartOps(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsi
 
 template <typename Op, typename T, int dstCol, int src0Col, int dstRow, unsigned elementsPerRepeat,
           unsigned blockSizeElem, unsigned dstRowStride, unsigned src0RowStride, unsigned src1RowStride>
-__PTO_INSTR__
+PTO_INTERNAL
 void TPartInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned src0ValidRow,
     unsigned src0ValidCol, unsigned src1ValidRow, unsigned src1ValidCol, unsigned dstValidRow, unsigned dstValidCol)
 {

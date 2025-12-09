@@ -19,7 +19,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
 template <typename TileDataOut, typename TileDataIn>
-__tf__ __aicore__ PTO_INLINE void TRowExpand(typename TileDataOut::TileDType __out__ dst, 
+__tf__ PTO_INTERNAL void TRowExpand(typename TileDataOut::TileDType __out__ dst,
                                   typename TileDataIn::TileDType __in__ src,
                                   unsigned kValidRows,
                                   unsigned kValidCols,
@@ -53,11 +53,11 @@ __tf__ __aicore__ PTO_INLINE void TRowExpand(typename TileDataOut::TileDType __o
 }
 
 template <typename TileDataOut, typename TileDataIn>
-__aicore__ PTO_INLINE void TROWEXPAND_IMPL(TileDataOut &dst, TileDataIn &src)
+PTO_INTERNAL void TROWEXPAND_IMPL(TileDataOut &dst, TileDataIn &src)
 {   
     static_assert((sizeof(typename TileDataIn::DType) == 1) || (sizeof(typename TileDataIn::DType) == 2) ||
                     (sizeof(typename TileDataIn::DType) == 4), "Data type must be b8/b16/b32");
-    static_assert(TileDataIn::Loc == pto::Location::Vec, "Src location must be Vec!");
+    static_assert(TileDataIn::Loc == pto::TileType::Vec, "Src TileType must be Vec!");
     static_assert(((TileDataOut::isRowMajor && (TileDataOut::SFractal == SLayout::NoneBox)) &&
                     (TileDataIn::isRowMajor && (TileDataIn::SFractal == SLayout::NoneBox))),
                     "Src and dst layout must be ND!");

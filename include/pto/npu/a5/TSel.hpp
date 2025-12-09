@@ -18,7 +18,7 @@ namespace pto
         __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);   \
 
     template <typename TileData, typename MaskTile, unsigned elementsPerRepeat>
-    __tf__ __aicore__ PTO_INLINE void TSel_b32(
+    __tf__ PTO_INTERNAL void TSel_b32(
         typename TileData::TileDType __out__ dst,
         typename MaskTile::TileDType __in__ selmask,
         typename TileData::TileDType __in__ src0,
@@ -68,7 +68,7 @@ namespace pto
     }
 
     template <typename TileData, typename MaskTile, unsigned elementsPerRepeat>
-    __tf__ __aicore__ PTO_INLINE void TSel_b16_8(
+    __tf__ PTO_INTERNAL void TSel_b16_8(
         typename TileData::TileDType __out__ dst,
         typename MaskTile::TileDType __in__ selmask,
         typename TileData::TileDType __in__ src0,
@@ -105,7 +105,7 @@ namespace pto
     }
 
     template <typename TileData, typename MaskTile>
-    __aicore__ PTO_INLINE void TSEL_IMPL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1)
+    PTO_INTERNAL void TSEL_IMPL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1)
     {
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
         unsigned validRow = dst.GetValidRow();

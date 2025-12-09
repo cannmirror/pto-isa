@@ -16,12 +16,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-__global__ __aicore__ void runTMOV(__gm__ T __out__ *out, __gm__ T __in__ *src) {
+__global__ AICORE void runTMOV(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using SrcTileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
-    using DstTileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using SrcTileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
     
     SrcTileData srcTile(kTRows_, kTCols_);
     DstTileData dstTile(kTRows_, kTCols_);

@@ -16,8 +16,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
   template <typename TileDataOut, typename TileDataIn>
-  __PTO_INSTR__ void TColReduceCheck(int srcValidRow, int srcValidCol, int dstValidRow) {
-    static_assert(TileDataOut::Loc == pto::Location::Vec && TileDataIn::Loc == pto::Location::Vec,
+  PTO_INTERNAL void TColReduceCheck(int srcValidRow, int srcValidCol, int dstValidRow) {
+    static_assert(TileDataOut::Loc == pto::TileType::Vec && TileDataIn::Loc == pto::TileType::Vec,
       "This instruction only support Vec Tile");
     static_assert(TileDataIn::isRowMajor && TileDataIn::SFractal == SLayout::NoneBox,
       "This instruction only support Nd fractal Tile");
@@ -37,7 +37,7 @@ namespace pto {
   }
 
   template <typename InstrOp, typename T, unsigned SrcStride>
-  __PTO_INSTR__ void TColReduceInstr_PostUpdate(__ubuf__ T *dst, __ubuf__ T *src, uint16_t validRow, int validCol) {
+  PTO_INTERNAL void TColReduceInstr_PostUpdate(__ubuf__ T *dst, __ubuf__ T *src, uint16_t validRow, int validCol) {
     constexpr unsigned elmPerRpt = CCE_VL / sizeof(T);  // 每次repeat涉及多少个元素
     constexpr auto distValue = std::integral_constant<::DistVST,
       static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
@@ -85,7 +85,7 @@ namespace pto {
   }
 
   template <typename InstrOp, typename T, unsigned SrcStride>
-  __PTO_INSTR__ void TColReduceInstr_NoPostUpdate(__ubuf__ T *dst, __ubuf__ T *src, uint16_t validRow, int validCol) {
+  PTO_INTERNAL void TColReduceInstr_NoPostUpdate(__ubuf__ T *dst, __ubuf__ T *src, uint16_t validRow, int validCol) {
     constexpr unsigned elmPerRpt = CCE_VL / sizeof(T);  // 每次repeat涉及多少个元素
     constexpr auto distValue = std::integral_constant<::DistVST,
       static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
@@ -120,7 +120,7 @@ namespace pto {
   }
 
   template <typename InstrOp, typename T, typename TileDataIn>
-  __PTO_INSTR__ void TColReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, int validRow, int validCol, unsigned version) {
+  PTO_INTERNAL void TColReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, int validRow, int validCol, unsigned version) {
     switch(version) {
       case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
       case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:

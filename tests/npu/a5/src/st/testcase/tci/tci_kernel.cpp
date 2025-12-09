@@ -14,12 +14,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int reverse>
-__global__ __aicore__ void runTci( __gm__ T __out__ *out, T S) {
+__global__ AICORE void runTci( __gm__ T __out__ *out, T S) {
     // 1. 定义两个类型
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
 
     // 2. 声明device侧的相关变量
     TileData dstTile(kTRows_, kTCols_);

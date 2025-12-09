@@ -12,14 +12,10 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define LAYOUT_HPP
 
 #include <stdint.h>
-
-#include <iostream>
 #include <type_traits>
 
-#include "pto/common/math_utils.hpp"
-
 namespace pto {
-enum class Location {
+enum class TileType {
   Vec,
   Mat,
   Left,
@@ -40,11 +36,11 @@ enum class SLayout {
   ColMajor = 2,
 };
 
-// returns the memory qualifier for a given location and data type.
-// compilation errors occur if the location does not have a specialized version.
-template <Location L, typename DType> struct MemoryQualifier;
+// returns the memory qualifier for a given TileType and data type.
+// compilation errors occur if the TileType does not have a specialized version.
+template <TileType L, typename DType> struct MemoryQualifier {};
 
-template <typename DType> struct MemoryQualifier<Location::Vec, DType> {
+template <typename DType> struct MemoryQualifier<TileType::Vec, DType> {
 #ifdef __PTO_AUTO__
   using type = __ubuf__ DType;
 #else
@@ -52,7 +48,7 @@ template <typename DType> struct MemoryQualifier<Location::Vec, DType> {
 #endif
 };
 
-template <typename DType> struct MemoryQualifier<Location::Mat, DType> {
+template <typename DType> struct MemoryQualifier<TileType::Mat, DType> {
 #ifdef __PTO_AUTO__
   using type = __cbuf__ DType;
 #else
@@ -60,7 +56,7 @@ template <typename DType> struct MemoryQualifier<Location::Mat, DType> {
 #endif
 };
 
-template <typename DType> struct MemoryQualifier<Location::Left, DType> {
+template <typename DType> struct MemoryQualifier<TileType::Left, DType> {
 #ifdef __PTO_AUTO__
   using type = __ca__ DType;
 #else
@@ -68,7 +64,7 @@ template <typename DType> struct MemoryQualifier<Location::Left, DType> {
 #endif
 };
 
-template <typename DType> struct MemoryQualifier<Location::Right, DType> {
+template <typename DType> struct MemoryQualifier<TileType::Right, DType> {
 #ifdef __PTO_AUTO__
   using type = __cb__ DType;
 #else
@@ -76,7 +72,7 @@ template <typename DType> struct MemoryQualifier<Location::Right, DType> {
 #endif
 };
 
-template <typename DType> struct MemoryQualifier<Location::Acc, DType> {
+template <typename DType> struct MemoryQualifier<TileType::Acc, DType> {
 #ifdef __PTO_AUTO__
   using type = __cc__ DType;
 #else
@@ -84,11 +80,11 @@ template <typename DType> struct MemoryQualifier<Location::Acc, DType> {
 #endif
 };
 
-template <typename DType> struct MemoryQualifier<Location::Bias, DType> {
+template <typename DType> struct MemoryQualifier<TileType::Bias, DType> {
   using type = uint64_t;
 };
 
-template <typename DType> struct MemoryQualifier<Location::Scaling, DType> {
+template <typename DType> struct MemoryQualifier<TileType::Scaling, DType> {
 #ifdef __PTO_AUTO__
   using type = __fbuf__ DType;
 #else

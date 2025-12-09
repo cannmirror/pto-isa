@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename DstTileData, typename SrcTileData>
-__tf__ __aicore__ void TMovToBt(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src)
+__tf__ AICORE void TMovToBt(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src)
 {
     using SrcType = typename SrcTileData::DType;
     using DstType = typename DstTileData::DType;
@@ -30,9 +30,9 @@ __tf__ __aicore__ void TMovToBt(typename DstTileData::TileDType __out__ dst, typ
         static_assert(std::is_same<DstType, float>::value,
             "TMov: When Source tile data types is half, dst tile data types must be float");
     }
-    static_assert(SrcTileData::Rows == 1, "TMov: When Location is Bias, row must be 1");
+    static_assert(SrcTileData::Rows == 1, "TMov: When TileType is Bias, row must be 1");
     static_assert(SrcTileData::Cols * sizeof(SrcType) % BURST_LEN_UNIT == 0,
-        "TMov: When Location is Bias, col * sizeof(srcDType) must be aligned to 64");
+        "TMov: When TileType is Bias, col * sizeof(srcDType) must be aligned to 64");
 
     __cbuf__ SrcType *srcAddrP = (__cbuf__ SrcType *)(src);
     uint64_t dstAddrP = (uint64_t)dst;
@@ -47,7 +47,7 @@ __tf__ __aicore__ void TMovToBt(typename DstTileData::TileDType __out__ dst, typ
 }
 
 template <typename DstTileData, typename SrcTileData>
-__tf__ __aicore__ void TMovToFb(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src)
+__tf__ AICORE void TMovToFb(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src)
 {
     using SrcType = typename SrcTileData::DType;
     using DstType = typename DstTileData::DType;
@@ -59,9 +59,9 @@ __tf__ __aicore__ void TMovToFb(typename DstTileData::TileDType __out__ dst, typ
     static_assert(
         std::is_same<DstType, SrcType>::value, "TMov: Destination and Source tile data types must be the same.");
     static_assert(std::is_same<DstType, uint64_t>::value, "TMov: Invalid data type.");
-    static_assert(SrcTileData::Rows == 1, "TMov: When Location is Scaling, row must be 1");
+    static_assert(SrcTileData::Rows == 1, "TMov: When TileType is Scaling, row must be 1");
     static_assert(SrcTileData::Cols * sizeof(SrcType) % BURST_LEN_UNIT == 0,
-        "TMov: When Location is Scaling, col * sizeof(srcType) must be aligned to 128");
+        "TMov: When TileType is Scaling, col * sizeof(srcType) must be aligned to 128");
 
     __cbuf__ SrcType *srcAddrP = (__cbuf__ SrcType *)(src);
     __fbuf__ DstType *dstAddr = (__fbuf__ DstType *)(dst);
@@ -73,7 +73,7 @@ __tf__ __aicore__ void TMovToFb(typename DstTileData::TileDType __out__ dst, typ
 }
 
 template <typename DstTileData, typename SrcTileData>
-__aicore__ void TMovToVec(DstTileData &dst, SrcTileData &src)
+AICORE void TMovToVec(DstTileData &dst, SrcTileData &src)
 {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename SrcTileData::DType);
     constexpr unsigned srcStride = SrcTileData::RowStride;
@@ -88,32 +88,32 @@ __aicore__ void TMovToVec(DstTileData &dst, SrcTileData &src)
 }
 
 template <typename DstTileData, typename SrcTileData>
-__aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
+AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
         "TMov: The shape of src needs to be the same as that of dst.");
-    static_assert((SrcTileData::Loc == Location::Mat &&
-                      (DstTileData::Loc == Location::Left || DstTileData::Loc == Location::Right ||
-                          DstTileData::Loc == Location::Bias || DstTileData::Loc == Location::Scaling)) ||
-                      (DstTileData::Loc == Location::Vec && SrcTileData::Loc == Location::Vec),
-        "TMov: Invalid Location.");
-    if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Left) {
+    static_assert((SrcTileData::Loc == TileType::Mat &&
+                      (DstTileData::Loc == TileType::Left || DstTileData::Loc == TileType::Right ||
+                          DstTileData::Loc == TileType::Bias || DstTileData::Loc == TileType::Scaling)) ||
+                      (DstTileData::Loc == TileType::Vec && SrcTileData::Loc == TileType::Vec),
+        "TMov: Invalid TileType.");
+    if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Left) {
         if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
             TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
         } else {
             TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
         }
-    } else if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Right) {
+    } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Right) {
         if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
             TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
         } else {
             TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
         }
-    } else if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Bias) {
+    } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Bias) {
         TMovToBt<DstTileData, SrcTileData>(dst.data(), src.data());
-    } else if constexpr (SrcTileData::Loc == Location::Mat && DstTileData::Loc == Location::Scaling) {
+    } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Scaling) {
         TMovToFb<DstTileData, SrcTileData>(dst.data(), src.data());
-    } else if constexpr (SrcTileData::Loc == Location::Vec && DstTileData::Loc == Location::Vec) {
+    } else if constexpr (SrcTileData::Loc == TileType::Vec && DstTileData::Loc == TileType::Vec) {
         TMovToVec<DstTileData, SrcTileData>(dst, src);
     }
 }

@@ -107,7 +107,7 @@ struct Padding<uint8_t>{
 };
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned src0Stride, unsigned src1Stride, unsigned dstStride>
-__tf__ __aicore__ PTO_INLINE void TCopyPadOp(typename TileData::TileDType __out__ dst,
+__tf__ PTO_INTERNAL void TCopyPadOp(typename TileData::TileDType __out__ dst,
     typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1,
     uint64_t Src0validRow, uint64_t Src0validCol, uint64_t Src1validRow, uint64_t Src1validCol,
     uint64_t DstvalidRow, uint64_t DstvalidCol)
@@ -168,7 +168,7 @@ __tf__ __aicore__ PTO_INLINE void TCopyPadOp(typename TileData::TileDType __out_
 }
 
 template <typename Op, typename DstTileData, typename Src0TileData, typename Src1TileData> 
-__aicore__ PTO_INLINE void TPartMasterImpl(DstTileData &dst, Src0TileData& src0, Src1TileData& src1,
+PTO_INTERNAL void TPartMasterImpl(DstTileData &dst, Src0TileData& src0, Src1TileData& src1,
     BinOpsImpl version)
 {
     using T  = typename DstTileData::DType;

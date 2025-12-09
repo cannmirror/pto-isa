@@ -22,7 +22,7 @@ using namespace std;
 namespace pto {
 
     template <typename T> struct DivSOp {
-        __aicore__ PTO_INLINE static void BinSInstr(RegTensor<T> &vregdst, RegTensor<T> &vregsrc, T src1, MaskReg &preg)
+        PTO_INTERNAL static void BinSInstr(RegTensor<T> &vregdst, RegTensor<T> &vregsrc, T src1, MaskReg &preg)
         {
             float divider = static_cast<float>(src1);
             if (divider != 0.0f)
@@ -55,7 +55,7 @@ namespace pto {
     };
 
         template <typename T> struct DivSOpS {
-        __aicore__ PTO_INLINE static void BinSInstr(RegTensor<T> &vregdst, RegTensor<T> &vregsrc, T src0, MaskReg &preg)
+        PTO_INTERNAL static void BinSInstr(RegTensor<T> &vregdst, RegTensor<T> &vregsrc, T src0, MaskReg &preg)
         {
             if constexpr (std::is_same<T, float>::value || std::is_same<T, half>::value)
             {
@@ -86,7 +86,7 @@ namespace pto {
     };
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __tf__ __aicore__ PTO_INLINE 
+    __tf__ PTO_INTERNAL 
     void TDivS(typename TileData::TileDType __out__ dst,
                                 typename TileData::TileDType __in__ src0, 
                                 typename TileData::DType __in__ src1, 
@@ -101,7 +101,7 @@ namespace pto {
     }
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __tf__ __aicore__ PTO_INLINE 
+    __tf__ PTO_INTERNAL 
     void TDivS(typename TileData::TileDType __out__ dst,
                                 typename TileData::DType __in__ src1, 
                                 typename TileData::TileDType __in__ src0, 
@@ -116,7 +116,7 @@ namespace pto {
     }
 
     template <typename TileData>
-    __aicore__ void TDIVS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar)
+    AICORE void TDIVS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar)
     {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
@@ -127,7 +127,7 @@ namespace pto {
     }
 
     template <typename TileData>
-    __aicore__ void TDIVS_IMPL(TileData &dst, typename TileData::DType scalar, TileData &src0)
+    AICORE void TDIVS_IMPL(TileData &dst, typename TileData::DType scalar, TileData &src0)
     {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);

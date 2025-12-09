@@ -8,8 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
-#include <pto/common/pto_tile.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 #include <iostream>
 
@@ -17,7 +16,7 @@ using namespace std;
 using namespace pto;
 
 template <typename GlobalData, typename TileData>
-__aicore__ inline void TSTORE_MAT2GM(GlobalData &dst, TileData &src)
+AICORE inline void TSTORE_MAT2GM(GlobalData &dst, TileData &src)
 {
     __cbuf__ typename TileData::DType *srcAddr = (__cbuf__ typename TileData::DType *)src.data();
     typename GlobalData::DType *dstAddr = dst.data();
@@ -57,7 +56,7 @@ __aicore__ inline void TSTORE_MAT2GM(GlobalData &dst, TileData &src)
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__aicore__ inline void RunTLoadND2ND(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void RunTLoadND2ND(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4, 1};
@@ -70,7 +69,7 @@ __aicore__ inline void RunTLoadND2ND(__gm__ T __out__ *out, __gm__ T __in__ *src
     using DynShapeDim5 = Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Mat, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Mat, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
 
     TileData srcTile(validRow, validCol);
 
@@ -88,7 +87,7 @@ __aicore__ inline void RunTLoadND2ND(__gm__ T __out__ *out, __gm__ T __in__ *src
 }
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__aicore__ inline void RunTLoadDN2DN(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void RunTLoadDN2DN(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, 1, gWholeShape3};
@@ -102,7 +101,7 @@ __aicore__ inline void RunTLoadDN2DN(__gm__ T __out__ *out, __gm__ T __in__ *src
     using DynShapeDim5 = Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5, Layout::DN>;
-    using TileData = Tile<Location::Mat, T, Rows, Cols, BLayout::ColMajor, -1, -1>;
+    using TileData = Tile<TileType::Mat, T, Rows, Cols, BLayout::ColMajor, -1, -1>;
 
     TileData srcTile(validRow, validCol);
 
@@ -121,7 +120,7 @@ __aicore__ inline void RunTLoadDN2DN(__gm__ T __out__ *out, __gm__ T __in__ *src
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__aicore__ inline void RunTLoadNZ2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void RunTLoadNZ2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4, 1};
@@ -131,7 +130,7 @@ __aicore__ inline void RunTLoadNZ2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src
     using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5, Layout::NZ>;
-    using TileData = Tile<Location::Mat, T, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>;
+    using TileData = Tile<TileType::Mat, T, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>;
 
     int validRow = gShape2 * gShape3;
     int validCol = gShape0 * gShape1 * gShape4;
@@ -151,7 +150,7 @@ __aicore__ inline void RunTLoadNZ2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__aicore__ inline void RunTLoadND2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void RunTLoadND2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4, 1};
@@ -162,7 +161,7 @@ __aicore__ inline void RunTLoadND2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src
     using SrcDynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using SrcDynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
     using GlobalData = GlobalTensor<T, SrcDynShapeDim5, SrcDynStridDim5, Layout::ND>;
-    using TileData = Tile<Location::Mat, T, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>;
+    using TileData = Tile<TileType::Mat, T, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>;
 
     int validRow = gShape0 * gShape1 * gShape2 * gShape3;
     int validCol = gShape4;
@@ -182,7 +181,7 @@ __aicore__ inline void RunTLoadND2NZ(__gm__ T __out__ *out, __gm__ T __in__ *src
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__aicore__ inline void RunTLoadDN2ZN(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void RunTLoadDN2ZN(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, 1, gWholeShape3};
@@ -193,7 +192,7 @@ __aicore__ inline void RunTLoadDN2ZN(__gm__ T __out__ *out, __gm__ T __in__ *src
     using SrcDynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using SrcDynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
     using GlobalData = GlobalTensor<T, SrcDynShapeDim5, SrcDynStridDim5, Layout::DN>;
-    using TileData = Tile<Location::Mat, T, Rows, Cols, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
+    using TileData = Tile<TileType::Mat, T, Rows, Cols, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
 
     int validRow = gShape3;
     int validCol = gShape4;
@@ -213,7 +212,7 @@ __aicore__ inline void RunTLoadDN2ZN(__gm__ T __out__ *out, __gm__ T __in__ *src
 
 template <typename T, int format, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__global__ __aicore__ void TLoadKernel(__gm__ T *out, __gm__ T *src)
+__global__ AICORE void TLoadKernel(__gm__ T *out, __gm__ T *src)
 {
     if constexpr (format == 0) {
         RunTLoadND2ND<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,

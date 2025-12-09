@@ -1,16 +1,15 @@
 #include <pto/pto-inst.hpp>
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/common/constants.hpp>
 
 
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-__aicore__ void runTEXP( __gm__ T __out__ *out, __gm__ T __in__ *src) {
+AICORE void runTEXP( __gm__ T __out__ *out, __gm__ T __in__ *src) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
     TileData srcTile(kTRows_, kTCols_);
     TileData dstTile(kTRows_, kTCols_);
     TASSIGN(srcTile, 0x0);

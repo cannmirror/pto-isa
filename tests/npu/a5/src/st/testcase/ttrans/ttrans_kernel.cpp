@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 
@@ -16,7 +16,7 @@ using namespace std;
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-inline __aicore__ void runTTRANS( __gm__ T __out__ *out, __gm__ T __in__ *src) {
+inline AICORE void runTTRANS( __gm__ T __out__ *out, __gm__ T __in__ *src) {
 
     if (block_idx > 0) return;
 
@@ -29,8 +29,8 @@ inline __aicore__ void runTTRANS( __gm__ T __out__ *out, __gm__ T __in__ *src) {
     constexpr uint16_t aligned_Rows = ( (kTRows_ * sizeof(T) + 31) / 32 ) * (32 / sizeof(T));
     constexpr uint16_t aligned_Cols = ( (kTCols_ * sizeof(T) + 31) / 32 ) * (32 / sizeof(T));
 
-    using TileDataSrc = Tile<Location::Vec, T, kTRows_, aligned_Cols, BLayout::RowMajor>;
-    using TileDataDst = Tile<Location::Vec, T, kTCols_, aligned_Rows, BLayout::RowMajor>;
+    using TileDataSrc = Tile<TileType::Vec, T, kTRows_, aligned_Cols, BLayout::RowMajor>;
+    using TileDataDst = Tile<TileType::Vec, T, kTCols_, aligned_Rows, BLayout::RowMajor>;
 
     TileDataSrc srcTile;
     TileDataDst dstTile;
@@ -67,7 +67,7 @@ inline __aicore__ void runTTRANS( __gm__ T __out__ *out, __gm__ T __in__ *src) {
 }
 
 
-extern "C" __global__ __aicore__ void launchTTRANS_1(__gm__ uint8_t *out, __gm__ uint8_t *src) {
+extern "C" __global__ AICORE void launchTTRANS_1(__gm__ uint8_t *out, __gm__ uint8_t *src) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 128;
     constexpr uint32_t K = 128;

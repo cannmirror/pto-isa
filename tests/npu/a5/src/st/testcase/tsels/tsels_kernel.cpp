@@ -8,7 +8,6 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 #include "acl/acl.h"
@@ -26,7 +25,7 @@ struct GenericDataSelector<T, kGRows_, kGCols_, kTRows_, kTCols_, PAD_VALUE_NULL
     using DynShapeDim5 = Shape<1, 1, 1, kTRows_, kTCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kTCols_, 1>;
     using GlobalType = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileType = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, kTRows_, kTCols_, SLayout::NoneBox, 512, PadValue::Null>;
+    using TileType = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, kTRows_, kTCols_, SLayout::NoneBox, 512, PadValue::Null>;
 };
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
@@ -34,11 +33,11 @@ struct GenericDataSelector<T, kGRows_, kGCols_, kTRows_, kTCols_, PAD_VALUE_MAX>
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalType = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileType = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, kGRows_, kGCols_, SLayout::NoneBox, 512, PadValue::Max>;
+    using TileType = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, kGRows_, kGCols_, SLayout::NoneBox, 512, PadValue::Max>;
 };
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kPadValue_>
-__global__ __aicore__ void runTSELS(__gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1, uint8_t selectMode) {
+__global__ AICORE void runTSELS(__gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1, uint8_t selectMode) {
     using GDS = GenericDataSelector<T, kGRows_, kGCols_, kTRows_, kTCols_, kPadValue_>;
     using GlobalData = typename GDS::GlobalType;
     using TileData = typename GDS::TileType;

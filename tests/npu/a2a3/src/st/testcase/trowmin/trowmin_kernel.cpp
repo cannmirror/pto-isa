@@ -16,15 +16,15 @@ using namespace std;
 using namespace pto;
 
 template <typename T, int row, int vaildRow, int srcCol, int srcVaildCol, int dstCol>
-__aicore__ PTO_INLINE void runTRowMin(__gm__ T *out, __gm__ T *src) {
+PTO_INTERNAL void runTRowMin(__gm__ T *out, __gm__ T *src) {
   using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
   using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
   using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
   GlobalData srcGlobal(src, DynDim2Shape(vaildRow, srcVaildCol), DynDim2Stride(row, srcCol));
   GlobalData dstGlobal(out, DynDim2Shape(vaildRow, dstCol), DynDim2Stride(row, dstCol));
 
-  using srcTileData = Tile<Location::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
-  using dstTileData = Tile<Location::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
+  using srcTileData = Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
+  using dstTileData = Tile<TileType::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
   srcTileData srcTile(vaildRow, srcVaildCol);
   srcTileData tmpTile(vaildRow, srcVaildCol);
   dstTileData dstTile(vaildRow, dstCol);
@@ -42,46 +42,46 @@ __aicore__ PTO_INLINE void runTRowMin(__gm__ T *out, __gm__ T *src) {
   TSTORE(dstGlobal, dstTile);
 }
 
-extern "C" __global__ __aicore__ void launchTROWMINCase1(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase1(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 127, 127, 64, 63, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase2(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase2(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 63, 63, 64, 64, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase3(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase3(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 31, 31, 128, 127, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase4(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase4(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 15, 15, 192, 192, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase5(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase5(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 7, 7, 448, 447, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase6(__gm__ half *out, __gm__ half *src) {
+extern "C" __global__ AICORE void launchTROWMINCase6(__gm__ half *out, __gm__ half *src) {
   runTRowMin<half, 256, 256, 16, 15, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase7(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase7(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 30, 30, 216, 216, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase8(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase8(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 30, 30, 216, 24, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase9(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase9(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 30, 11, 216, 216, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase10(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase10(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 30, 11, 216, 24, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase11(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase11(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 238, 238, 40, 40, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase12(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase12(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 238, 238, 40, 16, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase13(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase13(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 238, 121, 40, 40, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMINCase14(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTROWMINCase14(__gm__ float *out, __gm__ float *src) {
   runTRowMin<float, 238, 121, 40, 16, 1>(out, src);
 }
 

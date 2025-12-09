@@ -18,8 +18,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename TileData, typename T>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void CheckValid() {
     static_assert((std::is_same<typename TileData::DType, T>::value),
     "expect src and dst same datatype");
@@ -31,7 +30,7 @@ void CheckValid() {
 
 template <typename TileData, typename T, int descending = 0>
 __tf__
-__aicore__
+AICORE
 void Tci(typename TileData::TileDType __out__ dst, T S, unsigned validCol)
 {
     // 1.获取dst中的信息;
@@ -53,7 +52,7 @@ void Tci(typename TileData::TileDType __out__ dst, T S, unsigned validCol)
 }
 
 template <typename TileData, typename T, int descending>
-__aicore__
+AICORE
 void TCI_IMPL (TileData &dst, T S)
 {
     CheckValid<TileData, T>();

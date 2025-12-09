@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 
@@ -18,7 +18,7 @@ constexpr uint16_t BLOCK_CUBE_M_N = 16;
 constexpr uint16_t BLOCK_ALIGN_BYTE = 32;
 
 template <typename T>
-__aicore__ constexpr inline T CeilDiv(T num_1, T num_2)
+AICORE constexpr inline T CeilDiv(T num_1, T num_2)
 {
     if (num_2 == 0) {
         return 0;
@@ -30,7 +30,7 @@ template <typename T>
 using CType = typename std::conditional<std::is_same<T, int8_t>::value, int32_t, float>::type;
 
 template <int subBlockId, int DualDstCtl>
-__aicore__ inline constexpr uint8_t getMode()
+AICORE inline constexpr uint8_t getMode()
 {
     if constexpr (DualDstCtl == 0) {
         return subBlockId;
@@ -39,7 +39,7 @@ __aicore__ inline constexpr uint8_t getMode()
 }
 
 template <typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN>
-__aicore__ inline void RunMATMUL(__gm__ aType *src0, __gm__ bType *src1)
+AICORE inline void RunMATMUL(__gm__ aType *src0, __gm__ bType *src1)
 {
     using GlobalDataSrc0 = GlobalTensor<aType, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
@@ -48,8 +48,8 @@ __aicore__ inline void RunMATMUL(__gm__ aType *src0, __gm__ bType *src1)
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
 
-    using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
+    using TileMatAData = Tile<TileType::Mat, aType, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
     TileMatAData aMatTile;
     TileMatBData bMatTile;
     TASSIGN(aMatTile, 0x0);
@@ -88,7 +88,7 @@ __aicore__ inline void RunMATMUL(__gm__ aType *src0, __gm__ bType *src1)
 }
 
 template <typename aType, typename bType, typename fbType, int M, int K, int N, int validM, int validK, int validN>
-__aicore__ inline void RunMATMULFB(__gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
+AICORE inline void RunMATMULFB(__gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
 {
     using GlobalDataSrc0 = GlobalTensor<aType, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
@@ -100,9 +100,9 @@ __aicore__ inline void RunMATMULFB(__gm__ aType *src0, __gm__ bType *src1, __gm_
     GlobalDataSrc1 src1Global(src1);
     GlobalDataSrc2 src2Global(src2);
 
-    using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
-    using TileMatFbData = Tile<Location::Mat, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
+    using TileMatAData = Tile<TileType::Mat, aType, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
+    using TileMatFbData = Tile<TileType::Mat, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
     TileMatAData aMatTile;
     TileMatBData bMatTile;
     TileMatFbData fbMatTile;
@@ -146,7 +146,7 @@ __aicore__ inline void RunMATMULFB(__gm__ aType *src0, __gm__ bType *src1, __gm_
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN,
     int row, int col, int subBlockId>
-__global__ __aicore__ void RunTMOV(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
+__global__ AICORE void RunTMOV(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
 {
     using GlobalDataOut = GlobalTensor<outType, pto::Shape<1, 1, 1, validM, validN>,
         pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
@@ -159,7 +159,7 @@ __global__ __aicore__ void RunTMOV(__gm__ outType *out, __gm__ aType *src0, __gm
     TASSIGN(cTile, 0x0);
 
     uint8_t syncId = 0;
-    using DstTileData = Tile<Location::Vec, outType, row, col, BLayout::RowMajor, validM, validN>;
+    using DstTileData = Tile<TileType::Vec, outType, row, col, BLayout::RowMajor, validM, validN>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -189,7 +189,7 @@ __global__ __aicore__ void RunTMOV(__gm__ outType *out, __gm__ aType *src0, __gm
 }
 
 template <Layout layoutType>
-__aicore__ inline constexpr BLayout GetTileBLayout()
+AICORE inline constexpr BLayout GetTileBLayout()
 {
     if constexpr (layoutType == Layout::NZ) {
         return BLayout::ColMajor;
@@ -199,7 +199,7 @@ __aicore__ inline constexpr BLayout GetTileBLayout()
 }
 
 template <Layout layoutType>
-__aicore__ inline constexpr SLayout GetTileSLayout()
+AICORE inline constexpr SLayout GetTileSLayout()
 {
     if constexpr (layoutType == Layout::NZ) {
         return SLayout::RowMajor;
@@ -209,7 +209,7 @@ __aicore__ inline constexpr SLayout GetTileSLayout()
 }
 
 template <typename T, typename GlobalData, typename TileData>
-__aicore__ inline void UBCopyOut(GlobalData &dst, TileData &src, int rows, int cols, int startDstAddr)
+AICORE inline void UBCopyOut(GlobalData &dst, TileData &src, int rows, int cols, int startDstAddr)
 {
     constexpr uint32_t c0Size = 64;
     int gShape0 = dst.GetShape(0);
@@ -236,7 +236,7 @@ __aicore__ inline void UBCopyOut(GlobalData &dst, TileData &src, int rows, int c
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN,
     Layout layoutType, int sfractalSize, int subBlockId>
-__global__ __aicore__ void RunTMOVNz2Nz(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
+__global__ AICORE void RunTMOVNz2Nz(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
 {
     constexpr uint16_t sGRows_ = 16;
     constexpr uint16_t sGCols_ = CeilDiv<uint16_t>(sfractalSize, sGRows_ * sizeof(outType));
@@ -257,7 +257,7 @@ __global__ __aicore__ void RunTMOVNz2Nz(__gm__ outType *out, __gm__ aType *src0,
     TASSIGN(cTile, 0x0);
     uint8_t syncId = 0;
 
-    using DstTileData = Tile<Location::Vec, outType, M, N, GetTileBLayout<layoutType>(), validM, validN,
+    using DstTileData = Tile<TileType::Vec, outType, M, N, GetTileBLayout<layoutType>(), validM, validN,
         GetTileSLayout<layoutType>(), sfractalSize>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
@@ -293,7 +293,7 @@ __global__ __aicore__ void RunTMOVNz2Nz(__gm__ outType *out, __gm__ aType *src0,
 }
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, bool splitM>
-__global__ __aicore__ void RunSplitNTMOVNz2Nz(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
+__global__ AICORE void RunSplitNTMOVNz2Nz(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
 {
     constexpr int mSize = splitM ? M / 2 : M;
     constexpr int nSize = splitM ? N : N / 2;
@@ -322,7 +322,7 @@ __global__ __aicore__ void RunSplitNTMOVNz2Nz(__gm__ outType *out, __gm__ aType 
     uint8_t syncId = 0;
 
     using DstTileData =
-        Tile<Location::Vec, outType, M, N, BLayout::ColMajor, mSize, nSize, SLayout::RowMajor, sFractalSize>; // nz
+        Tile<TileType::Vec, outType, M, N, BLayout::ColMajor, mSize, nSize, SLayout::RowMajor, sFractalSize>; // nz
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -359,7 +359,7 @@ __global__ __aicore__ void RunSplitNTMOVNz2Nz(__gm__ outType *out, __gm__ aType 
 }
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, bool splitM>
-__global__ __aicore__ void RunSplitMTMOVNz2Nz(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
+__global__ AICORE void RunSplitMTMOVNz2Nz(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
 {
     constexpr int mSize = splitM ? M / 2 : M;
     constexpr int nSize = splitM ? N : N / 2;
@@ -375,8 +375,8 @@ __global__ __aicore__ void RunSplitMTMOVNz2Nz(__gm__ outType *out, __gm__ aType 
     using GlobalDataOut = GlobalTensor<outType, DynShapeDim5, DynStrideDim5, Layout::NZ>;
     constexpr int stride = splitM ? mSize * sGCols_ : M * nSize;
 
-    using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>;
+    using TileMatAData = Tile<TileType::Mat, aType, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>;
 
     RunMATMUL<aType, bType, M, K, N, M, K, N>(src0, src1);
 
@@ -386,7 +386,7 @@ __global__ __aicore__ void RunSplitMTMOVNz2Nz(__gm__ outType *out, __gm__ aType 
     uint8_t syncId = 0;
 
     using DstTileData =
-        Tile<Location::Vec, outType, M, N, BLayout::ColMajor, mSize, nSize, SLayout::RowMajor, sFractalSize>;
+        Tile<TileType::Vec, outType, M, N, BLayout::ColMajor, mSize, nSize, SLayout::RowMajor, sFractalSize>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -433,7 +433,7 @@ __global__ __aicore__ void RunSplitMTMOVNz2Nz(__gm__ outType *out, __gm__ aType 
 }
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, bool splitM>
-__global__ __aicore__ void RunSplitTMOV(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
+__global__ AICORE void RunSplitTMOV(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
 {
     constexpr int mSize = splitM ? M / 2 : M;
     constexpr int nSize = splitM ? N : N / 2;
@@ -450,7 +450,7 @@ __global__ __aicore__ void RunSplitTMOV(__gm__ outType *out, __gm__ aType *src0,
     TASSIGN(cTile, 0x0);
     uint8_t syncId = 0;
 
-    using DstTileData = Tile<Location::Vec, outType, M, N, BLayout::RowMajor, mSize, nSize>;
+    using DstTileData = Tile<TileType::Vec, outType, M, N, BLayout::RowMajor, mSize, nSize>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -480,7 +480,7 @@ __global__ __aicore__ void RunSplitTMOV(__gm__ outType *out, __gm__ aType *src0,
 
 template <typename outType, typename aType, typename bType, typename fbType, int M, int K, int N, int validM,
     int validK, int validN>
-__global__ __aicore__ void RunVectorQuantTMOV(
+__global__ AICORE void RunVectorQuantTMOV(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
 {
     using GlobalDataOut =
@@ -494,14 +494,14 @@ __global__ __aicore__ void RunVectorQuantTMOV(
     TASSIGN(cTile, 0x0);
     uint8_t syncId = 0;
 
-    using TileMatFbData = Tile<Location::Mat, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
+    using TileMatFbData = Tile<TileType::Mat, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
     TileMatFbData fbMatTile;
     TASSIGN(fbMatTile, 0x20000);
-    using FbTile = Tile<Location::Scaling, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
+    using FbTile = Tile<TileType::Scaling, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
     FbTile fbTile;
     TASSIGN(fbTile, 0x0);
 
-    using DstTileData = Tile<Location::Vec, outType, M, N, BLayout::RowMajor, validM, validN>;
+    using DstTileData = Tile<TileType::Vec, outType, M, N, BLayout::RowMajor, validM, validN>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -528,7 +528,7 @@ __global__ __aicore__ void RunVectorQuantTMOV(
 }
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN>
-__global__ __aicore__ void RunScalarQuantTMOV(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, float scalar)
+__global__ AICORE void RunScalarQuantTMOV(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, float scalar)
 {
     using GlobalDataOut =
         GlobalTensor<outType, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>, Layout::ND>;
@@ -541,7 +541,7 @@ __global__ __aicore__ void RunScalarQuantTMOV(__gm__ outType *out, __gm__ aType 
     TASSIGN(cTile, 0x0);
     uint8_t syncId = 0;
 
-    using DstTileData = Tile<Location::Vec, outType, M, N, BLayout::RowMajor, validM, validN>;
+    using DstTileData = Tile<TileType::Vec, outType, M, N, BLayout::RowMajor, validM, validN>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -571,7 +571,7 @@ __global__ __aicore__ void RunScalarQuantTMOV(__gm__ outType *out, __gm__ aType 
 }
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN>
-__global__ __aicore__ void RunScalarQuantTMOVNz2Dn(
+__global__ AICORE void RunScalarQuantTMOVNz2Dn(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, float scalar)
 {
     using GlobalDataOut =
@@ -585,7 +585,7 @@ __global__ __aicore__ void RunScalarQuantTMOVNz2Dn(
     TASSIGN(cTile, 0x0);
     uint8_t syncId = 0;
 
-    using DstTileData = Tile<Location::Vec, outType, M, N, BLayout::ColMajor, validM, validN>;
+    using DstTileData = Tile<TileType::Vec, outType, M, N, BLayout::ColMajor, validM, validN>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -616,7 +616,7 @@ __global__ __aicore__ void RunScalarQuantTMOVNz2Dn(
 
 template <typename outType, typename aType, typename bType, typename fbType, int M, int K, int N, int validM,
     int validK, int validN>
-__global__ __aicore__ void RunVectorQuantTMOVNz2Nz(
+__global__ AICORE void RunVectorQuantTMOVNz2Nz(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
 {
     constexpr uint16_t sGRows_ = 16;
@@ -630,7 +630,7 @@ __global__ __aicore__ void RunVectorQuantTMOVNz2Nz(
 
     using GlobalDataOut = GlobalTensor<outType, DynShapeDim5, DynStridDim5, Layout::NZ>;
     GlobalDataOut dstGlobal(out);
-    using TileMatFbData = Tile<Location::Mat, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
+    using TileMatFbData = Tile<TileType::Mat, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
 
     TileMatFbData fbMatTile;
     TASSIGN(fbMatTile, 0x20000);
@@ -640,12 +640,12 @@ __global__ __aicore__ void RunVectorQuantTMOVNz2Nz(
     using AccTile = TileAcc<CType<aType>, M, N, validM, validN>;
     AccTile cTile;
     TASSIGN(cTile, 0x0);
-    using FbTile = Tile<Location::Scaling, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
+    using FbTile = Tile<TileType::Scaling, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
     FbTile fbTile;
     TASSIGN(fbTile, 0x0);
     uint8_t syncId = 0;
 
-    using DstTileData = Tile<Location::Vec, outType, M, N, BLayout::ColMajor, validM, validN, SLayout::RowMajor, 512>;
+    using DstTileData = Tile<TileType::Vec, outType, M, N, BLayout::ColMajor, validM, validN, SLayout::RowMajor, 512>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -672,7 +672,7 @@ __global__ __aicore__ void RunVectorQuantTMOVNz2Nz(
 }
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN>
-__global__ __aicore__ void RunScalarQuantTMOVNz2Nz(
+__global__ AICORE void RunScalarQuantTMOVNz2Nz(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, float scalar)
 {
     constexpr uint16_t sGRows_ = 16;
@@ -694,7 +694,7 @@ __global__ __aicore__ void RunScalarQuantTMOVNz2Nz(
     TASSIGN(cTile, 0x0);
     uint8_t syncId = 0;
 
-    using DstTileData = Tile<Location::Vec, outType, M, N, BLayout::ColMajor, validM, validN, SLayout::RowMajor, 512>;
+    using DstTileData = Tile<TileType::Vec, outType, M, N, BLayout::ColMajor, validM, validN, SLayout::RowMajor, 512>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -918,7 +918,7 @@ template void LaunchTMOVL0c2UBSCQuant<4>(uint8_t *out, uint8_t *src0, uint8_t *s
 
 template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN,
     int row, int col, int subBlockId, int sfractalSize = 512>
-__global__ __aicore__ void RunTMOVNz2Dn(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
+__global__ AICORE void RunTMOVNz2Dn(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
 {
     using GlobalDataOut = GlobalTensor<outType, pto::Shape<1, 1, 1, validM, validN>,
         pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, 1, validM>, Layout::DN>;
@@ -932,7 +932,7 @@ __global__ __aicore__ void RunTMOVNz2Dn(__gm__ outType *out, __gm__ aType *src0,
     uint8_t syncId = 0;
 
     using DstTileData =
-        Tile<Location::Vec, outType, row, col, BLayout::ColMajor, validM, validN, SLayout::NoneBox, sfractalSize>;
+        Tile<TileType::Vec, outType, row, col, BLayout::ColMajor, validM, validN, SLayout::NoneBox, sfractalSize>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 
@@ -965,7 +965,7 @@ __global__ __aicore__ void RunTMOVNz2Dn(__gm__ outType *out, __gm__ aType *src0,
 
 template <typename outType, typename aType, typename bType, typename fbType, int M, int K, int N, int validM,
     int validK, int validN>
-__global__ __aicore__ void RunVectorQuantTMOVNz2Dn(
+__global__ AICORE void RunVectorQuantTMOVNz2Dn(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
 {
     using GlobalDataOut =
@@ -979,14 +979,14 @@ __global__ __aicore__ void RunVectorQuantTMOVNz2Dn(
     TASSIGN(cTile, 0x0);
     uint8_t syncId = 0;
 
-    using TileMatFbData = Tile<Location::Mat, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
+    using TileMatFbData = Tile<TileType::Mat, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
     TileMatFbData fbMatTile;
     TASSIGN(fbMatTile, 0x20000);
-    using FbTile = Tile<Location::Scaling, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
+    using FbTile = Tile<TileType::Scaling, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
     FbTile fbTile;
     TASSIGN(fbTile, 0x0);
 
-    using DstTileData = Tile<Location::Vec, outType, M, N, BLayout::ColMajor, validM, validN>;
+    using DstTileData = Tile<TileType::Vec, outType, M, N, BLayout::ColMajor, validM, validN>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
 

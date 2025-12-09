@@ -17,7 +17,7 @@ constexpr const int32_t LOG2_BLOCK_BYTE_SIZE = 5; // 2^5 = 32
 constexpr const int32_t LOG2_BLOCK_LEN = 4;       // 2^4 = 16
 
 template <typename DstType, typename SrcType, int32_t srcRow, int32_t srcCol, int32_t dstRow, int32_t dstCol>
-__tf__ __aicore__ void TExtractToANonTranspose(
+__tf__ AICORE void TExtractToANonTranspose(
     __ca__ DstType *dstAddr, __cbuf__ SrcType *srcAddr, uint16_t indexRow, uint16_t indexCol)
 {
     constexpr int config = srcRow | (1u << 16);
@@ -27,7 +27,7 @@ __tf__ __aicore__ void TExtractToANonTranspose(
 }
 
 template <typename DstType, typename SrcType, int32_t srcRow, int32_t srcCol, int32_t dstRow, int32_t dstCol>
-__tf__ __aicore__ void TExtractToATranspose(
+__tf__ AICORE void TExtractToATranspose(
     __ca__ DstType *dstAddr, __cbuf__ SrcType *srcAddr, uint16_t indexRow, uint16_t indexCol)
 {
     // b8采用Load2D转置
@@ -66,7 +66,7 @@ __tf__ __aicore__ void TExtractToATranspose(
     }
 }
 template <typename DstTileData, typename SrcTileData, bool Transpose>
-__aicore__ void TExtractToA(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+AICORE void TExtractToA(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
     uint16_t indexRow, uint16_t indexCol)
 {
     using SrcType = std::conditional_t<(sizeof(typename SrcTileData::DType) == 2), half, typename SrcTileData::DType>;
@@ -102,7 +102,7 @@ __aicore__ void TExtractToA(typename DstTileData::TileDType __out__ dst, typenam
     }
 }
 template <typename DstType, typename SrcType, int32_t srcRow, int32_t srcCol, int32_t dstRow, int32_t dstCol>
-__tf__ __aicore__ void TExtractToBNonTranspose(
+__tf__ AICORE void TExtractToBNonTranspose(
     __cb__ DstType *dstAddr, __cbuf__ SrcType *srcAddr, uint16_t indexRow, uint16_t indexCol)
 {
     uint16_t dstGap = 0;
@@ -134,7 +134,7 @@ __tf__ __aicore__ void TExtractToBNonTranspose(
 }
 
 template <typename DstType, typename SrcType, int32_t srcRow, int32_t srcCol, int32_t dstRow, int32_t dstCol>
-__tf__ __aicore__ void TExtractToBTranspose(
+__tf__ AICORE void TExtractToBTranspose(
     __cb__ DstType *dstAddr, __cbuf__ SrcType *srcAddr, uint16_t indexRow, uint16_t indexCol)
 {
     // b8使用Load2D
@@ -171,7 +171,7 @@ __tf__ __aicore__ void TExtractToBTranspose(
 }
 
 template <typename DstTileData, typename SrcTileData, bool Transpose>
-__aicore__ void TExtractToB(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+AICORE void TExtractToB(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
     uint16_t indexRow, uint16_t indexCol)
 {
     using SrcType = std::conditional_t<(sizeof(typename SrcTileData::DType) == 2), half, typename SrcTileData::DType>;
@@ -203,7 +203,7 @@ __aicore__ void TExtractToB(typename DstTileData::TileDType __out__ dst, typenam
     }
 }
 template <typename DstTileData, typename SrcTileData>
-__aicore__ void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
+AICORE void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
 {
     static_assert(std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value,
         "TExtract: Destination and Source tile data types must be the same.");
@@ -219,7 +219,7 @@ __aicore__ void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t index
         "The sum of indexRow and dstRow should be less than srcRow!");
     PTO_ASSERT(indexCol + DstTileData::Cols <= SrcTileData::Cols,
         "The sum of indexCol and dstCol should be less than srcCol!");
-    if constexpr (DstTileData::Loc == Location::Left) {
+    if constexpr (DstTileData::Loc == TileType::Left) {
         static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor,
             "TExtract: LeftTile Invalid Fractal.");
         if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {

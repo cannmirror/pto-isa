@@ -17,14 +17,14 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
     template <typename T>
-    __aicore__ PTO_INLINE uint32_t GetByteSize(const uint32_t value) {
+    PTO_INTERNAL uint32_t GetByteSize(const uint32_t value) {
         if constexpr (std::is_same<T, float4_e1m2x2_t>::value || std::is_same<T, float4_e2m1x2_t>::value) {
             return value >> 1; // fp4 4bits
         }
         return sizeof(T) * value;
     }
 
-    template <typename T, int U, int... Args> __aicore__ constexpr bool SupportBytes()
+    template <typename T, int U, int... Args> AICORE constexpr bool SupportBytes()
     {
         if constexpr (sizeof...(Args) > 0) {
             return sizeof(T) == U || SupportBytes<T, Args...>();
@@ -36,7 +36,7 @@ namespace pto {
     using UnalignReg = vector_align;
     using AddrReg = vector_address;
 
-    template <typename T> __aicore__ PTO_INLINE MaskReg CreatePredicateImpl(uint32_t &scalar)
+    template <typename T> PTO_INTERNAL MaskReg CreatePredicateImpl(uint32_t &scalar)
     {
         MaskReg reg;
         if constexpr (sizeof(T) == 1) {
@@ -50,25 +50,25 @@ namespace pto {
     }
 
     template <typename T>
-    __aicore__ PTO_INLINE MaskReg CreatePredicate(uint32_t &scalar)
+    PTO_INTERNAL MaskReg CreatePredicate(uint32_t &scalar)
     {
         return CreatePredicateImpl<T>(scalar);
     }
 
     template <typename T> struct RegTensor {
-        __aicore__ PTO_INLINE RegTensor(){};
+        PTO_INTERNAL RegTensor(){};
         using RegType = typename TypeGet<T>::T;
         RegType reg;
 
-        __aicore__ PTO_INLINE operator RegType &()
+        PTO_INTERNAL operator RegType &()
         {
             return reg;
         }
-        __aicore__ void Print() const;
+        AICORE void Print() const;
     };
 
     template <typename SrcType, typename DstType>
-    __aicore__ PTO_INLINE constexpr QuantMode_t GetCastPreQuantMode()
+    PTO_INTERNAL constexpr QuantMode_t GetCastPreQuantMode()
     {
         QuantMode_t quantPre = QuantMode_t::NoQuant;
         if constexpr (std::is_same<DstType, half>::value) {
@@ -80,7 +80,7 @@ namespace pto {
     }
 
     template <typename SrcType, typename DstType>
-    __aicore__ PTO_INLINE constexpr QuantMode_t GetScalarPreQuantMode()
+    PTO_INTERNAL constexpr QuantMode_t GetScalarPreQuantMode()
     {
         QuantMode_t quantPre = QuantMode_t::NoQuant;
         if constexpr (std::is_same<SrcType, float>::value) {
@@ -106,7 +106,7 @@ namespace pto {
     }
 
     template <typename SrcType, typename DstType>
-    __aicore__ PTO_INLINE constexpr QuantMode_t GetVectorPreQuantMode()
+    PTO_INTERNAL constexpr QuantMode_t GetVectorPreQuantMode()
     {
         QuantMode_t quantPre = QuantMode_t::NoQuant;
         if constexpr (std::is_same<SrcType, float>::value) {

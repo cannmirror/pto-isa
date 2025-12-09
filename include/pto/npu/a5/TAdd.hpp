@@ -23,14 +23,14 @@ using namespace std;
 namespace pto {
 
 template <typename T> struct AddOp {
-    __aicore__ PTO_INLINE static void BinInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1, MaskReg &preg)
+    PTO_INTERNAL static void BinInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1, MaskReg &preg)
     {
         vadd(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
     }
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ __aicore__ PTO_INLINE
+__tf__ PTO_INTERNAL
 void TAdd(typename TileData::TileDType __out__ dst, 
                             typename TileData::TileDType __in__ src0, 
                             typename TileData::TileDType __in__ src1,
@@ -46,7 +46,7 @@ void TAdd(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileData>
-__aicore__ PTO_INLINE void TADD_IMPL(TileData &dst, TileData &src0, TileData &src1)
+PTO_INTERNAL void TADD_IMPL(TileData &dst, TileData &src0, TileData &src1)
 {
     static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
                   std::is_same<typename TileData::DType, uint32_t>::value ||

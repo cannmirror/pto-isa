@@ -20,7 +20,7 @@ namespace pto {
     }
 
     template <typename TileDst, typename TileSrc>
-    __aicore__ PTO_INLINE void CheckRSValid()
+    PTO_INTERNAL void CheckRSValid()
     {
         using SrcType = TileSrc::DType;
         using DstType = TileDst::DType;
@@ -35,7 +35,7 @@ namespace pto {
     }
 
     template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
-    __aicore__ PTO_INLINE void TROWSUM_IMPL(TileDataOut &dstTile, TileDataIn &srcTile, TileDataTmp &tmp)
+    PTO_INTERNAL void TROWSUM_IMPL(TileDataOut &dstTile, TileDataIn &srcTile, TileDataTmp &tmp)
     {
         CheckRSValid<TileDataOut, TileDataIn>();
 

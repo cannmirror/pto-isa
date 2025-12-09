@@ -18,11 +18,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
 template <typename T> struct MulOp {
-    __PTO_INSTR__ static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
+    PTO_INTERNAL static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
     {
         vmul(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
     }
-    __PTO_INSTR__ static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
+    PTO_INTERNAL static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
         uint8_t dstRepeatStride, uint8_t src0RepeatStride, uint8_t src1RepeatStride)
     {
         vmul(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, src1RepeatStride);
@@ -30,7 +30,7 @@ template <typename T> struct MulOp {
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ __PTO_INSTR__ void TMul(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
+__tf__ PTO_INTERNAL void TMul(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
     typename TileData::TileDType __in__ src1, unsigned validRow, unsigned validCol)
 {
     using T = typename TileData::DType;
@@ -42,7 +42,7 @@ __tf__ __PTO_INSTR__ void TMul(typename TileData::TileDType __out__ dst, typenam
 }
 
 template <typename TileData>
-__aicore__ void TMUL_IMPL(TileData &dst, TileData &src0, TileData &src1)
+AICORE void TMUL_IMPL(TileData &dst, TileData &src0, TileData &src1)
 {
     static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
                 std::is_same<typename TileData::DType, int>::value ||
@@ -53,7 +53,7 @@ __aicore__ void TMUL_IMPL(TileData &dst, TileData &src0, TileData &src1)
                 std::is_same<typename TileData::DType, float32_t>::value,
                 "TMUL: Invalid data type.");
     
-    static_assert(TileData::Loc == Location::Vec, "Location of src and dst tiles must be Location::Vec.");
+    static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
     static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
     static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
     static_assert(TileData::isRowMajor, "TMul: not supported Layout type.");

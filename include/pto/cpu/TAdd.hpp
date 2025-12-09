@@ -20,7 +20,7 @@ namespace pto{
     }
 
     template <typename tile_shape>
-    __aicore__ PTO_INLINE void TADD_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+    PTO_INTERNAL void TADD_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
         TAdd_Impl<tile_shape>(dst.data(), src0.data(), src1.data(), row, col);

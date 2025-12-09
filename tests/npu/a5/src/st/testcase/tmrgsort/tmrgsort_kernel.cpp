@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 #include <pto/npu/a5/TMrgSort.hpp>
@@ -24,18 +24,18 @@ using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kTCols_src1, int kTCols_src2,
           int kTCols_src3, int TOPK, int LISTNUM>
-__global__ __aicore__ void runTMrgsort(__gm__ T* out, __gm__ T* src0, __gm__ T* src1, __gm__ T* src2, __gm__ T* src3)
+__global__ AICORE void runTMrgsort(__gm__ T* out, __gm__ T* src0, __gm__ T* src1, __gm__ T* src2, __gm__ T* src3)
 {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
     using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_ * LISTNUM>;
     using DstDynStridDim5 = pto::Stride<1, 1, 1, kGCols_ * LISTNUM, 1>;
     using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
     using TmpGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
-    using DstTileData = Tile<Location::Vec, T, 1, TOPK, BLayout::RowMajor, -1, -1>;
-    using TmpTileData = Tile<Location::Vec, T, 1, kTCols_ * LISTNUM, BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<TileType::Vec, T, 1, TOPK, BLayout::RowMajor, -1, -1>;
+    using TmpTileData = Tile<TileType::Vec, T, 1, kTCols_ * LISTNUM, BLayout::RowMajor, -1, -1>;
     TileData src0Tile(1, kTCols_);
     TileData src1Tile(1, kTCols_src1);
     TileData src2Tile(1, kTCols_src2);
@@ -104,19 +104,19 @@ __global__ __aicore__ void runTMrgsort(__gm__ T* out, __gm__ T* src0, __gm__ T* 
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kTCols_src1, int kTCols_src2,
           int kTCols_src3, int TOPK, int LISTNUM>
-__global__ __aicore__ void runTMrgsortExhausted(__gm__ T* out, __gm__ T* src0, __gm__ T* src1, __gm__ T* src2,
+__global__ AICORE void runTMrgsortExhausted(__gm__ T* out, __gm__ T* src0, __gm__ T* src1, __gm__ T* src2,
                                                 __gm__ T* src3)
 {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
     using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_ * LISTNUM>;
     using DstDynStridDim5 = pto::Stride<1, 1, 1, kGCols_ * LISTNUM, 1>;
     using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
     using TmpGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
-    using DstTileData = Tile<Location::Vec, T, 1, TOPK, BLayout::RowMajor, -1, -1>;
-    using TmpTileData = Tile<Location::Vec, T, 1, kTCols_ * LISTNUM, BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<TileType::Vec, T, 1, TOPK, BLayout::RowMajor, -1, -1>;
+    using TmpTileData = Tile<TileType::Vec, T, 1, kTCols_ * LISTNUM, BLayout::RowMajor, -1, -1>;
     TileData src0Tile(1, kTCols_);
     TileData src1Tile(1, kTCols_src1);
     TileData src2Tile(1, kTCols_src2);
@@ -185,16 +185,16 @@ __global__ __aicore__ void runTMrgsortExhausted(__gm__ T* out, __gm__ T* src0, _
 }
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, uint32_t blockLen>
-__global__ __aicore__ void runTMrgsort_single(__gm__ T *out, __gm__ T *src0) {
+__global__ AICORE void runTMrgsort_single(__gm__ T *out, __gm__ T *src0) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
 
     using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DstDynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
-    using DstTileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
 
     TileData src0Tile(1, kTCols_);
     DstTileData dstTile(1, kTCols_);
@@ -219,7 +219,7 @@ __global__ __aicore__ void runTMrgsort_single(__gm__ T *out, __gm__ T *src0) {
 }
 
 template <int kTCols_>
-__aicore__ PTO_INLINE int32_t fillMrgArray(int32_t* mrgArray, int blockLen) {
+PTO_INTERNAL int32_t fillMrgArray(int32_t* mrgArray, int blockLen) {
     int32_t arrayCount = 0;
     int32_t tmpInner = kTCols_;
     for (int32_t i = blockLen; i >= 64; i /= 4) {
@@ -234,7 +234,7 @@ __aicore__ PTO_INLINE int32_t fillMrgArray(int32_t* mrgArray, int blockLen) {
 
 template <typename GlobalData, typename DstGlobalData, typename DstTileData, typename TmpTileData, typename T,
     int kTCols_, int topk>
-__aicore__ PTO_INLINE void sortTailBlock(
+PTO_INTERNAL void sortTailBlock(
     DstGlobalData &dstGlobal, DstTileData &dstTile, __gm__ T *src, __ubuf__ T *srcAddr, int blockLen)
 {
     TmpTileData tmp1Tile(1, kTCols_);
@@ -246,8 +246,8 @@ __aicore__ PTO_INLINE void sortTailBlock(
     GlobalData srcGlobal(src);
     MrgSortExecutedNumList executedNumList;
     for (int32_t i = 0; i < arrayCount - 1; ++i) {
-        using Src0TileData = Tile<Location::Vec, T, 1, topk, BLayout::RowMajor, -1, -1>;
-        using Src1TileData = Tile<Location::Vec, T, 1, topk, BLayout::RowMajor, -1, -1>;
+        using Src0TileData = Tile<TileType::Vec, T, 1, topk, BLayout::RowMajor, -1, -1>;
+        using Src1TileData = Tile<TileType::Vec, T, 1, topk, BLayout::RowMajor, -1, -1>;
         mrgSortedLen += static_cast<uint16_t>(mrgArray[i]);
         uint64_t tmpMrgSortedLen = mrgSortedLen;
         uint64_t tmpMrgArray = mrgArray[i + 1];
@@ -276,14 +276,14 @@ __aicore__ PTO_INLINE void sortTailBlock(
 }
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int topk>
-__global__ __aicore__ void runTMrgsort_topk(__gm__ T *out, __gm__ T *src)
+__global__ AICORE void runTMrgsort_topk(__gm__ T *out, __gm__ T *src)
 {
     using GlobalData = GlobalTensor<T, Shape<1, 1, 1, kGRows_, kGCols_>, pto::Stride<1, 1, 1, kGCols_, 1>>;
-    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
     using DstGlobalData = GlobalTensor<T, Shape<1, 1, 1, kGRows_, kGCols_>, pto::Stride<1, 1, 1, topk, 1>>;
     using TmpGlobalData = GlobalTensor<T, Shape<1, 1, 1, kGRows_, kGCols_>, pto::Stride<1, 1, 1, kGCols_, 1>>;
-    using DstTileData = Tile<Location::Vec, T, kTRows_, topk, BLayout::RowMajor, -1, -1>;
-    using TmpTileData = Tile<Location::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<TileType::Vec, T, kTRows_, topk, BLayout::RowMajor, -1, -1>;
+    using TmpTileData = Tile<TileType::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
 
     TileData srcTile(1, kTCols_);
     DstTileData dstTile(1, topk);

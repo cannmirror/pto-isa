@@ -8,15 +8,14 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
-#include <pto/common/pto_tile.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 
 using namespace std;
 using namespace pto;
 
 template <typename T, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-inline __aicore__ void runTCVT(__gm__ T __out__ *out, __gm__ S __in__ *src) {
+inline AICORE void runTCVT(__gm__ T __out__ *out, __gm__ S __in__ *src) {
 
     //if (block_idx > 0) return;
 
@@ -25,8 +24,8 @@ inline __aicore__ void runTCVT(__gm__ T __out__ *out, __gm__ S __in__ *src) {
     using GlobalData_src = GlobalTensor<S, DynShapeDim4, DynStridDim4>;
     using GlobalData_dst = GlobalTensor<T, DynShapeDim4, DynStridDim4>;
 
-    using TileDataSrc = Tile<Location::Vec, S, kTRows_, kTCols_, BLayout::RowMajor>;
-    using TileDataDst = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor>;
+    using TileDataSrc = Tile<TileType::Vec, S, kTRows_, kTCols_, BLayout::RowMajor>;
+    using TileDataDst = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor>;
 
     TileDataSrc srcTile;
     TileDataDst dstTile;
@@ -55,7 +54,7 @@ inline __aicore__ void runTCVT(__gm__ T __out__ *out, __gm__ S __in__ *src) {
 }
 
 
-extern "C" __global__ __aicore__ void launchTCVT_1(__gm__ int *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTCVT_1(__gm__ int *out, __gm__ float *src) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 128;
     constexpr uint32_t K = 128;
@@ -64,7 +63,7 @@ extern "C" __global__ __aicore__ void launchTCVT_1(__gm__ int *out, __gm__ float
 }
 
 
-extern "C" __global__ __aicore__ void launchTCVT_2(__gm__ float *out, __gm__ int *src) {
+extern "C" __global__ AICORE void launchTCVT_2(__gm__ float *out, __gm__ int *src) {
     constexpr uint32_t M = 256;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 256;
@@ -72,7 +71,7 @@ extern "C" __global__ __aicore__ void launchTCVT_2(__gm__ float *out, __gm__ int
     runTCVT<float, int, M, N, K, L>(out, src);
 }
 
-extern "C" __global__ __aicore__ void launchTCVT_3(__gm__ int16_t *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTCVT_3(__gm__ int16_t *out, __gm__ float *src) {
     constexpr uint32_t M = 16;
     constexpr uint32_t N = 32;
     constexpr uint32_t K = 16;
@@ -80,7 +79,7 @@ extern "C" __global__ __aicore__ void launchTCVT_3(__gm__ int16_t *out, __gm__ f
     runTCVT<int16_t, float, M, N, K, L>(out, src);
 }
 
-extern "C" __global__ __aicore__ void launchTCVT_4(__gm__ int *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTCVT_4(__gm__ int *out, __gm__ float *src) {
     constexpr uint32_t M = 32;
     constexpr uint32_t N = 512;
     constexpr uint32_t K = 32;
@@ -88,7 +87,7 @@ extern "C" __global__ __aicore__ void launchTCVT_4(__gm__ int *out, __gm__ float
     runTCVT<int, float, M, N, K, L>(out, src);
 }
 
-extern "C" __global__ __aicore__ void launchTCVT_5(__gm__ int16_t *out, __gm__ int *src) {
+extern "C" __global__ AICORE void launchTCVT_5(__gm__ int16_t *out, __gm__ int *src) {
     constexpr uint32_t M = 2;
     constexpr uint32_t N = 512;
     constexpr uint32_t K = 2;
@@ -96,7 +95,7 @@ extern "C" __global__ __aicore__ void launchTCVT_5(__gm__ int16_t *out, __gm__ i
     runTCVT<int16_t, int, M, N, K, L>(out, src);
 }
 
-extern "C" __global__ __aicore__ void launchTCVT_6(__gm__ float *out, __gm__ int *src) {
+extern "C" __global__ AICORE void launchTCVT_6(__gm__ float *out, __gm__ int *src) {
     constexpr uint32_t M = 4;
     constexpr uint32_t N = 4096;
     constexpr uint32_t K = 4;
@@ -104,7 +103,7 @@ extern "C" __global__ __aicore__ void launchTCVT_6(__gm__ float *out, __gm__ int
     runTCVT<float, int, M, N, K, L>(out, src);
 }
 
-extern "C" __global__ __aicore__ void launchTCVT_7(__gm__ float *out, __gm__ int16_t *src) {
+extern "C" __global__ AICORE void launchTCVT_7(__gm__ float *out, __gm__ int16_t *src) {
     constexpr uint32_t M = 64;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 64;

@@ -17,7 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto{
     template <typename TileDataDst, typename TileDataSrc, unsigned blockSizeElem, unsigned srcStride,
         unsigned dstStride>
-    __tf__ __aicore__ PTO_INLINE void TCopy(typename TileDataDst::TileDType __out__ dst,
+    __tf__ PTO_INTERNAL void TCopy(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src, uint64_t validRow, uint64_t validCol) {
         if (validRow ==0 || validCol == 0) {
             return;

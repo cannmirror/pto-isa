@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 
@@ -16,7 +16,7 @@ using namespace pto;
 
 constexpr uint16_t BLOCK_ALIGN_BYTE = 32;
 template <typename T>
-__aicore__ inline T CeilAlign(T num_1, T num_2)
+AICORE inline T CeilAlign(T num_1, T num_2)
 {
     if (num_2 == 0) {
         return 0;
@@ -25,7 +25,7 @@ __aicore__ inline T CeilAlign(T num_1, T num_2)
 }
 
 template <typename T>
-__aicore__ inline T CeilDiv(T num_1, T num_2)
+AICORE inline T CeilDiv(T num_1, T num_2)
 {
     if (num_2 == 0) {
         return 0;
@@ -34,7 +34,7 @@ __aicore__ inline T CeilDiv(T num_1, T num_2)
 }
 
 template <typename T>
-__aicore__ inline void DynGM2L1(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0, unsigned TShape1)
+AICORE inline void DynGM2L1(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0, unsigned TShape1)
 {
     uint16_t nBurst = 1;
     uint16_t lenBurst = TShape0 * TShape1 * sizeof(T);
@@ -53,7 +53,7 @@ __aicore__ inline void DynGM2L1(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0
  * brief: dynamic l1 copy in nd2nz functions
  */
 template <typename GMT, typename L1T>
-__aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned TShape0, unsigned TShape1,
+AICORE inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned TShape0, unsigned TShape1,
                                    unsigned GmShape0, unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1,
                                    int reserved)
 { // ND2NZ
@@ -88,7 +88,7 @@ __aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned 
 
 // Nz2Zz
 template <typename T, unsigned Offset0, unsigned Offset1>
-__aicore__ inline void DynL1ToL0A(__ca__ T *dst, __cbuf__ T *src, unsigned dstM, unsigned dstK, unsigned srcM,
+AICORE inline void DynL1ToL0A(__ca__ T *dst, __cbuf__ T *src, unsigned dstM, unsigned dstK, unsigned srcM,
                                   unsigned srcK)
 {
     constexpr uint16_t blockCubeK = BLOCK_ALIGN_BYTE / sizeof(T);
@@ -108,7 +108,7 @@ __aicore__ inline void DynL1ToL0A(__ca__ T *dst, __cbuf__ T *src, unsigned dstM,
 
 // Nz2Zn
 template <typename T, unsigned Offset0, unsigned Offset1>
-__aicore__ inline void DynL1ToL0B(__cb__ T *dst, __cbuf__ T *src, unsigned dstK, unsigned dstN, unsigned srcK,
+AICORE inline void DynL1ToL0B(__cb__ T *dst, __cbuf__ T *src, unsigned dstK, unsigned dstN, unsigned srcK,
                                   unsigned srcN)
 {
     auto nBlockSize = 32;
@@ -127,7 +127,7 @@ __aicore__ inline void DynL1ToL0B(__cb__ T *dst, __cbuf__ T *src, unsigned dstK,
 }
 
 template <typename GMT, typename L0CT, unsigned TShape0, unsigned TShape1, unsigned oriTShape0, unsigned oriTShape1>
-__aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src, unsigned GmShape0, unsigned GmShape1,
+AICORE inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src, unsigned GmShape0, unsigned GmShape1,
                                   unsigned GmOffset0, unsigned GmOffset1, int uf)
 {  // NZ2ND
     uint16_t MSize = oriTShape0 < (GmShape0 - GmOffset0) ? oriTShape0 : (GmShape0 - GmOffset0);
@@ -171,7 +171,7 @@ __aicore__ inline void L0CCopyOut(__gm__ GMT *dst, __cc__ L0CT *src, unsigned Gm
 
 template <typename cType, typename aType, typename bType, typename biasType, int M, int K, int N, int ValidM,
           int ValidK, int ValidN>
-__global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1,
+__global__ AICORE void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1,
                                           __gm__ biasType *src2)
 {
     // static shape
@@ -191,15 +191,15 @@ __global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0,
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::RowMajor, ValidM, ValidK, SLayout::ColMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, ValidK, ValidN, SLayout::ColMajor, 512>;
-    using TileMatBiasData = Tile<Location::Mat, biasType, 1, alignN, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox, 512>;
+    using TileMatAData = Tile<TileType::Mat, aType, M, K, BLayout::RowMajor, ValidM, ValidK, SLayout::ColMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::RowMajor, ValidK, ValidN, SLayout::ColMajor, 512>;
+    using TileMatBiasData = Tile<TileType::Mat, biasType, 1, alignN, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox, 512>;
 
     using LeftTile = TileLeft<aType, M, K, ValidM, ValidK>;
     using RightTile = TileRight<bType, K, N, ValidK, ValidN>;
     using AccTile = TileAcc<cType, M, N, ValidM, ValidN>;
 
-    using BiasTile = Tile<Location::Bias, cType, 1, alignN, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox, 512>;
+    using BiasTile = Tile<TileType::Bias, cType, 1, alignN, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox, 512>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -257,7 +257,7 @@ __global__ __aicore__ void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0,
 
 template <typename cType, typename aType, typename bType, typename biasType, int M, int K, int N, int ValidM,
           int ValidK, int ValidN>
-__global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1,
+__global__ AICORE void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1,
                                                  __gm__ biasType *src2)
 {
     using GlobalDataSrc0 =
@@ -276,15 +276,15 @@ __global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
-    using TileMatBiasData = Tile<Location::Mat, biasType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox, 512>;
+    using TileMatAData = Tile<TileType::Mat, aType, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
+    using TileMatBiasData = Tile<TileType::Mat, biasType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox, 512>;
 
     using LeftTile = TileLeft<aType, M, K, -1, ValidK>;
     using RightTile = TileRight<bType, K, N, ValidK, -1>;
     using AccTile = TileAcc<cType, M, N, ValidM, -1>;
 
-    using BiasTile = Tile<Location::Bias, cType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox, 512>;
+    using BiasTile = Tile<TileType::Bias, cType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox, 512>;
 
     TileMatAData aMatTile(ValidM, ValidK);
     TileMatBData bMatTile(ValidK, ValidN);
@@ -343,7 +343,7 @@ __global__ __aicore__ void runTMovL12BiasDynamic(__gm__ cType *out, __gm__ aType
 
 template <typename cType, typename aType, typename bType, typename fbType, typename l0cType, int M, int K, int N,
           int ValidM, int ValidK, int ValidN>
-__global__ __aicore__ void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
+__global__ AICORE void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
 {
     // static shape
     using GlobalDataSrc0 =
@@ -359,15 +359,15 @@ __global__ __aicore__ void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, _
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::RowMajor, ValidM, ValidK, SLayout::ColMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, ValidK, ValidN, SLayout::ColMajor, 512>;
-    using TileMatFbData = Tile<Location::Mat, fbType, 1, N, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox>;
+    using TileMatAData = Tile<TileType::Mat, aType, M, K, BLayout::RowMajor, ValidM, ValidK, SLayout::ColMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::RowMajor, ValidK, ValidN, SLayout::ColMajor, 512>;
+    using TileMatFbData = Tile<TileType::Mat, fbType, 1, N, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox>;
 
     using LeftTile = TileLeft<aType, M, K, ValidM, ValidK>;
     using RightTile = TileRight<bType, K, N, ValidK, ValidN>;
     using AccTile = TileAcc<l0cType, M, N, ValidM, ValidN>;
 
-    using FbTile = Tile<Location::Scaling, fbType, 1, N, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox>;
+    using FbTile = Tile<TileType::Scaling, fbType, 1, N, BLayout::RowMajor, 1, ValidN, SLayout::NoneBox>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;

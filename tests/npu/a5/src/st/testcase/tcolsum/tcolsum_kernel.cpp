@@ -16,16 +16,16 @@ using namespace std;
 using namespace pto;
 
 template <typename T, int srcRow, int srcValidRow, int dstRow, int col, int validCol>
-__aicore__ PTO_INLINE void runTColSum(__gm__ T __out__ *out, __gm__ T __in__ *src, bool isBinary) {
+PTO_INTERNAL void runTColSum(__gm__ T __out__ *out, __gm__ T __in__ *src, bool isBinary) {
     using DynDim2Shape  = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
     GlobalData srcGlobal(src, DynDim2Shape(srcValidRow, validCol), DynDim2Stride(srcRow, col));
     GlobalData dstGlobal(out, DynDim2Shape(dstRow, validCol), DynDim2Stride(dstRow, col));
 
-    using SrcTileData = Tile<Location::Vec, T, srcRow, col, BLayout::RowMajor, -1, -1>;
-    using TmpTileData = Tile<Location::Vec, T, (srcRow + 1) / 2, col, BLayout::RowMajor, -1, -1>;
-    using DstTileData = Tile<Location::Vec, T, dstRow, col, BLayout::RowMajor, -1, -1>;
+    using SrcTileData = Tile<TileType::Vec, T, srcRow, col, BLayout::RowMajor, -1, -1>;
+    using TmpTileData = Tile<TileType::Vec, T, (srcRow + 1) / 2, col, BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<TileType::Vec, T, dstRow, col, BLayout::RowMajor, -1, -1>;
     SrcTileData srcTile(srcValidRow, validCol);
     TmpTileData tmpTile((srcValidRow + 1) / 2, validCol);
     DstTileData dstTile(dstRow, validCol);
@@ -45,63 +45,63 @@ __aicore__ PTO_INLINE void runTColSum(__gm__ T __out__ *out, __gm__ T __in__ *sr
     out = dstGlobal.data();
 }
 
-extern "C" __global__ __aicore__ void launchTCOLSUMCase01(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase01(__gm__ float *out, __gm__ float *src)
 {
     runTColSum<float, 1, 1, 1, 256, 255>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase02(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase02(__gm__ float *out, __gm__ float *src)
 {
     runTColSum<float, 16, 16, 1, 128, 127>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase03(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase03(__gm__ float *out, __gm__ float *src)
 {
     runTColSum<float, 16, 15, 1, 256, 255>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase04(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase04(__gm__ float *out, __gm__ float *src)
 {
     runTColSum<float, 64, 63, 1, 128, 127>(out, src, true);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase05(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase05(__gm__ float *out, __gm__ float *src)
 {
     runTColSum<float, 64, 64, 1, 128, 128>(out, src, true);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase11(__gm__ half *out, __gm__ half *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase11(__gm__ half *out, __gm__ half *src)
 {
     runTColSum<half, 1, 1, 1, 256, 255>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase12(__gm__ half *out, __gm__ half *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase12(__gm__ half *out, __gm__ half *src)
 {
     runTColSum<half, 16, 16, 1, 128, 127>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase13(__gm__ half *out, __gm__ half *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase13(__gm__ half *out, __gm__ half *src)
 {
     runTColSum<half, 16, 15, 1, 256, 255>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase14(__gm__ half *out, __gm__ half *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase14(__gm__ half *out, __gm__ half *src)
 {
     runTColSum<half, 64, 63, 1, 128, 127>(out, src, true);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase15(__gm__ half *out, __gm__ half *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase15(__gm__ half *out, __gm__ half *src)
 {
     runTColSum<half, 64, 64, 1, 128, 128>(out, src, true);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase21(__gm__ int8_t *out, __gm__ int8_t *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase21(__gm__ int8_t *out, __gm__ int8_t *src)
 {
     runTColSum<int8_t, 1, 1, 1, 256, 255>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase22(__gm__ int8_t *out, __gm__ int8_t *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase22(__gm__ int8_t *out, __gm__ int8_t *src)
 {
     runTColSum<int8_t, 16, 16, 1, 128, 127>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase23(__gm__ int8_t *out, __gm__ int8_t *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase23(__gm__ int8_t *out, __gm__ int8_t *src)
 {
     runTColSum<int8_t, 16, 15, 1, 256, 255>(out, src, false);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase24(__gm__ int8_t *out, __gm__ int8_t *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase24(__gm__ int8_t *out, __gm__ int8_t *src)
 {
     runTColSum<int8_t, 64, 63, 1, 128, 127>(out, src, true);
 }
-extern "C" __global__ __aicore__ void launchTCOLSUMCase25(__gm__ int8_t *out, __gm__ int8_t *src)
+extern "C" __global__ AICORE void launchTCOLSUMCase25(__gm__ int8_t *out, __gm__ int8_t *src)
 {
     runTColSum<int8_t, 64, 64, 1, 128, 128>(out, src, true);
 }

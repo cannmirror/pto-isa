@@ -1,14 +1,13 @@
 #include <pto/pto-inst.hpp>
 #include "test_common.h"
 #include <gtest/gtest.h>
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/common/constants.hpp>
 
 using namespace std;
 using namespace PtoTestCommon;
 
 template <typename ST, typename DT, size_t rows, size_t cols, size_t validRows, size_t validCols, uint16_t idxRow, uint16_t idxCol, uint16_t srcLayout, uint16_t dstLayout>
-__aicore__ inline void runTEXTRACT(__gm__ DT *out, __gm__ ST *src)
+AICORE inline void runTEXTRACT(__gm__ DT *out, __gm__ ST *src)
 {
     constexpr int validRowsDst = validRows - idxRow;
     constexpr int validColsDst = validCols - idxCol;
@@ -24,8 +23,8 @@ __aicore__ inline void runTEXTRACT(__gm__ DT *out, __gm__ ST *src)
     constexpr BLayout dstBL = dstLayout > 0 ? BLayout::ColMajor : BLayout::RowMajor;
     constexpr SLayout dstSL = dstLayout < 2 ? SLayout::NoneBox : SLayout::RowMajor;
 
-    Tile<Location::Mat, ST, rows, cols, srcBL, validRows, validCols, srcSL, 512> srcTile;
-    Tile<Location::Mat, DT, rows, cols, dstBL, validRowsDst, validColsDst, dstSL, 512> dstTile;
+    Tile<TileType::Mat, ST, rows, cols, srcBL, validRows, validCols, srcSL, 512> srcTile;
+    Tile<TileType::Mat, DT, rows, cols, dstBL, validRowsDst, validColsDst, dstSL, 512> dstTile;
 
     TASSIGN(srcTile, 0x0);
     TASSIGN(dstTile, 0x10000);

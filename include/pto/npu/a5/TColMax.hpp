@@ -16,13 +16,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
   template <typename T>
   struct TColMaxOp {
-    __PTO_INSTR__ static void ReduceInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1, MaskReg &pReg) {
+    PTO_INTERNAL static void ReduceInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1, MaskReg &pReg) {
       vmax(dst, src0, src1, pReg, MODE_ZEROING);
     }
   };
 
   template <typename T, typename TileDataOut, typename TileDataIn>
-  __tf__ __PTO_INSTR__ void TColMax(typename TileDataOut::TileDType __out__ dstData,
+  __tf__ PTO_INTERNAL void TColMax(typename TileDataOut::TileDType __out__ dstData,
     typename TileDataIn::TileDType __in__ srcData, uint16_t validRow, int validCol, unsigned version) {
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
     __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
@@ -31,7 +31,7 @@ namespace pto {
   }
 
   template <typename TileDataOut, typename TileDataIn>
-  __PTO_INSTR__ void TCOLMAX_IMPL(TileDataOut &dst, TileDataIn &src) {
+  PTO_INTERNAL void TCOLMAX_IMPL(TileDataOut &dst, TileDataIn &src) {
     int validCol = src.GetValidCol();
     int validRow = src.GetValidRow();
     TColReduceCheck<TileDataOut, TileDataIn>(validRow, validCol, dst.GetValidRow());

@@ -15,13 +15,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "common.hpp"
 
 namespace pto {
-__aicore__ PTO_INLINE int CEIL(int a, int b)
+PTO_INTERNAL int CEIL(int a, int b)
 {
     return (a + (b - 1)) / (b);
 }
 
 template <typename DstTileData, typename Src0TileData, typename Src1TileData>
-__aicore__ PTO_INLINE void CheckValid()
+PTO_INTERNAL void CheckValid()
 {
     static_assert((sizeof(typename DstTileData::DType) == 1) || (sizeof(typename DstTileData::DType) == 2) ||
                       (sizeof(typename DstTileData::DType) == 4),
@@ -33,7 +33,7 @@ __aicore__ PTO_INLINE void CheckValid()
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__tf__ __aicore__ void TGather_b32(typename TileDataD::TileDType __out__ dst,
+__tf__ AICORE void TGather_b32(typename TileDataD::TileDType __out__ dst,
     typename TileDataS0::TileDType __in__ src0, typename TileDataS1::TileDType __in__ src1, unsigned validCol,
     unsigned validRow)
 {
@@ -62,7 +62,7 @@ __tf__ __aicore__ void TGather_b32(typename TileDataD::TileDType __out__ dst,
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__tf__ __aicore__ void TGather_b16(typename TileDataD::TileDType __out__ dst,
+__tf__ AICORE void TGather_b16(typename TileDataD::TileDType __out__ dst,
     typename TileDataS0::TileDType __in__ src0, typename TileDataS1::TileDType __in__ src1, unsigned validCol,
     unsigned validRow)
 {
@@ -91,7 +91,7 @@ __tf__ __aicore__ void TGather_b16(typename TileDataD::TileDType __out__ dst,
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__tf__ __aicore__ void TGather_b16_bc(typename TileDataD::TileDType __out__ dst,
+__tf__ AICORE void TGather_b16_bc(typename TileDataD::TileDType __out__ dst,
     typename TileDataS0::TileDType __in__ src0, typename TileDataS1::TileDType __in__ src1, unsigned validCol,
     unsigned validRow)
 {
@@ -120,7 +120,7 @@ __tf__ __aicore__ void TGather_b16_bc(typename TileDataD::TileDType __out__ dst,
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__tf__ __aicore__ void TGather_fp8_e4m3(typename TileDataD::TileDType __out__ dst,
+__tf__ AICORE void TGather_fp8_e4m3(typename TileDataD::TileDType __out__ dst,
     typename TileDataS0::TileDType __in__ src0, typename TileDataS1::TileDType __in__ src1, unsigned validCol,
     unsigned validRow)
 {
@@ -149,7 +149,7 @@ __tf__ __aicore__ void TGather_fp8_e4m3(typename TileDataD::TileDType __out__ ds
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__tf__ __aicore__ void TGather_fp8_e5m2(typename TileDataD::TileDType __out__ dst,
+__tf__ AICORE void TGather_fp8_e5m2(typename TileDataD::TileDType __out__ dst,
     typename TileDataS0::TileDType __in__ src0, typename TileDataS1::TileDType __in__ src1, unsigned validCol,
     unsigned validRow)
 {
@@ -178,7 +178,7 @@ __tf__ __aicore__ void TGather_fp8_e5m2(typename TileDataD::TileDType __out__ ds
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__aicore__ void TGather(typename TileDataD::TileDType __out__ dst, typename TileDataS0::TileDType __in__ src0,
+AICORE void TGather(typename TileDataD::TileDType __out__ dst, typename TileDataS0::TileDType __in__ src0,
     typename TileDataS1::TileDType __in__ src1, unsigned validCol, unsigned validRow)
 {
     if constexpr (sizeof(typename TileDataS0::DType) == 4) {
@@ -195,7 +195,7 @@ __aicore__ void TGather(typename TileDataD::TileDType __out__ dst, typename Tile
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__aicore__ void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
+AICORE void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
 {
     CheckValid<TileDataD, TileDataS0, TileDataS1>();
 
@@ -206,7 +206,7 @@ __aicore__ void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
 }
 
 template <typename T, typename U>
-__aicore__ PTO_INLINE MaskReg PSetWithType(U dist)
+PTO_INTERNAL MaskReg PSetWithType(U dist)
 {
     if constexpr (sizeof(T) == sizeof(float)) {
         return pset_b32(dist);
@@ -218,7 +218,7 @@ __aicore__ PTO_INLINE MaskReg PSetWithType(U dist)
 }
 
 template <typename T>
-__aicore__ PTO_INLINE void PIntlvWithType(MaskReg &dst0, MaskReg &dst1, MaskReg src0, MaskReg src1)
+PTO_INTERNAL void PIntlvWithType(MaskReg &dst0, MaskReg &dst1, MaskReg src0, MaskReg src1)
 {
     if constexpr (sizeof(T) == sizeof(float)) {
         pintlv_b32(dst0, dst1, src0, src1);
@@ -230,7 +230,7 @@ __aicore__ PTO_INLINE void PIntlvWithType(MaskReg &dst0, MaskReg &dst1, MaskReg 
 }
 
 template <typename T, MaskPattern maskPattern>
-__aicore__ PTO_INLINE MaskReg GetMaskVal()
+PTO_INTERNAL MaskReg GetMaskVal()
 {
     MaskReg pg0;
     MaskReg pg1;
@@ -271,7 +271,7 @@ __aicore__ PTO_INLINE MaskReg GetMaskVal()
 }
 
 template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
-__tf__ __aicore__ void TGather(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+__tf__ AICORE void TGather(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
     uint16_t validRow, uint16_t validCol)
 {
     using T = typename DstTileData::DType;
@@ -309,7 +309,7 @@ __tf__ __aicore__ void TGather(typename DstTileData::TileDType __out__ dst, type
 }
 
 template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
-__aicore__ PTO_INLINE void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
+PTO_INTERNAL void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
 {
     using T = typename SrcTileData::DType;
     using U = typename DstTileData::DType;
@@ -329,7 +329,7 @@ __aicore__ PTO_INLINE void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
         "half/bfloat16_t/float/float8_e4m3_t/float8_e5m2_t/hifloat8_t.");
     static_assert((sizeof(U) == sizeof(T)), "TGATHER: expect same type size for dst and src");
     static_assert(
-        (DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec), "TGATHER: expect vec location");
+        (DstTileData::Loc == TileType::Vec) && (SrcTileData::Loc == TileType::Vec), "TGATHER: expect vec TileType");
     static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor), "TGATHER: expect row major");
     uint16_t rows = src.GetValidRow();
     uint16_t cols = src.GetValidCol();

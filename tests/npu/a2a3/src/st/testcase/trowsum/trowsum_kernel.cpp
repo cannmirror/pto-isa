@@ -16,15 +16,15 @@ using namespace std;
 using namespace pto;
 
 template <typename T, int row, int vaildRow, int srcCol, int srcVaildCol, int dstCol>
-__aicore__ PTO_INLINE void runTRowSum(__gm__ T __out__ *out, __gm__ T __in__ *src) {
+PTO_INTERNAL void runTRowSum(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     using DynDim2Shape  = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
     GlobalData srcGlobal(src, DynDim2Shape(vaildRow, srcVaildCol), DynDim2Stride(row, srcCol));
     GlobalData dstGlobal(out, DynDim2Shape(vaildRow, dstCol), DynDim2Stride(row, dstCol));
 
-    using srcTileData = Tile<Location::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
-    using dstTileData = Tile<Location::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
+    using srcTileData = Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
+    using dstTileData = Tile<TileType::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
     srcTileData srcTile(vaildRow, srcVaildCol);
     srcTileData tmpTile(vaildRow, srcVaildCol);
     dstTileData dstTile(vaildRow, dstCol);
@@ -44,27 +44,27 @@ __aicore__ PTO_INLINE void runTRowSum(__gm__ T __out__ *out, __gm__ T __in__ *sr
     out = dstGlobal.data();
 }
 
-extern "C" __global__ __aicore__ void launchTROWSUMCase1(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTROWSUMCase1(__gm__ float *out, __gm__ float *src)
 {
     runTRowSum<float, 127, 127, 64, 63, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWSUMCase2(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTROWSUMCase2(__gm__ float *out, __gm__ float *src)
 {
     runTRowSum<float, 63, 63, 64, 64, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWSUMCase3(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTROWSUMCase3(__gm__ float *out, __gm__ float *src)
 {
     runTRowSum<float, 31, 31, 128, 127, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWSUMCase4(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTROWSUMCase4(__gm__ float *out, __gm__ float *src)
 {
     runTRowSum<float, 15, 15, 192, 192, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWSUMCase5(__gm__ float *out, __gm__ float *src)
+extern "C" __global__ AICORE void launchTROWSUMCase5(__gm__ float *out, __gm__ float *src)
 {
     runTRowSum<float, 7, 7, 448, 447, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWSUMCase6(__gm__ half *out, __gm__ half *src)
+extern "C" __global__ AICORE void launchTROWSUMCase6(__gm__ half *out, __gm__ half *src)
 {
     runTRowSum<half, 256, 256, 16, 15, 1>(out, src);
 }

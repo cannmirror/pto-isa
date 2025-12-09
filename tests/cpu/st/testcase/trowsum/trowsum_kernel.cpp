@@ -1,11 +1,10 @@
 #include <pto/pto-inst.hpp>
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/common/constants.hpp>
 
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-__aicore__ inline void runTROWSUM(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void runTROWSUM(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = Stride<kGCols_, kGCols_, kGCols_, kGCols_, 1>;
@@ -13,7 +12,7 @@ __aicore__ inline void runTROWSUM(__gm__ T __out__ *out, __gm__ T __in__ *src)
     GlobalData srcGlobal(src);
     GlobalData dstGlobal(out);
 
-    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
     TileData srcTile(kTRows_, kTCols_);
     TileData tmpTile(kTRows_, kTCols_);
     TileData dstTile(kTRows_, kTCols_);

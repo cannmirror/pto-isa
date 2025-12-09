@@ -18,7 +18,7 @@ namespace pto {
     template <typename T, typename InstrOp>
     struct TColReduceOp {
         template <int dupSrcStride>
-        __PTO_INSTR__ static void ColReduceInstrByMode(__ubuf__ T *dst, __ubuf__ T *src, int numRepeatPerLine,
+        PTO_INTERNAL static void ColReduceInstrByMode(__ubuf__ T *dst, __ubuf__ T *src, int numRepeatPerLine,
                                                        int numRemainPerLine, int elementsPerLine, int validRow)
         {
             if (numRepeatPerLine > 0) {
@@ -47,7 +47,7 @@ namespace pto {
     };
     
     template <typename InstrOp, typename T, typename TileDataOut, typename TileDataIn, unsigned srcstride>
-    __PTO_INSTR__ void ColReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, int validRow, int validCol) {
+    PTO_INTERNAL void ColReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, int validRow, int validCol) {
         using ReduceOp = TColReduceOp<T, InstrOp>;
         constexpr int DTypeSize = sizeof(T);
         int lenBurst = (validCol * DTypeSize + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE;
@@ -72,8 +72,8 @@ namespace pto {
     }
 
     template <typename T, typename TileDataOut, typename TileDataIn>
-    __PTO_INSTR__ void TColReduceCheck(int SrcValidRow, int SrcValidCol, int DstValidCol) {
-        static_assert(TileDataOut::Loc == pto::Location::Vec && TileDataIn::Loc == pto::Location::Vec,
+    PTO_INTERNAL void TColReduceCheck(int SrcValidRow, int SrcValidCol, int DstValidCol) {
+        static_assert(TileDataOut::Loc == pto::TileType::Vec && TileDataIn::Loc == pto::TileType::Vec,
                       "This instruction only support Vec Tile");
         static_assert(TileDataIn::isRowMajor && TileDataIn::SFractal == SLayout::NoneBox,
                       "This instruction only support Nd fractal Tile");
