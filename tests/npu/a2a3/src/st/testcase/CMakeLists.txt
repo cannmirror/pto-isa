@@ -108,6 +108,7 @@ tci
 tcolmax
 tcolmin
 texpands
+tcolsum
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
