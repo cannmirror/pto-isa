@@ -11,7 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TMOV_HPP
 #define TMOV_HPP
 #include "TExtract.hpp"
-#include "TCopy.hpp"
+#include "TPartAdd.hpp"
 
 namespace pto {
 template <typename DstTileData, typename SrcTileData>
@@ -221,7 +221,10 @@ AICORE void TMovToVec(DstTileData &dst, SrcTileData &src) {
     uint64_t validDstCol = dst.GetValidCol();
     uint64_t validRow = (validSrcRow < validDstRow) ? validSrcRow : validDstRow;
     uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
-    TCopy<DstTileData, SrcTileData, blockSizeElem, srcStride, dstStride>(dst.data(), src.data(), validRow, validCol);
+    TPartCopyInstr<typename DstTileData::DType, DstTileData, SrcTileData, blockSizeElem, dstStride, srcStride>(
+        (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst.data()),
+        (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src.data()),
+        validRow, validCol, 0);
 }
 
 

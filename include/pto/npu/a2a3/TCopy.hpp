@@ -27,7 +27,7 @@ namespace pto{
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
         __ubuf__ U *dstPtr = (__ubuf__ U *)__cce_get_tile_ptr(dst);
 
-        static_assert(sizeof(T) == sizeof(U), "TCOPY: src and dst data type is different!");
+        static_assert(sizeof(T) == sizeof(U), "TMOV: src and dst data type is different!");
         
         if constexpr ((TileDataDst::isRowMajor && TileDataDst::Cols == TileDataSrc::Cols)||
         (!TileDataDst::isRowMajor && TileDataDst::Rows == TileDataSrc::Rows)) {
