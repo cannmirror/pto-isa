@@ -109,7 +109,7 @@ __aicore__ PTO_INLINE void CheckStaticAcc()
     static_assert(std::is_same_v<typename TileData::DType, int32_t> || std::is_same_v<typename TileData::DType, float>,
         "The input data type must be restricted to int32_t/float!");
     static_assert((GlobalData::layout == pto::Layout::ND) || (GlobalData::layout == pto::Layout::NZ),
-        "TSTORE(GlobalTensor, AccTile) only support NZ2ND/NZ2NZ.");
+        "TSTORE(Acc2GM) only support NZ2ND / NZ2NZ.");
     static_assert(TileData::Cols >= 1 && TileData::Cols <= 4095, "The range of Cols is [1, 4095].");
     static_assert((GlobalData::layout == pto::Layout::ND && TileData::Rows >= 1 && TileData::Rows <= 8192) ||
                       (GlobalData::layout == pto::Layout::NZ && TileData::Rows >= 1 && TileData::Rows <= 65535 &&

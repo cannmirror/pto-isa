@@ -86,21 +86,21 @@ if __name__ == "__main__":
     ]
 
     case_params_list = [
+        GlobalTensorInfo(np.float32, "NZ", 1, 1, 1, 16, 8, 1, 1, 2, 16, 8),
+        GlobalTensorInfo(np.uint8, "NZ", 1, 2, 1, 16, 32, 2, 4, 2, 16, 32),
+        GlobalTensorInfo(np.int16, "NZ", 2, 2, 2, 16, 16, 5, 3, 3, 16, 16),
         GlobalTensorInfo(np.float32, "ND", 2, 1, 1, 39, 47, 3, 2, 1, 43, 61),
         GlobalTensorInfo(np.int16, "ND", 1, 2, 1, 23, 121, 3, 2, 2, 35, 125),
         GlobalTensorInfo(np.int8, "ND", 2, 2, 3, 23, 47, 3, 3, 4, 32, 50),
         GlobalTensorInfo(np.float32, "DN", 1, 1, 1, 4, 21, 1, 1, 1, 8, 32),
         GlobalTensorInfo(np.uint16, "DN", 3, 1, 1, 1, 124, 5, 1, 1, 2, 128),
         GlobalTensorInfo(np.int8, "DN", 2, 3, 7, 47, 13, 2, 3, 7, 55, 29),
-        GlobalTensorInfo(np.float32, "NZ", 1, 1, 1, 16, 8, 1, 1, 2, 16, 8),
-        GlobalTensorInfo(np.int16, "NZ", 2, 2, 2, 16, 16, 5, 3, 3, 16, 16),
-        GlobalTensorInfo(np.uint8, "NZ", 1, 2, 1, 16, 32, 2, 4, 2, 16, 32),
         GlobalTensorInfo(np.int64, "ND", 1, 1, 2, 16, 16, 2, 2, 2, 16, 16),
         GlobalTensorInfo(np.uint64, "DN", 1, 1, 2, 16, 64, 2, 2, 2, 16, 64),
         GlobalTensorInfo(np.int64, "ND", 1, 1, 2, 39, 47, 2, 2, 2, 43, 50),
+        GlobalTensorInfo(np.uint8, "NZ", 1, 2, 1, 16, 32, 2, 4, 2, 16, 32), # fp4
         GlobalTensorInfo(np.uint8, "ND", 2, 2, 3, 23, 47, 3, 3, 4, 32, 50), # fp4
         GlobalTensorInfo(np.uint8, "DN", 2, 3, 7, 47, 13, 2, 3, 7, 55, 29), # fp4
-        GlobalTensorInfo(np.uint8, "NZ", 1, 2, 1, 16, 32, 2, 4, 2, 16, 32), # fp4
     ]
 
     for i, case_name in enumerate(case_name_list):
