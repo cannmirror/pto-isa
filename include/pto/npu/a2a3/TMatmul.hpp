@@ -24,41 +24,41 @@ __aicore__ PTO_INLINE constexpr bool GetKDirectionAlign()
     return false;
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
-__tf__ __aicore__ void TMatmul(typename TileAcc::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
+template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
+__tf__ __aicore__ void TMatmul(typename TileRes::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
     typename TileRight::TileDType __in__ bMatrix, uint16_t m, uint16_t k, uint16_t n)
 {
     constexpr bool kDirectionAlign = GetKDirectionAlign<TileLeft>();
 
-    __cc__ typename TileAcc::DType *c = (__cc__ typename TileAcc::DType *)__cce_get_tile_ptr(cMatrix);
+    __cc__ typename TileRes::DType *c = (__cc__ typename TileRes::DType *)__cce_get_tile_ptr(cMatrix);
     __ca__ typename TileLeft::DType *a = (__ca__ typename TileLeft::DType *)__cce_get_tile_ptr(aMatrix);
     __cb__ typename TileRight::DType *b = (__cb__ typename TileRight::DType *)__cce_get_tile_ptr(bMatrix);
 
     mad(c, a, b, m, k, n, 0, kDirectionAlign, cmatrixSource, cmatrixInitVal);
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
-__tf__ __aicore__ void TMatmulBias(typename TileAcc::TileDType __out__ cMatrix,
+template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
+__tf__ __aicore__ void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
     typename TileLeft::TileDType __in__ aMatrix, typename TileRight::TileDType __in__ bMatrix, uint64_t bias,
     uint16_t m, uint16_t k, uint16_t n)
 {
     constexpr bool kDirectionAlign = GetKDirectionAlign<TileLeft>();
 
-    __cc__ typename TileAcc::DType *c = (__cc__ typename TileAcc::DType *)__cce_get_tile_ptr(cMatrix);
+    __cc__ typename TileRes::DType *c = (__cc__ typename TileRes::DType *)__cce_get_tile_ptr(cMatrix);
     __ca__ typename TileLeft::DType *a = (__ca__ typename TileLeft::DType *)__cce_get_tile_ptr(aMatrix);
     __cb__ typename TileRight::DType *b = (__cb__ typename TileRight::DType *)__cce_get_tile_ptr(bMatrix);
     uint64_t xd = ((uint64_t)c) & 0xffffffffULL | ((bias & 0xffffffffULL) << 32);
-    c = (__cc__ typename TileAcc::DType *)xd;
+    c = (__cc__ typename TileRes::DType *)xd;
 
     mad(c, a, b, m, k, n, 0, kDirectionAlign, cmatrixSource, cmatrixInitVal);
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight>
+template <typename TileRes, typename TileLeft, typename TileRight>
 __aicore__ PTO_INLINE void CheckStaticMad()
 {
     using AType = typename TileLeft::DType;
     using BType = typename TileRight::DType;
-    using CType = typename TileAcc::DType;
+    using CType = typename TileRes::DType;
     static_assert(((std::is_same<CType, int32_t>::value) && (std::is_same<AType, int8_t>::value) &&
                       (std::is_same<BType, int8_t>::value)) ||
                       ((std::is_same<CType, float>::value) && (std::is_same<AType, half>::value) &&
@@ -70,12 +70,12 @@ __aicore__ PTO_INLINE void CheckStaticMad()
         "The data type is not supported.");
 
     static_assert(
-        (TileLeft::Rows == TileAcc::Rows) && (TileLeft::Cols == TileRight::Rows) && (TileRight::Cols == TileAcc::Cols),
+        (TileLeft::Rows == TileRes::Rows) && (TileLeft::Cols == TileRight::Rows) && (TileRight::Cols == TileRes::Cols),
         "Inconsistent number of m, k, n.");
 
     static_assert(TileLeft::Loc == Location::Left, "TileLeft location must be set to Location::Left.");
     static_assert(TileRight::Loc == Location::Right, "TileRight location must be set to Location::Right.");
-    static_assert(TileAcc::Loc == Location::Acc, "TileAcc location must be set to Location::Acc.");
+    static_assert(TileRes::Loc == Location::Acc, "TileRes location must be set to Location::Acc.");
 }
 
 __aicore__ PTO_INLINE void CheckDynamicMad(uint16_t aMatrixRow, uint16_t aMatrixCol, uint16_t bMatrixCol)
@@ -86,42 +86,42 @@ __aicore__ PTO_INLINE void CheckDynamicMad(uint16_t aMatrixRow, uint16_t aMatrix
     PTO_ASSERT(bMatrixCol >= 1 && bMatrixCol <= elementSize, "ERROR: The range of valid bMatrixCol is [1, 4095].");
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight>
-__aicore__ PTO_INLINE void TMATMUL_IMPL(TileAcc &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
+template <typename TileRes, typename TileLeft, typename TileRight>
+__aicore__ PTO_INLINE void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
 {
-    CheckStaticMad<TileAcc, TileLeft, TileRight>();
+    CheckStaticMad<TileRes, TileLeft, TileRight>();
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
     CheckDynamicMad(m, k, n);
-    TMatmul<TileAcc, TileLeft, TileRight, false, true>(cMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
+    TMatmul<TileRes, TileLeft, TileRight, false, true>(cMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight>
+template <typename TileRes, typename TileLeft, typename TileRight>
 __aicore__ PTO_INLINE void TMATMUL_ACC_IMPL(
-    TileAcc &cOutMatrix, TileAcc &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
+    TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
 {
-    CheckStaticMad<TileAcc, TileLeft, TileRight>();
+    CheckStaticMad<TileRes, TileLeft, TileRight>();
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
     CheckDynamicMad(m, k, n);
-    TMatmul<TileAcc, TileLeft, TileRight, false, false>(cOutMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
+    TMatmul<TileRes, TileLeft, TileRight, false, false>(cOutMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight, typename TileBias>
+template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias>
 __aicore__ PTO_INLINE void TMATMUL_BIAS_IMPL(
-    TileAcc &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData)
+    TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData)
 {
-    CheckStaticMad<TileAcc, TileLeft, TileRight>();
-    static_assert(std::is_same_v<typename TileAcc::DType, typename TileBias::DType>, "No supported bias data type.");
+    CheckStaticMad<TileRes, TileLeft, TileRight>();
+    static_assert(std::is_same_v<typename TileRes::DType, typename TileBias::DType>, "No supported bias data type.");
     static_assert((TileBias::Loc == Location::Bias) && (TileBias::Rows == 1), "TileBias must be single row.");
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
     CheckDynamicMad(m, k, n);
 
-    TMatmulBias<TileAcc, TileLeft, TileRight, true, false>(
+    TMatmulBias<TileRes, TileLeft, TileRight, true, false>(
         cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n);
 }
 } // namespace pto
