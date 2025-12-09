@@ -27,10 +27,10 @@ CC = $(CCEC_DIR)/ccec
 CXX = $(CCEC_DIR)/ccec
 ifeq ($(VERSION), a2a3)
 CC_O = -O2 --cce-aicore-arch=dav-c220-vec -lascendcl -lruntime
-DEFINES += -D__DAV_V220
+DEFINES += -DMEMORY_BASE
 else ifeq ($(VERSION), a5)
 CC_O = -O2 --cce-aicore-arch=dav-c310 -lascendcl -lruntime
-DEFINES += -D__DAV_V310
+DEFINES += -DREGISTER_BASE
 endif
 CC_VER ?= -std=c++17
 INCLUDE += -I$(COMPILER_DIR)/runtime/include -I$(ROOT)/test/common

@@ -14,7 +14,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/type.hpp>
 
-#ifdef __DAV_V220
+#ifdef MEMORY_BASE
 #include "pto/npu/a2a3/TAssign.hpp"
 #include "pto/npu/a2a3/TAdd.hpp"
 #include "pto/npu/a2a3/TMins.hpp"
@@ -58,7 +58,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a2a3/TColMin.hpp"
 #endif
 
-#ifdef __DAV_V310
+#ifdef REGISTER_BASE
 #include "pto/npu/a5/TAssign.hpp"
 #include "pto/npu/a5/TAdd.hpp"
 #include "pto/npu/a5/TAddS.hpp"

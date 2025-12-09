@@ -237,7 +237,7 @@ struct PadValueMap<uint8_t, PadValue::Max> {
     static constexpr auto value = uint8_t(0xff);
 };
 
-#if defined(__DAV_V310)
+#if defined(REGISTER_BASE)
 template <PadValue PadVal>
 struct PadValueMap<float4_e1m2x2_t, PadVal> {
     static constexpr auto value = uint8_t(0);

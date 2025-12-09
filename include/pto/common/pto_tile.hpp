@@ -705,14 +705,14 @@ struct Tile {
     TileDType data_;
 };
 
-#ifdef __DAV_V220
+#ifdef MEMORY_BASE
 template <typename Element_, const int Rows_, const int Cols_,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_>
 using TileLeft = Tile<Location::Left, Element_, Rows_, Cols_, BLayout::RowMajor,
                       RowValid_, ColValid_, SLayout::RowMajor, 512>;
 #endif
 
-#if defined (__DAV_V310) || defined (__CPU_SIM)
+#if defined (REGISTER_BASE) || defined (__CPU_SIM)
 template <typename Element_, const int Rows_, const int Cols_,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_>
 using TileLeft = Tile<Location::Left, Element_, Rows_, Cols_, BLayout::ColMajor,

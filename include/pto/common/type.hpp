@@ -10,7 +10,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifndef _PTO_INCLUDE_NPU_TYPE_H_
 #define _PTO_INCLUDE_NPU_TYPE_H_
-#if defined(__DAV_V220) || defined(__DAV_V310)
+#if defined(MEMORY_BASE) || defined(REGISTER_BASE)
 #define __aicore__ [aicore]
 #else
 #define __aicore__
