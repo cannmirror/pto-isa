@@ -15,9 +15,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-
-template <int32_t tilingKey>
-void launchTROWEXPAND(uint8_t *out, uint8_t *src, void *stream);
+namespace TRowExpandTest{
+template <typename T, uint32_t rows, uint32_t srcCols, uint32_t dstValidCols, uint32_t dstCols>
+void launchTROWEXPAND(T *out, T *src, void *stream);
 
 class TROWEXPANDTest : public testing::Test {
 protected:
@@ -35,25 +35,19 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-
-TEST_F(TROWEXPANDTest, case0)
-{
-    uint32_t rows = 16;
-    uint32_t srcCols = 16;
-    uint32_t dstCols = 512;
-    size_t inputFileSize = rows * srcCols * sizeof(uint16_t);
-    size_t outputFileSize = rows * dstCols * sizeof(uint16_t);
+template <typename T, uint32_t rows, uint32_t srcCols, uint32_t dstValidCols, uint32_t dstCols>
+void test_trowexpand() {
+    size_t inputFileSize = rows * srcCols * sizeof(T);
+    size_t outputFileSize = rows * dstCols * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
-    std::cout << "================================" << std::endl;
-
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    uint8_t *dstHost, *src0Host;
-    uint8_t *dstDevice, *src0Device;
-
+    T *dstHost, *src0Host;
+    T *dstDevice, *src0Device;
+    
     aclrtMallocHost((void **)(&dstHost), outputFileSize);
     aclrtMallocHost((void **)(&src0Host), inputFileSize);
 
@@ -63,11 +57,10 @@ TEST_F(TROWEXPANDTest, case0)
     ReadFile(GetGoldenDir() + "/input.bin", inputFileSize, src0Host, inputFileSize);
 
     aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTROWEXPAND<0>(dstDevice, src0Device, stream);
+    launchTROWEXPAND<T, rows, srcCols, dstValidCols, dstCols>(dstDevice, src0Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
 
     WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
 
@@ -85,291 +78,33 @@ TEST_F(TROWEXPANDTest, case0)
     std::vector<float> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
-    std::cout << "================================" << std::endl;
     bool ret = ResultCmp(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TROWEXPANDTest, case1)
+TEST_F(TROWEXPANDTest, case0_half_16_16_16_512)
 {
-    uint32_t rows = 16;
-    uint32_t srcCols = 32;
-    uint32_t dstCols = 256;
-    size_t inputFileSize = rows * srcCols * sizeof(uint8_t);
-    size_t outputFileSize = rows * dstCols * sizeof(uint8_t);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    std::cout << "================================" << std::endl;
-
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host;
-    uint8_t *dstDevice, *src0Device;
-
-    aclrtMallocHost((void **)(&dstHost), outputFileSize);
-    aclrtMallocHost((void **)(&src0Host), inputFileSize);
-
-    aclrtMalloc((void **)&dstDevice, outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", inputFileSize, src0Host, inputFileSize);
-
-    aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTROWEXPAND<1>(dstDevice, src0Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
-    std::cout << "================================" << std::endl;
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    test_trowexpand<aclFloat16, 16, 16, 512, 512>();
 }
-
-TEST_F(TROWEXPANDTest, case2)
+TEST_F(TROWEXPANDTest, case1_int8_16_32_16_256)
 {
-    uint32_t rows = 16;
-    uint32_t srcCols = 8;
-    uint32_t dstCols = 128;
-    size_t inputFileSize = rows * srcCols * sizeof(float);
-    size_t outputFileSize = rows * dstCols * sizeof(float);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    std::cout << "================================" << std::endl;
-
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host;
-    uint8_t *dstDevice, *src0Device;
-
-    aclrtMallocHost((void **)(&dstHost), outputFileSize);
-    aclrtMallocHost((void **)(&src0Host), inputFileSize);
-
-    aclrtMalloc((void **)&dstDevice, outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", inputFileSize, src0Host, inputFileSize);
-
-    aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTROWEXPAND<2>(dstDevice, src0Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
-    std::cout << "================================" << std::endl;
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    test_trowexpand<int8_t, 16, 32, 256, 256>();
 }
-
-
-TEST_F(TROWEXPANDTest, case3)
+TEST_F(TROWEXPANDTest, case2_float_16_8_16_128)
 {
-    uint32_t rows = 16;
-    uint32_t srcCols = 32 / sizeof(uint16_t);
-    uint32_t dstCols = 512;
-    size_t inputFileSize = rows * srcCols * sizeof(uint16_t);
-    size_t outputFileSize = rows * dstCols * sizeof(uint16_t);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    std::cout << "================================" << std::endl;
-
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host;
-    uint8_t *dstDevice, *src0Device;
-
-    aclrtMallocHost((void **)(&dstHost), outputFileSize);
-    aclrtMallocHost((void **)(&src0Host), inputFileSize);
-
-    aclrtMalloc((void **)&dstDevice, outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", inputFileSize, src0Host, inputFileSize);
-
-    aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTROWEXPAND<3>(dstDevice, src0Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
-    std::cout << "================================" << std::endl;
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    test_trowexpand<float, 16, 8, 128, 128>();
 }
-
-TEST_F(TROWEXPANDTest, case4)
+TEST_F(TROWEXPANDTest, case3_half_16_16_16_511)
 {
-    uint32_t rows = 16;
-    uint32_t srcCols = 32;
-    uint32_t dstCols = 256;
-    size_t inputFileSize = rows * srcCols * sizeof(uint8_t);
-    size_t outputFileSize = rows * dstCols * sizeof(uint8_t);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    std::cout << "================================" << std::endl;
-
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host;
-    uint8_t *dstDevice, *src0Device;
-
-    aclrtMallocHost((void **)(&dstHost), outputFileSize);
-    aclrtMallocHost((void **)(&src0Host), inputFileSize);
-
-    aclrtMalloc((void **)&dstDevice, outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", inputFileSize, src0Host, inputFileSize);
-
-    aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTROWEXPAND<4>(dstDevice, src0Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
-    std::cout << "================================" << std::endl;
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    test_trowexpand<aclFloat16, 16, 16, 511, 512>();
 }
-
-TEST_F(TROWEXPANDTest, case5)
+TEST_F(TROWEXPANDTest, case4_int8_16_32_16_255)
 {
-    uint32_t rows = 16;
-    uint32_t srcCols = 8;
-    uint32_t dstCols = 128;
-    size_t inputFileSize = rows * srcCols * sizeof(float);
-    size_t outputFileSize = rows * dstCols * sizeof(float);
-
-    aclInit(nullptr);
-    aclrtSetDevice(0);
-    std::cout << "================================" << std::endl;
-
-    aclrtStream stream;
-    aclrtCreateStream(&stream);
-
-    uint8_t *dstHost, *src0Host;
-    uint8_t *dstDevice, *src0Device;
-
-    aclrtMallocHost((void **)(&dstHost), outputFileSize);
-    aclrtMallocHost((void **)(&src0Host), inputFileSize);
-
-    aclrtMalloc((void **)&dstDevice, outputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, inputFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input.bin", inputFileSize, src0Host, inputFileSize);
-
-    aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTROWEXPAND<5>(dstDevice, src0Device, stream);
-
-    aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
-
-    aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-
-    aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-
-    aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
-    aclFinalize();
-
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
-    std::cout << "================================" << std::endl;
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    test_trowexpand<int8_t, 16, 32, 255, 256>();
 }
-
-
-
-
-
-
-
+TEST_F(TROWEXPANDTest, case5_float_16_8_16_127)
+{
+    test_trowexpand<float, 16, 8, 127, 128>();
+}
+}

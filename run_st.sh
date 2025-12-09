@@ -126,7 +126,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t trowsum -g TROWSUMTest.test1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tcolsum -g TCOLSUMTest.test01
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tcolmax -g TCOLMAXTest.test01
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t trowexpand -g TROWEXPANDTest.case5
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t trowexpand -g TROWEXPANDTest.case5_float_16_8_16_127
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tgather -g TGATHERTest.case1_float
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t ttrans -g TTRANSTest.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
