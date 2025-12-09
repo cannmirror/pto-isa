@@ -46,6 +46,16 @@ namespace pto {
 
     template <typename TileData>
     __aicore__ void TMUL_IMPL(TileData &dst, TileData &src0, TileData &src1) {
+        static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
+                      std::is_same<typename TileData::DType, uint32_t>::value ||
+                      std::is_same<typename TileData::DType, float>::value ||
+                      std::is_same<typename TileData::DType, int16_t>::value ||
+                      std::is_same<typename TileData::DType, uint16_t>::value ||
+                      std::is_same<typename TileData::DType, half>::value ||
+                      std::is_same<typename TileData::DType, bfloat16_t>::value ||
+                      std::is_same<typename TileData::DType, uint8_t>::value ||
+                      std::is_same<typename TileData::DType, int8_t>::value,
+                      "TMUL: Invalid data type.");
         static_assert(TileData::isRowMajor, "TMUL: not supported Layout type");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 

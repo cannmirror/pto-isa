@@ -69,9 +69,9 @@ void TBinOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
     uint16_t repeatTimes = CeilDivision(kValidRows * kValidCols, elementsPerRepeat);
     __VEC_SCOPE__
     {
-        RegTensor<T> vreg0;
-        RegTensor<T> vreg1;
-        RegTensor<T> vreg2;
+        RegTensor<T> vreg0_PU;
+        RegTensor<T> vreg1_PU;
+        RegTensor<T> vreg2_PU;
         MaskReg  preg;
 
         constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
@@ -79,10 +79,10 @@ void TBinOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
         #pragma clang loop unroll(disable)
         for (uint16_t i = 0; i < (uint16_t)repeatTimes; ++i) {
             preg = CreatePredicate<T>(sreg);
-            vlds(vreg0, src0Ptr, elementsPerRepeat, NORM, POST_UPDATE);
-            vlds(vreg1, src1Ptr, elementsPerRepeat, NORM, POST_UPDATE);
-            Op::BinInstr(vreg2, vreg0, vreg1, preg);
-            vsts(vreg2, dstPtr, elementsPerRepeat, distValue, preg, POST_UPDATE);
+            vlds(vreg0_PU, src0Ptr, elementsPerRepeat, NORM, POST_UPDATE);
+            vlds(vreg1_PU, src1Ptr, elementsPerRepeat, NORM, POST_UPDATE);
+            Op::BinInstr(vreg2_PU, vreg0_PU, vreg1_PU, preg);
+            vsts(vreg2_PU, dstPtr, elementsPerRepeat, distValue, preg, POST_UPDATE);
         }
     } 
 }
@@ -129,87 +129,72 @@ void TBinOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 
     __VEC_SCOPE__
     {
-        RegTensor<T> vreg0;
-        RegTensor<T> vreg1;
-        RegTensor<T> vreg2;
+        RegTensor<T> vreg0_PU;
+        RegTensor<T> vreg1_PU;
+        RegTensor<T> vreg2_PU;
         MaskReg preg;
         constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
         for (uint16_t i = 0; i < (uint16_t)(kValidRows); ++i) {
             for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
-                vlds(vreg0, src0Ptr,  i * rowStride + j * elementsPerRepeat, NORM);
-                vlds(vreg1, src1Ptr, i * rowStride + j * elementsPerRepeat, NORM);
+                vlds(vreg0_PU, src0Ptr,  i * rowStride + j * elementsPerRepeat, NORM);
+                vlds(vreg1_PU, src1Ptr, i * rowStride + j * elementsPerRepeat, NORM);
                 uint32_t count = ((j + 1) * elementsPerRepeat >= kValidCols ? kValidCols - j * elementsPerRepeat : elementsPerRepeat);
                 preg = CreatePredicate<T>(count);
-                Op::BinInstr(vreg2, vreg0, vreg1, preg);
-                vsts(vreg2, dstPtr, i * rowStride + j * elementsPerRepeat, distValue, preg);
+                Op::BinInstr(vreg2_PU, vreg0_PU, vreg1_PU, preg);
+                vsts(vreg2_PU, dstPtr, i * rowStride + j * elementsPerRepeat, distValue, preg);
             }
         }
     }
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE void BinaryInstr(typename TileData::TileDType __out__ dst, 
-                            typename TileData::TileDType __in__ src0, 
-                            typename TileData::TileDType __in__ src1,
-                            unsigned kValidRows,
-                            unsigned kValidCols,
-                            BinOpsImpl version) {
+__aicore__ PTO_INLINE void BinaryInstr(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1,
+                            unsigned kValidRows, unsigned kValidCols, BinOpsImpl version) {
     using T = typename TileData::DType;
-    if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> || std::is_same_v<T, uint16_t> || 
-        std::is_same_v<T, int16_t> || std::is_same_v<T, uint32_t> ||
-        std::is_same_v<T, int32_t> || std::is_same_v<T, half> ||
-        std::is_same_v<T, float> || std::is_same_v<T, bfloat16_t>) {
-        if constexpr (TileData::ValidCol == TileData::Cols) {
+    if constexpr (TileData::ValidCol == TileData::Cols) {
+        switch (version) {
+        case BinOpsImpl::BinOpsIMPL_DEFAULT:
+            TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
+            break;
+        case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
+        case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
+            TBinOps_1D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
+            break;
+        case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
+        case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
+        default:
+            TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
+            break;
+        }
+    } else {
+        if (TileData::Cols == kValidCols) {
             switch (version) {
-            case BinOpsImpl::BinOpsIMPL_DEFAULT:
-                TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                break;
             case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
             case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
                 TBinOps_1D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
                 break;
+            case BinOpsImpl::BinOpsIMPL_DEFAULT:
             case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
             case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
             default:
                 TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
                 break;
-            }
-        } else {
-            if (TileData::Cols == kValidCols) {
-                switch (version) {
-                case BinOpsImpl::BinOpsIMPL_DEFAULT:
-                    TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                    break;
-                case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
-                case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
-                    TBinOps_1D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                    break;
-                case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-                case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
-                default:
-                    TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                    break;
-                }  
-            }
-            else {
-                switch (version) {
-                case BinOpsImpl::BinOpsIMPL_DEFAULT:
-                    TBinOps_2D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                    break;
-                case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
-                case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
-                    TBinOps_2D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                    break;
-                case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-                case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
-                default:
-                    TBinOps_2D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                    break;
-                }  
-            }
+            }  
         }
-    }else {
-        static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TBinOps: Invalid data type.");
+        else {
+            switch (version) {
+            case BinOpsImpl::BinOpsIMPL_DEFAULT:
+            case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
+            case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
+                TBinOps_2D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
+                break;
+            case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
+            case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
+            default:
+                TBinOps_2D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
+                break;
+            }  
+        }
     }
 }
 
