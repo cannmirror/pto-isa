@@ -88,12 +88,12 @@ __tf__ __aicore__ void TMrgsort(typename DstTileData::TileDType __out__ dst,
     __ubuf__ typename DstTileData::DType *src0Ptr = (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(src0);
     __ubuf__ typename DstTileData::DType *src1Ptr = (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(src1);
 
-    uint64_t count = (uint64_t(src0Col)); // VMS4_SR[15:0], number of finished region proposals in list0
+    uint64_t count = uint64_t(src0Col); // VMS4_SR[15:0], number of finished region proposals in list0
     count |= (uint64_t(src1Col) << 16);   // VMS4_SR[31:16], number of finished region proposals in list1
 
     uint64_t config = InitConfig<exhausted>();
 
-    if (listNum == LIST_NUM_2) {
+    if constexpr (listNum == LIST_NUM_2) {
         config |= (uint64_t(0b0011) << 8); // Xt[11:8]: 4-bit mask signal
 
         __ubuf__ typename DstTileData::DType *addrArray[LIST_NUM_2] = {

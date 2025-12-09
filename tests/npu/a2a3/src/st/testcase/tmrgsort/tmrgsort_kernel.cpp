@@ -218,19 +218,74 @@ __global__ __aicore__ void runTMrgsort_single(__gm__ T *out, __gm__ T *src0) {
     out = dstGlobal.data();
 }
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int topk>
-__global__ __aicore__ void runTMrgsort_topk(__gm__ T *out, __gm__ T *src) {
-    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+template <int kTCols_>
+__aicore__ PTO_INLINE int32_t fillMrgArray(int32_t* mrgArray, int blockLen) {
+    int32_t arrayCount = 0;
+    int32_t tmpInner = kTCols_;
+    for (int32_t i = blockLen; i >= 64; i /= 4) {
+        int32_t count;
+        for (count = 0; count < tmpInner / i; count++) {
+            mrgArray[arrayCount++] = i;
+        }
+        tmpInner -= count * i;
+    }
+    return arrayCount;
+}
 
-    using DstDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using DstDynStridDim5 = pto::Stride<1, 1, 1, topk, 1>;
-    using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
-    using TmpDynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using TmpDynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using TmpGlobalData = GlobalTensor<T, TmpDynShapeDim5, TmpDynStridDim5>;
+template <typename GlobalData, typename DstGlobalData, typename DstTileData, typename TmpTileData, typename T,
+    int kTCols_, int topk>
+__aicore__ PTO_INLINE void sortTailBlock(
+    DstGlobalData &dstGlobal, DstTileData &dstTile, __gm__ T *src, __ubuf__ T *srcAddr, int blockLen)
+{
+    TmpTileData tmp1Tile(1, kTCols_);
+    TASSIGN(tmp1Tile, 0x0 + (kTCols_ * 2 + topk) * sizeof(T));
+    
+    int32_t mrgArray[15] = {0};
+    int32_t arrayCount = fillMrgArray<kTCols_>(mrgArray, blockLen);
+    uint16_t mrgSortedLen = 0;
+    GlobalData srcGlobal(src);
+    MrgSortExecutedNumList executedNumList;
+    for (int32_t i = 0; i < arrayCount - 1; ++i) {
+        using Src0TileData = Tile<Location::Vec, T, 1, topk, BLayout::RowMajor, -1, -1>;
+        using Src1TileData = Tile<Location::Vec, T, 1, topk, BLayout::RowMajor, -1, -1>;
+        mrgSortedLen += static_cast<uint16_t>(mrgArray[i]);
+        uint64_t tmpMrgSortedLen = mrgSortedLen;
+        uint64_t tmpMrgArray = mrgArray[i + 1];
+        if (tmpMrgSortedLen > topk) {
+            tmpMrgSortedLen = topk;
+        }
+        if (tmpMrgArray > topk) {
+            tmpMrgArray = topk;
+        }
+        Src0TileData src0Tile(1, tmpMrgSortedLen);
+        Src1TileData src1Tile(1, tmpMrgArray);
+        TASSIGN(src0Tile, 0x0 + (kTCols_ * 3 + topk) * sizeof(T));
+        TASSIGN(src1Tile, 0x0 + (kTCols_ * 3 + topk + tmpMrgSortedLen) * sizeof(T));
+        copy_ubuf_to_ubuf(src0Tile.data(), (__ubuf__ void *)srcAddr, 0, 1,
+            (tmpMrgSortedLen * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
+        pipe_barrier(PIPE_V);
+        copy_ubuf_to_ubuf(src1Tile.data(), (__ubuf__ void *)(srcAddr + mrgSortedLen), 0, 1,
+            (tmpMrgArray * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
+        pipe_barrier(PIPE_V);
+        TMRGSORT<DstTileData, TmpTileData, Src0TileData, Src1TileData, 0>(
+            dstTile, executedNumList, tmp1Tile, src0Tile, src1Tile);
+        pipe_barrier(PIPE_V);
+        copy_ubuf_to_ubuf((__ubuf__ void *)srcAddr, dstTile.data(), 0, 1,
+            (topk * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
+        pipe_barrier(PIPE_V);
+    }
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    TSTORE(dstGlobal, dstTile);
+}
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int topk>
+__global__ __aicore__ void runTMrgsort_topk(__gm__ T *out, __gm__ T *src)
+{
+    using GlobalData = GlobalTensor<T, Shape<1, 1, 1, kGRows_, kGCols_>, pto::Stride<1, 1, 1, kGCols_, 1>>;
+    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using DstGlobalData = GlobalTensor<T, Shape<1, 1, 1, kGRows_, kGCols_>, pto::Stride<1, 1, 1, topk, 1>>;
+    using TmpGlobalData = GlobalTensor<T, Shape<1, 1, 1, kGRows_, kGCols_>, pto::Stride<1, 1, 1, kGCols_, 1>>;
     using DstTileData = Tile<Location::Vec, T, kTRows_, topk, BLayout::RowMajor, -1, -1>;
     using TmpTileData = Tile<Location::Vec, T, 1, kTCols_, BLayout::RowMajor, -1, -1>;
 
@@ -238,7 +293,7 @@ __global__ __aicore__ void runTMrgsort_topk(__gm__ T *out, __gm__ T *src) {
     DstTileData dstTile(1, topk);
     TmpTileData tmpTile(1, kTCols_);
     uint32_t dstAddr = kTCols_ * sizeof(T);
-    uint32_t tmpAddr = dstAddr + kTCols_ * sizeof(T);
+    uint32_t tmpAddr = dstAddr + topk * sizeof(T);
     TASSIGN(srcTile, 0x0);
     TASSIGN(dstTile, 0x0 + dstAddr);
     TASSIGN(tmpTile, 0x0 + tmpAddr);
@@ -250,15 +305,14 @@ __global__ __aicore__ void runTMrgsort_topk(__gm__ T *out, __gm__ T *src) {
 
     // 每4个合并，计算整块
     TLOAD(srcTile, srcGlobal);
-    for(; blockLen * 4 <= kTCols_; blockLen *= 4) {
+    for (; blockLen * 4 <= kTCols_; blockLen *= 4) {
         set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
         wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
         TMRGSORT<TmpTileData, TileData>(tmpTile, srcTile, blockLen);
         pipe_barrier(PIPE_V);
         uint16_t cols = kTCols_ / (blockLen * 4) * (blockLen * 4);
         copy_ubuf_to_ubuf(
-                srcTile.data(), tmpTile.data(), 0, 1,
-                (cols * sizeof(typename DstTileData::DType) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
+            srcTile.data(), tmpTile.data(), 0, 1, (cols * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
         pipe_barrier(PIPE_V);
         set_flag(PIPE_V, PIPE_MTE2, EVENT_ID0);
         wait_flag(PIPE_V, PIPE_MTE2, EVENT_ID0);
@@ -266,66 +320,14 @@ __global__ __aicore__ void runTMrgsort_topk(__gm__ T *out, __gm__ T *src) {
 
     // 合并尾块
     if (blockLen < kTCols_) {
-        TmpTileData tmp1Tile(kTRows_, kTCols_);
-        uint32_t tmp1Addr = tmpAddr + kTCols_ * sizeof(T);
-        TASSIGN(tmp1Tile, 0x0 + tmp1Addr);
-        int32_t arrayCount = 0;
-        int32_t mrgArray[15] = {0};
-        int32_t tmpInner = kTCols_;
-        for (int32_t i = blockLen; i >= 64; i /= 4) {
-            int32_t count;
-            for (count = 0; count < tmpInner / i; count++) {
-                mrgArray[arrayCount++] = i;
-            }
-            tmpInner -= count * i;
-        }
-        uint16_t mrgSortedLen = 0;
-        GlobalData srcGlobal(src);
-        MrgSortExecutedNumList executedNumList;
-        for (int32_t i = 0; i < arrayCount - 1; ++i) {
-            using Src0TileData = Tile<Location::Vec, T, kTRows_, topk, BLayout::RowMajor, -1, -1>;
-            using Src1TileData = Tile<Location::Vec, T, kTRows_, topk, BLayout::RowMajor, -1, -1>;
-            mrgSortedLen += static_cast<uint16_t>(mrgArray[i]);
-            uint64_t tmpMrgSortedLen = mrgSortedLen;
-            uint64_t tmpMrgArray = mrgArray[i + 1];
-            if (tmpMrgSortedLen > topk) {
-                tmpMrgSortedLen = topk;
-            }
-            if (tmpMrgArray > topk) {
-                tmpMrgArray = topk;
-            }
-            Src0TileData src0Tile(1, tmpMrgSortedLen);
-            Src1TileData src1Tile(1, tmpMrgArray);
-            uint32_t src0Addr = tmp1Addr + kTCols_ * sizeof(T);
-            uint32_t src1Addr = src0Addr + tmpMrgSortedLen * sizeof(T);
-            TASSIGN(src0Tile, 0x0 + src0Addr);
-            TASSIGN(src1Tile, 0x0 + src1Addr);
-            copy_ubuf_to_ubuf(
-                src0Tile.data(), tmpTile.data(), 0, 1,
-                (tmpMrgSortedLen * sizeof(typename DstTileData::DType) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
-            pipe_barrier(PIPE_V);
-            copy_ubuf_to_ubuf(
-                src1Tile.data(), tmpTile.data() + mrgSortedLen, 0, 1,
-                (tmpMrgArray * sizeof(typename DstTileData::DType) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
-            pipe_barrier(PIPE_V);
-            set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-            wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-            TMRGSORT<DstTileData, TmpTileData, Src0TileData, Src1TileData, 0>(dstTile, executedNumList, tmp1Tile,
-                                        src0Tile, src1Tile);
-            pipe_barrier(PIPE_V);
-            copy_ubuf_to_ubuf(srcTile.data(), dstTile.data(), 0, 1,
-                              (topk * sizeof(typename DstTileData::DType) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0,
-                              0);
-            pipe_barrier(PIPE_V);
-        }
+        sortTailBlock<GlobalData, DstGlobalData, DstTileData, TmpTileData, T, kTCols_, topk>(
+            dstGlobal, dstTile, src, srcTile.data(), blockLen);
+    } else {
+        copy_ubuf_to_ubuf(
+            dstTile.data(), tmpTile.data(), 0, 1, (topk * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
         set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
         wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
         TSTORE(dstGlobal, dstTile);
-    } else {
-        copy_ubuf_to_ubuf(dstTile.data(), tmpTile.data(), 0, 1,
-                          (topk * sizeof(typename DstTileData::DType) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
-        pipe_barrier(PIPE_V);
-        TSTORE(dstGlobal, tmpTile);
     }
 }
 
