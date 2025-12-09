@@ -16,7 +16,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "common.hpp"
 #include "utils.hpp"
 
-
 namespace pto {
 
 template <typename TileDataOut, typename TileDataIn>
@@ -31,56 +30,23 @@ __tf__ __aicore__ PTO_INLINE void TRowExpand(typename TileDataOut::TileDType __o
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
 
-    uint32_t remainEleNum = kValidCols % eleCntReg ?: eleCntReg;
     uint16_t repeatTimes = CeilDivision(kValidCols, eleCntReg);
-
-
-    if constexpr (sizeof(T) == 1) {
-        __VEC_SCOPE__
-        {
-            RegTensor<T> vreg0;
-            RegTensor<T> vreg1;
-            MaskReg pg0 = CreatePredicate<T>(eleCntReg);
-            MaskReg pg1 = CreatePredicate<T>(remainEleNum);
-            for (uint16_t i = 0; i < (uint16_t)kValidRows; i++) {
-                vlds(vreg0, srcPtr + i * srcCols, (int32_t)0, NORM);
-                vdup(vreg1, vreg0, pg0, POS_LOWEST, MODE_ZEROING);
-                for (uint16_t j = 0; j < (uint16_t)(repeatTimes - 1); j++) {
-                    vsts(vreg1, dst + i * dstCols, (int32_t)(j * ELE_CNT_B8), NORM_B8, pg0);
-                }
-                vsts(vreg1, dst + i * dstCols, (int32_t)((repeatTimes - 1) * ELE_CNT_B8), NORM_B8, pg1);
-            }
-        }
-    } else if constexpr (sizeof(T) == 2) {
-        __VEC_SCOPE__
-        {
-            RegTensor<T> vreg0;
-            RegTensor<T> vreg1;
-            MaskReg pg0 = CreatePredicate<T>(eleCntReg);
-            MaskReg pg1 = CreatePredicate<T>(remainEleNum);
-            for (uint16_t i = 0; i < (uint16_t)kValidRows; i++) {
-                vlds(vreg0, srcPtr + i * srcCols, (int32_t)0, NORM);
-                vdup(vreg1, vreg0, pg0, POS_LOWEST, MODE_ZEROING);
-                for (uint16_t j = 0; j < (uint16_t)(repeatTimes - 1); j++) {
-                    vsts(vreg1, dst + i * dstCols, (int32_t)(j * ELE_CNT_B16), NORM_B16, pg0);
-                }
-                vsts(vreg1, dst + i * dstCols, (int32_t)((repeatTimes - 1) * ELE_CNT_B16), NORM_B16, pg1);
-            }
-        }
-    } else if constexpr (sizeof(T) == 4) {
-        __VEC_SCOPE__
-        {
-            RegTensor<T> vreg0;
-            RegTensor<T> vreg1;
-            MaskReg pg0 = CreatePredicate<T>(eleCntReg);
-            MaskReg pg1 = CreatePredicate<T>(remainEleNum);
-            for (uint16_t i = 0; i < (uint16_t)kValidRows; i++) {
-                vlds(vreg0, srcPtr + i * srcCols, (int32_t)0, NORM);
-                vdup(vreg1, vreg0, pg0, POS_LOWEST, MODE_ZEROING);
-                for (uint16_t j = 0; j < (uint16_t)(repeatTimes - 1); j++) {
-                    vsts(vreg1, dst + i * dstCols, (int32_t)(j * ELE_CNT_B32), NORM_B32, pg0);
-                }
-                vsts(vreg1, dst + i * dstCols, (int32_t)((repeatTimes - 1) * ELE_CNT_B32), NORM_B32, pg1);
+    constexpr auto eleCntValue = eleCntReg;
+    constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+    __VEC_SCOPE__
+    {
+        RegTensor<T> vreg0;
+        RegTensor<T> vreg1;
+        MaskReg pg0 = CreatePredicate<T>(eleCntReg);
+        MaskReg preg;
+        uint32_t sreg;
+        for (uint16_t i = 0; i < (uint16_t)kValidRows; i++) {
+            vlds(vreg0, srcPtr, i * srcCols, NORM);
+            vdup(vreg1, vreg0, pg0, POS_LOWEST, MODE_ZEROING);
+            sreg = (uint32_t)(kValidCols);
+            for (uint16_t j = 0; j < (uint16_t)repeatTimes; j++) {
+                preg = CreatePredicate<T>(sreg);
+                vsts(vreg1, dst, (int32_t)(j * eleCntValue + i * dstCols), distValue, preg);
             }
         }
     }

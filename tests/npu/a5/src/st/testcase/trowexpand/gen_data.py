@@ -18,7 +18,6 @@ np.random.seed(2025)
 
 def gen_golden_data(case_name, param):
     datatype = param.datatype
-
     m, k, n = param.row, param.src_col, param.dst_col
     dstValidCol = param.dstValidCol
     input = (np.random.rand(m, k) * 10).astype(datatype)
@@ -29,7 +28,8 @@ def gen_golden_data(case_name, param):
     input.tofile("./input.bin")
     golden.tofile("./golden.bin")
 
-class TRowExpand:
+
+class TRowExpandParam:
     def __init__(self, datatype, row, src_col, dst_col, dstValidCol):
         self.datatype = datatype
         self.row = row
@@ -37,30 +37,37 @@ class TRowExpand:
         self.dst_col = dst_col
         self.dstValidCol = dstValidCol
 
+
+def generate_case_name(idx, param):
+    dtype_str = {
+        np.float32: 'float',
+        np.float16: 'half',
+        np.int8: 'int8',
+        np.int16: 'int16',
+        np.int32: 'int32'
+    }[param.datatype]
+    return f"TROWEXPANDTest.case{idx}_{dtype_str}_{param.row}_{param.src_col}_{param.row}_{param.dstValidCol}"
+
 if __name__ == "__main__":
-    # 用例名称
-    case_name_list = [
-        "TROWEXPANDTest.case0",
-        "TROWEXPANDTest.case1",
-        "TROWEXPANDTest.case2",
-        "TROWEXPANDTest.case3",
-        "TROWEXPANDTest.case4",
-        "TROWEXPANDTest.case5",
-    ]
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    testcases_dir = os.path.join(script_dir, "testcases")
+    if not os.path.exists(testcases_dir):
+        os.makedirs(testcases_dir)
 
     case_params_list = [
-        TRowExpand(np.float16, 16, 16, 512, 512),
-        TRowExpand(np.int8,    16, 32, 256, 256),
-        TRowExpand(np.float32, 16, 8,  128, 128),
-        TRowExpand(np.float16, 16, 16, 512, 511),   # valid_cols = 511
-        TRowExpand(np.int8,    16, 32, 256, 255),   # valid_cols = 255
-        TRowExpand(np.float32, 16, 8,  128, 127),   # valid_cols = 127
+        TRowExpandParam(np.float16, 16, 16, 512, 512),
+        TRowExpandParam(np.int8, 16, 32, 256, 256),
+        TRowExpandParam(np.float32, 16, 8, 128, 128),
+        TRowExpandParam(np.float16, 16, 16, 512, 511),
+        TRowExpandParam(np.int8, 16, 32, 256, 255),
+        TRowExpandParam(np.float32, 16, 8, 128, 127),
     ]
 
-    for i, case_name in enumerate(case_name_list):
+    for i, param in enumerate(case_params_list):
+        case_name = generate_case_name(i, param)
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data(case_name, case_params_list[i])
+        gen_golden_data(case_name, param)
         os.chdir(original_dir)
