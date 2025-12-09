@@ -17,19 +17,18 @@ using namespace PtoTestCommon;
 
 template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-void LaunchTStore(T *out, T * src0, void *stream);
+void LaunchTStore(T *out, T *src0, void *stream);
 template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
     int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-void LaunchTStoreB4(T *out, T * src0, void *stream);
+void LaunchTStoreB4(T *out, T *src0, void *stream);
 class TStoreTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -37,9 +36,10 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template<int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
-int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-void test_tstore() {
+template <int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void test_tstore()
+{
     size_t dataSize = gWholeShape0 * gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4 * sizeof(DataType);
 
     aclInit(nullptr);
@@ -60,18 +60,8 @@ void test_tstore() {
     ReadFile(GetGoldenDir() + "/input.bin", dataSize, srcHost, dataSize);
 
     aclrtMemcpy(srcDevice, dataSize, srcHost, dataSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTStore<format,
-            DataType,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(dstDevice, srcDevice, stream);
+    LaunchTStore<format, DataType, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1,
+        gWholeShape2, gWholeShape3, gWholeShape4>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dataSize, dstDevice, dataSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -99,47 +89,47 @@ void test_tstore() {
 
 TEST_F(TStoreTest, case1)
 {
-    test_tstore<0, float, 2, 1, 1, 39, 47, 3, 2, 1, 43, 61>();
+    test_tstore<2, float, 1, 1, 1, 16, 8, 1, 1, 2, 16, 8>();
 }
 
 TEST_F(TStoreTest, case2)
 {
-    test_tstore<0, int16_t, 1, 2, 1, 23, 121, 3, 2, 2, 35, 125>();
+    test_tstore<2, uint8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>();
 }
 
 TEST_F(TStoreTest, case3)
 {
-    test_tstore<0, int8_t, 2, 2, 3, 23, 47, 3, 3, 4, 32, 50>();
+    test_tstore<2, int16_t, 2, 2, 2, 16, 16, 5, 3, 3, 16, 16>();
 }
 
 TEST_F(TStoreTest, case4)
 {
-    test_tstore<1, float, 1, 1, 1, 4, 21, 1, 1, 1, 8, 32>();
+    test_tstore<0, float, 2, 1, 1, 39, 47, 3, 2, 1, 43, 61>();
 }
 
 TEST_F(TStoreTest, case5)
 {
-    test_tstore<1, uint16_t, 3, 1, 1, 1, 124, 5, 1, 1, 2, 128>();
+    test_tstore<0, int16_t, 1, 2, 1, 23, 121, 3, 2, 2, 35, 125>();
 }
 
 TEST_F(TStoreTest, case6)
 {
-    test_tstore<1, int8_t, 2, 3, 7, 47, 13, 2, 3, 7, 55, 29>();
+    test_tstore<0, int8_t, 2, 2, 3, 23, 47, 3, 3, 4, 32, 50>();
 }
 
 TEST_F(TStoreTest, case7)
 {
-    test_tstore<2, float, 1, 1, 1, 16, 8, 1, 1, 2, 16, 8>();
+    test_tstore<1, float, 1, 1, 1, 4, 21, 1, 1, 1, 8, 32>();
 }
 
 TEST_F(TStoreTest, case8)
 {
-    test_tstore<2, int16_t, 2, 2, 2, 16, 16, 5, 3, 3, 16, 16>();
+    test_tstore<1, uint16_t, 3, 1, 1, 1, 124, 5, 1, 1, 2, 128>();
 }
 
 TEST_F(TStoreTest, case9)
 {
-    test_tstore<2, uint8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>();
+    test_tstore<1, int8_t, 2, 3, 7, 47, 13, 2, 3, 7, 55, 29>();
 }
 
 TEST_F(TStoreTest, case10)
@@ -157,9 +147,10 @@ TEST_F(TStoreTest, case12)
     test_tstore<0, int64_t, 1, 1, 2, 39, 47, 2, 2, 2, 43, 50>();
 }
 
-template<int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
-int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-void TestTstoreB4() {
+template <int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void TestTstoreB4()
+{
     size_t dataSize = gWholeShape0 * gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4 * sizeof(DataType);
 
     aclInit(nullptr);
@@ -180,18 +171,8 @@ void TestTstoreB4() {
     ReadFile(GetGoldenDir() + "/input.bin", dataSize, srcHost, dataSize);
 
     aclrtMemcpy(srcDevice, dataSize, srcHost, dataSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTStoreB4<format,
-            DataType,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(dstDevice, srcDevice, stream);
+    LaunchTStoreB4<format, DataType, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1,
+        gWholeShape2, gWholeShape3, gWholeShape4>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dataSize, dstDevice, dataSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -219,13 +200,13 @@ void TestTstoreB4() {
 
 TEST_F(TStoreTest, fp4case1)
 {
-    TestTstoreB4<0, uint8_t, 2, 2, 3, 23, 47, 3, 3, 4, 32, 50>();
+    TestTstoreB4<2, uint8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>();
 }
 TEST_F(TStoreTest, fp4case2)
 {
-    TestTstoreB4<1, uint8_t, 2, 3, 7, 47, 13, 2, 3, 7, 55, 29>();
+    TestTstoreB4<0, uint8_t, 2, 2, 3, 23, 47, 3, 3, 4, 32, 50>();
 }
 TEST_F(TStoreTest, fp4case3)
 {
-    TestTstoreB4<2, uint8_t, 1, 2, 1, 16, 32, 2, 4, 2, 16, 32>();
+    TestTstoreB4<1, uint8_t, 2, 3, 7, 47, 13, 2, 3, 7, 55, 29>();
 }
