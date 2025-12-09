@@ -20,14 +20,14 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
 template <typename T> struct ExpandSOp {
-    __aicore__ PTO_INLINE static void BinSInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, T scalar, MaskReg &preg)
+    PTO_INTERNAL static void BinSInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, T scalar, MaskReg &preg)
     {
         vdup(reg_dst, scalar, preg, MODE_ZEROING);
     }
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ __aicore__ PTO_INLINE
+__tf__ PTO_INTERNAL
 void TExpandS(typename TileData::TileDType __out__ dst,
            typename TileData::DType scalar,
            unsigned kValidRows,
@@ -40,10 +40,10 @@ void TExpandS(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileData>
-__aicore__ void TEXPANDS_IMPL(TileData &dst, typename TileData::DType scalar)
+AICORE void TEXPANDS_IMPL(TileData &dst, typename TileData::DType scalar)
 {
     using T = typename TileData::DType;
-    static_assert(TileData::Loc == Location::Vec, "Location of src and dst tiles must be Location::Vec.");
+    static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
     static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
     static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
 

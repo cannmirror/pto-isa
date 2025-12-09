@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 #include <limits>
@@ -27,7 +27,7 @@ using namespace pto;
 
 //case shape is static, but testing would do dynamic or static test
 template <int shape0, int shape1, int shape2, int shape3, int shape4>
-__aicore__ __inline__ auto getOptDynShape(int gShape0, int gShape1, int gShape2, int gShape3, int gShape4) {
+AICORE __inline__ auto getOptDynShape(int gShape0, int gShape1, int gShape2, int gShape3, int gShape4) {
 		if constexpr ( shape0 == 1 ) 
 		{
 			using DynShapeDim5 = Shape<1, -1, -1, -1, -1>;
@@ -62,7 +62,7 @@ __aicore__ __inline__ auto getOptDynShape(int gShape0, int gShape1, int gShape2,
 
 //case shape is static, but testing would do dynamic or static test
 template <typename T, int shape0, int shape1, int shape2, int shape3, int shape4, int tRows, int tCols, BLayout major, int dyn>
-__aicore__ __inline__ auto getGlobalTensor(__gm__ T* addr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4) {
+AICORE __inline__ auto getGlobalTensor(__gm__ T* addr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4) {
 
 	if constexpr ( dyn )
 	{
@@ -103,7 +103,7 @@ __aicore__ __inline__ auto getGlobalTensor(__gm__ T* addr, int gShape0, int gSha
 	}
 }
 
-inline __aicore__ uint64_t get_syscnt() //dont use get_sys_cnt(), need volatile for profiling
+inline AICORE uint64_t get_syscnt() //dont use get_sys_cnt(), need volatile for profiling
 {
 	uint64_t syscnt;
 	asm volatile("MOV %0, SYS_CNT\n":"+l"(syscnt));
@@ -114,7 +114,7 @@ inline __aicore__ uint64_t get_syscnt() //dont use get_sys_cnt(), need volatile 
 #define align_to_32B(x,T) ((((x)+type_32_aligned(T)-1)/type_32_aligned(T))*(type_32_aligned(T)));
 
 template <typename T, int shape0, int shape1, int shape2, int shape3, int shape4, int kTRows_, int kTCols_, int dyn_, PadValue PadVal_= PadValue::Null>
-__aicore__ void runTLOADND(__gm__ T *out, __gm__ T *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog) {
+AICORE void runTLOADND(__gm__ T *out, __gm__ T *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog) {
     
 	//Avoid stack dcache miss
 	{
@@ -140,12 +140,12 @@ __aicore__ void runTLOADND(__gm__ T *out, __gm__ T *src, int gShape0, int gShape
 	__ubuf__ T* ubaddr0 = 0x0;
 	__ubuf__ T* ubaddr1 = 0x0;
 	
-	using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, PadVal_>;
-	//using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+	using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, PadVal_>;
+	//using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
     TileData vecTile(kTRows_, gCols);
     TASSIGN(vecTile, (uint64_t)ubaddr0);
 	
-	using TileDataP = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, kTCols_>;
+	using TileDataP = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, kTCols_>;
     TileDataP vecTileP(kTRows_);
     TASSIGN(vecTileP, (uint64_t)ubaddr1);
 	
@@ -173,62 +173,62 @@ __aicore__ void runTLOADND(__gm__ T *out, __gm__ T *src, int gShape0, int gShape
 
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_1(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_1(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<float, 1, 1, 1, 128, 128, 128, 128, 1, PadValue::Null>((__gm__ float*)out, (__gm__ float*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_2(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_2(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<float,  2, 2, 2, 256, 64, 256, 64, 1, PadValue::Null>((__gm__ float*)out, (__gm__ float*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_3(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_3(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<float, 1, 1, 1, 128, 127, 128, 128, 1, PadValue::Max>((__gm__ float*)out, (__gm__ float*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_4(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_4(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<int16_t, 1, 1, 1, 128, 127, 128, 128, 1, PadValue::Max>((__gm__ int16_t*)out, (__gm__ int16_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_5(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_5(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<uint8_t, 1, 1, 1, 128, 127, 128, 128, 1, PadValue::Min>((__gm__ uint8_t*)out, (__gm__ uint8_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_6(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_6(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<int16_t,  1, 1, 32, 64, 128, 64, 128, 1, PadValue::Null>((__gm__ int16_t*)out, (__gm__ int16_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_7(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_7(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<int16_t,  1, 1, 32, 64, 128, 64, 128, 0, PadValue::Null>((__gm__ int16_t*)out, (__gm__ int16_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_8(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_8(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<float,  2, 2, 2, 256, 60, 256, 64, 1, PadValue::Max>((__gm__ float*)out, (__gm__ float*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_9(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_9(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<int64_t, 1, 1, 1, 128, 128, 128, 128, 1, PadValue::Null>((__gm__ int64_t*)out, (__gm__ int64_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_10(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_10(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<uint64_t, 1, 1, 1, 128, 125, 128, 128, 1, PadValue::Zero>((__gm__ uint64_t*)out, (__gm__ uint64_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_11(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_11(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<int64_t,  2, 2, 2, 256, 62, 256, 64, 1, PadValue::Zero>((__gm__ int64_t*)out, (__gm__ int64_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
 
-extern "C" __global__ __aicore__ void launchTLOAD_12(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
+extern "C" __global__ AICORE void launchTLOAD_12(__gm__ uint8_t *out, __gm__ uint8_t *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog)
 {
 	runTLOADND<uint64_t,  2, 2, 2, 256, 64, 256, 64, 1, PadValue::Null>((__gm__ uint64_t*)out, (__gm__ uint64_t*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }

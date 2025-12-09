@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 
@@ -17,7 +17,7 @@ using namespace pto;
 constexpr uint16_t BLOCK_CUBE_M_N = 16;
 constexpr uint16_t BLOCK_ALIGN_BYTE = 32;
 template <typename T>
-__aicore__ inline T CeilAlign(T num_1, T num_2)
+AICORE inline T CeilAlign(T num_1, T num_2)
 {
     if (num_2 == 0) {
         return 0;
@@ -25,13 +25,13 @@ __aicore__ inline T CeilAlign(T num_1, T num_2)
     return (num_1 + num_2 - 1) / num_2 * num_2;
 }
 
-__aicore__ inline unsigned CalcLinearOffset(unsigned GmShape1, unsigned Offset0, unsigned Offset1)
+AICORE inline unsigned CalcLinearOffset(unsigned GmShape1, unsigned Offset0, unsigned Offset1)
 {
     return Offset1 + Offset0 * GmShape1;
 }
 
 template <typename T>
-__aicore__ inline void DynGM2L1NZ2NZ(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0, unsigned TShape1)
+AICORE inline void DynGM2L1NZ2NZ(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0, unsigned TShape1)
 {
     uint16_t nBurst = 1;
     uint16_t lenBurst = TShape0 * TShape1 * sizeof(T);
@@ -50,7 +50,7 @@ __aicore__ inline void DynGM2L1NZ2NZ(__cbuf__ T *dst, __gm__ T *src, unsigned TS
  * brief: dynamic l1 copy in nd2nz functions
  */
 template <typename GMT, typename L1T>
-__aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned TShape0, unsigned TShape1, unsigned GmShape0,
+AICORE inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned TShape0, unsigned TShape1, unsigned GmShape0,
     unsigned GmShape1, unsigned GmOffset0, unsigned GmOffset1, int reserved)
 {
     src += CalcLinearOffset(GmShape1, GmOffset0, GmOffset1);
@@ -86,7 +86,7 @@ __aicore__ inline void DynL1CopyIn(__cbuf__ L1T *dst, __gm__ GMT *src, unsigned 
 template <typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1, int gShape2,
     int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4,
     int validM, int validN, int validK, int quantMode>
-__aicore__ inline void TStoreAcc2gmNZ2ND(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1)
+AICORE inline void TStoreAcc2gmNZ2ND(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -106,12 +106,12 @@ __aicore__ inline void TStoreAcc2gmNZ2ND(__gm__ dstDataType *out, __gm__ srcData
     int offset = 0;
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
+    using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
 
     using LeftTile = TileLeft<srcDataType, M, K, M, K>;
     using RightTile = TileRight<srcDataType, K, N, K, N>;
-    using AccTile = Tile<Location::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
+    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -169,7 +169,7 @@ __aicore__ inline void TStoreAcc2gmNZ2ND(__gm__ dstDataType *out, __gm__ srcData
 template <typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1, int gShape2,
     int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4,
     int validM, int validN, int validK, int quantMode>
-__aicore__ inline void TStoreAcc2gmNZ2NZ(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1)
+AICORE inline void TStoreAcc2gmNZ2NZ(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -192,9 +192,9 @@ __aicore__ inline void TStoreAcc2gmNZ2NZ(__gm__ dstDataType *out, __gm__ srcData
     int offset = 0;
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
-    using AccTile = Tile<Location::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
+    using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
+    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     using LeftTile = TileLeft<srcDataType, M, K, M, K>;
     using RightTile = TileRight<srcDataType, K, N, K, N>;
@@ -249,7 +249,7 @@ __aicore__ inline void TStoreAcc2gmNZ2NZ(__gm__ dstDataType *out, __gm__ srcData
 template <typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1, int gShape2,
     int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4,
     int validM, int validN, int validK, int quantMode>
-__aicore__ inline void TStoreAcc2gmNZ2NDFp(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1,
+AICORE inline void TStoreAcc2gmNZ2NDFp(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1,
     __gm__ uint64_t *quantTensor)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -271,16 +271,16 @@ __aicore__ inline void TStoreAcc2gmNZ2NDFp(__gm__ dstDataType *out, __gm__ srcDa
     int offset = 0;
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
+    using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
     using TileMatScalingData =
-        Tile<Location::Mat, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
+        Tile<TileType::Mat, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
     using LeftTile = TileLeft<srcDataType, M, K, M, K>;
     using RightTile = TileRight<srcDataType, K, N, K, N>;
-    using AccTile = Tile<Location::Acc, accDataType, Rows, Cols, BLayout::ColMajor, M, K, SLayout::RowMajor, 1024>;
+    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, M, K, SLayout::RowMajor, 1024>;
     using ScalingTile =
-        Tile<Location::Scaling, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
+        Tile<TileType::Scaling, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -341,7 +341,7 @@ __aicore__ inline void TStoreAcc2gmNZ2NDFp(__gm__ dstDataType *out, __gm__ srcDa
 template <int floatType, typename dstDataType, typename srcDataType, int gShape0, int gShape1, int gShape2, int gShape3,
     int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int validM,
     int validN, int validK, int quantMode>
-__global__ __aicore__ void LaunchTStoreAcc2gmNZ2ND(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+__global__ AICORE void LaunchTStoreAcc2gmNZ2ND(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     if constexpr (std::is_same_v<srcDataType, uint16_t> && std::is_same_v<dstDataType, uint16_t>) {
         if constexpr (floatType == 0) {
@@ -495,7 +495,7 @@ __global__ __aicore__ void LaunchTStoreAcc2gmNZ2ND(__gm__ uint8_t *out, __gm__ u
 template <int floatType, typename dstDataType, typename srcDataType, int gShape0, int gShape1, int gShape2, int gShape3,
     int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int validM,
     int validN, int validK, int quantMode>
-__global__ __aicore__ void LaunchTStoreAcc2gmNZ2NZ(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+__global__ AICORE void LaunchTStoreAcc2gmNZ2NZ(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     if constexpr (std::is_same_v<srcDataType, uint16_t> && std::is_same_v<dstDataType, uint16_t>) {
         if constexpr (floatType == 0) {
@@ -673,7 +673,7 @@ void LaunchTStoreAcc2gm(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream
 template <typename dstDataType, typename srcDataType, int gShape0, int gShape1, int gShape2, int gShape3,
     int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int validM,
     int validN, int validK, int quantMode>
-__global__ __aicore__ void LaunchTStoreAcc2gmNZ2NDFp(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1,
+__global__ AICORE void LaunchTStoreAcc2gmNZ2NDFp(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1,
     __gm__ uint8_t *quantTensor)
 {
     TStoreAcc2gmNZ2NDFp<int32_t,

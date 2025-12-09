@@ -14,7 +14,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto{
     template <typename TileData>
-    __aicore__ void TASSIGN_IMPL(TileData &tile, uint32_t addr) {
+    AICORE void TASSIGN_IMPL(TileData &tile, uint32_t addr) {
         tile.assignData(reinterpret_cast<typename TileData::TileDType>(static_cast<std::uintptr_t>(addr)));
     }
 }

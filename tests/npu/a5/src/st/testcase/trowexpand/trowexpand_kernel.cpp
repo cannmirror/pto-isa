@@ -16,17 +16,17 @@ using namespace pto;
 namespace TRowExpandTest{
 
 template <typename T, uint32_t rows, uint32_t srcCols, uint32_t dstValidCols, uint32_t dstCols>
-__global__ __aicore__ void runROWEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src) {
+__global__ AICORE void runROWEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src) {
 
     using DynShapeDim5 = Shape<1, 1, 1, rows, srcCols>;
     using DynStridDim5 = pto::Stride<1, 1, 1, srcCols, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, rows, srcCols, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, rows, srcCols, BLayout::RowMajor, -1, -1>;
 
     using DstDynShapeDim5 = Shape<1, 1, 1, rows, dstCols>;
     using DstDynStridDim5 = pto::Stride<1, 1, 1, dstCols, 1>;
     using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
-    using DstTileData = Tile<Location::Vec, T, rows, dstCols, BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<TileType::Vec, T, rows, dstCols, BLayout::RowMajor, -1, -1>;
 
     TileData srcTile(rows, 1);
     DstTileData dstTile(rows, dstValidCols);

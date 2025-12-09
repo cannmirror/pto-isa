@@ -8,8 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
-#include <pto/common/pto_tile.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_instr_impl.hpp>
 #include <pto/common/constants.hpp>
 
@@ -17,12 +16,12 @@ using namespace pto;
 typedef float IN_DTYPE;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-__aicore__ PTO_INLINE void runTCOPY( __gm__ T __out__ *out, __gm__ T __in__ *src) {
+PTO_INTERNAL void runTCOPY( __gm__ T __out__ *out, __gm__ T __in__ *src) {
     if (block_idx > 0){return;}
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, kTRows_, kTCols_, BLayout::RowMajor>;
+    using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor>;
     TileData srcTile;
     TileData dstTile;
     TASSIGN(srcTile, 0x0);
@@ -43,7 +42,7 @@ __aicore__ PTO_INLINE void runTCOPY( __gm__ T __out__ *out, __gm__ T __in__ *src
 
 
 
-extern "C" __global__ __aicore__ void launchTCOPY_1(__gm__ float *out, __gm__ float *src) {
+extern "C" __global__ AICORE void launchTCOPY_1(__gm__ float *out, __gm__ float *src) {
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 128;
     constexpr uint32_t K = 128;

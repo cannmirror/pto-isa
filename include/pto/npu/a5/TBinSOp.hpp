@@ -30,7 +30,7 @@ enum class BinSOpsImpl : uint8_t {
 };
 
 template <typename Op, typename TileData, typename ScalarType, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TBinSOps_1D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *src0Ptr, 
                     ScalarType src1,
@@ -57,7 +57,7 @@ void TBinSOps_1D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, typename ScalarType, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TBinSOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *src0Ptr, 
                     ScalarType src1,
@@ -84,7 +84,7 @@ void TBinSOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, typename ScalarType, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TBinSOps_2D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *src0Ptr, 
                     ScalarType src1,
@@ -112,7 +112,7 @@ void TBinSOps_2D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, typename ScalarType, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TBinSOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *src0Ptr, 
                     ScalarType src1,
@@ -140,7 +140,7 @@ void TBinSOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, typename ScalarType, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE void BinaryInstr(typename TileData::TileDType __out__ dst, 
+PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst,
                             typename TileData::TileDType __in__ src0, 
                             ScalarType src1,
                             unsigned kValidRows,

@@ -14,7 +14,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename SrcType, typename DstType>
-__aicore__ PTO_INLINE constexpr QuantMode_t GetCastPreQuantModeGm()
+PTO_INTERNAL constexpr QuantMode_t GetCastPreQuantModeGm()
 {
     QuantMode_t quantPre = QuantMode_t::NoQuant;
     if constexpr (std::is_same<SrcType, float>::value) {
@@ -28,7 +28,7 @@ __aicore__ PTO_INLINE constexpr QuantMode_t GetCastPreQuantModeGm()
 }
 
 template <typename SrcType, typename DstType>
-__aicore__ PTO_INLINE constexpr QuantMode_t GetScalarPreQuantModeGm()
+PTO_INTERNAL constexpr QuantMode_t GetScalarPreQuantModeGm()
 {
     QuantMode_t quantPre = QuantMode_t::NoQuant;
     if constexpr (std::is_same<SrcType, float>::value) {
@@ -54,7 +54,7 @@ __aicore__ PTO_INLINE constexpr QuantMode_t GetScalarPreQuantModeGm()
 }
 
 template <typename SrcType, typename DstType>
-__aicore__ PTO_INLINE constexpr QuantMode_t GetVectorPreQuantModeGm()
+PTO_INTERNAL constexpr QuantMode_t GetVectorPreQuantModeGm()
 {
     QuantMode_t quantPre = QuantMode_t::NoQuant;
     if constexpr (std::is_same<SrcType, float>::value) {
@@ -80,7 +80,7 @@ __aicore__ PTO_INLINE constexpr QuantMode_t GetVectorPreQuantModeGm()
 }
 
 template <typename T>
-__aicore__ PTO_INLINE void SetAtomicAdd()
+PTO_INTERNAL void SetAtomicAdd()
 {
     static_assert((std::is_same_v<T, __gm__ half>) || (std::is_same_v<T, __gm__ float>) ||
                       (std::is_same_v<T, __gm__ int16_t>) || (std::is_same_v<T, __gm__ int32_t>) ||
@@ -104,7 +104,7 @@ __aicore__ PTO_INLINE void SetAtomicAdd()
 }
 
 template <typename TileData, typename GlobalData, bool isQuant>
-__aicore__ PTO_INLINE void CheckStaticAcc()
+PTO_INTERNAL void CheckStaticAcc()
 {
     static_assert(std::is_same_v<typename TileData::DType, int32_t> || std::is_same_v<typename TileData::DType, float>,
         "The input data type must be restricted to int32_t/float!");
@@ -127,7 +127,7 @@ __aicore__ PTO_INLINE void CheckStaticAcc()
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void CheckStaticVec()
+PTO_INTERNAL void CheckStaticVec()
 {
     static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
         "Source dtype must be same with dst dtype!");
@@ -160,7 +160,7 @@ __aicore__ PTO_INLINE void CheckStaticVec()
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
-__aicore__ PTO_INLINE void TStoreAccND(typename GlobalData::DType *dstGlobalAddr,
+PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr,
     __cc__ typename TileData::DType *srcTileAddr, int gShape3, int gShape4, int gStride2, int gStride3, int validRow,
     int validCol)
 {
@@ -189,7 +189,7 @@ __aicore__ PTO_INLINE void TStoreAccND(typename GlobalData::DType *dstGlobalAddr
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
-__aicore__ PTO_INLINE void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typename TileData::DType *srcAddr,
+PTO_INTERNAL void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typename TileData::DType *srcAddr,
     typename GlobalData::DType *dstGlobalAddr, __cc__ typename TileData::DType *srcTileAddr, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gStride0, int validRow, int validCol)
 {
@@ -228,7 +228,7 @@ __aicore__ PTO_INLINE void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc
 }
 
 template <typename GlobalData, typename TileData, typename FpTileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
-__tf__ __aicore__ void TStoreAccFp(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+__tf__ AICORE void TStoreAccFp(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
     typename FpTileData::TileDType __in__ fp, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
     int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -249,7 +249,7 @@ __tf__ __aicore__ void TStoreAccFp(typename GlobalData::DType __out__ *dst, type
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
-__tf__ __aicore__ void TStoreAcc(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+__tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -267,14 +267,14 @@ __tf__ __aicore__ void TStoreAcc(typename GlobalData::DType __out__ *dst, typena
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src,
+PTO_INTERNAL void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src,
     uint16_t nBurst, uint32_t lenBurst, uint64_t burstDstStride, uint32_t burstSrcStride)
 {
     copy_ubuf_to_gm_align_v2(dst, src, 0, nBurst, lenBurst, 0, burstDstStride, burstSrcStride);
 }
 
 template <typename GlobalData, typename TileData>
-__aicore__ PTO_INLINE void TStoreVecND(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
+PTO_INTERNAL void TStoreVecND(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -318,7 +318,7 @@ __aicore__ PTO_INLINE void TStoreVecND(typename GlobalData::DType *dstAddr, __ub
     }
 }
 template <typename GlobalData, typename TileData>
-__aicore__ PTO_INLINE void TStoreVecDN(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
+PTO_INTERNAL void TStoreVecDN(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -364,7 +364,7 @@ __aicore__ PTO_INLINE void TStoreVecDN(typename GlobalData::DType *dstAddr, __ub
 }
 
 template <typename GlobalData, typename TileData>
-__aicore__ PTO_INLINE void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
+PTO_INTERNAL void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ubuf__ typename TileData::DType *srcAddr,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -387,7 +387,7 @@ __aicore__ PTO_INLINE void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ub
     }
 }
 template <typename GlobalData, typename TileData>
-__tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+__tf__ AICORE void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -407,17 +407,17 @@ __tf__ __aicore__ void TStore(typename GlobalData::DType __out__ *dst, typename 
 }
 
 template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
-__aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src)
+AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
-    static_assert(TileData::Loc == pto::Location::Vec || TileData::Loc == pto::Location::Acc,
-        "Source location only suport Vec/Acc!");
-    if constexpr (TileData::Loc == pto::Location::Vec) {
+    static_assert(TileData::Loc == pto::TileType::Vec || TileData::Loc == pto::TileType::Acc,
+        "Source TileType only suport Vec/Acc!");
+    if constexpr (TileData::Loc == pto::TileType::Vec) {
         CheckStaticVec<TileData, GlobalData>();
 
         TStore<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(0), dst.GetShape(1), dst.GetShape(2),
             dst.GetShape(3), dst.GetShape(4), dst.GetStride(0), dst.GetStride(1), dst.GetStride(2), dst.GetStride(3),
             dst.GetStride(4), src.GetValidRow(), src.GetValidCol());
-    } else if constexpr (TileData::Loc == pto::Location::Acc) {
+    } else if constexpr (TileData::Loc == pto::TileType::Acc) {
         using L0cT = typename TileData::DType;
         using DstT = typename GlobalData::DType;
         CheckStaticAcc<TileData, GlobalData, false>();
@@ -436,7 +436,7 @@ __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src)
 }
 
 template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
-__aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantScalar)
+AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantScalar)
 {
     using L0cT = typename TileData::DType;
     using DstT = typename GlobalData::DType;
@@ -456,7 +456,7 @@ __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantSca
 }
 
 template <typename TileData, typename GlobalData, typename FpTileData, AtomicType atomicType = AtomicType::AtomicNone>
-__aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src, FpTileData &fp)
+AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src, FpTileData &fp)
 {
     using L0cT = typename TileData::DType;
     using DstT = typename GlobalData::DType;

@@ -17,7 +17,7 @@ namespace pto {
     template <typename T>
     struct COLMAXOp
     {
-        __PTO_INSTR__ static void ReduceInstr(__ubuf__ T *dst, __ubuf__ T *src0, 
+        PTO_INTERNAL static void ReduceInstr(__ubuf__ T *dst, __ubuf__ T *src0, 
                                               __ubuf__ T *src1, uint8_t repeats,
                                               uint8_t dstRepeatStride,
                                               uint8_t src0RepeatStride,
@@ -29,7 +29,7 @@ namespace pto {
     };
 
     template <typename T, typename TileDataDst, typename TileDataSrc, unsigned srcstride>
-    __tf__ __aicore__ PTO_INLINE void TColMax(typename TileDataDst::TileDType __out__ dst,
+    __tf__ PTO_INTERNAL void TColMax(typename TileDataDst::TileDType __out__ dst,
                                               typename TileDataSrc::TileDType __in__ src,
                                               int validRow, int validCol)
     {
@@ -41,7 +41,7 @@ namespace pto {
     }
 
     template <typename TileDataOut, typename TileDataIn>
-    __aicore__ PTO_INLINE void TCOLMAX_IMPL(TileDataOut &dst, TileDataIn &src) {
+    PTO_INTERNAL void TCOLMAX_IMPL(TileDataOut &dst, TileDataIn &src) {
         using T = typename TileDataIn::DType;
         int ValidRow = src.GetValidRow();
         int ValidCol = src.GetValidCol();

@@ -1,5 +1,4 @@
 #include <pto/pto-inst.hpp>
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/common/constants.hpp>
 #include <iostream>
 
@@ -8,7 +7,7 @@ using namespace pto;
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, 
     int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__aicore__ inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -24,7 +23,7 @@ __aicore__ inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ 
     using DynShapeDim5 = Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<Location::Vec, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
 
     TileData srcTile(validRow, validCol);
 
@@ -45,7 +44,7 @@ __aicore__ inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ 
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1,
 int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__aicore__ inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -62,7 +61,7 @@ __aicore__ inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ 
     using DynShapeDim5 = Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5, Layout::DN>;
-    using TileData = Tile<Location::Vec, T, Rows, Cols, BLayout::ColMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, Rows, Cols, BLayout::ColMajor, -1, -1>;
 
     TileData srcTile(validRow, validCol);
 
@@ -81,7 +80,7 @@ __aicore__ inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ 
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1,
     int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__aicore__ inline void RunTStoreNZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
+AICORE inline void RunTStoreNZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
         gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -96,7 +95,7 @@ __aicore__ inline void RunTStoreNZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
     using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5, Layout::NZ>;
-    using TileData = Tile<Location::Vec, T, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>;
+    using TileData = Tile<TileType::Vec, T, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>;
 
     int validRow = gShape2 * gShape3;
     int validCol = gShape0 * gShape1 * gShape4;
@@ -116,7 +115,7 @@ __aicore__ inline void RunTStoreNZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
 
 template <typename T, pto::Layout format, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
     int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-__global__ __aicore__ void TStoreKernel(__gm__ T *out, __gm__ T *src)
+__global__ AICORE void TStoreKernel(__gm__ T *out, __gm__ T *src)
 {
     if constexpr (format == pto::Layout::ND) {
         RunTStoreRowMajor<T,

@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
     template <typename TileData>
-    __aicore__ constexpr TileData::DType getPadValue()
+    AICORE constexpr TileData::DType getPadValue()
     {
         if constexpr (std::is_same<typename TileData::DType, float>::value) {
             switch (TileData::PadVal)
@@ -113,7 +113,7 @@ namespace pto {
     }
 
     template <typename TileData, typename GlobalData>
-    __tf__ __aicore__ void TLoad(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
+    __tf__ AICORE void TLoad(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
         int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
         int gStride3, int gStride4, int validRow, int validCol)
     {
@@ -198,7 +198,7 @@ namespace pto {
     }
 
     template <typename TileData, typename GlobalData>
-    __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
+    AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src)
     {
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
                       "Source dtype must be same with dst dtype");

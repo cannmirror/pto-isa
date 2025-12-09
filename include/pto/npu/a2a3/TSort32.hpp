@@ -24,7 +24,7 @@ constexpr const uint32_t HALF_DST_STRIDE_COEF = 4;
 constexpr const uint32_t MAX_UB_TMP = 32 * 255;
 
 template <typename T, typename IdxT, unsigned dstStride, unsigned srcStride>
-__aicore__ PTO_INLINE void LargeTmpBufferImpl(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, __ubuf__ IdxT *idxPtr, __ubuf__ T *tmpPtr,
+PTO_INTERNAL void LargeTmpBufferImpl(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, __ubuf__ IdxT *idxPtr, __ubuf__ T *tmpPtr,
     unsigned validRow, unsigned repeatNumPerRow, unsigned idxStride, unsigned srcTailPerRow, unsigned srcTailRepeatNum)
 {
     T minVal = -(0.0 / 0.0);
@@ -69,7 +69,7 @@ __aicore__ PTO_INLINE void LargeTmpBufferImpl(__ubuf__ T *dstPtr, __ubuf__ T *sr
 
 template <typename DstTileData, typename SrcTileData, typename IdxTileData,
     unsigned dstStride, unsigned srcStride>
-__tf__ __aicore__ void TSort32Impl(typename DstTileData::TileDType __out__ dst,
+__tf__ AICORE void TSort32Impl(typename DstTileData::TileDType __out__ dst,
                             typename SrcTileData::TileDType __in__ src,
                             typename IdxTileData::TileDType __in__ idx,
                             unsigned validRow,
@@ -106,7 +106,7 @@ __tf__ __aicore__ void TSort32Impl(typename DstTileData::TileDType __out__ dst,
 }
 
 template <typename DstTileData, typename SrcTileData, typename IdxTileData, typename TmpTileData, unsigned dstStride, unsigned srcStride>
-__tf__ __aicore__ void TSort32Impl(typename DstTileData::TileDType __out__ dst,
+__tf__ AICORE void TSort32Impl(typename DstTileData::TileDType __out__ dst,
                             typename SrcTileData::TileDType __in__ src,
                             typename IdxTileData::TileDType __in__ idx,
                             typename TmpTileData::TileDType __in__ tmp,
@@ -151,7 +151,7 @@ __tf__ __aicore__ void TSort32Impl(typename DstTileData::TileDType __out__ dst,
 }
 
 template <typename DstTileData, typename SrcTileData, typename IdxTileData>
-__aicore__ PTO_INLINE void CheckStatic()
+PTO_INTERNAL void CheckStatic()
 {
     static_assert((std::is_same<typename DstTileData::DType, half>::value) ||
                     (std::is_same<typename DstTileData::DType, float>::value),
@@ -160,16 +160,16 @@ __aicore__ PTO_INLINE void CheckStatic()
                     "Idx must be uint32_t.");
     static_assert((std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value),
                     "Dst and src must be same.");
-    static_assert((DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec) &&
-                    (IdxTileData::Loc == Location::Vec),
-                    "Location must be Vec.");
+    static_assert((DstTileData::Loc == TileType::Vec) && (SrcTileData::Loc == TileType::Vec) &&
+                    (IdxTileData::Loc == TileType::Vec),
+                    "TileType must be Vec.");
     static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor && IdxTileData::isRowMajor),
                     "Expect row major");
 }
 
 // 32 Align Interface, No tmpTile
 template <typename DstTileData, typename SrcTileData, typename IdxTileData>
-__aicore__ PTO_INLINE void TSORT32_IMPL(DstTileData &dst, SrcTileData &src, IdxTileData &idx)
+PTO_INTERNAL void TSORT32_IMPL(DstTileData &dst, SrcTileData &src, IdxTileData &idx)
 {
     CheckStatic<DstTileData, SrcTileData, IdxTileData>();
     unsigned validRow = dst.GetValidRow();
@@ -184,7 +184,7 @@ __aicore__ PTO_INLINE void TSORT32_IMPL(DstTileData &dst, SrcTileData &src, IdxT
 
 // 32 Non-Align Interface, Have tmpTile
 template <typename DstTileData, typename SrcTileData, typename IdxTileData, typename TmpTileData>
-__aicore__ PTO_INLINE void TSORT32_IMPL(DstTileData &dst, SrcTileData &src, IdxTileData &idx, TmpTileData &tmp)
+PTO_INTERNAL void TSORT32_IMPL(DstTileData &dst, SrcTileData &src, IdxTileData &idx, TmpTileData &tmp)
 {
     CheckStatic<DstTileData, SrcTileData, IdxTileData>();
     unsigned validRow = dst.GetValidRow();

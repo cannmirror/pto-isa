@@ -23,7 +23,7 @@ namespace pto {
 constexpr const int NUM_BITS_IN_BYTE = 8;
 
 template <typename RegTensorDst, typename RegTensorSrc, typename T>
-__aicore__ void GenCmpCall (RegTensorDst &dst, RegTensorSrc &src0, T src1, CmpMode cmpMode,
+AICORE void GenCmpCall (RegTensorDst &dst, RegTensorSrc &src0, T src1, CmpMode cmpMode,
         vector_bool &preg)
 {
     switch (static_cast<CmpMode>(cmpMode)) {
@@ -52,7 +52,7 @@ __aicore__ void GenCmpCall (RegTensorDst &dst, RegTensorSrc &src0, T src1, CmpMo
 }
 
 template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0, unsigned SS>
-__tf__ __aicore__ void TCmps_8B(typename TileDataDst::TileDType __out__ dst,
+__tf__ AICORE void TCmps_8B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
         CmpMode mode, unsigned numRepeatPerLine,
         unsigned numRemainPerLine, unsigned validRow, unsigned validCol,
@@ -81,7 +81,7 @@ __tf__ __aicore__ void TCmps_8B(typename TileDataDst::TileDType __out__ dst,
 
 
 template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0, unsigned SS>
-__tf__ __aicore__ void TCmps_16B(typename TileDataDst::TileDType __out__ dst,
+__tf__ AICORE void TCmps_16B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
         CmpMode mode, unsigned numRepeatPerLine,
         unsigned numRemainPerLine, unsigned validRow, unsigned validCol,
@@ -110,7 +110,7 @@ __tf__ __aicore__ void TCmps_16B(typename TileDataDst::TileDType __out__ dst,
 
 
 template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0, unsigned SS>
-__tf__ __aicore__ void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
+__tf__ AICORE void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
         CmpMode mode, unsigned numRepeatPerLine,
         unsigned numRemainPerLine, unsigned validRow, unsigned validCol,
@@ -157,7 +157,7 @@ __tf__ __aicore__ void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
 
 
 template <typename TileDataDst, typename TileDataSrc0, typename T>
-__aicore__ void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
+AICORE void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
 
     uint64_t repeatWidth = 
     static_cast<uint64_t>(max(sizeof(typename TileDataDst::DType), sizeof(typename TileDataSrc0::DType)));

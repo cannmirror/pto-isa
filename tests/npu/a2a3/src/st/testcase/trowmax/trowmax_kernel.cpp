@@ -17,7 +17,7 @@ using namespace pto;
 
 template <typename T, int row, int vaildRow, int srcCol, int srcVaildCol,
           int dstCol>
-__aicore__ PTO_INLINE void runTRowMax(__gm__ T *out, __gm__ T *src) {
+PTO_INTERNAL void runTRowMax(__gm__ T *out, __gm__ T *src) {
   using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
   using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
   using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
@@ -27,9 +27,9 @@ __aicore__ PTO_INLINE void runTRowMax(__gm__ T *out, __gm__ T *src) {
                        DynDim2Stride(row, dstCol));
 
   using srcTileData =
-      Tile<Location::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
+      Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
   using dstTileData =
-      Tile<Location::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
+      Tile<TileType::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
   srcTileData srcTile(vaildRow, srcVaildCol);
   srcTileData tmpTile(vaildRow, srcVaildCol);
   dstTileData dstTile(vaildRow, dstCol);
@@ -48,59 +48,59 @@ __aicore__ PTO_INLINE void runTRowMax(__gm__ T *out, __gm__ T *src) {
   TSTORE(dstGlobal, dstTile);
 }
 
-extern "C" __global__ __aicore__ void launchTROWMAXCase1(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase1(__gm__ float *out,
                                                          __gm__ float *src) {
   runTRowMax<float, 127, 127, 64, 63, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase2(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase2(__gm__ float *out,
                                                          __gm__ float *src) {
   runTRowMax<float, 63, 63, 64, 64, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase3(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase3(__gm__ float *out,
                                                          __gm__ float *src) {
   runTRowMax<float, 31, 31, 128, 127, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase4(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase4(__gm__ float *out,
                                                          __gm__ float *src) {
   runTRowMax<float, 15, 15, 192, 192, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase5(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase5(__gm__ float *out,
                                                          __gm__ float *src) {
   runTRowMax<float, 7, 7, 448, 447, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase6(__gm__ half *out,
+extern "C" __global__ AICORE void launchTROWMAXCase6(__gm__ half *out,
                                                          __gm__ half *src) {
   runTRowMax<half, 256, 256, 16, 15, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase7(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase7(__gm__ float *out,
                                                          __gm__ float *src) {
   runTRowMax<float, 30, 30, 216, 216, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase8(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase8(__gm__ float *out,
                                                          __gm__ float *src) {
   runTRowMax<float, 30, 30, 216, 24, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase9(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase9(__gm__ float *out,
                                                          __gm__ float *src) {
   runTRowMax<float, 30, 11, 216, 216, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase10(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase10(__gm__ float *out,
                                                           __gm__ float *src) {
   runTRowMax<float, 30, 11, 216, 24, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase11(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase11(__gm__ float *out,
                                                           __gm__ float *src) {
   runTRowMax<float, 238, 238, 40, 40, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase12(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase12(__gm__ float *out,
                                                           __gm__ float *src) {
   runTRowMax<float, 238, 238, 40, 16, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase13(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase13(__gm__ float *out,
                                                           __gm__ float *src) {
   runTRowMax<float, 238, 121, 40, 40, 1>(out, src);
 }
-extern "C" __global__ __aicore__ void launchTROWMAXCase14(__gm__ float *out,
+extern "C" __global__ AICORE void launchTROWMAXCase14(__gm__ float *out,
                                                           __gm__ float *src) {
   runTRowMax<float, 238, 121, 40, 16, 1>(out, src);
 }

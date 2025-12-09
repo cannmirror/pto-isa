@@ -18,7 +18,7 @@ namespace pto
 {
     template <typename T>
     struct SDivOp {
-        __PTO_INSTR__ static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats) {
+        PTO_INTERNAL static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats) {
             if constexpr (std::is_same<T, int32_t>::value)
             {
                 vector_dup(dst, src1, repeats, 1, 1, 8, 8);
@@ -58,7 +58,7 @@ namespace pto
                 vdiv(dst, dst, src0, repeats, 1, 1, 1, 8, 8, 8);
             }
         }
-        __PTO_INSTR__ static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
+        PTO_INTERNAL static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
             if constexpr (std::is_same<T, int32_t>::value)
             {
                 vector_dup(dst, src1, repeats, 1, 1, dstRepeatStride, srcRepeatStride);
@@ -102,7 +102,7 @@ namespace pto
     
     template <typename T> 
     struct DivSOp {
-        __PTO_INSTR__ static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats) {
+        PTO_INTERNAL static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats) {
             float divider = static_cast<float>(src1);
             if (divider != 0.0f)
             {
@@ -141,7 +141,7 @@ namespace pto
                 vmuls(dst, src0, divider, repeats, 1, 1, 8, 8);
             }
         }
-        __PTO_INSTR__ static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
+        PTO_INTERNAL static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
             float divider = static_cast<float>(src1);
             if (divider != 0.0f)
             {
@@ -182,7 +182,7 @@ namespace pto
         }
     };
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
-    __tf__ __PTO_INSTR__ void TDivS(typename TileData::TileDType __out__ dst,
+    __tf__ PTO_INTERNAL void TDivS(typename TileData::TileDType __out__ dst,
                                 typename TileData::TileDType __in__ src0,
                                 typename TileData::DType __in__ src1,
                                 unsigned validRow,
@@ -195,7 +195,7 @@ namespace pto
                 dstPtr, src0Ptr, src1, validRow, validCol);
     }
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
-    __tf__ __PTO_INSTR__ void TSDiv(typename TileData::TileDType __out__ dst,
+    __tf__ PTO_INTERNAL void TSDiv(typename TileData::TileDType __out__ dst,
                                 typename TileData::TileDType __in__ src0,
                                 typename TileData::DType __in__ src1,
                                 unsigned validRow,
@@ -208,7 +208,7 @@ namespace pto
                 dstPtr, src0Ptr, src1, validRow, validCol);
     }
     template <typename TileData>
-    __aicore__ void TDIVS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar) {
+    AICORE void TDIVS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar) {
         static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
                       std::is_same<typename TileData::DType, int>::value ||
                       std::is_same<typename TileData::DType, int16_t>::value ||
@@ -218,7 +218,7 @@ namespace pto
                       std::is_same<typename TileData::DType, float32_t>::value,
                       "TDIVS: Invalid data type");
 
-        static_assert(TileData::Loc == Location::Vec, "Location of src and dst tiles must be Location::Vec.");
+        static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
         
@@ -236,7 +236,7 @@ namespace pto
     }
     
     template <typename TileData>
-    __PTO_INSTR__ void TDIVS_IMPL(TileData &dst, typename TileData::DType scalar, TileData &src0) {
+    PTO_INTERNAL void TDIVS_IMPL(TileData &dst, typename TileData::DType scalar, TileData &src0) {
         static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
                       std::is_same<typename TileData::DType, int>::value ||
                       std::is_same<typename TileData::DType, int16_t>::value ||
@@ -246,7 +246,7 @@ namespace pto
                       std::is_same<typename TileData::DType, float32_t>::value,
                       "TDIVS: Invalid data type");
 
-        static_assert(TileData::Loc == Location::Vec, "Location of src and dst tiles must be Location::Vec.");
+        static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
         

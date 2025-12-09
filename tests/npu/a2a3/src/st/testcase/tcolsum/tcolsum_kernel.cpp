@@ -16,16 +16,16 @@ using namespace std;
 using namespace pto;
 
 template <typename T, int cols, int src_row, int src_validRow, bool IsBinary>
-__global__ __aicore__ void runTCOLSUM(__gm__ T __out__ *out, __gm__ T __in__ *src) {
+__global__ AICORE void runTCOLSUM(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
     GlobalData srcGlobal(src, DynDim2Shape(src_row, cols), DynDim2Stride(src_row, cols));
     GlobalData dstGlobal(out, DynDim2Shape(1, cols), DynDim2Stride(1, cols));
 
-    using srcTileData = Tile<Location::Vec, T, src_row, cols, BLayout::RowMajor, -1, -1>;
-    using tmpTileData = Tile<Location::Vec, T, src_row, cols, BLayout::RowMajor, -1, -1>;
-    using dstTileData = Tile<Location::Vec, T, 1, cols, BLayout::RowMajor, -1, -1>;
+    using srcTileData = Tile<TileType::Vec, T, src_row, cols, BLayout::RowMajor, -1, -1>;
+    using tmpTileData = Tile<TileType::Vec, T, src_row, cols, BLayout::RowMajor, -1, -1>;
+    using dstTileData = Tile<TileType::Vec, T, 1, cols, BLayout::RowMajor, -1, -1>;
     srcTileData srcTile(src_validRow, cols);
     tmpTileData tmpTile(src_validRow / 2, cols);
     dstTileData dstTile(1, cols);

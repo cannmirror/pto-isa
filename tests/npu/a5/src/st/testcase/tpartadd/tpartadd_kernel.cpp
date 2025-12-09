@@ -8,7 +8,6 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 #include "acl/acl.h"
@@ -16,15 +15,15 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int dstVR, int dstVC, int src0VR, int src0VC, int src1VR, int src1VC>
-__global__ __aicore__ void runTPartAdd( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
+__global__ AICORE void runTPartAdd( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
     constexpr uint16_t alignedSrc0VC=((src0VC*sizeof(T)+31)/32)*(32/sizeof(T));
     constexpr uint16_t alignedSrc1VC=((src1VC*sizeof(T)+31)/32)*(32/sizeof(T));
     using GlobalDataDst = GlobalTensor<T, Shape<1, 1, 1, dstVR, dstVC>, pto::Stride<1, 1, 1, dstVC, 1>>;
     using GlobalDataSrc0 = GlobalTensor<T, Shape<1, 1, 1, src0VR, src0VC>, pto::Stride<1, 1, 1, src0VC, 1>>;
     using GlobalDataSrc1 = GlobalTensor<T, Shape<1, 1, 1, src1VR, src1VC>, pto::Stride<1, 1, 1, src1VC, 1>>;
-    using TileDataDst = Tile<Location::Vec, T, dstVR, dstVC, BLayout::RowMajor, -1, -1>;
-    using TileDataSrc0 = Tile<Location::Vec, T, src0VR, alignedSrc0VC, BLayout::RowMajor, -1, -1>;
-    using TileDataSrc1 = Tile<Location::Vec, T, src1VR, alignedSrc1VC, BLayout::RowMajor, -1, -1>;
+    using TileDataDst = Tile<TileType::Vec, T, dstVR, dstVC, BLayout::RowMajor, -1, -1>;
+    using TileDataSrc0 = Tile<TileType::Vec, T, src0VR, alignedSrc0VC, BLayout::RowMajor, -1, -1>;
+    using TileDataSrc1 = Tile<TileType::Vec, T, src1VR, alignedSrc1VC, BLayout::RowMajor, -1, -1>;
     TileDataSrc0 src0Tile(src0VR, src0VC);
     TileDataSrc1 src1Tile(src1VR, src1VC);
     TileDataDst dstTile(dstVR, dstVC);

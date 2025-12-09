@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <cassert>
 
 #define __global__
-#define __aicore__
+#define AICORE
 #define __gm__
 #define __out__
 #define __in__

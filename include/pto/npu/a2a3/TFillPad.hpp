@@ -17,7 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename TileData>
-__aicore__ constexpr auto getCopyNullPtr()
+AICORE constexpr auto getCopyNullPtr()
 {
     using T = typename TileData::DType;
     if constexpr (sizeof(T) == 4) {
@@ -37,8 +37,7 @@ __aicore__ constexpr auto getCopyNullPtr()
 
 template <typename TileDataDst, typename TileDataSrc>
 __tf__
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TFillPad_CopyData(typename TileDataDst::TileDType __out__ dst, typename TileDataSrc::TileDType __in__ src, uint64_t dstValidRow, uint64_t dstValidCol, uint64_t srcValidRow, uint64_t srcValidCol)
 {
     set_mask_count(); // counter mode
@@ -87,8 +86,7 @@ void TFillPad_CopyData(typename TileDataDst::TileDType __out__ dst, typename Til
 }
 
 template <typename T>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 uint64_t getPadMask(uint64_t validCol)
 {
     if constexpr (sizeof(T) == 4) {
@@ -108,8 +106,7 @@ uint64_t getPadMask(uint64_t validCol)
 
 template <typename TileDataDst, typename TileDataSrc>
 __tf__
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TFillPad(typename TileDataDst::TileDType __out__ dst, typename TileDataSrc::TileDType __in__ src, uint64_t dstValidRow, uint64_t dstValidCol, uint64_t srcValidRow, uint64_t srcValidCol)
 {
     using T = typename TileDataSrc::DType;
@@ -218,8 +215,7 @@ void TFillPad(typename TileDataDst::TileDType __out__ dst, typename TileDataSrc:
 }  //end of tf
 
 template <typename TileDataDst, typename TileDataSrc, bool inplace>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TFILLPAD_IMPL(TileDataDst &dst, TileDataSrc &src)
 {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc::DType);
@@ -247,8 +243,7 @@ void TFILLPAD_IMPL(TileDataDst &dst, TileDataSrc &src)
 }
 
 template <typename TileDataDst, typename TileDataSrc>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TFILLPAD(TileDataDst &dst, TileDataSrc &src)
 {
     static_assert(TileDataDst::Cols == TileDataSrc::Cols && TileDataDst::Rows == TileDataSrc::Rows,
@@ -258,8 +253,7 @@ void TFILLPAD(TileDataDst &dst, TileDataSrc &src)
 }
 
 template <typename TileDataDst, typename TileDataSrc>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TFILLPAD_INPLACE(TileDataDst &dst, TileDataSrc &src)
 {
     static_assert(TileDataDst::Cols == TileDataSrc::Cols && TileDataDst::Rows == TileDataSrc::Rows,
@@ -269,8 +263,7 @@ void TFILLPAD_INPLACE(TileDataDst &dst, TileDataSrc &src)
 }
 
 template <typename TileDataDst, typename TileDataSrc>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TFILLPAD_EXPAND(TileDataDst &dst, TileDataSrc &src)
 {
     static_assert(TileDataDst::Cols >= TileDataSrc::Cols && TileDataDst::Rows >= TileDataSrc::Rows,

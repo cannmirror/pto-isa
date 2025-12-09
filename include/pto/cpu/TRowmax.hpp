@@ -26,7 +26,7 @@ namespace pto{
     }
 
   template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
-  __PTO_INSTR__ void TROWMAX_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp) {
+  PTO_INTERNAL void TROWMAX_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp) {
         (void)tmp;
         unsigned row = src.GetValidRow();
         unsigned col = src.GetValidCol();

@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-__global__ __aicore__ void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols) {
+__global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols) {
     using DynShapeSrc = pto::Shape<-1, -1, -1, -1, -1>;
     using DynStrideSrc = pto::Stride<-1, -1, -1, -1, -1>;
     using GlobalDataSrc = GlobalTensor<T, DynShapeSrc, DynStrideSrc>;
@@ -26,8 +26,8 @@ __global__ __aicore__ void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src
 
     constexpr int kTCols_aligned = (kTCols_ * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
     constexpr int kTRows_aligned = (kTRows_ * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
-    using TileDataSrc = Tile<Location::Vec, T, kTRows_, kTCols_aligned, BLayout::RowMajor, -1, -1>;
-    using TileDataDst = Tile<Location::Vec, T, kTCols_, kTRows_aligned, BLayout::RowMajor, -1, -1>;
+    using TileDataSrc = Tile<TileType::Vec, T, kTRows_, kTCols_aligned, BLayout::RowMajor, -1, -1>;
+    using TileDataDst = Tile<TileType::Vec, T, kTCols_, kTRows_aligned, BLayout::RowMajor, -1, -1>;
 
     TileDataSrc srcTile(vRows, vCols);
     TileDataDst dstTile(vCols, vRows);

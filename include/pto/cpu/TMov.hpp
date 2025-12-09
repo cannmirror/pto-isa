@@ -17,7 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto
 {
     template <typename DstTileData, typename SrcTileData>
-    __aicore__ void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
+    AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
         assert (src.GetValidRow() == dst.GetValidRow() && src.GetValidRow() == dst.GetValidRow());
         for(size_t c=0; c<src.GetValidCol(); c++) {
             size_t subTileSrcC = c / SrcTileData::InnerCols;

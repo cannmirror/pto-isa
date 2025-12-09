@@ -17,15 +17,15 @@ namespace pto
 {
     template<typename T>
     struct MinSOp {
-        __PTO_INSTR__ static void BinSInstr(__ubuf__ T* dst, __ubuf__ T* src0, T src1, uint8_t repeats) {
+        PTO_INTERNAL static void BinSInstr(__ubuf__ T* dst, __ubuf__ T* src0, T src1, uint8_t repeats) {
             vmins(dst, src0, src1, repeats, 1, 1, 8, 8);
         }
-        __PTO_INSTR__ static void BinSInstr(__ubuf__ T* dst, __ubuf__ T* src0, T src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
+        PTO_INTERNAL static void BinSInstr(__ubuf__ T* dst, __ubuf__ T* src0, T src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
             vmins(dst, src0, src1, repeats, 1, 1, dstRepeatStride, srcRepeatStride);
         }
     };
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
-    __tf__ __PTO_INSTR__ void TMinS(typename TileData::TileDType __out__ dst,
+    __tf__ PTO_INTERNAL void TMinS(typename TileData::TileDType __out__ dst,
                                 typename TileData::TileDType __in__ src0,
                                 typename TileData::DType __in__ src1,
                                 unsigned validRow,
@@ -38,7 +38,7 @@ namespace pto
             dstPtr, src0Ptr, src1, validRow, validCol);
 }
     template <typename TileData>
-    __PTO_INSTR__ void TMINS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar)
+    PTO_INTERNAL void TMINS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar)
     {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);

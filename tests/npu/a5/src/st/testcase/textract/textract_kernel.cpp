@@ -8,14 +8,14 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 
 using namespace pto;
 
 template <typename T, typename U, typename S, int M, int K, int N, uint16_t indexM, uint16_t indexK, uint16_t indexN, bool isAtranspose, bool isBtranspose>
-__aicore__ inline void runTEXTRACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
+AICORE inline void runTEXTRACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
     constexpr int mValid = M - indexM;
     constexpr int kValid = K - indexK;
@@ -34,11 +34,11 @@ __aicore__ inline void runTEXTRACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = std::conditional_t< isAtranspose,
-        Tile<Location::Mat, U, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, U, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
     using TileMatBData = std::conditional_t< isBtranspose,
-        Tile<Location::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>>;
+        Tile<TileType::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>,
+        Tile<TileType::Mat, S, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, mValid, kValid, mValid, kValid>;
     using RightTile = TileRight<S, kValid, nValid, kValid, nValid>;
@@ -78,7 +78,7 @@ __aicore__ inline void runTEXTRACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1
 }
 
 template <typename T, typename U, typename S, int M, int K, int N, uint16_t indexM, uint16_t indexK, uint16_t indexN,  bool isAtranspose, bool isBtranspose>
-__aicore__ inline void runTEXTRACT_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, int m, int k, int n)
+AICORE inline void runTEXTRACT_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, int m, int k, int n)
 {
     constexpr int mValid = M - indexM;
     constexpr int kValid = K - indexK;
@@ -100,11 +100,11 @@ __aicore__ inline void runTEXTRACT_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = std::conditional_t< isAtranspose,
-        Tile<Location::Mat, U, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, U, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, U, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
     using TileMatBData = std::conditional_t< isBtranspose,
-        Tile<Location::Mat, S, K, N, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>>;
+        Tile<TileType::Mat, S, K, N, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>,
+        Tile<TileType::Mat, S, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, mValid, kValid, -1, -1>;
     using RightTile = TileRight<S, kValid, nValid, kValid, -1>;
@@ -147,7 +147,7 @@ __aicore__ inline void runTEXTRACT_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__
     out = dstGlobal.data();
 }
 
-extern "C" __global__ __aicore__ void launchTEXTRACT_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 32;
     constexpr uint32_t K = 96;
@@ -162,7 +162,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_1(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ half *>(src0),
         reinterpret_cast<__gm__ half *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t K = 48;
@@ -177,7 +177,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_2(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t K = 128;
@@ -192,7 +192,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_3(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_4(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_4(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 96;
@@ -207,7 +207,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_4(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ half *>(src0),
         reinterpret_cast<__gm__ half *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_5(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_5(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -222,7 +222,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_5(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_6(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_6(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t K = 128;
@@ -237,7 +237,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_6(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_7(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_7(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -252,7 +252,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_7(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ half *>(src0),
         reinterpret_cast<__gm__ half *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_8(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_8(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 64;
@@ -267,7 +267,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_8(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_9(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_9(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t K = 64;
@@ -282,7 +282,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_9(__gm__ uint8_t *out, __gm
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_10(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_10(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -297,7 +297,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_10(__gm__ uint8_t *out, __g
         reinterpret_cast<__gm__ bfloat16_t *>(src0),
         reinterpret_cast<__gm__ bfloat16_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_11(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_11(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -312,7 +312,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_11(__gm__ uint8_t *out, __g
         reinterpret_cast<__gm__ float8_e4m3_t *>(src0),
         reinterpret_cast<__gm__ float8_e4m3_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_12(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_12(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -327,7 +327,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_12(__gm__ uint8_t *out, __g
         reinterpret_cast<__gm__ float8_e5m2_t *>(src0),
         reinterpret_cast<__gm__ float8_e5m2_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_13(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_13(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -342,7 +342,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_13(__gm__ uint8_t *out, __g
         reinterpret_cast<__gm__ hifloat8_t *>(src0),
         reinterpret_cast<__gm__ hifloat8_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_14(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_14(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 96;
@@ -357,7 +357,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_14(__gm__ uint8_t *out, __g
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1), M, K, N);
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_15(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_15(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 48;
@@ -372,7 +372,7 @@ extern "C" __global__ __aicore__ void launchTEXTRACT_15(__gm__ uint8_t *out, __g
         reinterpret_cast<__gm__ half *>(src0),
         reinterpret_cast<__gm__ half *>(src1), M, K, N);
 }
-extern "C" __global__ __aicore__ void launchTEXTRACT_16(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTEXTRACT_16(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 32;
     constexpr uint32_t K = 96;
@@ -444,7 +444,7 @@ template void launchTEXTRACT<15>(uint8_t *out, uint8_t *src0, uint8_t *src1, voi
 template void launchTEXTRACT<16>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream); 
 
 template <typename T, typename U, typename S, int M, int K, int N, bool isAtranspose, bool isBtranspose>
-__aicore__ inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
+AICORE inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
     using GlobalDataSrc0 = std::conditional_t< isAtranspose,
         GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, 1, M>, Layout::DN>,
@@ -459,11 +459,11 @@ __aicore__ inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = std::conditional_t< isAtranspose,
-        Tile<Location::Mat, U, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, U, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, U, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
     using TileMatBData = std::conditional_t< isBtranspose,
-        Tile<Location::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>>;
+        Tile<TileType::Mat, S, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>,
+        Tile<TileType::Mat, S, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, M, K, M, K>;
     using RightTile = TileRight<S, K, N, K, N>;
@@ -503,7 +503,7 @@ __aicore__ inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 }
 
 template <typename T, typename U, typename S, int M, int K, int N, bool isAtranspose, bool isBtranspose>
-__aicore__ inline void runTMOV_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, int m, int k, int n)
+AICORE inline void runTMOV_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, int m, int k, int n)
 {
     using GlobalDataSrc0 = std::conditional_t< isAtranspose,
         GlobalTensor<U, pto::Shape<1, 1, 1, M, K>, pto::Stride<1 * M * K, 1 * M * K, M * K, 1, M>, Layout::DN>,
@@ -521,11 +521,11 @@ __aicore__ inline void runTMOV_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = std::conditional_t< isAtranspose,
-        Tile<Location::Mat, U, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, U, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, U, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
     using TileMatBData = std::conditional_t< isBtranspose,
-        Tile<Location::Mat, S, K, N, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>>;
+        Tile<TileType::Mat, S, K, N, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>,
+        Tile<TileType::Mat, S, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, M, K, -1, -1>;
     using RightTile = TileRight<S, K, N, K, -1>;
@@ -565,7 +565,7 @@ __aicore__ inline void runTMOV_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *
 }
 
 template <typename T, typename U, typename S, int M, int K, int N, bool isAtranspose, bool isBtranspose, int targetM, int targetK, int targetN>
-__aicore__ inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
+AICORE inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
     using GlobalDataSrc0 = std::conditional_t< isAtranspose,
         GlobalTensor<U, pto::Shape<1, 1, 1, targetM, targetK>, pto::Stride<1*targetM*targetK, 1*targetM*targetK, targetM*targetK, 1, targetM>, Layout::DN>,
@@ -580,11 +580,11 @@ __aicore__ inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = std::conditional_t< isAtranspose,
-        Tile<Location::Mat, U, targetM, targetK, BLayout::RowMajor, targetM, targetK, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, U, targetM, targetK, BLayout::ColMajor, targetM, targetK, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, U, targetM, targetK, BLayout::RowMajor, targetM, targetK, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, U, targetM, targetK, BLayout::ColMajor, targetM, targetK, SLayout::RowMajor, 512>>;
     using TileMatBData = std::conditional_t< isBtranspose,
-        Tile<Location::Mat, S, targetK, targetN, BLayout::ColMajor, targetK, targetN, SLayout::RowMajor, 512>,
-        Tile<Location::Mat, S, targetK, targetN, BLayout::RowMajor, targetK, targetN, SLayout::ColMajor, 512>>;
+        Tile<TileType::Mat, S, targetK, targetN, BLayout::ColMajor, targetK, targetN, SLayout::RowMajor, 512>,
+        Tile<TileType::Mat, S, targetK, targetN, BLayout::RowMajor, targetK, targetN, SLayout::ColMajor, 512>>;
 
     using LeftTile = TileLeft<U, targetM, targetK, targetM, K>;
     using RightTile = TileRight<S, targetK, targetN, K, targetN>;
@@ -623,7 +623,7 @@ __aicore__ inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *
     out = dstGlobal.data();
 }
 
-extern "C" __global__ __aicore__ void launchTMOV_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 32;
     constexpr uint32_t K = 96;
@@ -635,7 +635,7 @@ extern "C" __global__ __aicore__ void launchTMOV_1(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ half *>(src0),
         reinterpret_cast<__gm__ half *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t K = 48;
@@ -647,7 +647,7 @@ extern "C" __global__ __aicore__ void launchTMOV_2(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t K = 128;
@@ -659,7 +659,7 @@ extern "C" __global__ __aicore__ void launchTMOV_3(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_4(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_4(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -671,7 +671,7 @@ extern "C" __global__ __aicore__ void launchTMOV_4(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ bfloat16_t *>(src0),
         reinterpret_cast<__gm__ bfloat16_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_5(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_5(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 96;
@@ -683,7 +683,7 @@ extern "C" __global__ __aicore__ void launchTMOV_5(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ float8_e4m3_t *>(src0),
         reinterpret_cast<__gm__ float8_e4m3_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_6(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_6(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -695,7 +695,7 @@ extern "C" __global__ __aicore__ void launchTMOV_6(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ float8_e5m2_t *>(src0),
         reinterpret_cast<__gm__ float8_e5m2_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_7(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_7(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 128;
     constexpr uint32_t K = 128;
@@ -707,7 +707,7 @@ extern "C" __global__ __aicore__ void launchTMOV_7(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ hifloat8_t *>(src0),
         reinterpret_cast<__gm__ hifloat8_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_8(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_8(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 96;
@@ -719,7 +719,7 @@ extern "C" __global__ __aicore__ void launchTMOV_8(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1), M, K, N);
 }
-extern "C" __global__ __aicore__ void launchTMOV_9(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_9(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -731,7 +731,7 @@ extern "C" __global__ __aicore__ void launchTMOV_9(__gm__ uint8_t *out, __gm__ u
         reinterpret_cast<__gm__ half *>(src0),
         reinterpret_cast<__gm__ half *>(src1), M, K, N);
 }
-extern "C" __global__ __aicore__ void launchTMOV_10(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_10(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 64;
     constexpr uint32_t K = 128;
@@ -743,7 +743,7 @@ extern "C" __global__ __aicore__ void launchTMOV_10(__gm__ uint8_t *out, __gm__ 
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1), M, K, N);
 }
-extern "C" __global__ __aicore__ void launchTMOV_11(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_11(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 65;
     constexpr uint32_t K = 40;
@@ -759,7 +759,7 @@ extern "C" __global__ __aicore__ void launchTMOV_11(__gm__ uint8_t *out, __gm__ 
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_12(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_12(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 65;
     constexpr uint32_t K = 40;
@@ -775,7 +775,7 @@ extern "C" __global__ __aicore__ void launchTMOV_12(__gm__ uint8_t *out, __gm__ 
         reinterpret_cast<__gm__ half *>(src0),
         reinterpret_cast<__gm__ half *>(src1));
 }
-extern "C" __global__ __aicore__ void launchTMOV_13(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+extern "C" __global__ AICORE void launchTMOV_13(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     constexpr uint32_t M = 65;
     constexpr uint32_t K = 40;

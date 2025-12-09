@@ -27,7 +27,7 @@ enum class UnaryOpsImpl : uint8_t {
 };
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TUnaryOps_1D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *srcPtr,
                     unsigned kValidRows,
@@ -53,7 +53,7 @@ void TUnaryOps_1D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TUnaryOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *srcPtr,
                     unsigned kValidRows,
@@ -79,7 +79,7 @@ void TUnaryOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TUnaryOps_2D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *srcPtr,
                     unsigned kValidRows,
@@ -106,7 +106,7 @@ void TUnaryOps_2D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE
+PTO_INTERNAL
 void TUnaryOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
                     __ubuf__ typename TileData::DType *srcPtr,
                     unsigned kValidRows,
@@ -133,7 +133,7 @@ void TUnaryOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE void UnaryInstr(typename TileData::TileDType __out__ dst, 
+PTO_INTERNAL void UnaryInstr(typename TileData::TileDType __out__ dst,
                             typename TileData::TileDType __in__ src,
                             unsigned kValidRows,
                             unsigned kValidCols,
@@ -198,14 +198,14 @@ __aicore__ PTO_INLINE void UnaryInstr(typename TileData::TileDType __out__ dst,
 template<typename T> using unaryFuncPtr = void (*)(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg);
 
 template <typename T, unaryFuncPtr<T> funcPtr> struct UnaryOperation {
-    __aicore__ PTO_INLINE static void UnaryInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg)
+    PTO_INTERNAL static void UnaryInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg)
     {
         funcPtr(reg_dst, reg_src, preg);
     }
 };
 
 template <typename TileData, unaryFuncPtr<typename TileData::DType> funcPtr, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ __aicore__ PTO_INLINE
+__tf__ PTO_INTERNAL
 void TUnaryOp(typename TileData::TileDType __out__ dst, 
                             typename TileData::TileDType __in__ src,
                             unsigned kValidRows,
@@ -219,12 +219,12 @@ void TUnaryOp(typename TileData::TileDType __out__ dst,
 }
 
 /* TEXP */
-template<typename T> __aicore__ void _vexp(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
+template<typename T> AICORE void _vexp(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
     vexp(reg_dst, reg_src, preg, MODE_ZEROING);
 }
 
 template <typename TileData>
-__aicore__ void TEXP_IMPL(TileData &dst, TileData &src) {
+AICORE void TEXP_IMPL(TileData &dst, TileData &src) {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned rowStride = TileData::RowStride;
@@ -235,12 +235,12 @@ __aicore__ void TEXP_IMPL(TileData &dst, TileData &src) {
 }
 
 /* TSQRT */
-template<typename T> __aicore__ void _vsqrt(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
+template<typename T> AICORE void _vsqrt(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
     vsqrt(reg_dst, reg_src, preg, MODE_ZEROING);
 }
 
 template <typename TileData>
-__aicore__ void TSQRT_IMPL(TileData &dst, TileData &src) {
+AICORE void TSQRT_IMPL(TileData &dst, TileData &src) {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned rowStride = TileData::RowStride;
@@ -252,7 +252,7 @@ __aicore__ void TSQRT_IMPL(TileData &dst, TileData &src) {
 
 /* TRSQRT */
 template <typename TileData>
-__tf__ __aicore__ void TRsqrtCustom(typename TileData::TileDType __out__ dst,
+__tf__ AICORE void TRsqrtCustom(typename TileData::TileDType __out__ dst,
                                     typename TileData::TileDType __in__ src,
                                     unsigned validCol, unsigned validRow) {
     using T = typename TileData::DType;
@@ -285,7 +285,7 @@ __tf__ __aicore__ void TRsqrtCustom(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileData>
-__aicore__ void TRSQRT_IMPL(TileData &dst, TileData &src) {
+AICORE void TRSQRT_IMPL(TileData &dst, TileData &src) {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned rowStride = TileData::RowStride;

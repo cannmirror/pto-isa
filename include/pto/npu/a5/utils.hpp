@@ -38,7 +38,7 @@ namespace pto{
         DIST_ONEPT
     };
     
-    template <typename T, DistVST dist> __aicore__ PTO_INLINE constexpr DistVST GetDistVst()
+    template <typename T, DistVST dist> PTO_INTERNAL constexpr DistVST GetDistVst()
     {
         if constexpr (dist == DistVST::DIST_NORM) {
             static_assert(SupportBytes<T, 1, 2, 4>(), "DistVST DIST_NORM only support type b8/b16/b32 on current device");

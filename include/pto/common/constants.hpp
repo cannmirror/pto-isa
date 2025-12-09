@@ -250,7 +250,7 @@ struct PadValueMap<float4_e2m1x2_t, PadVal> {
 #endif
 
 template <typename TileData>
-__aicore__ PTO_INLINE constexpr auto GetPadValue()
+PTO_INTERNAL constexpr auto GetPadValue()
 {
     using DType = typename TileData::DType;
     constexpr PadValue PadVal = TileData::PadVal;
@@ -267,7 +267,7 @@ enum class TileLayoutCustom : uint8_t {
 };
 
 template <typename TileData>
-__aicore__ PTO_INLINE constexpr TileLayoutCustom GetTileLayoutCustom()
+PTO_INTERNAL constexpr TileLayoutCustom GetTileLayoutCustom()
 {
     if constexpr (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox)) {
         return TileLayoutCustom::ND;

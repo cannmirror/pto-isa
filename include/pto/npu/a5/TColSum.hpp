@@ -20,13 +20,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
   template <typename T>
   struct TColSumOp {
-    __PTO_INSTR__ static void ReduceInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1, MaskReg &pReg) {
+    PTO_INTERNAL static void ReduceInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1, MaskReg &pReg) {
       vadd(dst, src0, src1, pReg, MODE_ZEROING);
     }
   };
 
   template <typename T, unsigned TmpStride>
-  __PTO_INSTR__ void TColSum_Binary_TmpProc(RegTensor<T> &src0VReg, RegTensor<T> &src1VReg, RegTensor<T> &dstVReg,
+  PTO_INTERNAL void TColSum_Binary_TmpProc(RegTensor<T> &src0VReg, RegTensor<T> &src1VReg, RegTensor<T> &dstVReg,
     MaskReg &pReg, __ubuf__ T *tmp, uint16_t nLoop) {
     bool remain;
     constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>
@@ -54,7 +54,7 @@ namespace pto {
   }
 
   template <typename T, unsigned SrcStride, unsigned TmpStride, unsigned elmPerRpt>
-  __PTO_INSTR__ void TColSum_Binary(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp,
+  PTO_INTERNAL void TColSum_Binary(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp,
     uint16_t validRow, int validCol, unsigned version) {
     uint16_t repeatTimes = CeilDivision(validCol, elmPerRpt);
     __VEC_SCOPE__
@@ -98,7 +98,7 @@ namespace pto {
   }
 
   template <typename T, typename TileDataOut, typename TileDataIn, typename TileDataTmp, bool isBinary>
-  __tf__ __PTO_INSTR__ void TColSum(typename TileDataOut::TileDType __out__ dstData,
+  __tf__ PTO_INTERNAL void TColSum(typename TileDataOut::TileDType __out__ dstData,
     typename TileDataIn::TileDType __in__ srcData, typename TileDataIn::TileDType __in__ tmpData,
     uint16_t validRow, int validCol, unsigned version) {
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
@@ -114,7 +114,7 @@ namespace pto {
   }
 
   template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
-  __PTO_INSTR__ void TCOLSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, bool isBinary) {
+  PTO_INTERNAL void TCOLSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, bool isBinary) {
     int validCol = src.GetValidCol();
     int validRow = src.GetValidRow();
     TColReduceCheck<TileDataOut, TileDataIn>(validRow, validCol, dst.GetValidRow());

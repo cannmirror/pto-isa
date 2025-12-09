@@ -29,34 +29,34 @@ namespace pto
 
     template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
               typename Src2TileData, bool exhausted>
-    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
+    PTO_INTERNAL void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
                                         Src0TileData &src0, Src1TileData &src1,
                                         Src2TileData &src2) {
     }
 
     template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
               bool exhausted>
-    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
+    PTO_INTERNAL void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
                                         Src0TileData &src0, Src1TileData &src1) {
     }
 
     // blockLen大小包含值+索引，比如32个值+索引：blockLen=64
     template <typename DstTileData, typename SrcTileData>
-    __aicore__ PTO_INLINE void TMRGSORT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t blockLen) {
+    PTO_INTERNAL void TMRGSORT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t blockLen) {
     }
 
     template <typename Src0TileData, typename Src1TileData, typename Src2TileData, typename Src3TileData>
-    __aicore__ PTO_INLINE constexpr uint32_t GETMRGSORTTMPSIZE() {
+    PTO_INTERNAL constexpr uint32_t GETMRGSORTTMPSIZE() {
         return Src0TileData::Cols + Src1TileData::Cols + Src2TileData::Cols + Src3TileData::Cols;
     }
 
     template <typename Src0TileData, typename Src1TileData, typename Src2TileData>
-    __aicore__ PTO_INLINE constexpr uint32_t GETMRGSORTTMPSIZE() {
+    PTO_INTERNAL constexpr uint32_t GETMRGSORTTMPSIZE() {
         return Src0TileData::Cols + Src1TileData::Cols + Src2TileData::Cols;
     }
 
     template <typename Src0TileData, typename Src1TileData>
-    __aicore__ PTO_INLINE constexpr uint32_t GETMRGSORTTMPSIZE() {
+    PTO_INTERNAL constexpr uint32_t GETMRGSORTTMPSIZE() {
         return Src0TileData::Cols + Src1TileData::Cols;
     }
 }

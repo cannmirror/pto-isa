@@ -23,7 +23,7 @@ enum class SELMODE : uint8_t {
 
 template <typename TileData, typename MaskTile, unsigned rowStride, unsigned maskRowStride>
 __tf__
-__aicore__
+AICORE
 void TSel(typename TileData::TileDType __out__ dst, typename MaskTile::TileDType __in__ selMask,
     typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1, unsigned validRow,
     unsigned validCol)
@@ -58,7 +58,7 @@ void TSel(typename TileData::TileDType __out__ dst, typename MaskTile::TileDType
 }
 
 template <typename TileData, typename MaskTile>
-__aicore__
+AICORE
 void TSEL_IMPL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1)
 {
     constexpr unsigned rowStride = TileData::RowStride;

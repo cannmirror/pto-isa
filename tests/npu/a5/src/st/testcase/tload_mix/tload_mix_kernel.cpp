@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 
@@ -16,7 +16,7 @@ using namespace pto;
 
 template <typename T, int N1, int N2, int N3, int M, int K, int WN1, int WN2, int WN3, int WN4, int WN5, int baseM,
     int baseK>
-__aicore__ inline void runTLOAD_MIX_ND2NZ(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
+AICORE inline void runTLOAD_MIX_ND2NZ(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
 {
     // static shape
     using GlobalDataSrc0 = GlobalTensor<T,
@@ -32,8 +32,8 @@ __aicore__ inline void runTLOAD_MIX_ND2NZ(__gm__ T *out, __gm__ T *src0, __gm__ 
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData =
-        Tile<Location::Mat, T, baseM, baseK, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;  // 大N小Z
-    using TileUBData = Tile<Location::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
+        Tile<TileType::Mat, T, baseM, baseK, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;  // 大N小Z
+    using TileUBData = Tile<TileType::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
     TileUBData srcTile(baseM, baseK);
     TASSIGN(srcTile, 0x0);
 
@@ -87,7 +87,7 @@ __aicore__ inline void runTLOAD_MIX_ND2NZ(__gm__ T *out, __gm__ T *src0, __gm__ 
 }
 template <typename T, int N1, int N2, int N3, int M, int K, int WN1, int WN2, int WN3, int WN4, int WN5, int baseM,
     int baseK>
-__aicore__ inline void runTLOAD_MIX_DN2NZ(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
+AICORE inline void runTLOAD_MIX_DN2NZ(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
 {
     // static shape
     using GlobalDataSrc0 = GlobalTensor<T,
@@ -103,8 +103,8 @@ __aicore__ inline void runTLOAD_MIX_DN2NZ(__gm__ T *out, __gm__ T *src0, __gm__ 
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData =
-        Tile<Location::Mat, T, baseM, baseK, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;  // 大N小Z
-    using TileUBData = Tile<Location::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
+        Tile<TileType::Mat, T, baseM, baseK, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;  // 大N小Z
+    using TileUBData = Tile<TileType::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
     TileUBData srcTile(baseM, baseK);
     TASSIGN(srcTile, 0x0);
 
@@ -154,7 +154,7 @@ __aicore__ inline void runTLOAD_MIX_DN2NZ(__gm__ T *out, __gm__ T *src0, __gm__ 
 
 template <typename T, int N1, int N2, int N3, int M, int K, int WN1, int WN2, int WN3, int WN4, int WN5, int baseM,
     int baseK>
-__aicore__ inline void runTLOAD_MIX_ND2ND(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
+AICORE inline void runTLOAD_MIX_ND2ND(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
 {
     // static shape
     using GlobalDataSrc0 = GlobalTensor<T,
@@ -169,8 +169,8 @@ __aicore__ inline void runTLOAD_MIX_ND2ND(__gm__ T *out, __gm__ T *src0, __gm__ 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, T, baseM, baseK, BLayout::RowMajor, M, K, SLayout::NoneBox>;  // 大N小Z
-    using TileUBData = Tile<Location::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
+    using TileMatAData = Tile<TileType::Mat, T, baseM, baseK, BLayout::RowMajor, M, K, SLayout::NoneBox>;  // 大N小Z
+    using TileUBData = Tile<TileType::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
     TileUBData srcTile(baseM, baseK);
     TASSIGN(srcTile, 0x0);
 
@@ -217,7 +217,7 @@ __aicore__ inline void runTLOAD_MIX_ND2ND(__gm__ T *out, __gm__ T *src0, __gm__ 
 
 template <typename T, int N1, int N2, int N3, int M, int K, int WN1, int WN2, int WN3, int WN4, int WN5, int baseM,
     int baseK>
-__aicore__ inline void runTLOAD_MIX_DN2DN(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
+AICORE inline void runTLOAD_MIX_DN2DN(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
 {
     // static shape
     using GlobalDataSrc0 = GlobalTensor<T,
@@ -232,9 +232,9 @@ __aicore__ inline void runTLOAD_MIX_DN2DN(__gm__ T *out, __gm__ T *src0, __gm__ 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, T, baseM, baseK, BLayout::ColMajor, M, K, SLayout::NoneBox>;  // 大N小Z
+    using TileMatAData = Tile<TileType::Mat, T, baseM, baseK, BLayout::ColMajor, M, K, SLayout::NoneBox>;  // 大N小Z
     using TileUBData =
-        Tile<Location::Vec, T, baseK, baseM, BLayout::RowMajor, -1, -1>;  // DN：baseM need 32Byte aligned
+        Tile<TileType::Vec, T, baseK, baseM, BLayout::RowMajor, -1, -1>;  // DN：baseM need 32Byte aligned
     TileUBData srcTile(baseK, baseM);
     TASSIGN(srcTile, 0x0);
 
@@ -277,7 +277,7 @@ __aicore__ inline void runTLOAD_MIX_DN2DN(__gm__ T *out, __gm__ T *src0, __gm__ 
 
 template <typename T, int N1, int N2, int N3, int M, int K, int WN1, int WN2, int WN3, int WN4, int WN5, int baseM,
     int baseK>
-__aicore__ inline void runTLOAD_MIX_NZ2NZ(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
+AICORE inline void runTLOAD_MIX_NZ2NZ(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
 {
     // static shape
     using GlobalDataSrc0 = GlobalTensor<T,
@@ -292,12 +292,12 @@ __aicore__ inline void runTLOAD_MIX_NZ2NZ(__gm__ T *out, __gm__ T *src0, __gm__ 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataOut dstGlobal(out);
     using TileMatAData =
-        Tile<Location::Mat, T, baseM, baseK, BLayout::ColMajor, N3 * M, N2 * K, SLayout::RowMajor, 512>;  // [80,48]
+        Tile<TileType::Mat, T, baseM, baseK, BLayout::ColMajor, N3 * M, N2 * K, SLayout::RowMajor, 512>;  // [80,48]
                                                                                                           // valid is
                                                                                                           // [N3 * M, N2
                                                                                                           // * K]
 
-    using TileUBData = Tile<Location::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
+    using TileUBData = Tile<TileType::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
     TileUBData srcTile(baseM, baseK);
     TASSIGN(srcTile, 0x0);
 
@@ -348,7 +348,7 @@ __aicore__ inline void runTLOAD_MIX_NZ2NZ(__gm__ T *out, __gm__ T *src0, __gm__ 
 
 template <typename T, int N1, int N2, int N3, int M, int K, int WN1, int WN2, int WN3, int WN4, int WN5, int baseM,
     int baseK>
-__aicore__ inline void runTLOAD_MIX_DN2ZN(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
+AICORE inline void runTLOAD_MIX_DN2ZN(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
 {
     // static shape
     using GlobalDataSrc0 = GlobalTensor<T,
@@ -364,8 +364,8 @@ __aicore__ inline void runTLOAD_MIX_DN2ZN(__gm__ T *out, __gm__ T *src0, __gm__ 
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData =
-        Tile<Location::Mat, T, baseM, baseK, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>;  // 大Z小N
-    using TileUBData = Tile<Location::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
+        Tile<TileType::Mat, T, baseM, baseK, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>;  // 大Z小N
+    using TileUBData = Tile<TileType::Vec, T, baseM, baseK, BLayout::RowMajor, -1, -1>;
     TileUBData srcTile(baseM, baseK);
     TASSIGN(srcTile, 0x0);
 
@@ -418,7 +418,7 @@ __aicore__ inline void runTLOAD_MIX_DN2ZN(__gm__ T *out, __gm__ T *src0, __gm__ 
 
 template <typename T, int format, int N1, int N2, int N3, int N4, int N5, int WN1, int WN2, int WN3, int WN4, int WN5,
     int BASEM, int BASEK>
-__global__ __aicore__ void TLOAD_MIX_KERNEL(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+__global__ AICORE void TLOAD_MIX_KERNEL(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
     if constexpr (format == 0) {  // ND2NZ
         runTLOAD_MIX_ND2NZ<T, N1, N2, N3, N4, N5, WN1, WN2, WN3, WN4, WN5, BASEM, BASEK>(
@@ -512,7 +512,7 @@ template void launchTLOADMIX<int8_t, 5, 1, 1, 1, 59, 119, 1, 1, 1, 64, 128, 64, 
 
 template <typename T, int format, int dtype, int N1, int N2, int N3, int N4, int N5, int WN1, int WN2, int WN3, int WN4,
     int WN5, int BASEM, int BASEK>
-__global__ __aicore__ void TLOAD_MIX_KERNEL_B4(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
+__global__ AICORE void TLOAD_MIX_KERNEL_B4(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
     if constexpr (format == 0) { // ND2NZ
         if constexpr (dtype == 0) {
             runTLOAD_MIX_ND2NZ<float4_e1m2x2_t, N1, N2, N3, N4, N5 * 2, WN1, WN2, WN3, WN4, WN5 * 2, BASEM, BASEK * 2>(

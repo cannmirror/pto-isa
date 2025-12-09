@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 #include <pto/npu/a5/TSort32.hpp>
@@ -21,7 +21,7 @@ using namespace std;
 using namespace pto;
 
 template <typename T, uint32_t ROWS_, uint32_t COLS_, uint32_t VALID_R_, uint32_t VALID_C, uint32_t ALIGN_C>
-__aicore__ void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, __gm__ T *tmp){
+AICORE void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, __gm__ T *tmp){
 
     constexpr uint32_t TYPE_COEF = sizeof(float)/sizeof(T);
     using SrcShapeDim5 = pto::Shape<1, 1, 1, ROWS_, COLS_>;
@@ -40,10 +40,10 @@ __aicore__ void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, 
     using OutStridDim5 = pto::Stride<1, 1, 1, TYPE_COEF * 2 * COLS_, 1>;
     using OutGlobalData = GlobalTensor<T, OutShapeDim5, OutStridDim5>;
 
-    using SrcTileData = Tile<Location::Vec, T,    ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
-    using IdxTileData = Tile<Location::Vec, uint32_t, ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
-    using DstTileData = Tile<Location::Vec, T,    ROWS_, TYPE_COEF * 2 * ALIGN_C, BLayout::RowMajor, -1, -1>;
-    using TmpTileData = Tile<Location::Vec, T,    1, ALIGN_C, BLayout::RowMajor>;
+    using SrcTileData = Tile<TileType::Vec, T,    ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
+    using IdxTileData = Tile<TileType::Vec, uint32_t, ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
+    using DstTileData = Tile<TileType::Vec, T,    ROWS_, TYPE_COEF * 2 * ALIGN_C, BLayout::RowMajor, -1, -1>;
+    using TmpTileData = Tile<TileType::Vec, T,    1, ALIGN_C, BLayout::RowMajor>;
 
     SrcTileData srcTile(VALID_R_, VALID_C);
     IdxTileData idxTile(VALID_R_, ALIGN_C);
@@ -75,7 +75,7 @@ __aicore__ void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, 
     out = dstGlobal.data();
 }
 
-extern "C" __global__ __aicore__ void launchTSORT32_1(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
+extern "C" __global__ AICORE void launchTSORT32_1(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
         __gm__ uint64_t *tmp)
 {
     constexpr uint32_t ROWS = 2;
@@ -88,7 +88,7 @@ extern "C" __global__ __aicore__ void launchTSORT32_1(__gm__ uint64_t *out, __gm
             reinterpret_cast<__gm__ float *>(src), idx, reinterpret_cast<__gm__ float *>(tmp));
 }
 
-extern "C" __global__ __aicore__ void launchTSORT32_2(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
+extern "C" __global__ AICORE void launchTSORT32_2(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
         __gm__ uint64_t *tmp)
 {
     constexpr uint32_t ROWS = 4;
@@ -102,7 +102,7 @@ extern "C" __global__ __aicore__ void launchTSORT32_2(__gm__ uint64_t *out, __gm
                 reinterpret_cast<__gm__ half *>(src), idx, reinterpret_cast<__gm__ half *>(tmp));
 }
 
-extern "C" __global__ __aicore__ void launchTSORT32_3(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
+extern "C" __global__ AICORE void launchTSORT32_3(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
         __gm__ uint64_t *tmp)
 {
     constexpr uint32_t ROWS = 1;
@@ -116,7 +116,7 @@ extern "C" __global__ __aicore__ void launchTSORT32_3(__gm__ uint64_t *out, __gm
                 reinterpret_cast<__gm__ float *>(src), idx, reinterpret_cast<__gm__ float *>(tmp));
 }
 
-extern "C" __global__ __aicore__ void launchTSORT32_4(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
+extern "C" __global__ AICORE void launchTSORT32_4(__gm__ uint64_t *out, __gm__ uint64_t *src, __gm__ uint32_t *idx,
         __gm__ uint64_t *tmp)
 {
     constexpr uint32_t ROWS = 2;

@@ -59,7 +59,7 @@ namespace pto {
     }
 
     template <typename TileAcc, typename TileLeft, typename TileRight>
-    __aicore__ PTO_INLINE void CheckMadValid()
+    PTO_INTERNAL void CheckMadValid()
     {
         using AType = typename TileLeft::DType;
         using BType = typename TileRight::DType;
@@ -76,25 +76,25 @@ namespace pto {
             (TileLeft::Rows == TileAcc::Rows) && (TileLeft::Cols == TileRight::Rows) && (TileRight::Cols == TileAcc::Cols),
             "Inconsistent number of m, k, n");
         static_assert(
-            ((TileLeft::Loc == Location::Left) && (!TileLeft::isRowMajor) && (TileLeft::SFractal == SLayout::RowMajor)) &&
-                ((TileRight::Loc == Location::Right) && (TileRight::isRowMajor) &&
+            ((TileLeft::Loc == TileType::Left) && (!TileLeft::isRowMajor) && (TileLeft::SFractal == SLayout::RowMajor)) &&
+                ((TileRight::Loc == TileType::Right) && (TileRight::isRowMajor) &&
                     (TileRight::SFractal == SLayout::ColMajor)) &&
-                ((TileAcc::Loc == Location::Acc) && (!TileAcc::isRowMajor) && (TileAcc::SFractal == SLayout::RowMajor)),
+                ((TileAcc::Loc == TileType::Acc) && (!TileAcc::isRowMajor) && (TileAcc::SFractal == SLayout::RowMajor)),
             "Non-conforming matrix fractal");
     }
 
     template <typename TileAcc, typename TileBias>
-    __aicore__ PTO_INLINE void CheckBiasValid()
+    PTO_INTERNAL void CheckBiasValid()
     {
         using CType = typename TileAcc::DType;
         using BiasType = typename TileBias::DType;
         static_assert(std::is_same_v<CType, BiasType>, "No supported bias data type");
-        static_assert((TileBias::Loc == Location::Bias) && (TileBias::Rows == 1) && (TileBias::isRowMajor),
+        static_assert((TileBias::Loc == TileType::Bias) && (TileBias::Rows == 1) && (TileBias::isRowMajor),
             "Non-conforming bias fractal");
     }
 
     template <typename TileAcc, typename TileLeft, typename TileRight>
-    __aicore__ PTO_INLINE void TMATMUL_IMPL(TileAcc &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
+    PTO_INTERNAL void TMATMUL_IMPL(TileAcc &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
     {
         CheckMadValid<TileAcc, TileLeft, TileRight>();
 
@@ -106,7 +106,7 @@ namespace pto {
     }
 
     template <typename TileAcc, typename TileLeft, typename TileRight>
-    __aicore__ PTO_INLINE void TMATMUL_ACC_IMPL(TileAcc &cOutMatrix, TileAcc &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
+    PTO_INTERNAL void TMATMUL_ACC_IMPL(TileAcc &cOutMatrix, TileAcc &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
     {
         CheckMadValid<TileAcc, TileLeft, TileRight>();
 
@@ -118,7 +118,7 @@ namespace pto {
     }
 
     template <typename TileAcc, typename TileLeft, typename TileRight, typename TileBias>
-    __aicore__ PTO_INLINE void TMATMUL_BIAS_IMPL(TileAcc &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasMatrix)
+    PTO_INTERNAL void TMATMUL_BIAS_IMPL(TileAcc &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasMatrix)
     {
         CheckMadValid<TileAcc, TileLeft, TileRight>();
         CheckBiasValid<TileAcc, TileBias>();

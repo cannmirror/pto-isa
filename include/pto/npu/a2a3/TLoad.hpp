@@ -13,7 +13,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadInstrGm2ub(__ubuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
+PTO_INTERNAL void TLoadInstrGm2ub(__ubuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
     uint16_t nBurst, uint32_t lenBurst, uint32_t gmGap, uint32_t ubGap, uint32_t ubPad)
 {
     if constexpr (sizeof(typename TileData::DType) == 1) {
@@ -28,7 +28,7 @@ __aicore__ PTO_INLINE void TLoadInstrGm2ub(__ubuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadNd2nzInstr(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
+PTO_INTERNAL void TLoadNd2nzInstr(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
     uint16_t ndNum, uint16_t nValue, uint16_t dValue, uint16_t srcNdMatrixStride, uint16_t srcDValue,
     uint16_t dstNzC0Stride, uint16_t dstNzNStride, uint16_t dstNzMatrixStride)
 {
@@ -48,14 +48,14 @@ __aicore__ PTO_INLINE void TLoadNd2nzInstr(__cbuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadInstrGm2L1(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
+PTO_INTERNAL void TLoadInstrGm2L1(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
     uint16_t nBurst, uint16_t lenBurst, uint16_t gmGap, uint16_t l1Gap)
 {
     copy_gm_to_cbuf(dst, src, (uint8_t)0, nBurst, lenBurst, gmGap, l1Gap, (pad_t)0);
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadGm2ubNd2nd(__ubuf__ typename TileData::DType *dstAddr,
+PTO_INTERNAL void TLoadGm2ubNd2nd(__ubuf__ typename TileData::DType *dstAddr,
     typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
     int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -97,7 +97,7 @@ __aicore__ PTO_INLINE void TLoadGm2ubNd2nd(__ubuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadGm2ubDn2dn(__ubuf__ typename TileData::DType *dstAddr,
+PTO_INTERNAL void TLoadGm2ubDn2dn(__ubuf__ typename TileData::DType *dstAddr,
     typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
     int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -138,7 +138,7 @@ __aicore__ PTO_INLINE void TLoadGm2ubDn2dn(__ubuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void CheckNzFormat(
+PTO_INTERNAL void CheckNzFormat(
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int validRow, int validCol)
 {
     static_assert(GlobalData::staticShape[3] == FRACTAL_NZ_ROW &&
@@ -150,7 +150,7 @@ __aicore__ PTO_INLINE void CheckNzFormat(
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadGm2ubNz2nz(__ubuf__ typename TileData::DType *dstAddr,
+PTO_INTERNAL void TLoadGm2ubNz2nz(__ubuf__ typename TileData::DType *dstAddr,
     typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
     int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -170,7 +170,7 @@ __aicore__ PTO_INLINE void TLoadGm2ubNz2nz(__ubuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__tf__ __aicore__ void TLoadGm2ub(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
+__tf__ AICORE void TLoadGm2ub(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -189,7 +189,7 @@ __tf__ __aicore__ void TLoadGm2ub(typename TileData::TileDType __out__ dst, type
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadGm2L1Nd2nd(__cbuf__ typename TileData::DType *dstAddr,
+PTO_INTERNAL void TLoadGm2L1Nd2nd(__cbuf__ typename TileData::DType *dstAddr,
     typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
     int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -224,7 +224,7 @@ __aicore__ PTO_INLINE void TLoadGm2L1Nd2nd(__cbuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadGm2L1Dn2dn(__cbuf__ typename TileData::DType *dstAddr,
+PTO_INTERNAL void TLoadGm2L1Dn2dn(__cbuf__ typename TileData::DType *dstAddr,
     typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
     int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -259,7 +259,7 @@ __aicore__ PTO_INLINE void TLoadGm2L1Dn2dn(__cbuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void TLoadGm2L1Nz2nz(__cbuf__ typename TileData::DType *dstAddr,
+PTO_INTERNAL void TLoadGm2L1Nz2nz(__cbuf__ typename TileData::DType *dstAddr,
     typename GlobalData::DType *srcAddr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0,
     int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -280,7 +280,7 @@ __aicore__ PTO_INLINE void TLoadGm2L1Nz2nz(__cbuf__ typename TileData::DType *ds
 }
 
 template <typename TileData, typename GlobalData>
-__tf__ __aicore__ void TLoadGm2L1(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
+__tf__ AICORE void TLoadGm2L1(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -299,7 +299,7 @@ __tf__ __aicore__ void TLoadGm2L1(typename TileData::TileDType __out__ dst, type
 }
 
 template <typename TileData, typename GlobalData>
-__tf__ __aicore__ void TLoadGm2L1Nd2nz(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
+__tf__ AICORE void TLoadGm2L1Nd2nz(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -322,7 +322,7 @@ __tf__ __aicore__ void TLoadGm2L1Nd2nz(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileData, typename GlobalData>
-__tf__ __aicore__ void TLoadGm2L1Dn2zn(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
+__tf__ AICORE void TLoadGm2L1Dn2zn(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
@@ -342,7 +342,7 @@ __tf__ __aicore__ void TLoadGm2L1Dn2zn(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ PTO_INLINE void CheckTloadStaticData()
+PTO_INTERNAL void CheckTloadStaticData()
 {
     static_assert(
         std::is_same_v<typename TileData::DType, int8_t> || std::is_same_v<typename TileData::DType, uint8_t> ||
@@ -353,7 +353,7 @@ __aicore__ PTO_INLINE void CheckTloadStaticData()
             std::is_same_v<typename TileData::DType, float>,
         "Data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/half/bfloat16_t/float/int64_t/uint64_t!");
     static_assert(
-        TileData::Loc == pto::Location::Vec || TileData::Loc == pto::Location::Mat, "Dst location must be Vec or Mat!");
+        TileData::Loc == pto::TileType::Vec || TileData::Loc == pto::TileType::Mat, "Dst TileType must be Vec or Mat!");
     static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
         "Source dtype must be same with dst dtype!");
 
@@ -367,7 +367,7 @@ __aicore__ PTO_INLINE void CheckTloadStaticData()
 }
 
 template <typename TileData, typename GlobalData>
-__aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
+AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src)
 {
     CheckTloadStaticData<TileData, GlobalData>();
     PTO_ASSERT(src.GetShape(0) > 0 && src.GetShape(1) > 0 && src.GetShape(2) > 0 && src.GetShape(3) > 0 &&
@@ -377,12 +377,12 @@ __aicore__ void TLOAD_IMPL(TileData &dst, GlobalData &src)
         (GlobalData::layout == pto::Layout::ND && GetTileLayoutCustom<TileData>() == TileLayoutCustom::ND) ||
         (GlobalData::layout == pto::Layout::DN && GetTileLayoutCustom<TileData>() == TileLayoutCustom::DN) ||
         (GlobalData::layout == pto::Layout::NZ && GetTileLayoutCustom<TileData>() == TileLayoutCustom::NZ);
-    if constexpr (TileData::Loc == pto::Location::Vec) {
+    if constexpr (TileData::Loc == pto::TileType::Vec) {
         static_assert(isSameLayout, "TLOAD(VecTile, GlobalTensor) only support ND2ND/DN2DN/NZ2NZ!");
         TLoadGm2ub<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(0), src.GetShape(1), src.GetShape(2),
             src.GetShape(3), src.GetShape(4), src.GetStride(0), src.GetStride(1), src.GetStride(2), src.GetStride(3),
             src.GetStride(4), dst.GetValidRow(), dst.GetValidCol());
-    } else if constexpr (TileData::Loc == pto::Location::Mat) {
+    } else if constexpr (TileData::Loc == pto::TileType::Mat) {
         static_assert(
             isSameLayout ||
                 (GlobalData::layout == pto::Layout::ND && GetTileLayoutCustom<TileData>() == TileLayoutCustom::NZ) ||

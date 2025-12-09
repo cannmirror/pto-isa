@@ -22,7 +22,7 @@ namespace pto {
 
 template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset, unsigned elementsPerRepeat,
           unsigned blockSizeElem, unsigned dstRowStride, unsigned offsetRowStride>
-__tf__ __PTO_INSTR__ void TGatherB_ByRow(typename TileDataDst::TileDType __out__ dst,
+__tf__ PTO_INTERNAL void TGatherB_ByRow(typename TileDataDst::TileDType __out__ dst,
                                    typename TileDataSrc::TileDType __in__ src,
                                    typename TileDataOffset::TileDType __in__ offset,
                                    unsigned validRow, unsigned validCol,
@@ -59,7 +59,7 @@ __tf__ __PTO_INSTR__ void TGatherB_ByRow(typename TileDataDst::TileDType __out__
 
 template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset, unsigned elementsPerRepeat,
           unsigned blockSizeElem, unsigned dstRowStride, unsigned offsetRowStride>
-__tf__ __PTO_INSTR__ void TGatherB_ByCol(typename TileDataDst::TileDType __out__ dst,
+__tf__ PTO_INTERNAL void TGatherB_ByCol(typename TileDataDst::TileDType __out__ dst,
                                    typename TileDataSrc::TileDType __in__ src,
                                    typename TileDataOffset::TileDType __in__ offset,
                                    unsigned validRow, unsigned validCol,
@@ -97,7 +97,7 @@ __tf__ __PTO_INSTR__ void TGatherB_ByCol(typename TileDataDst::TileDType __out__
 }
 
 template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset>
-__PTO_INSTR__ void TGATHERB_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataOffset &offset)
+PTO_INTERNAL void TGATHERB_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataOffset &offset)
 {
     static_assert(sizeof(typename TileDataDst::DType) == 4 || sizeof(typename TileDataDst::DType) == 2 ||
                   sizeof(typename TileDataDst::DType) == 1,

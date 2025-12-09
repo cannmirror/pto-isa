@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 
@@ -16,7 +16,7 @@ using namespace pto;
 constexpr uint16_t BLOCK_CUBE_M_N = 16;
 constexpr uint16_t BLOCK_ALIGN_BYTE = 32;
 template <typename T>
-__aicore__ inline T CeilAlign(T num_1, T num_2)
+AICORE inline T CeilAlign(T num_1, T num_2)
 {
     if (num_2 == 0) {
         return 0;
@@ -25,7 +25,7 @@ __aicore__ inline T CeilAlign(T num_1, T num_2)
 }
 
 template <typename T>
-__aicore__ inline void DynGM2L1NZ2NZ(__cbuf__ T* dst, __gm__ T* src, unsigned TShape0, unsigned TShape1)
+AICORE inline void DynGM2L1NZ2NZ(__cbuf__ T* dst, __gm__ T* src, unsigned TShape0, unsigned TShape1)
 {
     uint16_t nBurst = 1;
     uint16_t lenBurst = TShape0 * TShape1 * sizeof(T) / 32;
@@ -35,7 +35,7 @@ __aicore__ inline void DynGM2L1NZ2NZ(__cbuf__ T* dst, __gm__ T* src, unsigned TS
 }
 
 template <typename T>
-__aicore__ inline void DynGM2L1ND2NZ(__cbuf__ T* dst, __gm__ T* src, unsigned TShape0, unsigned TShape1, int isBias = 0,
+AICORE inline void DynGM2L1ND2NZ(__cbuf__ T* dst, __gm__ T* src, unsigned TShape0, unsigned TShape1, int isBias = 0,
                                      int isScaling = 0)
 {  // ND2NZ
     uint16_t nValue = TShape0;
@@ -65,7 +65,7 @@ __aicore__ inline void DynGM2L1ND2NZ(__cbuf__ T* dst, __gm__ T* src, unsigned TS
 }
 
 template <typename GMT, typename L0CT, unsigned TShape0, unsigned TShape1, unsigned oriTShape0, unsigned oriTShape1>
-__aicore__ inline void L0CCopyOut(__gm__ GMT* dst, __cc__ L0CT* src, unsigned GmShape0, unsigned GmShape1,
+AICORE inline void L0CCopyOut(__gm__ GMT* dst, __cc__ L0CT* src, unsigned GmShape0, unsigned GmShape1,
                                   unsigned GmOffset0, unsigned GmOffset1, int uf = 0, uint8_t reluMode = 0)
 {  // NZ2ND
     uint16_t MSize = oriTShape0 < GmShape0 ? oriTShape0 : GmShape0;
@@ -111,7 +111,7 @@ __aicore__ inline void L0CCopyOut(__gm__ GMT* dst, __cc__ L0CT* src, unsigned Gm
 
 template <typename cType, typename aType, typename bType, typename biasInputType, typename l0CType, int M, int N, int K,
           int isAtranspose, int isBtranspose>
-__global__ __aicore__ void TMOV2BTKernel(__gm__ cType* out, __gm__ aType* src0, __gm__ bType* src1,
+__global__ AICORE void TMOV2BTKernel(__gm__ cType* out, __gm__ aType* src0, __gm__ bType* src1,
                                          __gm__ biasInputType* src2)
 {
     // bias按照64B对齐申请tile大小和搬运
@@ -130,17 +130,17 @@ __global__ __aicore__ void TMOV2BTKernel(__gm__ cType* out, __gm__ aType* src0, 
 
     using TileMatAData =
         std::conditional_t<isAtranspose,
-                           Tile<Location::Mat, aType, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
-                           Tile<Location::Mat, aType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>;
+                           Tile<TileType::Mat, aType, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
+                           Tile<TileType::Mat, aType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>;
     using TileMatBiasData =
-        Tile<Location::Mat, biasInputType, 1, alignBiasN, BLayout::RowMajor, 1, alignBiasN, SLayout::NoneBox>;
+        Tile<TileType::Mat, biasInputType, 1, alignBiasN, BLayout::RowMajor, 1, alignBiasN, SLayout::NoneBox>;
 
-    using LeftTile = Tile<Location::Left, aType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
+    using LeftTile = Tile<TileType::Left, aType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
     using RightTile = TileRight<bType, K, N, K, N>;
     using AccTile = TileAcc<l0CType, M, N, M, N>;
 
-    using BiasTile = Tile<Location::Bias, l0CType, 1, alignBiasN, BLayout::RowMajor, 1, N, SLayout::NoneBox>;
+    using BiasTile = Tile<TileType::Bias, l0CType, 1, alignBiasN, BLayout::RowMajor, 1, N, SLayout::NoneBox>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -202,7 +202,7 @@ __global__ __aicore__ void TMOV2BTKernel(__gm__ cType* out, __gm__ aType* src0, 
 
 template <typename cType, typename aType, typename bType, typename biasInputType, typename l0CType, int M, int N, int K,
           int isAtranspose, int isBtranspose>
-__global__ __aicore__ void TMOV2BTDyncmicKernel(__gm__ cType* out, __gm__ aType* src0, __gm__ bType* src1,
+__global__ AICORE void TMOV2BTDyncmicKernel(__gm__ cType* out, __gm__ aType* src0, __gm__ bType* src1,
                                                 __gm__ biasInputType* src2, int m, int k, int n)
 {
     // bias按照64B对齐申请tile大小和搬运
@@ -232,16 +232,16 @@ __global__ __aicore__ void TMOV2BTDyncmicKernel(__gm__ cType* out, __gm__ aType*
 
     using TileMatAData =
         std::conditional_t<isAtranspose,
-                           Tile<Location::Mat, aType, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
-                           Tile<Location::Mat, aType, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
-    using TileMatBiasData = Tile<Location::Mat, biasInputType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
+                           Tile<TileType::Mat, aType, M, K, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
+                           Tile<TileType::Mat, aType, M, K, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
+    using TileMatBiasData = Tile<TileType::Mat, biasInputType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
-    using LeftTile = Tile<Location::Left, aType, M, K, BLayout::RowMajor, -1, K, SLayout::RowMajor, 512>;
+    using LeftTile = Tile<TileType::Left, aType, M, K, BLayout::RowMajor, -1, K, SLayout::RowMajor, 512>;
     using RightTile = TileRight<bType, K, N, K, -1>;
     using AccTile = TileAcc<l0CType, M, N, M, -1>;
 
-    using BiasTile = Tile<Location::Bias, l0CType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
+    using BiasTile = Tile<TileType::Bias, l0CType, 1, alignN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
     TileMatAData aMatTile(m, k);
     TileMatBData bMatTile(k, n);
@@ -305,7 +305,7 @@ __global__ __aicore__ void TMOV2BTDyncmicKernel(__gm__ cType* out, __gm__ aType*
 
 template <typename cType, typename aType, typename bType, typename scalingType, typename l0cType, int M, int N, int K,
           int isAtranspose, int isBtranspose, uint8_t reluMode>
-__global__ __aicore__ void TMOV2ScalingKernel(__gm__ cType* out, __gm__ aType* src0, __gm__ bType* src1,
+__global__ AICORE void TMOV2ScalingKernel(__gm__ cType* out, __gm__ aType* src0, __gm__ bType* src1,
                                               __gm__ scalingType* src2)
 {
     using GlobalDataSrc0 = GlobalTensor<aType, Shape<1, 1, 1, M, K>, Stride<1 * M * K, 1 * M * K, M * K, K, 1>>;
@@ -320,16 +320,16 @@ __global__ __aicore__ void TMOV2ScalingKernel(__gm__ cType* out, __gm__ aType* s
 
     using TileMatAData =
         std::conditional_t<isAtranspose,
-                           Tile<Location::Mat, aType, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
-                           Tile<Location::Mat, aType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>;
-    using TileMatFbData = Tile<Location::Mat, scalingType, 1, N, BLayout::RowMajor, 1, N, SLayout::NoneBox>;
+                           Tile<TileType::Mat, aType, M, K, BLayout::RowMajor, M, K, SLayout::ColMajor, 512>,
+                           Tile<TileType::Mat, aType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::RowMajor, K, N, SLayout::ColMajor, 512>;
+    using TileMatFbData = Tile<TileType::Mat, scalingType, 1, N, BLayout::RowMajor, 1, N, SLayout::NoneBox>;
 
-    using LeftTile = Tile<Location::Left, aType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
+    using LeftTile = Tile<TileType::Left, aType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
     using RightTile = TileRight<bType, K, N, K, N>;
     using AccTile = TileAcc<l0cType, M, N, M, N>;
 
-    using FbTile = Tile<Location::Scaling, scalingType, 1, N, BLayout::RowMajor, 1, N, SLayout::NoneBox>;
+    using FbTile = Tile<TileType::Scaling, scalingType, 1, N, BLayout::RowMajor, 1, N, SLayout::NoneBox>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -395,7 +395,7 @@ __global__ __aicore__ void TMOV2ScalingKernel(__gm__ cType* out, __gm__ aType* s
 
 template <typename cType, typename aType, typename bType, typename biasInputType, typename scalingType,
           typename l0CType, int M, int N, int K, int isAtranspose, int isBtranspose>
-__global__ __aicore__ void TMOV2NdDyncmicKernel(__gm__ cType* out, __gm__ aType* src0, __gm__ bType* src1,
+__global__ AICORE void TMOV2NdDyncmicKernel(__gm__ cType* out, __gm__ aType* src0, __gm__ bType* src1,
                                                 __gm__ biasInputType* src2, __gm__ scalingType* src3, int m, int k,
                                                 int n)
 {
@@ -440,21 +440,21 @@ __global__ __aicore__ void TMOV2NdDyncmicKernel(__gm__ cType* out, __gm__ aType*
     constexpr uint16_t alignK = (K + blockCubeK - 1) / blockCubeK * blockCubeK;
 
     using TileMatAData = std::conditional_t<
-        isAtranspose, Tile<Location::Mat, aType, alignM, alignK, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
-        Tile<Location::Mat, aType, alignM, alignK, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
-    using TileMatBData = Tile<Location::Mat, bType, alignK, alignN, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
+        isAtranspose, Tile<TileType::Mat, aType, alignM, alignK, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, aType, alignM, alignK, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 512>>;
+    using TileMatBData = Tile<TileType::Mat, bType, alignK, alignN, BLayout::RowMajor, -1, -1, SLayout::ColMajor, 512>;
     using TileMatBiasData =
-        Tile<Location::Mat, biasInputType, 1, alignBiasN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
+        Tile<TileType::Mat, biasInputType, 1, alignBiasN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
     using TileMatScalingData =
-        Tile<Location::Mat, scalingType, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
+        Tile<TileType::Mat, scalingType, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
-    using LeftTile = Tile<Location::Left, aType, alignM, alignK, BLayout::RowMajor, -1, alignK, SLayout::RowMajor, 512>;
+    using LeftTile = Tile<TileType::Left, aType, alignM, alignK, BLayout::RowMajor, -1, alignK, SLayout::RowMajor, 512>;
     using RightTile = TileRight<bType, alignK, alignN, alignK, -1>;
     using AccTile = TileAcc<l0CType, alignM, alignN, alignM, -1>;
 
-    using BiasTile = Tile<Location::Bias, l0CType, 1, alignBiasN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
+    using BiasTile = Tile<TileType::Bias, l0CType, 1, alignBiasN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
     using ScalingTile =
-        Tile<Location::Scaling, scalingType, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
+        Tile<TileType::Scaling, scalingType, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
     TileMatAData aMatTile(alignM, alignK);
     TileMatBData bMatTile(alignK, alignN);

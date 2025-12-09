@@ -1,4 +1,3 @@
-#include <pto/common/tile_tensor_impl.hpp>
 #include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 #include "acl/acl.h"
@@ -9,18 +8,18 @@ using namespace pto;
 #define PTO_CEIL(x, y) ((((x) + (y) - 1) / (y)) * (y))
 
 template <typename T, int Rows, int Cols, int ValidRows, int ValidCols>
-__global__ __aicore__ void runTSEL(__gm__ T __out__ *out, __gm__ uint8_t __in__ *mask, __gm__ T __in__ *src0, __gm__ T __in__ *src1)
+__global__ AICORE void runTSEL(__gm__ T __out__ *out, __gm__ uint8_t __in__ *mask, __gm__ T __in__ *src0, __gm__ T __in__ *src1)
 {
     using DynShapeDim5 = pto::Shape<1, 1, 1, Rows, Cols>;
     using DynStridDim5 = pto::Stride<1, 1, 1, Cols, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
 
-    using TileData = Tile<Location::Vec, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
+    using TileData = Tile<TileType::Vec, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
     using DynShapeDim5mask = Shape<1, 1, 1, Rows, PTO_CEIL(PTO_DIV_ROUNDUP(Cols, 8), 32)>;
     using DynStridDim5mask = pto::Stride<1, 1, 1, PTO_CEIL(PTO_DIV_ROUNDUP(Cols, 8), 32), 1>;
     using MaskGlobal = GlobalTensor<uint8_t, DynShapeDim5mask, DynStridDim5mask>;
 
-    using MaskTile = Tile<Location::Vec, uint8_t, Rows, PTO_CEIL(PTO_DIV_ROUNDUP(Cols, 8), 32), BLayout::RowMajor, -1, -1>;
+    using MaskTile = Tile<TileType::Vec, uint8_t, Rows, PTO_CEIL(PTO_DIV_ROUNDUP(Cols, 8), 32), BLayout::RowMajor, -1, -1>;
     TileData src0Tile(ValidRows, ValidCols);
     TileData src1Tile(ValidRows, ValidCols);
     TileData dstTile(ValidRows, ValidCols);

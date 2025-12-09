@@ -17,8 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 template <typename T, typename TileDataDst, typename TileDataSrc, unsigned blockSizeElem, unsigned dstStride,
     unsigned srcStride>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TPartCopyInstr(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr,
     uint64_t validRow, uint64_t validCol, uint64_t startRow)
 {
@@ -46,8 +45,7 @@ void TPartCopyInstr(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr,
 
 template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
     unsigned blockSizeElem, unsigned dstStride, unsigned src0Stride, unsigned src1Stride>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TPartAddInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
     unsigned validRow, unsigned validCol) {
     if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> || std::is_same_v<T, uint16_t> ||
@@ -77,8 +75,7 @@ void TPartAddInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
           unsigned blockSizeElem, unsigned dstRowStride, unsigned src0RowStride, unsigned src1RowStride>
 __tf__
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TPartAdd(typename TileDataDst::TileDType __out__ dst,
     typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned src0ValidRow,
     unsigned src0ValidCol, unsigned src1ValidRow, unsigned src1ValidCol, unsigned dstValidRow, unsigned dstValidCol)
@@ -132,8 +129,7 @@ void TPartAdd(typename TileDataDst::TileDType __out__ dst,
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-__aicore__
-PTO_INLINE
+PTO_INTERNAL
 void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
 {
     static_assert(std::is_same<typename TileDataDst::DType, typename TileDataSrc0::DType>::value &&

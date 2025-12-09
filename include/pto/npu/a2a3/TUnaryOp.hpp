@@ -18,7 +18,7 @@ namespace pto {
     #define SMALL_RPT (4)
 
     template <typename Op, typename T>
-    __PTO_INSTR__ void Unary1LCountMode(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
+    PTO_INTERNAL void Unary1LCountMode(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
         set_mask_count();
         SetVectorCount(validRow * validCol);
         Op::UnaryInstr(dstPtr, srcPtr, 0);
@@ -27,7 +27,7 @@ namespace pto {
     }
 
     template <typename Op, typename T, unsigned rowStride>
-    __PTO_INSTR__ void Unary2LCountMode(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
+    PTO_INTERNAL void Unary2LCountMode(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
         set_mask_count();
         SetVectorCount(validCol);
         for (uint32_t i = 0; i < validRow; i++) {
@@ -39,7 +39,7 @@ namespace pto {
     }
 
     template <typename Op, typename T, unsigned elementsPerRepeat>
-    __PTO_INSTR__ void Unary1LNormMode(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
+    PTO_INTERNAL void Unary1LNormMode(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
         unsigned numElements = validRow * validCol;
         unsigned headRepeats = numElements / elementsPerRepeat;
         unsigned tailElements = numElements % elementsPerRepeat;
@@ -54,7 +54,7 @@ namespace pto {
     }
 
      template <typename Op, typename T, unsigned elementsPerRepeat, unsigned rowStride>
-    __PTO_INSTR__ void Unary2LNormModeColVLAlign(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
+    PTO_INTERNAL void Unary2LNormModeColVLAlign(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
         unsigned headRepeats = validCol / elementsPerRepeat;
         for (uint32_t i = 0; i < validRow; i++) {
             uint32_t offset = i * rowStride;
@@ -63,7 +63,7 @@ namespace pto {
     }
 
     template <typename Op, typename T, unsigned rows, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __PTO_INSTR__ void Unary2LNormModeHead(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned numRepeatPerLine) {
+    PTO_INTERNAL void Unary2LNormModeHead(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned numRepeatPerLine) {
         if (numRepeatPerLine) {
             unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
             unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
@@ -83,7 +83,7 @@ namespace pto {
     }
 
     template <typename Op, typename T, unsigned rows, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __PTO_INSTR__ void Unary2LNormModeTail(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned numRemainPerLine) {
+    PTO_INTERNAL void Unary2LNormModeTail(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned numRemainPerLine) {
         unsigned numLoop = 0;
         unsigned remainAfterLoop = validRow;
         constexpr bool strideOverFlag = (rowStride / blockSizeElem > REPEAT_STRIDE_MAX);
@@ -122,7 +122,7 @@ namespace pto {
     }
 
     template <typename Op, typename T, unsigned rows, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __PTO_INSTR__ void Unary2LNormModeRowRpt(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
+    PTO_INTERNAL void Unary2LNormModeRowRpt(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned validRow, unsigned validCol) {
         constexpr unsigned repeatStride = rowStride / blockSizeElem;
         constexpr bool condRowRpt = ((rows <= pto::REPEAT_MAX) && (repeatStride <= REPEAT_STRIDE_MAX));
         if constexpr (condRowRpt) {
@@ -158,7 +158,7 @@ namespace pto {
     }
 
     template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __PTO_INSTR__ void UnaryInstr(__ubuf__ typename TileData::DType *dstPtr,
+    PTO_INTERNAL void UnaryInstr(__ubuf__ typename TileData::DType *dstPtr,
                                   __ubuf__ typename TileData::DType *srcPtr,
                                   unsigned validRow, unsigned validCol) {
         using T = typename TileData::DType;
@@ -200,17 +200,17 @@ namespace pto {
     template <typename T> using unaryFuncPtr = void (*)(__ubuf__ T*, __ubuf__ T*, uint8_t, uint16_t, uint16_t, uint8_t, uint8_t);
 
     template <typename T, unaryFuncPtr<T> funcPtr> struct UnaryOperation {
-        __PTO_INSTR__ static void UnaryInstr(__ubuf__ T *dst, __ubuf__ T *src, uint8_t repeats) {
+        PTO_INTERNAL static void UnaryInstr(__ubuf__ T *dst, __ubuf__ T *src, uint8_t repeats) {
             funcPtr(dst, src, repeats, 1, 1, 8, 8);
         }
-        __PTO_INSTR__ static void UnaryInstr(__ubuf__ T *dst, __ubuf__ T *src, uint8_t repeats,
+        PTO_INTERNAL static void UnaryInstr(__ubuf__ T *dst, __ubuf__ T *src, uint8_t repeats,
                                              uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
             funcPtr(dst, src, repeats, 1, 1, dstRepeatStride, srcRepeatStride);
         }
     };
 
     template <typename TileData, unaryFuncPtr<typename TileData::DType> funcPtr, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __tf__ __aicore__ void TUnaryOp(typename TileData::TileDType __out__ dst,
+    __tf__ AICORE void TUnaryOp(typename TileData::TileDType __out__ dst,
                                     typename TileData::TileDType __in__ src,
                                     unsigned validRow,
                                     unsigned validCol) {
@@ -223,7 +223,7 @@ namespace pto {
     /* RSQRT */
 
     template <typename TileData>
-    __tf__ __aicore__ void TRsqrtCustom(typename TileData::TileDType __out__ dst,
+    __tf__ AICORE void TRsqrtCustom(typename TileData::TileDType __out__ dst,
                                         typename TileData::TileDType __in__ src,
                                         unsigned validRow,
                                         unsigned validCol) {
@@ -254,20 +254,20 @@ namespace pto {
     }
 
     template<typename DataType>
-    __aicore__ void _vrsqrt(__ubuf__ DataType* dst, __ubuf__ DataType* src,
+    AICORE void _vrsqrt(__ubuf__ DataType* dst, __ubuf__ DataType* src,
                             uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride,
                             uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
         vrsqrt(dst, src, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
     }
 
     template <typename TileData>
-    __aicore__ void TRSQRT_IMPL(TileData &dst, TileData &src) {
+    AICORE void TRSQRT_IMPL(TileData &dst, TileData &src) {
         static_assert(std::is_same<typename TileData::DType, float32_t>::value ||
                       std::is_same<typename TileData::DType, float>::value ||
                       std::is_same<typename TileData::DType, half>::value ||
                       std::is_same<typename TileData::DType, float16_t>::value,
                       "TRSQRT: Invalid data type");
-        static_assert(TileData::Loc == Location::Vec, "TRSQRT: Location of src and dst tiles must be Location::Vec.");
+        static_assert(TileData::Loc == TileType::Vec, "TRSQRT: TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "TRSQRT: Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "TRSQRT: Number of valid rows must not be greater than number of tile rows.");
 
@@ -289,20 +289,20 @@ namespace pto {
     /* SQRT */
 
     template<typename DataType>
-    __aicore__ void _vsqrt(__ubuf__ DataType* dst, __ubuf__ DataType* src, 
+    AICORE void _vsqrt(__ubuf__ DataType* dst, __ubuf__ DataType* src, 
                             uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride,
                             uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
         vsqrt(dst, src, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
     }
 
     template <typename TileData>
-    __aicore__ void TSQRT_IMPL(TileData &dst, TileData &src) {
+    AICORE void TSQRT_IMPL(TileData &dst, TileData &src) {
         static_assert(std::is_same<typename TileData::DType, float32_t>::value ||
                       std::is_same<typename TileData::DType, float>::value ||
                       std::is_same<typename TileData::DType, half>::value ||
                       std::is_same<typename TileData::DType, float16_t>::value,
                       "TSQRT: Invalid data type");
-        static_assert(TileData::Loc == Location::Vec, "TSQRT: Location of src and dst tiles must be Location::Vec.");
+        static_assert(TileData::Loc == TileType::Vec, "TSQRT: TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "TSQRT: Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "TSQRT: Number of valid rows must not be greater than number of tile rows.");
 
@@ -320,20 +320,20 @@ namespace pto {
     /* EXP */
 
     template<typename DataType>
-    __aicore__ void _vexp(__ubuf__ DataType* dst, __ubuf__ DataType* src, 
+    AICORE void _vexp(__ubuf__ DataType* dst, __ubuf__ DataType* src, 
                           uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride,
                           uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
         vexp(dst, src, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
     }
 
     template <typename TileData>
-    __aicore__ void TEXP_IMPL(TileData &dst, TileData &src) {
+    AICORE void TEXP_IMPL(TileData &dst, TileData &src) {
         static_assert(std::is_same<typename TileData::DType, float32_t>::value ||
                       std::is_same<typename TileData::DType, float>::value ||
                       std::is_same<typename TileData::DType, half>::value ||
                       std::is_same<typename TileData::DType, float16_t>::value,
                       "TEXP: Invalid data type");
-        static_assert(TileData::Loc == Location::Vec, "TEXP: Location of src and dst tiles must be Location::Vec.");
+        static_assert(TileData::Loc == TileType::Vec, "TEXP: TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "TEXP: Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "TEXP: Number of valid rows must not be greater than number of tile rows.");
 

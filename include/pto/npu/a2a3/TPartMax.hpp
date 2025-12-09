@@ -18,11 +18,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 template <typename T>
 struct PartMaxOp {
-    __PTO_INSTR__ static void PartInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
+    PTO_INTERNAL static void PartInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
     {
         vmax(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
     }
-    __PTO_INSTR__ static void PartInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
+    PTO_INTERNAL static void PartInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
         uint8_t dstRepeatStride, uint8_t src0RepeatStride, uint8_t src1RepeatStride)
     {
         vmax(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, src1RepeatStride);
@@ -32,7 +32,7 @@ struct PartMaxOp {
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
           unsigned blockSizeElem, unsigned dstRowStride, unsigned src0RowStride, unsigned src1RowStride>
 __tf__
-__PTO_INSTR__
+PTO_INTERNAL
 void TPartMax(typename TileDataDst::TileDType __out__ dst,
     typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned src0ValidRow,
     unsigned src0ValidCol, unsigned src1ValidRow, unsigned src1ValidCol, unsigned dstValidRow, unsigned dstValidCol)
@@ -61,7 +61,7 @@ void TPartMax(typename TileDataDst::TileDType __out__ dst,
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-__PTO_INSTR__
+PTO_INTERNAL
 void TPARTMAX_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
 {
     static_assert(std::is_same_v<typename TileDataDst::DType, typename TileDataSrc0::DType> &&

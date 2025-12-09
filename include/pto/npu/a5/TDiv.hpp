@@ -22,14 +22,14 @@ using namespace std;
 namespace pto {
 
     template <typename T> struct DivOp {
-        __aicore__ PTO_INLINE static void BinInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1, MaskReg &preg)
+        PTO_INTERNAL static void BinInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1, MaskReg &preg)
         {
             vdiv(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
         }
     };
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __tf__ __aicore__ PTO_INLINE
+    __tf__ PTO_INTERNAL
     void TDiv(typename TileData::TileDType __out__ dst, 
                                 typename TileData::TileDType __in__ src0, 
                                 typename TileData::TileDType __in__ src1,
@@ -45,7 +45,7 @@ namespace pto {
     }
 
     template <typename TileData>
-    __aicore__ void TDIV_IMPL(TileData &dst, TileData &src0, TileData &src1) {
+    AICORE void TDIV_IMPL(TileData &dst, TileData &src0, TileData &src1) {
         static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
                       std::is_same<typename TileData::DType, float>::value ||
                       std::is_same<typename TileData::DType, int16_t>::value ||

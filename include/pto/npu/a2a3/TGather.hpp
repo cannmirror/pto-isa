@@ -14,13 +14,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/constants.hpp>
 
 namespace pto {
-__aicore__ PTO_INLINE int CEIL(int a, int b)
+PTO_INTERNAL int CEIL(int a, int b)
 {
     return (a + (b - 1)) / (b);
 }
 
 template <typename DstTileData, typename Src0TileData, typename Src1TileData>
-__aicore__ PTO_INLINE void CheckValid()
+PTO_INTERNAL void CheckValid()
 {
     static_assert(
         (sizeof(typename DstTileData::DType) == 2) || (sizeof(typename DstTileData::DType) == 4), "expect b16/b32");
@@ -30,7 +30,7 @@ __aicore__ PTO_INLINE void CheckValid()
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__tf__ __aicore__ void TGather(typename TileDataD::TileDType __out__ dst, typename TileDataS0::TileDType __in__ src0,
+__tf__ AICORE void TGather(typename TileDataD::TileDType __out__ dst, typename TileDataS0::TileDType __in__ src0,
     typename TileDataS1::TileDType __in__ src1, unsigned validCol, unsigned validRow)
 {
     __ubuf__ typename TileDataS0::DType *src0Ptr = (__ubuf__ typename TileDataS0::DType *)__cce_get_tile_ptr(src0);
@@ -82,7 +82,7 @@ __tf__ __aicore__ void TGather(typename TileDataD::TileDType __out__ dst, typena
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-__aicore__ void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
+AICORE void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
 {
     CheckValid<TileDataD, TileDataS0, TileDataS1>();
 
@@ -93,7 +93,7 @@ __aicore__ void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
 }
 
 template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
-__tf__ __aicore__ void TGather(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+__tf__ AICORE void TGather(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
     unsigned validRow, unsigned validCol)
 {
     using T = typename SrcTileData::DType;
@@ -113,12 +113,12 @@ __tf__ __aicore__ void TGather(typename DstTileData::TileDType __out__ dst, type
 }
 
 template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
-__aicore__ PTO_INLINE void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
+PTO_INTERNAL void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
 {
     using T = typename SrcTileData::DType;
     static_assert(sizeof(T) == 2 || sizeof(T) == 4, "TGATHER: src element type must be 16 or 32-bit wide");
     static_assert(
-        (DstTileData::Loc == Location::Vec) && (SrcTileData::Loc == Location::Vec), "TGATHER: expect vec location");
+        (DstTileData::Loc == TileType::Vec) && (SrcTileData::Loc == TileType::Vec), "TGATHER: expect vec TileType");
     static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor), "TGATHER: expect row major");
     static_assert((sizeof(typename DstTileData::DType) == sizeof(T)), "TGATHER: expect same type size for dst and src");
     PTO_ASSERT(dst.GetValidCol() == DstTileData::Cols, "expect continuous memory for dst.");

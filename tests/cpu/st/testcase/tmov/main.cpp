@@ -7,7 +7,7 @@ using namespace std;
 using namespace pto;
 using namespace PtoTestCommon;
 
-template<typename T, int rows, int cols, int validRow, int validCol, Location srcLoc, BLayout srcBL, SLayout srcSL, Location dstLoc, BLayout dstBL, SLayout dstSL>
+template<typename T, int rows, int cols, int validRow, int validCol, TileType srcLoc, BLayout srcBL, SLayout srcSL, TileType dstLoc, BLayout dstBL, SLayout dstSL>
 void testMov(){
     Tile<srcLoc,T,rows,cols,srcBL,validRow,validCol,srcSL> src;
     Tile<dstLoc,T,rows,cols,dstBL,-1,-1,dstSL> dst(validRow,validCol);
@@ -43,7 +43,7 @@ protected:
 
 #define TMOV_TEST(T, rows, cols, validRow, validCol, srcLoc, srcBL, srcSL, dstLoc, dstBL, dstSL) \
     TEST_F(TMOVTest, T##_##rows##_##cols##_##validRow##_##validCol##_##srcLoc##_##srcBL##_##srcSL##_##dstLoc##_##dstBL##_##dstSL) { \
-    testMov<T, rows, cols, validRow, validCol, Location::srcLoc, BLayout::srcBL, SLayout::srcSL, Location::dstLoc, BLayout::dstBL, SLayout::dstSL>(); }
+    testMov<T, rows, cols, validRow, validCol, TileType::srcLoc, BLayout::srcBL, SLayout::srcSL, TileType::dstLoc, BLayout::dstBL, SLayout::dstSL>(); }
 
 TMOV_TEST(float, 64,128,64,128,Vec,RowMajor,NoneBox,Vec,RowMajor,NoneBox)
 TMOV_TEST(float, 64,128,64,128,Vec,RowMajor,NoneBox,Vec,ColMajor,NoneBox)

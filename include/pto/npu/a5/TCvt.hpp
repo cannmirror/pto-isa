@@ -34,7 +34,7 @@ namespace pto {
 
 //--- Common templates --------------------------------------------------------
 template <typename R, typename DST, typename SRC>
-inline __aicore__ void castS64to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castS64to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B32))) DST_VEC;
     vector_s64 v_input_0;
 
@@ -53,7 +53,7 @@ inline __aicore__ void castS64to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t
 }
 
 template <typename R, typename DST, typename SRC>
-inline __aicore__ void cast32to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void cast32to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef SRC __attribute__((ext_vector_type(ELE_CNT_B32))) SRC_VEC;
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B16))) DST_VEC;
     SRC_VEC v_input_0, v_input_1;
@@ -82,7 +82,7 @@ inline __aicore__ void cast32to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t&
 }
 
 template <typename R, bool EN_RS, typename DST, typename SRC>
-inline __aicore__ void cast32to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void cast32to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef SRC __attribute__((ext_vector_type(ELE_CNT_B32))) SRC_VEC;
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B32))) DST_VEC;
 
@@ -102,7 +102,7 @@ inline __aicore__ void cast32to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t&
 }
 
 template <typename R, typename SRC>
-inline __aicore__ void cast32toS64(__ubuf__ int64_t *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void cast32toS64(__ubuf__ int64_t *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef SRC __attribute__((ext_vector_type(ELE_CNT_B32))) SRC_VEC;
 
     FOR_ELEMENTS_64(ELE_CNT_B32/2)
@@ -123,7 +123,7 @@ inline __aicore__ void cast32toS64(__ubuf__ int64_t *dst, __ubuf__ SRC *src, int
 }
 
 template <typename R, bool EN_RS, bool EN_FIRST, typename DST, typename SRC >
-inline __aicore__ void cast16to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void cast16to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef SRC __attribute__((ext_vector_type(ELE_CNT_B16))) SRC_VEC;
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B16))) DST_VEC;
 
@@ -148,7 +148,7 @@ inline __aicore__ void cast16to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t&
 }
 
 template <typename R, bool EN_RS, typename DST, typename SRC >
-inline __aicore__ void cast16to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void cast16to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef SRC __attribute__((ext_vector_type(ELE_CNT_B16))) SRC_VEC;
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B32))) DST_VEC;
 
@@ -174,7 +174,7 @@ inline __aicore__ void cast16to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t&
 }
 
 template <typename R, typename DST_VEC, typename DST, typename SRC>
-inline __aicore__ void cast16to8(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void cast16to8(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef SRC __attribute__((ext_vector_type(ELE_CNT_B16))) SRC_VEC;
    
     uint32_t len16 = ELE_CNT_B16;
@@ -197,7 +197,7 @@ inline __aicore__ void cast16to8(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& 
 
 
 template <typename SRC_VEC, typename DST, typename SRC>
-inline __aicore__ void cast8to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void cast8to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B16))) DST_VEC;
    
     uint32_t len8 = ELE_CNT_B8;
@@ -218,7 +218,7 @@ inline __aicore__ void cast8to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& 
 
 //--- Src:: FP32 ----------------------------------------------------------------------
 template <typename R>
-inline __aicore__ void castData(__ubuf__ float *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ float *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP32 to FP32
     FOR_ELEMENTS(ELE_CNT_B32)
         vector_f32 v_input_0, v_output;
@@ -231,31 +231,31 @@ inline __aicore__ void castData(__ubuf__ float *dst, __ubuf__ float *src, int32_
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ float16_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ float16_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP32 to FP16
     cast32to16<R>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ bfloat16_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ bfloat16_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP32 to BF16
     cast32to16<R>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int16_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int16_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP32 to I16
     cast32to16<R>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int32_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int32_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP32 to I32
     cast32to32<R,true>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int64_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int64_t *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP32 to I64
     cast32toS64<R>(dst, src, dstOffset, srcOffset, len);
 }
@@ -263,19 +263,19 @@ inline __aicore__ void castData(__ubuf__ int64_t *dst, __ubuf__ float *src, int3
 
 //--- Src:: FP16 ----------------------------------------------------------------------
 template <typename R>
-inline __aicore__ void castData(__ubuf__ float *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ float *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP16 to FP32
     cast16to32<void, false>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int32_t *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int32_t *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP16 to I32
     cast16to32<R , false>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ half *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ half *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP16 to FP16
     FOR_ELEMENTS(ELE_CNT_B16)
         vector_f16 v_input_0, v_output;
@@ -288,133 +288,133 @@ inline __aicore__ void castData(__ubuf__ half *dst, __ubuf__ half *src, int32_t&
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int16_t *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int16_t *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP16 to I16
     cast16to16<R, true, false>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int8_t *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int8_t *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP16 to I8
     cast16to8<R, vector_s8>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ uint8_t *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ uint8_t *dst, __ubuf__ half *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // FP16 to U8
     cast16to8<R, vector_u8>(dst, src, dstOffset, srcOffset, len);
 }
 
 //--- Src:: BF16 ----------------------------------------------------------------------
 template <typename R>
-inline __aicore__ void castData(__ubuf__ float *dst, __ubuf__ bfloat16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ float *dst, __ubuf__ bfloat16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // BF16 to FP32
     cast16to32<void, false>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int32_t *dst, __ubuf__ bfloat16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int32_t *dst, __ubuf__ bfloat16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // BF16 to I32
     cast16to32<R, true>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ half *dst, __ubuf__ bfloat16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ half *dst, __ubuf__ bfloat16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // BF16 to F16
     cast16to16<R,false, true>(dst, src, dstOffset, srcOffset, len);
 }
 
 //--- Src:: U8,I8 ----------------------------------------------------------------------
 template <typename R>
-inline __aicore__ void castData(__ubuf__ half *dst, __ubuf__ uint8_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ half *dst, __ubuf__ uint8_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // U8 to FP16
     cast8to16<vector_u8>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ uint16_t *dst, __ubuf__ uint8_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ uint16_t *dst, __ubuf__ uint8_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // U8 to U16
     cast8to16<vector_u8>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ half *dst, __ubuf__ int8_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ half *dst, __ubuf__ int8_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I8 to FP16
     cast8to16<vector_s8>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int16_t *dst, __ubuf__ int8_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int16_t *dst, __ubuf__ int8_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I8 to I16
     cast8to16<vector_s8>(dst, src, dstOffset, srcOffset, len);
 }
 
 //--- Src:: I16 ----------------------------------------------------------------------
 template <typename R>
-inline __aicore__ void castData(__ubuf__ half *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ half *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I16 to FP16
     cast16to16<R,false, false>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ float *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ float *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I16 to FP32 
     cast16to32<void, false>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ uint32_t *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ uint32_t *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I16 to U32 
     cast16to32<void, false>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int32_t *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int32_t *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I16 to I32 
     cast16to32<void, false>(dst, src, dstOffset, srcOffset, len);
 }
 
 //--- Src:: I32 ----------------------------------------------------------------------
 template <typename R>
-inline __aicore__ void castData(__ubuf__ float *dst, __ubuf__ int32_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ float *dst, __ubuf__ int32_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I32 to FP32
     cast32to32<R,false>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int16_t *dst, __ubuf__ int32_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int16_t *dst, __ubuf__ int32_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I32 to I16
     cast32to16<void>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ uint16_t *dst, __ubuf__ int32_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ uint16_t *dst, __ubuf__ int32_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I32 to U16
     cast32to16<void>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int64_t *dst, __ubuf__ int32_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int64_t *dst, __ubuf__ int32_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I32 to I64
     cast32toS64<void>(dst, src, dstOffset, srcOffset, len);
 }
 
 //--- Src:: I64 ----------------------------------------------------------------------
 template <typename R>
-inline __aicore__ void castData(__ubuf__ float *dst, __ubuf__ int64_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ float *dst, __ubuf__ int64_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I64 to FP32
     castS64to32<R>(dst, src, dstOffset, srcOffset, len);
 }
 
 template <typename R>
-inline __aicore__ void castData(__ubuf__ int32_t *dst, __ubuf__ int64_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+inline AICORE void castData(__ubuf__ int32_t *dst, __ubuf__ int64_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I64 to I32
     castS64to32<void>(dst, src, dstOffset, srcOffset, len);
 }
 
 
 template <typename TileDataD, typename TileDataS, typename R>
-inline __aicore__ void implTCVT(TileDataD &dst, TileDataS &src)
+inline AICORE void implTCVT(TileDataD &dst, TileDataS &src)
 {
     uint16_t rows = src.GetValidRow();
     uint16_t cols = src.GetValidCol();
@@ -429,7 +429,7 @@ inline __aicore__ void implTCVT(TileDataD &dst, TileDataS &src)
 }
 
 template <typename TileDataD, typename TileDataS>
-__aicore__ void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
+AICORE void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
 {
     switch (mode) {
         case RoundMode::CAST_RINT:

@@ -23,7 +23,7 @@ using namespace std;
 namespace pto {
 template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat,
           unsigned blockSizeElem>
-__tf__ __aicore__ void TRowMax(typename TileDataOut::TileDType __out__ dst,
+__tf__ AICORE void TRowMax(typename TileDataOut::TileDType __out__ dst,
                                typename TileDataIn::TileDType __in__ src,
                                uint32_t rows, uint32_t cols) {
   using TIN = typename TileDataIn::DType;
@@ -57,7 +57,7 @@ __tf__ __aicore__ void TRowMax(typename TileDataOut::TileDType __out__ dst,
 }
 
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
-__aicore__ void TROWMAX_IMPL(TileDataOut &dst, TileDataIn &src,
+AICORE void TROWMAX_IMPL(TileDataOut &dst, TileDataIn &src,
                              TileDataTmp &tmp) {
   using T = typename TileDataIn::DType;
   static_assert(std::is_same_v<T, half> || std::is_same_v<T, float>,

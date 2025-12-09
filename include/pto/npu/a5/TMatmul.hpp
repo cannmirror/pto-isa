@@ -13,13 +13,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename TileLeft>
-__aicore__ PTO_INLINE constexpr bool GetGemvCtrl()
+PTO_INTERNAL constexpr bool GetGemvCtrl()
 {
     return TileLeft::Rows != 1;
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
-__tf__ __aicore__ void TMatmul(typename TileRes::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
+__tf__ AICORE void TMatmul(typename TileRes::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
     typename TileRight::TileDType __in__ bMatrix, uint16_t m, uint16_t k, uint16_t n)
 {
     constexpr bool gemvCtrl = GetGemvCtrl<TileLeft>();
@@ -32,7 +32,7 @@ __tf__ __aicore__ void TMatmul(typename TileRes::TileDType __out__ cMatrix, type
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
-__tf__ __aicore__ void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
+__tf__ AICORE void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
     typename TileLeft::TileDType __in__ aMatrix, typename TileRight::TileDType __in__ bMatrix, uint64_t bias,
     uint16_t m, uint16_t k, uint16_t n)
 {
@@ -48,7 +48,7 @@ __tf__ __aicore__ void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight>
-__aicore__ PTO_INLINE void CheckMadValid()
+PTO_INTERNAL void CheckMadValid()
 {
     using AType = typename TileLeft::DType;
     using BType = typename TileRight::DType;
@@ -72,15 +72,15 @@ __aicore__ PTO_INLINE void CheckMadValid()
         (TileLeft::Rows == TileRes::Rows) && (TileLeft::Cols == TileRight::Rows) && (TileRight::Cols == TileRes::Cols),
         "Inconsistent number of m, k, n.");
     static_assert(
-        ((TileLeft::Loc == Location::Left) && (!TileLeft::isRowMajor) && (TileLeft::SFractal == SLayout::RowMajor)) &&
-            ((TileRight::Loc == Location::Right) && (TileRight::isRowMajor) &&
+        ((TileLeft::Loc == TileType::Left) && (!TileLeft::isRowMajor) && (TileLeft::SFractal == SLayout::RowMajor)) &&
+            ((TileRight::Loc == TileType::Right) && (TileRight::isRowMajor) &&
                 (TileRight::SFractal == SLayout::ColMajor)) &&
-            ((TileRes::Loc == Location::Acc) && (!TileRes::isRowMajor) && (TileRes::SFractal == SLayout::RowMajor)),
+            ((TileRes::Loc == TileType::Acc) && (!TileRes::isRowMajor) && (TileRes::SFractal == SLayout::RowMajor)),
         "Non-conforming matrix fractal.");
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight>
-__aicore__ PTO_INLINE void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
+PTO_INTERNAL void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
 {
     // cmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0：use the real number in C matrix
     CheckMadValid<TileRes, TileLeft, TileRight>();
@@ -93,7 +93,7 @@ __aicore__ PTO_INLINE void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, Til
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight>
-__aicore__ PTO_INLINE void TMATMUL_ACC_IMPL(
+PTO_INTERNAL void TMATMUL_ACC_IMPL(
     TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
 {
     // cmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0：use the real number in C matrix
@@ -107,14 +107,14 @@ __aicore__ PTO_INLINE void TMATMUL_ACC_IMPL(
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias>
-__aicore__ PTO_INLINE void TMATMUL_BIAS_IMPL(
+PTO_INTERNAL void TMATMUL_BIAS_IMPL(
     TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData)
 {
     // cmatrixSource control matrix source, 0: C matrix is in L0C, 1: C matrix is in C2
     // cmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0：use the real number in C matrix
     CheckMadValid<TileRes, TileLeft, TileRight>();
     static_assert(std::is_same_v<typename TileRes::DType, typename TileBias::DType>, "No supported bias data type.");
-    static_assert((TileBias::Loc == Location::Bias) && (TileBias::Rows == 1) && (TileBias::isRowMajor),
+    static_assert((TileBias::Loc == TileType::Bias) && (TileBias::Rows == 1) && (TileBias::isRowMajor),
         "Non-conforming bias fractal.");
 
     uint16_t m = aMatrix.GetValidRow();

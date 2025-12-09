@@ -22,7 +22,7 @@ using namespace std;
 namespace pto {
     const uint32_t ADDR_ALIGN = 32;
     template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat, unsigned blockSizeElem>
-    __tf__ __aicore__ void TRowSum(typename TileDataOut::TileDType __out__ dst,
+    __tf__ AICORE void TRowSum(typename TileDataOut::TileDType __out__ dst,
                                    typename TileDataIn::TileDType __in__ src, uint32_t rows, uint32_t cols) {
         using TOUT = typename TileDataOut::DType;
         using TIN = typename TileDataIn::DType;
@@ -55,7 +55,7 @@ namespace pto {
     }
 
     template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
-    __aicore__ void TROWSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp) {
+    AICORE void TROWSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp) {
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataIn::DType);  // 每个block涉及多少个元素
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataIn::DType);  // 每次repeat涉及多少个元素
 

@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 
@@ -16,7 +16,7 @@ using namespace pto;
 
 template <typename outType, typename aType, typename bType, typename biasType, int M, int K, int N, int validM,
     int validK, int validN, bool isBias>
-__global__ __aicore__ void RunTMATMUL(
+__global__ AICORE void RunTMATMUL(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ biasType *src2)
 {
     using GlobalDataSrc0 = GlobalTensor<aType, pto::Shape<1, 1, 1, validM, validK>,
@@ -32,14 +32,14 @@ __global__ __aicore__ void RunTMATMUL(
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, aType, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, bType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<Location::Mat, biasType, 1, N, BLayout::RowMajor, 1, N>;
+    using TileMatAData = Tile<TileType::Mat, aType, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
+    using TileBiasData = Tile<TileType::Mat, biasType, 1, N, BLayout::RowMajor, 1, N>;
 
     using LeftTile = TileLeft<aType, M, K, validM, validK>;
     using RightTile = TileRight<bType, K, N, validK, validN>;
     using AccTile = TileAcc<outType, M, N, validM, validN>;
-    using BiasTile = Tile<Location::Bias, outType, 1, N, BLayout::RowMajor, 1, N>;
+    using BiasTile = Tile<TileType::Bias, outType, 1, N, BLayout::RowMajor, 1, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -94,7 +94,7 @@ __global__ __aicore__ void RunTMATMUL(
 }
 
 template <typename outType, typename aType, typename bType, typename biasType, int M, int K, int N, bool isBias>
-__global__ __aicore__ void RunTMATMUL_SPLIT_K(
+__global__ AICORE void RunTMATMUL_SPLIT_K(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ biasType *src2)
 {
     constexpr int BASEM = 128;
@@ -110,14 +110,14 @@ __global__ __aicore__ void RunTMATMUL_SPLIT_K(
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<Location::Mat, aType, BASEM, BASEK, BLayout::ColMajor, M, BASEK, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<Location::Mat, bType, BASEK, BASEN, BLayout::ColMajor, BASEK, N, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<Location::Mat, biasType, 1, BASEN, BLayout::RowMajor, 1, BASEN>;
+    using TileMatAData = Tile<TileType::Mat, aType, BASEM, BASEK, BLayout::ColMajor, M, BASEK, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, bType, BASEK, BASEN, BLayout::ColMajor, BASEK, N, SLayout::RowMajor, 512>;
+    using TileBiasData = Tile<TileType::Mat, biasType, 1, BASEN, BLayout::RowMajor, 1, BASEN>;
 
     using LeftTile = TileLeft<aType, BASEM, BASEK, M, BASEK>;
     using RightTile = TileRight<bType, BASEK, BASEN, BASEK, N>;
     using AccTile = TileAcc<outType, BASEM, BASEN, M, N>;
-    using BiasTile = Tile<Location::Bias, outType, 1, BASEN, BLayout::RowMajor, 1, N>;
+    using BiasTile = Tile<TileType::Bias, outType, 1, BASEN, BLayout::RowMajor, 1, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;

@@ -8,7 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <pto/common/tile_tensor_impl.hpp>
+#include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
 #include <iostream>
@@ -17,14 +17,14 @@ using namespace std;
 using namespace pto;
 
 template <typename T, int rows, int src_col, int src_validCol, int dst_col, int dst_validCol>
-__global__ __aicore__ void runTROWEXPAND( __gm__ T __out__ *out, __gm__ T __in__ *src) {
+__global__ AICORE void runTROWEXPAND( __gm__ T __out__ *out, __gm__ T __in__ *src) {
     using DynShapeDim5 = Shape<1, 1, 1, -1, -1>;
     using DynStridDim5 = Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     GlobalData srcGlobal(src, DynShapeDim5(rows, src_validCol), DynStridDim5(rows, src_col));
     GlobalData dstGlobal(out, DynShapeDim5(rows, dst_validCol), DynStridDim5(rows, dst_col));
-    using TileDataSrc = Tile<Location::Vec, T, rows, src_col, BLayout::RowMajor, -1, -1>;
-    using TileDataDst = Tile<Location::Vec, T, rows, dst_validCol, BLayout::RowMajor, -1, -1>;
+    using TileDataSrc = Tile<TileType::Vec, T, rows, src_col, BLayout::RowMajor, -1, -1>;
+    using TileDataDst = Tile<TileType::Vec, T, rows, dst_validCol, BLayout::RowMajor, -1, -1>;
 
 
     TileDataSrc srcTile(rows, src_validCol);

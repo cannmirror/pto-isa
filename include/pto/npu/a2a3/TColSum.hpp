@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
     template <typename T, int SrcStride, int DstStride>
-    __aicore__ PTO_INLINE void BinarySum(__ubuf__ T *dst, __ubuf__ T *src, int validRow, int validCol)
+    PTO_INTERNAL void BinarySum(__ubuf__ T *dst, __ubuf__ T *src, int validRow, int validCol)
     {
         set_mask_count(); 
         set_vector_mask(0, validCol);
@@ -33,7 +33,7 @@ namespace pto {
     }
 
     template <typename T, int SrcStride, int DstStride>
-    __aicore__ PTO_INLINE void SequentialSum(__ubuf__ T *dst, __ubuf__ T *src, int validRow, int validCol)
+    PTO_INTERNAL void SequentialSum(__ubuf__ T *dst, __ubuf__ T *src, int validRow, int validCol)
     {
         set_mask_count(); 
         set_vector_mask(0, validCol);
@@ -47,7 +47,7 @@ namespace pto {
     
     template <typename T, typename TileDataDst, typename TileDataSrc, typename TileDataTmp, int srcstride,
               int dststride, int tmpstride, bool IsBinary>
-    __tf__ __aicore__ PTO_INLINE void TColSum(typename TileDataDst::TileDType __out__ dst,
+    __tf__ PTO_INTERNAL void TColSum(typename TileDataDst::TileDType __out__ dst,
                                               typename TileDataSrc::TileDType __in__ src,
                                               typename TileDataTmp::TileDType __in__ tmp,
                                               int validRow, int validCol) {
@@ -82,10 +82,10 @@ namespace pto {
     }
 
     template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
-    __aicore__ PTO_INLINE void TCOLSUM_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp, bool IsBinary) {
+    PTO_INTERNAL void TCOLSUM_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp, bool IsBinary) {
         using T = typename TileDataSrc::DType;
-        static_assert(TileDataDst::Loc == pto::Location::Vec && TileDataSrc::Loc == pto::Location::Vec &&
-                      TileDataTmp::Loc == pto::Location::Vec, "This instruction only support Vec Tile");
+        static_assert(TileDataDst::Loc == pto::TileType::Vec && TileDataSrc::Loc == pto::TileType::Vec &&
+                      TileDataTmp::Loc == pto::TileType::Vec, "This instruction only support Vec Tile");
         static_assert(TileDataSrc::isRowMajor && TileDataSrc::SFractal == SLayout::NoneBox,
                       "This instruction only support Nd fractal Tile");
         static_assert(TileDataDst::isRowMajor && TileDataDst::SFractal == SLayout::NoneBox,

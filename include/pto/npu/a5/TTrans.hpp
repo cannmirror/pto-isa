@@ -22,7 +22,7 @@ using namespace std;
 namespace pto {
     
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem>
-    __tf__ __aicore__ PTO_INLINE void TTransB32(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src) {
+    __tf__ PTO_INTERNAL void TTransB32(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src) {
         using T = typename TileData::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
@@ -54,7 +54,7 @@ namespace pto {
     }
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem>
-    __tf__ __aicore__ PTO_INLINE void TTransB16(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src) {
+    __tf__ PTO_INTERNAL void TTransB16(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src) {
         using T = typename TileData::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
@@ -85,7 +85,7 @@ namespace pto {
     }
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem>
-    __tf__ __aicore__ PTO_INLINE void TTransB8(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src) {
+    __tf__ PTO_INTERNAL void TTransB8(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src) {
         using T = typename TileData::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
@@ -116,7 +116,7 @@ namespace pto {
     }
 
     template <typename TileDataDst, typename TileDataSrc>
-    __aicore__ PTO_INLINE void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src) {
+    PTO_INTERNAL void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src) {
 
         using T = typename TileDataSrc::DType; 
 

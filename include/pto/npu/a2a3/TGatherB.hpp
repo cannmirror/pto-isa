@@ -18,13 +18,13 @@ namespace pto {
 
 template <typename T>
 struct GatherB {
-    __PTO_INSTR__ static void GatherBInstr(
+    PTO_INTERNAL static void GatherBInstr(
         __ubuf__ T *dst, __ubuf__ uint32_t *offset, uint32_t srcAddr, uint16_t dstRepeatStride, uint8_t repeats)
     {
         vgatherb((__ubuf__ T *)dst, offset, srcAddr, dstRepeatStride, 1, repeats);
     }
 
-    __PTO_INSTR__ static void GatherBInstrB8(
+    PTO_INTERNAL static void GatherBInstrB8(
         __ubuf__ uint16_t *dst, __ubuf__ uint32_t *offset, uint32_t srcAddr, uint16_t dstRepeatStride, uint8_t repeats)
     {
         vgatherb((__ubuf__ uint16_t *)dst, offset, srcAddr, dstRepeatStride, 1, repeats);
@@ -33,7 +33,7 @@ struct GatherB {
 
 template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride,
     unsigned offsetRowStride>
-__PTO_INSTR__ void GatherBlockHead(
+PTO_INTERNAL void GatherBlockHead(
     __ubuf__ T *dstPtr, __ubuf__ uint32_t *offsetPtr, uint32_t &srcAddr, unsigned validRow, unsigned numRepeatPerLine)
 {
     unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
@@ -66,7 +66,7 @@ __PTO_INSTR__ void GatherBlockHead(
 
 template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride,
     unsigned offsetRowStride>
-__PTO_INSTR__ void GatherBlockTail(
+PTO_INTERNAL void GatherBlockTail(
     __ubuf__ T *dstPtr, __ubuf__ uint32_t *offsetPtr, uint32_t &srcAddr, unsigned validRow, unsigned validCol)
 {
     unsigned numLoop = validRow / REPEAT_MAX;
@@ -99,7 +99,7 @@ __PTO_INSTR__ void GatherBlockTail(
 
 template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride,
     unsigned offsetRowStride>
-__PTO_INSTR__ void TGatherBlock(
+PTO_INTERNAL void TGatherBlock(
     __ubuf__ T *dstPtr, __ubuf__ uint32_t *offsetPtr, uint32_t &srcAddr, unsigned validRow, unsigned validCol)
 {
     unsigned numRepeatPerLine = validCol / elementsPerRepeat;
@@ -119,7 +119,7 @@ __PTO_INSTR__ void TGatherBlock(
 
 template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset, unsigned elementsPerRepeat,
     unsigned blockSizeElem, unsigned dstRowStride, unsigned offsetRowStride>
-__tf__ __PTO_INSTR__ void TGatherB(typename TileDataDst::TileDType __out__ dst,
+__tf__ PTO_INTERNAL void TGatherB(typename TileDataDst::TileDType __out__ dst,
     typename TileDataSrc::TileDType __in__ src, typename TileDataOffset::TileDType __in__ offset, unsigned validRow,
     unsigned validCol)
 {
@@ -142,7 +142,7 @@ __tf__ __PTO_INSTR__ void TGatherB(typename TileDataDst::TileDType __out__ dst,
 }
 
 template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset>
-__PTO_INSTR__ void TGATHERB_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataOffset &offset)
+PTO_INTERNAL void TGATHERB_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataOffset &offset)
 {
     static_assert(TileDataDst::isRowMajor, "TGATHERB: not supported Layout type.");
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);

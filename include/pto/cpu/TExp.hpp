@@ -24,7 +24,7 @@ namespace pto{
     }
 
     template <typename tile_shape>
-    __aicore__ PTO_INLINE void TEXP_IMPL(tile_shape &dst, tile_shape &src) {
+    PTO_INTERNAL void TEXP_IMPL(tile_shape &dst, tile_shape &src) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
         TExp_Impl<tile_shape>(dst.data(), src.data(), row, col);

@@ -21,18 +21,18 @@ namespace pto
 {
   template <typename T, typename InstrOp>
   struct TRowReduceOp {
-    __PTO_INSTR__ static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t rptTimes,
+    PTO_INTERNAL static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t rptTimes,
       uint16_t dstRptStride, uint16_t src0RptStride, uint16_t src1RptStride) {
         InstrOp::BinInstrImpl(dst, src0, src1, rptTimes, dstRptStride, src0RptStride, src1RptStride);
     }
 
-    __PTO_INSTR__ static void ReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, uint8_t rptTimes,
+    PTO_INTERNAL static void ReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, uint8_t rptTimes,
       uint16_t dstRptStride, uint16_t srcBlkStride, uint16_t srcRptStride) {
         InstrOp::ReduceInstrImpl(dst, src, rptTimes, dstRptStride, srcBlkStride, srcRptStride);
     }
 
     template <bool CntModeEn, int Cols, uint32_t DstStride, uint32_t SrcStride, uint8_t ElemPerRpt>
-    __PTO_INSTR__ static void ReduceInstrByMode(__ubuf__ T *dst, __ubuf__ T *src, unsigned rptTimes) {
+    PTO_INTERNAL static void ReduceInstrByMode(__ubuf__ T *dst, __ubuf__ T *src, unsigned rptTimes) {
       if constexpr (DstStride > B16_REPEAT_MAX) {
         for (int i = 0; i < rptTimes; i++) {
           ReduceInstr(dst + i * DstStride, src + i * Cols, 1, 0, 1, 0);
@@ -50,7 +50,7 @@ namespace pto
 
     template <bool CntModeEn, int DstCols, int Src0Cols, int Src1Cols, uint32_t DstStride, uint32_t Src0RptStride,
       uint32_t Src1RptStride, uint8_t ElemPerRpt>
-    __PTO_INSTR__ static void BinInstrByMode(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, unsigned rptTimes) {
+    PTO_INTERNAL static void BinInstrByMode(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, unsigned rptTimes) {
       if constexpr (DstStride > REPEAT_MAX || Src0RptStride > REPEAT_MAX || Src1RptStride > REPEAT_MAX) {
         for (int i = 0; i < rptTimes; i++) {
           BinInstr(dst + i * DstCols, src0 + i * Src0Cols, src1 + i * Src1Cols, 1, 0, 0, 0);
@@ -67,7 +67,7 @@ namespace pto
     }
 
   template <int TmpCols, int SrcCols, uint32_t TmpStride, uint32_t SrcStride, uint8_t ElemPerRpt>
-    __PTO_INSTR__ static void FillTmp(__ubuf__ T *tmp, __ubuf__ T *src, int srcRptPerRow, int validRow, int validCol) {
+    PTO_INTERNAL static void FillTmp(__ubuf__ T *tmp, __ubuf__ T *src, int srcRptPerRow, int validRow, int validCol) {
       if (validCol >= 2 * ElemPerRpt) {
         // validcol大于等于2次repeat，将完整的2次repeat比较后写入tmp
         BinInstrByMode<true, TmpCols, SrcCols, SrcCols, TmpStride, SrcStride, SrcStride, ElemPerRpt>
@@ -77,7 +77,7 @@ namespace pto
     }
 
     template <int TmpCols, int SrcCols, uint32_t TmpStride, uint32_t SrcStride, uint8_t ElemPerRpt>
-    __PTO_INSTR__ static void TmpProc(__ubuf__ T *tmp, __ubuf__ T *src, int srcRptPerRow, int validRow) {
+    PTO_INTERNAL static void TmpProc(__ubuf__ T *tmp, __ubuf__ T *src, int srcRptPerRow, int validRow) {
       for (int i = 2; i < srcRptPerRow; ++i) {
         BinInstrByMode<true, TmpCols, TmpCols, SrcCols, TmpStride, TmpStride, SrcStride, ElemPerRpt>
           (tmp, tmp, src + i * ElemPerRpt, validRow);
@@ -87,8 +87,8 @@ namespace pto
   };
 
   template <typename TileDataOut, typename TileDataIn>
-  __PTO_INSTR__ void TRowReduceCheck(int validRow, int validCol, int dstValidRow) {
-    static_assert(TileDataOut::Loc == pto::Location::Vec && TileDataIn::Loc == pto::Location::Vec,
+  PTO_INTERNAL void TRowReduceCheck(int validRow, int validCol, int dstValidRow) {
+    static_assert(TileDataOut::Loc == pto::TileType::Vec && TileDataIn::Loc == pto::TileType::Vec,
       "This instruction only support Vec Tile");
     static_assert(TileDataIn::isRowMajor && TileDataIn::SFractal == SLayout::NoneBox,
       "This instruction only support Nd fractal Tile");
@@ -105,7 +105,7 @@ namespace pto
 
   template <typename InstrOp, typename T, uint32_t DstCols, uint32_t SrcCols, uint8_t elemPerRpt,
     uint32_t dstRptStride, uint32_t srcRptStride>
-  __PTO_INSTR__ void OneRepeatProc(__ubuf__ T *dst, __ubuf__ T *src, int validCol, int validRow, int remain,
+  PTO_INTERNAL void OneRepeatProc(__ubuf__ T *dst, __ubuf__ T *src, int validCol, int validRow, int remain,
     int rowRptTimes) {
     if (validCol == elemPerRpt) {
       InstrOp::template ReduceInstrByMode<true, SrcCols, dstRptStride, srcRptStride, elemPerRpt>
@@ -129,7 +129,7 @@ namespace pto
   }
 
   template <typename InstrOp, typename T, typename TileDataOut, typename TileDataIn, typename TileDataTmp>
-  __PTO_INSTR__ void TRowReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp, int validCol, int validRow) {
+  PTO_INTERNAL void TRowReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp, int validCol, int validRow) {
     constexpr uint8_t elemPerBlock = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr uint8_t elemPerRpt = REPEAT_BYTE / sizeof(T);
     constexpr uint32_t dstRptStride = TileDataOut::Cols;

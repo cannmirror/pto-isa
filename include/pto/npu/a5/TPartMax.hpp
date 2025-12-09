@@ -17,7 +17,7 @@ namespace pto {
 
 template <typename T> struct TPartMaxOp {
     static constexpr T PadVal = Padding<T>::Min;
-    __PTO_INSTR__ static void BinInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1,
+    PTO_INTERNAL static void BinInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1,
         MaskReg preg)
     {
         vmax(dst, src0, src1, preg, MODE_ZEROING);
@@ -25,7 +25,7 @@ template <typename T> struct TPartMaxOp {
 };
 
 template <typename DstTileData, typename Src0TileData, typename Src1TileData> 
-__aicore__ PTO_INLINE void TPARTMAX_IMPL(DstTileData &dst, Src0TileData& src0, Src1TileData& src1,
+PTO_INTERNAL void TPARTMAX_IMPL(DstTileData &dst, Src0TileData& src0, Src1TileData& src1,
     BinOpsImpl version = BinOpsImpl::BinOpsIMPL_DEFAULT)
 {
     TPartMasterImpl<TPartMaxOp<typename DstTileData::DType>, DstTileData, Src0TileData, Src1TileData>
