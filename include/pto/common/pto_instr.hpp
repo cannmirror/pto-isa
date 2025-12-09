@@ -82,21 +82,18 @@ __PTO_INSTR__ void TDIV(TileData &dst, TileData &src0, TileData &src1) {
   MAP_INSTR_IMPL(TDIV, dst, src0, src1)
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight>
-__PTO_INSTR__ void TMATMUL(TileAcc &cMatrix, TileLeft &aMatrix,
-                           TileRight &bMatrix) {
+template <typename TileRes, typename TileLeft, typename TileRight>
+__PTO_INSTR__ void TMATMUL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix) {
   MAP_INSTR_IMPL(TMATMUL, cMatrix, aMatrix, bMatrix)
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight>
-__PTO_INSTR__ void TMATMUL_ACC(TileAcc &cOutMatrix, TileAcc &cInMatrix,
-                               TileLeft &aMatrix, TileRight &bMatrix) {
+template <typename TileRes, typename TileLeft, typename TileRight>
+__PTO_INSTR__ void TMATMUL_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix) {
   MAP_INSTR_IMPL(TMATMUL_ACC, cOutMatrix, cInMatrix, aMatrix, bMatrix)
 }
 
-template <typename TileAcc, typename TileLeft, typename TileRight, typename TileBias>
-__PTO_INSTR__ void TMATMUL_BIAS(TileAcc &cMatrix, TileLeft &aMatrix,
-                                TileRight &bMatrix, TileBias &biasData) {
+template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias>
+__PTO_INSTR__ void TMATMUL_BIAS(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData) {
   MAP_INSTR_IMPL(TMATMUL_BIAS, cMatrix, aMatrix, bMatrix, biasData)
 }
 
