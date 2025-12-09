@@ -17,8 +17,8 @@ namespace pto {
 template <typename DstTileData, typename SrcTileData>
 __tf__ __aicore__ void TMovToBt(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src)
 {
-    using SrcType = typename SrcTileData::DType;
     using DstType = typename DstTileData::DType;
+    using SrcType = typename SrcTileData::DType;
     static_assert((std::is_same_v<SrcType, int32_t> && std::is_same_v<DstType, int32_t>) ||
                       (std::is_same_v<SrcType, float> && std::is_same_v<DstType, float>) ||
                       (std::is_same_v<SrcType, half> && std::is_same_v<DstType, float>) ||
@@ -28,22 +28,25 @@ __tf__ __aicore__ void TMovToBt(typename DstTileData::TileDType __out__ dst, typ
     constexpr int32_t srcRow = SrcTileData::Rows;
     constexpr int32_t srcCol = SrcTileData::Cols;
     constexpr int32_t dstCol = DstTileData::Cols;
+    constexpr const int BIAS_TABLE_UNIT = 64;
+    constexpr const int BIAS_TABLE_SIZE = 4096;
+    constexpr const int ONE_ROW = 1;
 
-    static_assert(srcRow == 1, "TMov: When Location is Bias, row must be 1.");
-    static_assert(
-        dstCol * sizeof(DstType) % 64 == 0, "TMov: When Location is Bias, col * sizeof(Dtype) must be aligned to 64.");
-    static_assert(
-        dstCol * sizeof(DstType) <= 4096, "TMov: The memory occupation of BiasTile exceeds 4.0KB boas table size.");
+    static_assert(srcRow == ONE_ROW, "TMov: When Location is Bias, row must be 1.");
+    static_assert(dstCol * sizeof(DstType) % BIAS_TABLE_UNIT == 0,
+        "TMov: When Location is Bias, col * sizeof(Dtype) must be aligned to 64.");
+    static_assert(dstCol * sizeof(DstType) <= BIAS_TABLE_SIZE,
+        "TMov: The memory occupation of BiasTile exceeds 4.0KB bias table size.");
 
-    constexpr const int BURST_LEN_UNIT = 32;
     __cbuf__ SrcType *srcAddrP = (__cbuf__ SrcType *)(src);
     uint64_t dstAddrP = (uint64_t)dst;
 
     bool convControl = false;
-    uint16_t burstNum = 1;
-    uint16_t burstLen = srcRow * srcCol * sizeof(SrcType) / BURST_LEN_UNIT;
-    uint16_t srcGap = 0;
-    uint16_t dstGap = 0;
+    constexpr uint16_t burstNum = 1;
+    constexpr const int BURST_LEN_UNIT_SHIFT = 5; // BURST_LEN_UNIT = 32;
+    constexpr uint16_t burstLen = srcRow * srcCol * sizeof(SrcType) >> BURST_LEN_UNIT_SHIFT;
+    constexpr uint16_t srcGap = 0;
+    constexpr uint16_t dstGap = 0;
 
     if constexpr (std::is_same_v<SrcType, half> && std::is_same_v<DstType, float>) {
         convControl = true;
@@ -59,21 +62,24 @@ __tf__ __aicore__ void TMovToFb(typename DstTileData::TileDType __out__ dst, typ
     constexpr int32_t srcRow = SrcTileData::Rows;
     constexpr int32_t srcCol = SrcTileData::Cols;
     constexpr int32_t dstCol = DstTileData::Cols;
+    constexpr const int FIXPIPE_BUFFER_UNIT = 128;
+    constexpr const int FIXPIPE_BUFFER_SIZE = 4096;
+    constexpr const int ONE_ROW = 1;
 
-    static_assert(srcRow == 1, "TMov: When Location is Scaling, row must be 1.");
-    static_assert(dstCol * sizeof(DstType) % 128 == 0,
+    static_assert(srcRow == ONE_ROW, "TMov: When Location is Scaling, row must be 1.");
+    static_assert(dstCol * sizeof(DstType) % FIXPIPE_BUFFER_UNIT == 0,
         "TMov: When Location is Scaling, col * sizeof(Dtype) must be aligned to 128.");
-    static_assert(
-        dstCol * sizeof(DstType) <= 4096, "TMov: The memory occupation of FbTile exceeds 4.0KB boas table size.");
+    static_assert(dstCol * sizeof(DstType) <= FIXPIPE_BUFFER_SIZE,
+        "TMov: The memory occupation of FbTile exceeds 4.0KB fixpipe buffer size.");
 
     __cbuf__ SrcType *srcAddrP = (__cbuf__ SrcType *)(src);
     __fbuf__ DstType *dstAddrP = (__fbuf__ DstType *)(dst);
 
-    uint16_t burstNum = 1;
-    constexpr int BURST_LEN_UNIT = 64;
-    uint16_t burstLen = srcRow * srcCol * sizeof(SrcType) / BURST_LEN_UNIT;
-    uint16_t srcGap = 0;
-    uint16_t dstGap = 0;
+    constexpr uint16_t burstNum = 1;
+    constexpr int BURST_LEN_UNIT_SHIFT = 6;  //BURST_LEN_UNIT = 64;
+    constexpr uint16_t burstLen = srcRow * srcCol * sizeof(SrcType) >> BURST_LEN_UNIT_SHIFT;
+    constexpr uint16_t srcGap = 0;
+    constexpr uint16_t dstGap = 0;
 
     copy_cbuf_to_fbuf(dstAddrP, srcAddrP, burstNum, burstLen, srcGap, dstGap);
 }
@@ -207,11 +213,11 @@ __aicore__ PTO_INLINE void CheckTMovL0cToUBValid()
 template <typename DstTileData, typename SrcTileData>
 __aicore__ void TMovToVec(DstTileData &dst, SrcTileData &src) {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename SrcTileData::DType);
-    constexpr unsigned srcStride = SrcTileData::RowStride;
     constexpr unsigned dstStride = DstTileData::RowStride;
+    constexpr unsigned srcStride = SrcTileData::RowStride;
     uint64_t validSrcRow = src.GetValidRow();
-    uint64_t validSrcCol = src.GetValidCol();
     uint64_t validDstRow = dst.GetValidRow();
+    uint64_t validSrcCol = src.GetValidCol();
     uint64_t validDstCol = dst.GetValidCol();
     uint64_t validRow = (validSrcRow < validDstRow) ? validSrcRow : validDstRow;
     uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
