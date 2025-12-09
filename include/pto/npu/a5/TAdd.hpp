@@ -48,6 +48,16 @@ void TAdd(typename TileData::TileDType __out__ dst,
 template <typename TileData>
 __aicore__ PTO_INLINE void TADD_IMPL(TileData &dst, TileData &src0, TileData &src1)
 {
+    static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
+                  std::is_same<typename TileData::DType, uint32_t>::value ||
+                  std::is_same<typename TileData::DType, float>::value ||
+                  std::is_same<typename TileData::DType, int16_t>::value ||
+                  std::is_same<typename TileData::DType, uint16_t>::value ||
+                  std::is_same<typename TileData::DType, half>::value ||
+                  std::is_same<typename TileData::DType, bfloat16_t>::value ||
+                  std::is_same<typename TileData::DType, uint8_t>::value ||
+                  std::is_same<typename TileData::DType, int8_t>::value,
+                  "TADD: Invalid data type.");
     static_assert(TileData::isRowMajor, "TADD: not supported Layout type");
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);

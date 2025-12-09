@@ -45,6 +45,11 @@ namespace pto {
 
     template <typename TileData>
     __aicore__ void TMIN_IMPL(TileData &dst, TileData &src0, TileData &src1) {
+        static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
+                      std::is_same<typename TileData::DType, float>::value ||
+                      std::is_same<typename TileData::DType, int16_t>::value ||
+                      std::is_same<typename TileData::DType, half>::value,
+                      "TMIN: Invalid data type.");
         static_assert(TileData::isRowMajor, "TMIN: not supported Layout type");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 
