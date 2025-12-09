@@ -102,11 +102,11 @@ checkopts() {
         shift
         ;;
       --sim)
-        RUN_TYPE=SIM
+        RUN_TYPE=sim
         shift
         ;;
       --npu)
-        RUN_TYPE=NPU
+        RUN_TYPE=npu
         shift
         ;;
       --)
@@ -127,7 +127,7 @@ run_simple_st() {
   chmod +x run_st.sh
   if [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "FALSE" ]; then
     ./run_st.sh a3 $RUN_TYPE simple
-  elif [ "$ENABLE_A3" = "FALSE"] && [ "$ENABLE_A5" = "TRUE" ]; then
+  elif [ "$ENABLE_A3" = "FALSE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
     ./run_st.sh a5 $RUN_TYPE simple
   elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
     ./run_st.sh a3_a5 $RUN_TYPE simple
