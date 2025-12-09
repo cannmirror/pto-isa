@@ -82,6 +82,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/Tci.hpp"
 #include "pto/npu/a5/TSels.hpp"
 #include "pto/npu/a5/TSel.hpp"
+#include "pto/npu/a5/TExpandS.hpp"
 #include "pto/npu/a5/TSort32.hpp"
 #include "pto/npu/a5/TExtract.hpp"
 #include "pto/npu/a5/TMins.hpp"

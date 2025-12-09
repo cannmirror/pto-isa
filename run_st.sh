@@ -146,6 +146,8 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tdivs -g TDIVSTest.case5
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmuls -g TMULSTest.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tadds -g TADDSTest.case1
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t texpands -g TEXPANDSTest.case_float_64x64_64x64_64x64_PAD_VALUE_NULL
+
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tgatherb
@@ -177,5 +179,6 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tdivs
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmuls
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tadds
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t texpands
   fi
 fi
