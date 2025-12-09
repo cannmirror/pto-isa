@@ -25,11 +25,12 @@ namespace pto{
         }
     }
 
-    template <typename tile_shape_out, typename tile_shape_in>
-    __aicore__ PTO_INLINE void TROWMAX_IMPL(tile_shape_out &dst, tile_shape_in &src) {
+  template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
+  __PTO_INSTR__ void TROWMAX_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp) {
+        (void)tmp;
         unsigned row = src.GetValidRow();
         unsigned col = src.GetValidCol();
-        TRowmax_Impl<tile_shape_out, tile_shape_in>(dst.data(), src.data(), row, col);
+        TRowmax_Impl<TileDataOut, TileDataIn>(dst.data(), src.data(), row, col);
     }
 }
 
