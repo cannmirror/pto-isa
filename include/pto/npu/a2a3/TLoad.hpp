@@ -201,21 +201,21 @@ __aicore__ PTO_INLINE void TLoadGm2L1Nd2nd(__cbuf__ typename TileData::DType *ds
     uint16_t lenBurst = (validCol * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
     uint16_t gmGap = ((gStride3 - gShape4) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
     uint16_t l1Gap = ((TileData::Cols - validCol) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
-    typename GlobalData::DType *srcAddrP = srcAddr;
-    __cbuf__ typename TileData::DType *dstAddrP = dstAddr;
+
     int64_t dstStride2 = gShape3 * TileData::Cols;
     int64_t dstStride1 = gShape2 * dstStride2;
     int64_t dstStride0 = gShape1 * dstStride1;
-
+    typename GlobalData::DType *srcAddrP = srcAddr;
+    __cbuf__ typename TileData::DType *dstAddrP = dstAddr;
     for (uint32_t i = 0; i < gShape0; i++) {
         int64_t srcAddr0 = i * gStride0;
         int64_t dstAddr0 = i * dstStride0;
         for (uint32_t j = 0; j < gShape1; j++) {
-            int64_t srcAddr1 = j * gStride1;
             int64_t dstAddr1 = j * dstStride1;
+            int64_t srcAddr1 = j * gStride1;
             for (uint32_t k = 0; k < gShape2; k++) {
-                dstAddrP = dstAddr + dstAddr0 + dstAddr1 + k * dstStride2;
                 srcAddrP = srcAddr + srcAddr0 + srcAddr1 + k * gStride2;
+                dstAddrP = dstAddr + dstAddr0 + dstAddr1 + k * dstStride2;
                 TLoadInstrGm2L1<TileData, GlobalData>(dstAddrP, srcAddrP, nBurst, lenBurst, gmGap, l1Gap);
             }
         }
