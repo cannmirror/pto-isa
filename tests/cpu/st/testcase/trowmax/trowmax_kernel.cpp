@@ -27,7 +27,7 @@ __aicore__ void runTROWMAX( __gm__ T __out__ *out, __gm__ T __in__ *src) {
     TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    TROWMAX(dstTile, srcTile);
+    TROWMAX(dstTile, srcTile, srcTile); // tmp tile is not used in cpu version
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);
