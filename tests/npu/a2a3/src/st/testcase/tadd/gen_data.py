@@ -14,23 +14,24 @@ import os
 import numpy as np
 np.random.seed(19)
 
+
 def gen_golden_data_tadd(case_name, param):
     dtype = param.dtype
 
-    H, W = [param.tile_row, param.tile_col]
+    h, w = [param.tile_row, param.tile_col]
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    input2 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+    input1 = np.random.randint(1, 10, size=[h, w]).astype(dtype)
+    input2 = np.random.randint(1, 10, size=[h, w]).astype(dtype)
 
     # Perform the addbtraction
     golden = input1 + input2
 
     # Apply valid region constraints
-    output = np.zeros([H, W]).astype(dtype)
-    for h in range(H):
-        for w in range(W):
+    output = np.zeros([h, w]).astype(dtype)
+    for h in range(h):
+        for w in range(w):
             if h >= h_valid or w >= w_valid:
                 golden[h][w] = output[h][w]
 
@@ -41,7 +42,8 @@ def gen_golden_data_tadd(case_name, param):
 
     return output, input1, input2, golden
 
-class taddParams:
+
+class TAddParams:
     def __init__(self, dtype, gm_row, gm_col, tile_row, tile_col, valid_row, valid_col):
         self.dtype = dtype
         self.tile_row = gm_row
@@ -51,7 +53,7 @@ class taddParams:
         self.valid_row = valid_row
         self.valid_col = valid_col
 
-def generate_case_name(idx, param):
+def generate_case_name(param):
     dtype_str = {
         np.float32: 'float',
         np.float16: 'half',
@@ -59,7 +61,7 @@ def generate_case_name(idx, param):
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TADDTest.case{idx}_{dtype_str}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+    return f"TADDTest.case_{dtype_str}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -71,14 +73,14 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        taddParams(np.float32, 64, 64, 64, 64, 64, 64),
-        taddParams(np.int32, 64, 64, 64, 64, 64, 64),
-        taddParams(np.int16, 64, 64, 64, 64, 64, 64),
-        taddParams(np.float16, 16, 256, 16, 256, 16, 256),
+        TAddParams(np.float32, 64, 64, 64, 64, 64, 64),
+        TAddParams(np.int32, 64, 64, 64, 64, 64, 64),
+        TAddParams(np.int16, 64, 64, 64, 64, 64, 64),
+        TAddParams(np.float16, 16, 256, 16, 256, 16, 256),
     ]
 
-    for i, param in enumerate(case_params_list):
-        case_name = generate_case_name(i+1, param)
+    for param in case_params_list:
+        case_name = generate_case_name(param)
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()

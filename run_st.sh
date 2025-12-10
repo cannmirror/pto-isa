@@ -61,7 +61,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tsels -g TSELSTest.case_float_64x64_64x64_64x64
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tsels -g TSELSTest.case_half_16x256_16x256_16x256
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tsort32 -g TSort32Test.case1
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tadd -g TADDTest.case1_float_64x64_64x64
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tadd -g TADDTest.case_float_64x64_64x64
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tsel -g TSELTest.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tfillpad -g TFILLPADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX
@@ -131,7 +131,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsels -g TSELSTest.case_half_2x32_2x32_2x32
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsort32 -g TSort32Test.case1
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tadd -g TADDTest.case1_float_64x64_64x64
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsort32 -g TSort32Test.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmins -g TMINSTEST.case_float_60x60_64x64_60x60
