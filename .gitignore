@@ -2,6 +2,7 @@
 .idea
 .vscode
 build
+build_tests
 *.o
 output/
 __pycache__/

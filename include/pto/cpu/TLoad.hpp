@@ -17,99 +17,112 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
     template <typename TileData>
     AICORE constexpr TileData::DType getPadValue()
-    {
-        if constexpr (std::is_same<typename TileData::DType, float>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero: return uint32_t(0);
-                case PadValue::Min: return uint32_t(0xff800000UL);
-                case PadValue::Max: return uint32_t(0x7f800000UL);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, uint64_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero:
-                case PadValue::Min: return uint64_t(0);
-                case PadValue::Max: return uint64_t(0xffffffffffffffffUL);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, int64_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero: return uint64_t(0);
-                case PadValue::Min: return uint64_t(0xffffffffffffffffUL);
-                case PadValue::Max: return uint64_t(0x7fffffffffffffffUL);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, int32_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero: return uint32_t(0);
-                case PadValue::Min: return uint32_t(0xffffffffUL);
-                case PadValue::Max: return uint32_t(0x7fffffffUL);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, uint32_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero:
-                case PadValue::Min: return uint32_t(0);
-                case PadValue::Max: return uint32_t(0xffffffffUL);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, bfloat16_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero: return uint16_t(0);
-                case PadValue::Min: return uint16_t(0xff80);
-                case PadValue::Max: return uint16_t(0x7f80);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, half>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero: return uint16_t(0);
-                case PadValue::Min: return uint16_t(0xfc00);
-                case PadValue::Max: return uint16_t(0x7c00);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, int16_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero: return uint16_t(0);
-                case PadValue::Min: return uint16_t(0xffff);
-                case PadValue::Max: return uint16_t(0x7fff);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, uint16_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero:
-                case PadValue::Min: return uint16_t(0);
-                case PadValue::Max: return uint16_t(0xffff);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, int8_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero: return uint8_t(0);
-                case PadValue::Min: return uint8_t(0xff);
-                case PadValue::Max: return uint8_t(0x7f);
-            }
-        } else if constexpr (std::is_same<typename TileData::DType, uint8_t>::value) {
-            switch (TileData::PadVal)
-            {
-                case PadValue::Null:
-                case PadValue::Zero:
-                case PadValue::Min: return uint8_t(0);
-                case PadValue::Max: return uint8_t(0xff);
-            }
-        } else {
-            static_assert(sizeof(typename TileData::DType) < 0, "TLOAD: Unsupported DType for PadValue");
+    {    
+        switch (TileData::PadVal)
+        {
+            case PadValue::Null:
+            case PadValue::Zero: return typename TileData::DType(0);
+            case PadValue::Min:
+                if constexpr(std::numeric_limits<typename TileData::DType>::has_infinity) {
+                    return -std::numeric_limits<typename TileData::DType>::infinity();
+                } else {
+                    return std::numeric_limits<typename TileData::DType>::min();
+                }
+            case PadValue::Max:
+                if constexpr(std::numeric_limits<typename TileData::DType>::has_infinity) {
+                    return std::numeric_limits<typename TileData::DType>::infinity();
+                } else {
+                    return std::numeric_limits<typename TileData::DType>::max();
+                }
         }
         return 0;
+    }
+
+    template <typename GlobalData, typename TileData, std::enable_if_t<TileData::isRowMajor, int> = 0>
+    __tf__ __aicore__ PTO_INLINE void LoadPlainMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+        int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol, size_t idx3) {
+        size_t offsetDstBase =  idx3*gShape3*TileData::Cols;
+        for (uint32_t r = 0; r < gShape3; r++) {
+            for (uint32_t c = 0; c < gShape4; c++) {
+                size_t offsetDst = offsetDstBase + r*TileData::Cols + c;
+                size_t offsetSrc = r*gStride3 + c*gStride4;
+                dst[offsetDst] = src[offsetSrc];
+            }
+        }
+    }
+    template <typename GlobalData, typename TileData, std::enable_if_t<!TileData::isRowMajor, int> = 0>
+    __tf__ __aicore__ PTO_INLINE void LoadPlainMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+        int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol, size_t idx3) {
+        size_t offsetDstBase =  idx3*gShape4*TileData::Rows;
+        for (uint32_t r = 0; r < gShape3; r++) {
+            for (uint32_t c = 0; c < gShape4; c++) {
+                size_t offsetDst = offsetDstBase + c*TileData::Rows + r;
+                size_t offsetSrc = r*gStride3 + c*gStride4;
+                dst[offsetDst] = src[offsetSrc];
+            }
+        }
+    }
+
+    template <typename GlobalData, typename TileData>
+    __tf__ __aicore__ PTO_INLINE void LoadPlain(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+        int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+        int gStride3, int gStride4, int validRow, int validCol) {
+        int64_t dstStride1 = gShape2;
+        int64_t dstStride0 = gShape1 * dstStride1;
+
+        for (uint32_t i = 0; i < gShape0; i++) {
+            int64_t dstAddr0 = i * dstStride0;
+            int64_t srcAddr0 = i * gStride0;
+            for (uint32_t j = 0; j < gShape1; j++) {
+                int64_t dstAddr1 = j * dstStride1;
+                int64_t srcAddr1 = j * gStride1;
+                for (uint32_t k = 0; k < gShape2; k++) {
+                    size_t offsetSrcBase = srcAddr0 + srcAddr1 + k * gStride2;
+                    LoadPlainMatrix<GlobalData, TileData>(dst, src+offsetSrcBase, gShape3, gShape4, gStride3, gStride4, validRow, validCol, dstAddr0 + dstAddr1 + k);
+                }
+            }
+        }
+    }
+
+    template <typename GlobalData, typename TileData, std::enable_if_t<TileData::isRowMajor, int> = 0>
+    __tf__ __aicore__ PTO_INLINE void LoadSubfractalMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+        int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol) {
+        // Zn layout
+        for(size_t c=0; c<gShape4; c++) {
+            size_t subTileC = c / TileData::InnerCols;
+            size_t innerC = c % TileData::InnerCols;
+            for(size_t r=0; r < gShape3; r++) {
+                size_t subTileR = r / TileData::InnerRows;
+                size_t innerR = r % TileData::InnerRows;
+
+                size_t tile_idx = subTileR*TileData::Cols*TileData::InnerRows +
+                    subTileC*TileData::InnerNumel + innerC*TileData::InnerRows + innerR;
+
+                size_t gd_idx = r*gStride3 + c*gStride4;
+
+                dst[tile_idx] = src[gd_idx];
+            }
+        }
+    }
+
+    template <typename GlobalData, typename TileData, std::enable_if_t<!TileData::isRowMajor, int> = 0>
+    __tf__ __aicore__ PTO_INLINE void LoadSubfractalMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+        int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol) {
+        // Nz layout
+        for(size_t c=0; c<gShape4; c++) {
+            size_t subTileC = c / TileData::InnerCols;
+            size_t innerC = c % TileData::InnerCols;
+            for(size_t r=0; r < gShape3; r++) {
+                size_t subTileR = r / TileData::InnerRows;
+                size_t innerR = r % TileData::InnerRows;
+
+                size_t tile_idx = subTileC*TileData::Rows*TileData::InnerCols +
+                    subTileR*TileData::InnerNumel + innerR*TileData::InnerCols + innerC;
+                size_t gd_idx = r*gStride3 + c*gStride4;
+
+                dst[tile_idx] = src[gd_idx];
+            }
+        }
     }
 
     template <typename TileData, typename GlobalData>
@@ -125,75 +138,11 @@ namespace pto {
 
         //Filling data
         if(TileData::SFractal == SLayout::NoneBox) {
-            int64_t dstStride1 = gShape2;
-            int64_t dstStride0 = gShape1 * dstStride1;
-
-            for (uint32_t i = 0; i < gShape0; i++) {
-                int64_t dstAddr0 = i * dstStride0;
-                int64_t srcAddr0 = i * gStride0;
-                for (uint32_t j = 0; j < gShape1; j++) {
-                    int64_t dstAddr1 = j * dstStride1;
-                    int64_t srcAddr1 = j * gStride1;
-                    for (uint32_t k = 0; k < gShape2; k++) {
-                        size_t offsetSrcBase = srcAddr0 + srcAddr1 + k * gStride2;
-
-                        if constexpr (TileData::isRowMajor) { // ND
-                            size_t offsetDstBase =  (dstAddr0 + dstAddr1 + k)*gShape3*TileData::Cols;
-
-                            for (uint32_t r = 0; r < gShape3; r++) {
-                                for (uint32_t c = 0; c < gShape4; c++) {
-                                    size_t offsetDst = offsetDstBase + r*TileData::Cols + c;
-                                    size_t offsetSrc = offsetSrcBase + r*gStride3 + c*gStride4;
-                                    dst[offsetDst] = src[offsetSrc];
-                                }
-                            }
-                        } else { // DN
-                            size_t offsetDstBase =  (dstAddr0 + dstAddr1 + k)*gShape4*TileData::Rows;
-                            for (uint32_t r = 0; r < gShape3; r++) {
-                                for (uint32_t c = 0; c < gShape4; c++) {
-                                    size_t offsetDst = offsetDstBase + c*TileData::Rows + r;
-                                    size_t offsetSrc = offsetSrcBase + r*gStride3 + c*gStride4;
-                                    dst[offsetDst] = src[offsetSrc];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            LoadPlain<GlobalData, TileData>(dst, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2,
+                gStride3, gStride4, validRow, validCol);
         } else {
             assert(gShape0==1 && gShape1==1 && gShape2==1 && "ND,DN -> Nz,Zn convertion does support only 2D GMs");
-            if constexpr (!TileData::isRowMajor) { // Nz layout
-                for(size_t c=0; c<gShape4; c++) {
-                    size_t subTileC = c / TileData::InnerCols;
-                    size_t innerC = c % TileData::InnerCols;
-                    for(size_t r=0; r < gShape3; r++) {
-                        size_t subTileR = r / TileData::InnerRows;
-                        size_t innerR = r % TileData::InnerRows;
-
-                        size_t tile_idx = subTileC*TileData::Rows*TileData::InnerCols +
-                            subTileR*TileData::InnerNumel + innerR*TileData::InnerCols + innerC;
-                        size_t gd_idx = r*gStride3 + c*gStride4;
-
-                        dst[tile_idx] = src[gd_idx];
-                    }
-                }
-            } else { // Zn layout
-                for(size_t c=0; c<gShape4; c++) {
-                    size_t subTileC = c / TileData::InnerCols;
-                    size_t innerC = c % TileData::InnerCols;
-                    for(size_t r=0; r < gShape3; r++) {
-                        size_t subTileR = r / TileData::InnerRows;
-                        size_t innerR = r % TileData::InnerRows;
-
-                        size_t tile_idx = subTileR*TileData::Cols*TileData::InnerRows +
-                            subTileC*TileData::InnerNumel + innerC*TileData::InnerRows + innerR;
-
-                        size_t gd_idx = r*gStride3 + c*gStride4;
-
-                        dst[tile_idx] = src[gd_idx];
-                    }
-                }
-            }
+            LoadSubfractalMatrix<GlobalData, TileData>(dst, src, gShape3, gShape4, gStride3, gStride4, validRow, validCol);
         }
     }
 
