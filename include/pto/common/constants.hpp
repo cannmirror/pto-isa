@@ -140,6 +140,7 @@ template <>
 struct PadValueMap<bfloat16_t, PadValue::Null> {
     static constexpr auto value = uint16_t(0);
 };
+
 template <>
 struct PadValueMap<bfloat16_t, PadValue::Zero> {
     static constexpr auto value = uint16_t(0);
