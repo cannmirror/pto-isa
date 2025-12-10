@@ -40,7 +40,7 @@ void TPartCopyInstr(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr,
                 vsts(vreg0, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
             }
         }
-    } // end of VF
+    }
 } // end of tf
 
 template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,
