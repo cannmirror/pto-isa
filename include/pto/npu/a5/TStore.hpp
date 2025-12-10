@@ -180,7 +180,7 @@ PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr,
     xmReg = ((nSize & 0xfff) << 4) | (static_cast<uint64_t>(mSize & 0xffff) << 16) |
             (static_cast<uint64_t>(dstD & 0xffffffff) << 32);
     uint64_t xtReg = 0;
-    xtReg = srcStride | (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) |
+    xtReg = srcStride | (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
             (static_cast<uint64_t>(quantPre & 0x1f) << 34) | (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);
     uint64_t config = ndNum | (static_cast<uint64_t>(srcNdStride & 0xffff) << 16) |
                       (static_cast<uint64_t>(dstNdStride & 0xffff) << 32);
@@ -213,7 +213,7 @@ PTO_INTERNAL void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typena
     uint32_t dstStride = (gShape2 * gShape3 + cubeBlock - 1) / cubeBlock * cubeBlock * c0Size;
 
     uint64_t xtReg = 0;
-    xtReg = srcStride | (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) |
+    xtReg = srcStride | (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
             (static_cast<uint64_t>(quantPre & 0x1f) << 34) | (static_cast<uint64_t>(channelSplitEn & 0x1) << 42);
     uint64_t xmReg = 0;
     xmReg = ((static_cast<uint64_t>(nSize & 0xfff) << 4) | (static_cast<uint64_t>(mSize & 0xffff) << 16) |
