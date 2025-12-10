@@ -17,20 +17,21 @@ using namespace pto;
 
 template <typename T, int row, int vaildRow, int srcCol, int srcVaildCol, int dstCol>
 PTO_INTERNAL void runTRowSum(__gm__ T __out__ *out, __gm__ T __in__ *src) {
-    using DynDim2Shape  = Shape<1, 1, 1, -1, -1>;
-    using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
+    using DynDim2Shape  = Shape<1, 1, 1, vaildRow, -1>;
+    using DynDim2Stride = pto::Stride<1, 1, row, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
-    GlobalData srcGlobal(src, DynDim2Shape(vaildRow, srcVaildCol), DynDim2Stride(row, srcCol));
-    GlobalData dstGlobal(out, DynDim2Shape(vaildRow, dstCol), DynDim2Stride(row, dstCol));
+    GlobalData srcGlobal(src, DynDim2Shape(srcVaildCol), DynDim2Stride(srcCol));
+    GlobalData dstGlobal(out, DynDim2Shape(dstCol), DynDim2Stride(dstCol));
 
+    constexpr int dstTileMinCol = BLOCK_BYTE_SIZE / sizeof(T);
     using srcTileData = Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
-    using dstTileData = Tile<TileType::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
+    using dstTileData = Tile<TileType::Vec, T, row, dstTileMinCol, BLayout::RowMajor, -1, -1>;
     srcTileData srcTile(vaildRow, srcVaildCol);
     srcTileData tmpTile(vaildRow, srcVaildCol);
     dstTileData dstTile(vaildRow, dstCol);
     TASSIGN(srcTile, 0x0);
-    TASSIGN(tmpTile, 0x14000);
-    TASSIGN(dstTile, 0x28000);
+    TASSIGN(tmpTile, row * srcCol * sizeof(T));
+    TASSIGN(dstTile, row * (srcCol + dstTileMinCol) * sizeof(T));
 
     // 搬运数据
     TLOAD(srcTile, srcGlobal);

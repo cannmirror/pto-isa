@@ -1,3 +1,12 @@
+/**
+Copyright (c) 2025 Huawei Technologies Co., Ltd.
+This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+CANN Open Software License Agreement Version 2.0 (the "License").
+Please refer to the License for details. You may not use this file except in compliance with the License.
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+See LICENSE in the root of the software repository for the full text of the License.
+*/
 #ifndef TSEL_HPP
 #define TSEL_HPP
 
@@ -15,7 +24,7 @@ namespace pto
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst); \
         __ubuf__ typename MaskTile::DType *maskPtr = (__ubuf__ typename MaskTile::DType *)__cce_get_tile_ptr(selmask);  \
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);   \
-        __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);   \
+        __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1)
 
     template <typename TileData, typename MaskTile, unsigned elementsPerRepeat>
     __tf__ PTO_INTERNAL void TSel_b32(

@@ -16,25 +16,27 @@ import ctypes
 import numpy as np
 np.random.seed(23)
 
+
 def gen_golden_data(case_name, param):
     data_type = param.data_type
     cols = param.col
     src_row = param.src_row
-    srcValidRow = param.srcValidRow
+    src_valid_row = param.src_valid_row
 
-    input = np.random.rand(srcValidRow, cols) * 10
+    input = np.random.rand(src_valid_row, cols) * 10
     input = input.astype(data_type)
     golden = np.zeros((1, cols), dtype=data_type)
     golden[0] = np.sum(input, axis=0)
     input.tofile('input.bin')
     golden.tofile('golden.bin')
 
+
 class TColSum:
-    def __init__(self, data_type, col, src_row, srcValidRow):
+    def __init__(self, data_type, col, src_row, src_valid_row):
         self.data_type = data_type
         self.col = col
         self.src_row = src_row
-        self.srcValidRow = srcValidRow
+        self.src_valid_row = src_valid_row
 
 if __name__ == "__main__":
 

@@ -23,14 +23,15 @@ PTO_INTERNAL void runTRowMin(__gm__ T *out, __gm__ T *src) {
   GlobalData srcGlobal(src, DynDim2Shape(vaildRow, srcVaildCol), DynDim2Stride(row, srcCol));
   GlobalData dstGlobal(out, DynDim2Shape(vaildRow, dstCol), DynDim2Stride(row, dstCol));
 
+  constexpr int dstTileMinCol = BLOCK_BYTE_SIZE / sizeof(T);
   using srcTileData = Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
-  using dstTileData = Tile<TileType::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
+  using dstTileData = Tile<TileType::Vec, T, row, dstTileMinCol, BLayout::RowMajor, -1, -1>;
   srcTileData srcTile(vaildRow, srcVaildCol);
   srcTileData tmpTile(vaildRow, srcVaildCol);
   dstTileData dstTile(vaildRow, dstCol);
   TASSIGN(srcTile, 0x0);
   TASSIGN(dstTile, sizeof(T) * row * srcCol);
-  TASSIGN(tmpTile, sizeof(T) * row * (srcCol + 16));
+  TASSIGN(tmpTile, sizeof(T) * row * (srcCol + dstTileMinCol));
 
   // 搬运数据
   TLOAD(srcTile, srcGlobal);

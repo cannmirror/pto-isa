@@ -14,6 +14,7 @@ import os
 import numpy as np
 np.random.seed(19)
 
+
 def gen_golden_data(param):
     data_type = param.data_type
     row = param.row
@@ -38,7 +39,8 @@ def gen_golden_data(param):
     input_arr.tofile('input.bin')
     output_arr.tofile('golden.bin')
 
-class tcolmaxParams:
+
+class TColMaxParams:
     def __init__(self, name, data_type, row, valid_row, col, valid_col):
         self.name = name
         self.data_type = data_type
@@ -49,33 +51,33 @@ class tcolmaxParams:
 
 if __name__ == "__main__":
     case_params_list = [
-        tcolmaxParams("TCOLMAXTest.case01", np.float32, 1, 1, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case02", np.float32, 16, 16, 128, 127),
-        tcolmaxParams("TCOLMAXTest.case03", np.float32, 16, 15, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case11", np.float16, 1, 1, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case12", np.float16, 16, 16, 128, 127),
-        tcolmaxParams("TCOLMAXTest.case13", np.float16, 16, 15, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case21", np.int8, 1, 1, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case22", np.int8, 16, 16, 128, 127),
-        tcolmaxParams("TCOLMAXTest.case23", np.int8, 16, 15, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case31", np.uint8, 1, 1, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case32", np.uint8, 16, 16, 128, 127),
-        tcolmaxParams("TCOLMAXTest.case33", np.uint8, 16, 15, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case41", np.int16, 1, 1, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case42", np.int16, 16, 16, 128, 127),
-        tcolmaxParams("TCOLMAXTest.case43", np.int16, 16, 15, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case51", np.uint16, 1, 1, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case52", np.uint16, 16, 16, 128, 127),
-        tcolmaxParams("TCOLMAXTest.case53", np.uint16, 16, 15, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case61", np.int32, 1, 1, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case62", np.int32, 16, 16, 128, 127),
-        tcolmaxParams("TCOLMAXTest.case63", np.int32, 16, 15, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case71", np.uint32, 1, 1, 256, 255),
-        tcolmaxParams("TCOLMAXTest.case72", np.uint32, 16, 16, 128, 127),
-        tcolmaxParams("TCOLMAXTest.case73", np.uint32, 16, 15, 256, 255),
+        TColMaxParams("TCOLMAXTest.case01", np.float32, 1, 1, 256, 255),
+        TColMaxParams("TCOLMAXTest.case02", np.float32, 16, 16, 128, 127),
+        TColMaxParams("TCOLMAXTest.case03", np.float32, 16, 15, 256, 255),
+        TColMaxParams("TCOLMAXTest.case11", np.float16, 1, 1, 256, 255),
+        TColMaxParams("TCOLMAXTest.case12", np.float16, 16, 16, 128, 127),
+        TColMaxParams("TCOLMAXTest.case13", np.float16, 16, 15, 256, 255),
+        TColMaxParams("TCOLMAXTest.case21", np.int8, 1, 1, 256, 255),
+        TColMaxParams("TCOLMAXTest.case22", np.int8, 16, 16, 128, 127),
+        TColMaxParams("TCOLMAXTest.case23", np.int8, 16, 15, 256, 255),
+        TColMaxParams("TCOLMAXTest.case31", np.uint8, 1, 1, 256, 255),
+        TColMaxParams("TCOLMAXTest.case32", np.uint8, 16, 16, 128, 127),
+        TColMaxParams("TCOLMAXTest.case33", np.uint8, 16, 15, 256, 255),
+        TColMaxParams("TCOLMAXTest.case41", np.int16, 1, 1, 256, 255),
+        TColMaxParams("TCOLMAXTest.case42", np.int16, 16, 16, 128, 127),
+        TColMaxParams("TCOLMAXTest.case43", np.int16, 16, 15, 256, 255),
+        TColMaxParams("TCOLMAXTest.case51", np.uint16, 1, 1, 256, 255),
+        TColMaxParams("TCOLMAXTest.case52", np.uint16, 16, 16, 128, 127),
+        TColMaxParams("TCOLMAXTest.case53", np.uint16, 16, 15, 256, 255),
+        TColMaxParams("TCOLMAXTest.case61", np.int32, 1, 1, 256, 255),
+        TColMaxParams("TCOLMAXTest.case62", np.int32, 16, 16, 128, 127),
+        TColMaxParams("TCOLMAXTest.case63", np.int32, 16, 15, 256, 255),
+        TColMaxParams("TCOLMAXTest.case71", np.uint32, 1, 1, 256, 255),
+        TColMaxParams("TCOLMAXTest.case72", np.uint32, 16, 16, 128, 127),
+        TColMaxParams("TCOLMAXTest.case73", np.uint32, 16, 15, 256, 255),
     ]
 
-    for i, case in enumerate(case_params_list):
+    for _, case in enumerate(case_params_list):
         if not os.path.exists(case.name):
             os.makedirs(case.name)
         original_dir = os.getcwd()

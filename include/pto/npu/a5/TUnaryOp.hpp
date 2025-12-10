@@ -161,10 +161,10 @@ void UnaryInstr(typename TileData::TileDType __out__ dst,
                             unsigned kValidCols,
                             UnaryOpsImpl version) {
     if constexpr (TileData::ValidCol == TileData::Cols) {
-        TUnarTUnaryOps_1D_Switch<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src, kValidRows, kValidCols, version);
+        TUnaryOps_1D_Switch<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src, kValidRows, kValidCols, version);
     } else {
         if (TileData::Cols == kValidCols) {
-            TUnarTUnaryOps_1D_Switch<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src, kValidRows, kValidCols, version);
+            TUnaryOps_1D_Switch<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src, kValidRows, kValidCols, version);
         } else {
             switch (version) {
             case UnaryOpsImpl::UnaryOpsIMPL_1D_NO_POST_UPDATE:
@@ -220,7 +220,7 @@ AICORE void TEXP_IMPL(TileData &dst, TileData &src) {
     unsigned validCol = dst.GetValidCol();
 
     static_assert(TileData::isRowMajor, "TEXP: not supported Layout type");
-    static_assert(std::is_same_v<TileData::DType, float> || std::is_same_v<TileData::DType, half>, "TEXP: not supported Layout type");
+    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TEXP: not supported Layout type");
 
     TUnaryOp<TileData, _vexp, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
 }
@@ -239,7 +239,7 @@ AICORE void TSQRT_IMPL(TileData &dst, TileData &src) {
     unsigned validCol = dst.GetValidCol();
 
     static_assert(TileData::isRowMajor, "TSQRT: not supported Layout type");
-    static_assert(std::is_same_v<TileData::DType, float> || std::is_same_v<TileData::DType, half>, "TSQRT: not supported Layout type");
+    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TSQRT: not supported Layout type");
 
     TUnaryOp<TileData, _vsqrt, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
 }
@@ -287,7 +287,7 @@ AICORE void TRSQRT_IMPL(TileData &dst, TileData &src) {
     unsigned validCol = dst.GetValidCol();
 
     static_assert(TileData::isRowMajor, "TRSQRT: not supported Layout type");
-    static_assert(std::is_same_v<TileData::DType, float> || std::is_same_v<TileData::DType, half>, "TRSQRT: not supported Layout type");
+    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TRSQRT: not supported Layout type");
 
     TRsqrtCustom<TileData>(dst.data(), src.data(), validRow, validCol);
 }

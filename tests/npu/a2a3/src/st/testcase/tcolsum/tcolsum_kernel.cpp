@@ -47,7 +47,6 @@ __global__ AICORE void runTCOLSUM(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);
     out = dstGlobal.data();
-
 }
 
 template <typename T, int cols, int src_row, int src_validRow, bool IsBinary>
@@ -58,7 +57,6 @@ void launchTCOLSUM(T *out, T *src, void *stream)
     runTCOLSUM<T, cols, src_row, src_validRow, IsBinary><<<1, nullptr, stream>>>(out, src);
 
     cout << "launchTCOLSUM end!" << endl;
-
 }
 
 template void launchTCOLSUM<int16_t, 16, 16, 8, false>(int16_t *out, int16_t *src, void *stream);

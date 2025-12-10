@@ -67,9 +67,6 @@ bool TCOLSumTestFramework()
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstByteSize, dstDevice, dstByteSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    // PrintData(srcHost, src_validRow* cols, FLOAT, 255);
-    // PrintData(dstHost,  1 * cols, FLOAT, 255);
-
     WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstByteSize);
 
     aclrtFree(dstDevice);
@@ -88,7 +85,6 @@ bool TCOLSumTestFramework()
     ReadFile(GetGoldenDir() + "/output.bin", dstByteSize, devFinal.data(), dstByteSize);
 
     return ResultCmp(golden, devFinal, 0.001f);
-
 }
 
 TEST_F(TCOLSUMTest, case1)
