@@ -37,6 +37,9 @@ namespace pto {
     for (int i = 0; i < BinaryAccLoopTimes; ++i) {
       remain = nLoop % 2;
       nLoop /= 2;
+
+      // 依赖上一次循环的数据, 设置同步vlds等vsts
+      mem_bar(VST_VLD);
       for (int j = 0; j < nLoop; ++j) {
         vlds(src0VReg, tmp, (2 * j) * TmpStride, NORM);
         vlds(src1VReg, tmp, (2 * j + 1) * TmpStride, NORM);
@@ -45,6 +48,8 @@ namespace pto {
       }
 
       if (remain) {
+        // 尾块处理依赖上文for最后一次循环写入的tmp数据, 设置同步vlds等vsts
+        mem_bar(VST_VLD);
         vlds(src0VReg, tmp, (nLoop - 1) * TmpStride, NORM);
         vlds(src1VReg, tmp, (2 * nLoop) * TmpStride, NORM);
         vadd(dstVReg, src0VReg, src1VReg, pReg, MODE_ZEROING);
@@ -85,6 +90,8 @@ namespace pto {
 
         if (remain) {
           // 最后剩余奇数行加入tmp最后一行
+          // 尾块处理依赖第nLoop行的tmp数据, 设置同步vlds等vsts
+          mem_bar(VST_VLD);
           vlds(src0VReg, src, i * elmPerRpt + (validRow - 1) * SrcStride, NORM);
           vlds(src1VReg, tmp, (nLoop - 1) * TmpStride, NORM);
           vadd(dstVReg, src0VReg, src1VReg, pReg, MODE_ZEROING);

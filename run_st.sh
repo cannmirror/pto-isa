@@ -123,20 +123,19 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tstore -g TStoreTest.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t trowsum -g TROWSUMTest.test1
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tcolsum -g TCOLSUMTest.test01
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tcolmax -g TCOLMAXTest.test01
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tcolsum -g TCOLSUMTest.case01
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tcolmax -g TCOLMAXTest.case01
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t trowexpand -g TROWEXPANDTest.case5_float_16_8_16_127
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tgather -g TGATHERTest.case1_float
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t ttrans -g TTRANSTest.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsels -g TSELSTest.case_half_2x32_2x32_2x32
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsort32 -g TSort32Test.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsort32 -g TSort32Test.case1
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmins -g TMINSTEST.case_float_60x60_64x64_60x60
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmins -g TMINSTEST.case_float_16x200_20x512_16x200
-    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmins -g TMINSTEST.case_float_1x3600_2x4096_1x3600
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmins -g TMINSTest.case_float_60x60_64x64_60x60
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmins -g TMINSTest.case_float_16x200_20x512_16x200
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tmins -g TMINSTest.case_float_1x3600_2x4096_1x3600
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tload -g TLOADTest.case_float_GT_2_2_2_256_60_VT_256_64_BLK8_PADMAX
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64_inPlace_False

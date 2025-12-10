@@ -1,6 +1,7 @@
 #include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 #include <limits>
+#include <algorithm>
 
 using namespace std;
 using namespace pto;

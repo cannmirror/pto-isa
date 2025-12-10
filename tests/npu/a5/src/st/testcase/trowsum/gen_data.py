@@ -27,7 +27,7 @@ def gen_golden_data(param):
     result_arr = input_arr.sum(axis=1, keepdims=True)
     output_arr = np.zeros((rows, cols), dtype=dst_type)
     for i in range(cols):
-        output_arr[i, 0]=result_arr[i, 0]
+        output_arr[i, 0] = result_arr[i, 0]
     input_arr.tofile('input0.bin')
     output_arr.tofile('golden.bin')
 

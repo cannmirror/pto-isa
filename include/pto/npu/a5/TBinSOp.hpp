@@ -139,7 +139,7 @@ void TBinSOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
     }
 }
 template <typename Op, typename TileData, typename ScalarType, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__aicore__ PTO_INLINE void TBinSOps_1D_selector(typename TileData::TileDType __out__ dst, 
+PTO_INTERNAL void TBinSOps_1D_selector(typename TileData::TileDType __out__ dst, 
                             typename TileData::TileDType __in__ src0, 
                             ScalarType src1,
                             unsigned kValidRows,
