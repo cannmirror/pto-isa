@@ -34,9 +34,6 @@ template <> struct TypeGet<uint16_t> {
 template <> struct TypeGet<half> {
     using T = vector_f16;
 };
-//template <> struct TypeGet<bfloat16_t> {
-//     using T = vector_bf16;
-//};
 template <> struct TypeGet<int16_t> {
     using T = vector_s16;
 };
@@ -46,29 +43,5 @@ template <> struct TypeGet<uint8_t> {
 template <> struct TypeGet<int8_t> {
     using T = vector_s8;
 };
-
-// template <> struct TypeGet<hifloat8_t> {
-//     using T = vector_hif8;
-// };
-
-// template <> struct TypeGet<float8_e4m3_t> {
-//     using T = vector_f8e4m3;
-// };
-
-// template <> struct TypeGet<float8_e5m2_t> {
-//     using T = vector_f8e5m2;
-// };
-
-// template <> struct TypeGet<float4_e2m1_t> {
-//     using T = vector_f4e2m1;
-// };
-
-// template <> struct TypeGet<float4_e1m2_t> {
-//     using T = vector_f4e1m2;
-// };
-
-// template <> struct TypeGet<int4x2_t> {
-//     using T = vector_s4x2;
-// };
 } // namespace pto
 #endif 
