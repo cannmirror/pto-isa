@@ -14,7 +14,6 @@ import os
 import numpy as np
 import copy
 import struct
-# bfloat16 = ml_dtypes.bfloat16
 np.random.seed(19)
 
 class Dequantizer:
@@ -23,84 +22,77 @@ class Dequantizer:
     
     def extract_quant_params(self, quant_value_uint64):
         """
-        从uint64量化因子中提取参数
-        64位结构:
-        [63:36] - mcb + reserved (28位)
-        [35:32] - N (4位，右移位数)
-        [31:0]  - M1 (32位浮点数)
-        M2 = M1 (不使用ReLU)
+        Extract parameters from a uint64 quantization factor.
+        64-bit layout:
+        Bits [63:36]: mcb + reserved (28 bits)
+        Bits [35:32]: N (4 bits, right shift amount)
+        Bits [31:0]: M1 (32-bit float)
+        Note: M2 equals M1 (ReLU not applied).
         """
-        # 确保是整数类型
+        # Ensure it is an integer type.
         quant_uint64 = int(quant_value_uint64)
         
-        # 提取各个字段
+        # Extract the various bit fields.
         M1_uint32 = quant_uint64 & 0xFFFFFFFF  # [31:0] M1
-        N_shift = (quant_uint64 >> 32) & 0xF   # [35:32] N (4位)
+        N_shift = (quant_uint64 >> 32) & 0xF   # [35:32] N (4bit)
         mcb_and_reserved = (quant_uint64 >> 36) & 0xFFFFFFF  # [63:36] mcb + reserved
         
         mcb = mcb_and_reserved & 0x1
         
-        # 将M1从uint32转换回float32
+        # Convert M1 from uint32 to float32.
         M1_bytes = M1_uint32.to_bytes(4, byteorder='little', signed=False)
         M1 = np.frombuffer(M1_bytes, dtype=np.float32)[0]
         
-        # 不使用ReLU，M2 = M1
+        # M2 = M1 (ReLU disabled).
         M2 = M1
         
         return mcb, N_shift, M1, M2
     
     def deqf16_quantization(self, quant_value_uint64, src_value_in_s32):
         """
-        反量化函数 - 不使用ReLU
+        Dequantizer - without ReLU
         """
         tmp0 = np.int32(src_value_in_s32)
         
         mcb, N, M1, M2 = self.extract_quant_params(quant_value_uint64)
         
         if mcb == 0:
-            # 模式0: 直接32位转浮点
+            # Mode 0: Direct 32-bit to floating-point conversion.
             tmp2 = tmp0.astype(np.float32)
         else:
-            # 模式1: 右移N位 + 饱和到16位 + 转浮点
-            # 使用算术右移保持符号
+            # Mode 1: Right shift N bits → saturate to 16-bit → convert to floating-point.
+            # Arithmetic right shift is used to maintain sign information.
             if tmp0 < 0:
-                shifted = -((-tmp0) >> N)  # 负数保持符号
+                shifted = -((-tmp0) >> N)
             else:
                 shifted = tmp0 >> N
                 
             tmp1 = np.clip(shifted, -32768, 32767).astype(np.int16)
             tmp2 = tmp1.astype(np.float32)
         
-        # 不使用ReLU，正负数都使用M1
+        # When ReLU is not used, M1 is applied to both positive and negative values.
         tmp3 = tmp2 * M1
         
-        # 转half精度
+        # Cast to half precision (float16).
         tmp4 = np.float16(tmp3)
         
         return tmp4
     
     def process_batch_column_based(self, quant_tensor, s32_elements):
         """
-        列级量化处理 - 不使用ReLU
+        Per-column quantization without ReLU activation
         """
         if len(s32_elements.shape) != 2:
             raise ValueError(f"输入应该是二维数组，当前形状: {s32_elements.shape}")
         
         M, N = s32_elements.shape
         
-        # 确保quant_tensor是uint64类型
         if quant_tensor.dtype != np.uint64:
             quant_tensor = quant_tensor.astype(np.uint64)
         
         if len(quant_tensor) != N:
             raise ValueError(f"量化参数数量{len(quant_tensor)}与输出列数{N}不匹配")
         
-        print(f"量化处理 (不使用ReLU):")
-        print(f"  输入形状: ({M}, {N}), 范围: [{np.min(s32_elements)}, {np.max(s32_elements)}]")
-        print(f"  量化参数: shape={quant_tensor.shape}")
-        
-        # 显示量化参数详情
-        print(f"\n量化参数详情:")
         for col_idx in range(min(N, 3)):
             quant_value = quant_tensor[col_idx]
             mcb, N_shift, M1, M2 = self.extract_quant_params(quant_value)
@@ -108,8 +100,7 @@ class Dequantizer:
             print(f"  第{col_idx}列:")
             print(f"    uint64值: 0x{quant_value:016X}")
             print(f"    解析: mcb={mcb}, N={N_shift}, M1={M1:.6f}, M2={M2:.6f}")
-        
-        # 处理每个元素
+
         results = np.zeros((M, N), dtype=np.float16)
         
         for row_idx in range(M):
@@ -123,17 +114,15 @@ class Dequantizer:
 
 def create_quant_tensor_uint64(nAlign):
     """
-    创建uint64类型的量化参数张量 - 不使用ReLU
+    Create a uint64 quantization parameter tensor - without ReLU.
     """
-    # 创建有意义的量化参数
     mcb_value = [0 for i in range(nAlign)]
     N_value = [1 for i in range(nAlign)]
-    M1_value = [0.25 for i in range(nAlign)]  # 不同的缩放因子
+    M1_value = [0.25 for i in range(nAlign)]
 
     quant_tensor = np.zeros(nAlign, dtype=np.uint64)
     
     for i in range(nAlign):
-        # 处理标量参数或列表参数
         if isinstance(mcb_value, (list, np.ndarray)):
             mcb = mcb_value[i] if i < len(mcb_value) else mcb_value[-1]
         else:
@@ -149,18 +138,18 @@ def create_quant_tensor_uint64(nAlign):
         else:
             M1_val = M1_value if M1_value is not None else (0.5 + (i % 10) * 0.1)
         
-        # 限制N_shift在4位范围内
+        # Constrain N_shift to a 4-bit range
         N_shift = N_shift & 0xF
         
-        # 不使用ReLU，reserved字段只包含mcb
-        reserved = mcb  # 只有mcb位，没有ReLU模式位
+        # In non-ReLU configuration, the reserved field consists solely of mcb bits.
+        reserved = mcb  # The bit field contains only mcb without any ReLU mode indication bits.
         
-        # 将M1从float32转换为uint32
+        # Convert parameter M1 from float32 format to uint32 representation.
         M1_array = np.array([M1_val], dtype=np.float32)
         M1_bytes = M1_array.tobytes()
         M1_uint32 = int.from_bytes(M1_bytes, byteorder='little', signed=False)
         
-        # 构造64位uint64值
+        # Assemble/construct a 64-bit unsigned integer (uint64) value from these components.
         quant_value = (reserved << 36) | (N_shift << 32) | M1_uint32
         quant_tensor[i] = quant_value
     
@@ -168,7 +157,7 @@ def create_quant_tensor_uint64(nAlign):
 
 
 def relu(x):
-    """ReLU激活函数"""
+    """ReLU"""
     return np.maximum(0, x)
 
 def golden_data_saturation_convert(golden, l0c_type, temp_quant_tensor, M):
@@ -200,31 +189,30 @@ def gen_golden_data(case_name, param):
     
     biasNAlign = n
     scalingNAlign = n
-    # bias需要64B对齐
+    # The bias address needs to be 64B aligned.
     if bias_type == np.float16:
         biasNAlign = (int)((np.ceil((n * 2) / 64) * 64) / 2)
     elif bias_type == np.float32 or bias_type == np.int32:
         biasNAlign = (int)((np.ceil((n * 4) / 64) * 64) / 4)
 
-    # fb需要128B对齐
+    # The scaling address needs to be 128B aligned.
     scalingNAlign = (int)((np.ceil((n * 8) / 128) * 128) / 8)
-
 
     x1_gm = np.random.randint(-1, 10, [m, k]).astype(src_type)
     x2_gm = np.random.randint(-1, 10, [k, n]).astype(src_type)
     bias_gm = np.random.randint(1, 10, [biasNAlign, ]).astype(bias_type)
 
-    # 获取切片
-    x1_slice = x1_gm[start_m:, start_k:]  # 从(rowIdx1, colIdx1)开始到结束
-    x2_slice = x2_gm[start_k:, :]  # 从(rowIdx2, colIdx2)开始到结束
+    x1_slice = x1_gm[start_m:, start_k:]  # Starting from position (rowIdx1, colIdx1) and continuing to the end.
+    x2_slice = x2_gm[start_k:, :]  # Starting from position (rowIdx2, colIdx2) and continuing to the end.
 
-    # 根据实际维度调整索引方式
-    # bias需要用户保证64B对齐，bias_gm中只有前n个数是有效值，剩余为无效值，只是为了满足对齐要求，不参与计算
+    """For bias, users must ensure 64-byte alignment. 
+    In the bias_gm buffer, only the first n values are valid; 
+    the remaining values are invalid and 
+    are only included to meet the alignment requirement—they do not participate in computation.
+    """
     if bias_gm.ndim == 1:
-        # 如果是一维数组，使用一维索引
-        bias_slice = bias_gm[:n]  # 去掉第二个维度索引
+        bias_slice = bias_gm[:n]
     else:
-        # 如果是二维数组，保持原代码
         bias_slice = bias_gm[:n, :]
 
     # A:[m-start_m, k-start_k]
@@ -235,16 +223,23 @@ def gen_golden_data(case_name, param):
     else:
         golden = (np.matmul(x1_slice.astype(l0c_type), x2_slice.astype(l0c_type)).astype(l0c_type)).astype(l0c_type)
 
-    #-----------------------------------------量化------------------------------
+    #-----------------------------------------quant------------------------------
     if dst_type == np.int8:
         temp_quant_tensor = np.random.randint(1, 5, [scalingNAlign, ]).astype(np.float32)
         temp_quant_tensor_slice = temp_quant_tensor[:n]
-        # scaling需要用户保证128B对齐，scaling_gm中只有前n个数是有效值，剩余为无效值，只是为了满足对齐要求，不参与计算
+        """For scaling, users must ensure 128-byte alignment. 
+        In the scaling_gm buffer, only the first n values are valid; 
+        the remaining values are invalid and 
+        are only included to meet the alignment requirement—they do not participate in computation.
+        """
         temp_quant_tensor_api = copy.deepcopy(temp_quant_tensor).astype(np.uint64)
         for i, _ in enumerate(temp_quant_tensor_api):
-            #将每个float32的位模式转换为uint64，保持浮点数的位模式
+            # Convert each float32 bit pattern to uint64 while preserving the floating-point bit pattern.
             temp_quant_tensor_api[i] = struct.unpack('!I', struct.pack('!f', temp_quant_tensor[i]))[0]
-            # 对于B8输出场景要在数据中设置特性标志位，表示输出是u8还是s8:[46]=0 , dst_type=uint8; [46]=1 ,dst_type=int8
+            """For B8 output scenarios, configure a feature flag in the data to specify 
+            whether the output format is unsigned 8-bit (u8) or signed 8-bit (s8).
+            [46]=0 , dst_type=uint8; [46]=1 ,dst_type=int8
+            """
             if dst_type == np.int8:
                 temp_quant_tensor_api[i] = temp_quant_tensor_api[i] | np.uint64(0x400000000000)
 
@@ -252,16 +247,19 @@ def gen_golden_data(case_name, param):
         if is_quant:
             golden = golden_data_saturation_convert(golden, dst_type, temp_quant_tensor_slice, m).astype(dst_type)
     elif dst_type == np.float16:
-        # 创建反量化器
+        # Create a dequantizer.
         dequantizer = Dequantizer()
         scaling_gm = create_quant_tensor_uint64(scalingNAlign)
-        # scaling需要用户保证128B对齐，scaling_gm中只有前n个数是有效值，剩余为无效值，只是为了满足对齐要求，不参与计算
+        """For scaling, users must ensure 128-byte alignment. 
+        In the scaling_gm buffer, only the first n values are valid; 
+        the remaining values are invalid and 
+        are only included to meet the alignment requirement—they do not participate in computation.
+        """
         scaling_gm_slice = scaling_gm[:n]
         if is_quant:
             golden = dequantizer.process_batch_column_based(scaling_gm_slice, golden)
     else:
         scaling_gm = np.random.randint(1, 5, [scalingNAlign, ]).astype(np.uint64)
-    #- -----------------------------------------------------------------------
 
     if is_atrans:
         x1_gm = x1_gm.transpose()
@@ -274,7 +272,7 @@ def gen_golden_data(case_name, param):
     elif src_type == np.int8:
         c0_size = 32
 
-    #转成NZ格式的输入
+    # Convert to NZ format input.
     if not is_nd:
         x1_gm = x1_gm.reshape((int(x1_gm.shape[0] / 16), 16, int(x1_gm.shape[1] / c0_size), c0_size)).transpose(2, 0, 1, 3)
         x1_gm = x1_gm.reshape(x1_gm.shape[0] * x1_gm.shape[1], x1_gm.shape[2] * x1_gm.shape[3])
@@ -291,7 +289,7 @@ def gen_golden_data(case_name, param):
     os.chdir(original_dir)
 
 class tmovParams:
-    def __init__(self, atype, btype, ctype, biastype, gmtype, m, n, k, is_atrans=0, is_btrans=0, is_bias=0, is_quant=0, relu_mode=0, is_nd = 0):
+    def __init__(self, atype, btype, ctype, biastype, gmtype, m, n, k, is_atrans=0, is_btrans=0, is_bias=0, is_quant=0, relu_mode=0, is_nd = 1):
         self.atype = atype
         self.btype = btype
         self.ctype = ctype
@@ -310,11 +308,10 @@ class tmovParams:
         self.is_nd = is_nd
 
 if __name__ == "__main__":
-    # 用例名称
     case_name_list = [
         # copy_l1_bias
         #TMOVTest.caseName_model_inputType_biasType_isAtranspose_isBtranspose_isBias_isQuant_reluMode
-        "TMOVTest.case1_bias_static_half_float_0_1_1_0_0_param", # 此名称需要和 TEST_F(TMATMULTest, case1)定义的名称一致
+        "TMOVTest.case1_bias_static_half_float_0_1_1_0_0_param", # This name must match the name defined in TEST_F(TMATMULTest, case1)
         "TMOVTest.case2_bias_static_int8_int32_0_1_1_0_0_param",
         "TMOVTest.case3_bias_static_float_float_0_1_1_0_0_param",
         "TMOVTest.case4_bias_dynamic_half_half_0_1_1_0_0_param",
@@ -325,13 +322,13 @@ if __name__ == "__main__":
         "TMOVTest.case11_scaling_static_int32_int8_0_1_0_1_0_param",
         "TMOVTest.case12_scaling_static_int32_half_0_1_0_1_0_param",
         "TMOVTest.case13_scaling_static_float_int8_0_1_0_1_0_param",
-        # copy_l1_bias + copy_l1_fb + ndInput + dynamic + unalign
+        # copy_l1_bias + copy_l1_fb + dynamic + unalign
         "TMOVTest.case14_scaling_dynamic_int32_int8_0_1_1_1_0_param",
         "TMOVTest.case15_scaling_dynamic_int32_int8_0_1_1_1_0_param",
     ]
 
     case_params_list = [
-        #tmovParams(atype, btype, l0ctype, biastype, gmtype, m, n, k, is_atrans=0, is_btrans=0, is_bias = 0, is_quant=0, relu_mode=0, is_nd=0)
+        #tmovParams(atype, btype, l0ctype, biastype, gmtype, m, n, k, is_atrans=0, is_btrans=0, is_bias = 0, is_quant=0, relu_mode=0, is_nd=1)
         # copy_l1_bias
         tmovParams(np.float16, np.float16, np.float32, np.float32, np.float32, 64, 32, 80,  0, 1, 1, 0, 0),#case1
         tmovParams(np.int8, np.int8, np.int32, np.int32, np.int32, 128, 64, 128, 0, 1, 1, 0, 0),#case2
@@ -343,9 +340,9 @@ if __name__ == "__main__":
         tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, 128, 112, 32,  0, 1, 0, 1, 0),#case11
         tmovParams(np.int8, np.int8, np.int32, np.int32, np.float16, 144, 80, 160,  0, 1, 0, 1, 0),#case12
         tmovParams(np.float16, np.float16, np.float32, np.float32, np.int8, 64, 32, 80, 0, 1, 0, 1, 0),#case13
-        # copy_l1_bias + copy_l1_fb + ndInput + dynamic + unalign
-        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, 60, 17, 80, 0, 1, 1, 1, 0, 1),#case14
-        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, 15, 10, 30, 0, 1, 1, 1, 0, 1),#case15
+        # copy_l1_bias + copy_l1_fb + dynamic + unalign
+        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, 60, 17, 80, 0, 1, 1, 1, 0),#case14
+        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, 15, 10, 30, 0, 1, 1, 1, 0),#case15
     ]
 
     for i, case_name in enumerate(case_name_list):
