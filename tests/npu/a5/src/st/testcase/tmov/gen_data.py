@@ -22,34 +22,34 @@ bfloat16 = ml_dtypes.bfloat16
 
 def extract_quant_params(quant_gm):
     """
-    从uint64类型的quant_gm中提取M1、offset、sign参数
+    Extract the parameters M1, offset, and sign from the quant_gm of type uint64.
     Args:
-        quant_g: uint64类型的整数
+        quant_g: An integer of type uint64
     Return:
-        M1: 自定义格式(1,8,10)的浮点数
-        offset: 9位整数
-        sign: 1位布尔值(0或1)
+        m1: A floating-point number in custom format (1,8,10)
+        offset: A 9-bit integer
+        sign: A 1-bit boolean value (0 or 1)
     """
     quant_gm = int(quant_gm)
-    M1_bits = (quant_gm >> 13) & 0x7FFFF  # 提取M1的19位[31:13]，0x7FFFF是19位掩码
-    offset = (quant_gm >> 37) & 0x1FF     # 提取offset的9位[45:37]，0x1FF是9位掩码
-    sign = (quant_gm >> 46) & 0x1         # 提取sign的一位[46]，0x1是1位掩码
+    m1_bits = (quant_gm >> 13) & 0x7FFFF  # Extract m1=quant_gm[31:13]; 0x7FFFF is the 19-bit mask.
+    offset = (quant_gm >> 37) & 0x1FF     # Extract offset=quant_gm[45:37]，0x1FF is the 9-bit mask.
+    sign = (quant_gm >> 46) & 0x1         # Extract sign=quant_gm[46]，0x1 is the 1-bit mask.
 
-    # 解析M1为(1,8,10)格式的浮点数
-    sign_bit = (M1_bits >> 18) & 0x1
-    exponent = (M1_bits >> 10) & 0xFF
-    mantissa = M1_bits & 0x3FF
-    exponent_bias = 127  # 假设指数偏倚量为127，与float32一致
-    M1 = (-1) ** sign_bit * (1 + mantissa / 1024) * (2 ** (exponent - exponent_bias))
+    # Parse M1 into a floating-point number in (1,8,10) format.
+    sign_bit = (m1_bits >> 18) & 0x1
+    exponent = (m1_bits >> 10) & 0xFF
+    mantissa = m1_bits & 0x3FF
+    exponent_bias = 127  # Assuming the exponent bias is 127, which aligns with float32.
+    m1 = (-1) ** sign_bit * (1 + mantissa / 1024) * (2 ** (exponent - exponent_bias))
 
-    return M1, offset, sign
+    return m1, offset, sign
 
 def saturation(value, min_val, max_val, target_type):
     """
-    将输入的浮点数进行饱和处理，并转换为目标类型
+    Perform saturation processing on the input floating-point number and convert it to the target type.
     """
-    x_clamped = np.clip(value, min_val, max_val)  # 饱和处理
-    return np.round(x_clamped).astype(target_type)  # 四舍五入并转换为目标类型
+    x_clamped = np.clip(value, min_val, max_val)
+    return np.round(x_clamped).astype(target_type)
 
 def qf2b8_pre(data, quant_gm):
     """
@@ -144,9 +144,8 @@ class tmovParams:
         self.is_quant = is_quant
 
 if __name__ == "__main__":
-    # 用例名称
     case_name_list = [
-        "TMOVTest.case_bias1",  # 此名称要和TEST_F(TMATMULTest, case1)定义的名称一致
+        "TMOVTest.case_bias1",
         "TMOVTest.case_bias2",
         "TMOVTest.case_bias3",
         "TMOVTest.case_bias4",
@@ -164,21 +163,34 @@ if __name__ == "__main__":
 
     case_params_list = [
         # L1_TO_BIAS
-        tmovParams(np.float16, np.float16, np.float32, np.float32, np.float32, np.uint64, 64, 32, 96, 1, 0),    # float32 -> float32
-        tmovParams(np.float32, np.float32, np.float32, np.float16, np.float32, np.uint64, 128, 64, 128, 1, 0),  # half -> float32
-        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 64, 32, 80, 1, 0),  # bfloat16 -> float32
-        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int32, np.uint64, 128, 64, 96, 1, 0),               # int32 -> int32
-        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int32, np.uint64, 31, 63, 32, 1, 0),                # 非对齐分型 int32 -> int32
-        tmovParams(np.float16, np.float16, np.float32, np.float16, np.float32, np.uint64, 64, 32, 80, 1, 0),    # 动态tile float32 -> float32
-        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 112, 48, 96, 1, 0), # 动态tile bfloat16 -> float32
-        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 15, 63, 96, 1, 0),  # 动态tile 非对齐分型 bfloat16 -> float32
+        # float32 -> float32
+        tmovParams(np.float16, np.float16, np.float32, np.float32, np.float32, np.uint64, 64, 32, 96, 1, 0),
+        # half -> float32
+        tmovParams(np.float32, np.float32, np.float32, np.float16, np.float32, np.uint64, 128, 64, 128, 1, 0),
+        # bfloat16 -> float32
+        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 64, 32, 80, 1, 0),
+        # int32 -> int32
+        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int32, np.uint64, 128, 64, 96, 1, 0),
+        # Non-aligned, int32 -> int32
+        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int32, np.uint64, 31, 63, 32, 1, 0),  
+        # dynamic tile, float32 -> float32    
+        tmovParams(np.float16, np.float16, np.float32, np.float16, np.float32, np.uint64, 64, 32, 80, 1, 0),
+        # dynamic tile, bfloat16 -> float32
+        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 112, 48, 96, 1, 0),
+        # dynamic tile, Non-aligned, bfloat16 -> float32
+        tmovParams(np.float32, np.float32, np.float32, bfloat16, np.float32, np.uint64, 15, 63, 96, 1, 0),
 
         # L1_TO_FB: quant
-        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, np.uint64, 32, 128, 32, 0, 1),                # int32 -> int8
-        tmovParams(np.int8, np.int8, np.int32, np.int32, np.float16, np.uint64, 96, 64, 32, 0, 1),              # int32 -> half
-        tmovParams(np.int8, np.int8, np.int32, np.int32, bfloat16, np.uint64, 128, 64, 96, 0, 1),           # int32 -> bfloat16
-        tmovParams(np.float32, np.float32, np.float32, np.float32, np.int8, np.uint64, 112, 48, 96, 0, 1),      # float32 -> int8
-        tmovParams(np.float32, np.float32, np.float32, np.float32, np.int8, np.uint64, 31, 31, 96, 0, 1),       # 非对齐分型 float32 -> int8
+        # int32 -> int8
+        tmovParams(np.int8, np.int8, np.int32, np.int32, np.int8, np.uint64, 32, 128, 32, 0, 1),
+        # int32 -> half
+        tmovParams(np.int8, np.int8, np.int32, np.int32, np.float16, np.uint64, 96, 64, 32, 0, 1),
+        # int32 -> bfloat16
+        tmovParams(np.int8, np.int8, np.int32, np.int32, bfloat16, np.uint64, 128, 64, 96, 0, 1),
+        # float32 -> int8
+        tmovParams(np.float32, np.float32, np.float32, np.float32, np.int8, np.uint64, 112, 48, 96, 0, 1),
+        # Non-aligned, float32 -> int8
+        tmovParams(np.float32, np.float32, np.float32, np.float32, np.int8, np.uint64, 31, 31, 96, 0, 1),
     ]
 
     for i, case_name in enumerate(case_name_list):
