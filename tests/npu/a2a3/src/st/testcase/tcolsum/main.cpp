@@ -45,7 +45,6 @@ bool TCOLSumTestFramework()
 
     aclInit(nullptr);
     aclrtSetDevice(0);
-    std::cout << "================================" << std::endl;
 
     aclrtStream stream;
     aclrtCreateStream(&stream);
@@ -59,10 +58,10 @@ bool TCOLSumTestFramework()
     aclrtMalloc((void**)&dstDevice, dstByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void**)&srcDevice, srcByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    launchTCOLSUM<T, cols, src_row, src_validRow, IsBinary>(dstDevice, srcDevice, stream);
     ReadFile(GetGoldenDir() + "/input.bin", srcByteSize, srcHost, srcByteSize);
 
     aclrtMemcpy(srcDevice, srcByteSize, srcHost, srcByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    launchTCOLSUM<T, cols, src_row, src_validRow, IsBinary>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstByteSize, dstDevice, dstByteSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -79,8 +78,8 @@ bool TCOLSumTestFramework()
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(dstByteSize);
-    std::vector<float> devFinal(dstByteSize);
+    std::vector<T> golden(dstByteSize);
+    std::vector<T> devFinal(dstByteSize);
     ReadFile(GetGoldenDir() + "/golden.bin", dstByteSize, golden.data(), dstByteSize);
     ReadFile(GetGoldenDir() + "/output.bin", dstByteSize, devFinal.data(), dstByteSize);
 

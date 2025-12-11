@@ -27,6 +27,7 @@ namespace pto {
 
         if (validRow % 2 == 1) {
             vadd(dst, dst, src + (validRow - 1) * SrcStride, 0, 1, 1, 1, 8, 8, 8);
+            pipe_barrier(PIPE_V);
         }
         set_mask_norm();
         set_vector_mask(-1, -1);
