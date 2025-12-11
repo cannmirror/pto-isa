@@ -63,7 +63,7 @@ namespace pto
                 vsel(dreg1, vreg2, vreg3, selMask1);
                 vsts(dreg1, dstPtr, elementsPerRepeat, distValue, preg, POST_UPDATE);
             }
-            for (uint16_t i = 0; i < (uint16_t)repeatTimes % unRollConstant; ++i)
+            for (uint16_t i = 0; i < (uint16_t)(repeatTimes % unRollConstant); ++i)
             {
                 plds(selMask2, (__ubuf__ uint32_t *)maskPtr + newRepeatTimes * selOffset, 0, US);
                 punpack(selMask2, selMask2, LOWER);
