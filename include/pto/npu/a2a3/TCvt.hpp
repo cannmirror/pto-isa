@@ -446,17 +446,13 @@ namespace pto{
     {
         __ubuf__ typename TileDataD::DType *dstPtr = (__ubuf__ typename TileDataD::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataS::DType *srcPtr = (__ubuf__ typename TileDataS::DType *)__cce_get_tile_ptr(src);
-
         constexpr unsigned dstNElemPerBlock = BLOCK_BYTE_SIZE / sizeof(typename TileDataD::DType);
         constexpr unsigned srcNElemPerBlock = BLOCK_BYTE_SIZE / sizeof(typename TileDataS::DType);
-
         if (numRepeatPerLine > 0) {
             TCvtHead<TileDataD, TileDataS, SS, DS>(dstPtr, srcPtr, mode, numRepeatPerLine, validRow, elementsPerRepeat, dstRepeatStride, srcRepeatStride);
         }
-
         dstPtr += numRepeatPerLine * elementsPerRepeat;
         srcPtr += numRepeatPerLine * elementsPerRepeat;
-
         if (numRemainPerLine > 0) {
             unsigned numLoop = validRow / REPEAT_MAX;
             unsigned remainAfterLoop = validRow % REPEAT_MAX;
@@ -464,24 +460,14 @@ namespace pto{
             if (numLoop > 0) {
                 for (uint32_t j = 0; j < numLoop; j++) {
                     GenCastCall<TileDataD, TileDataS>(dstPtr + j * DS * REPEAT_MAX,
-                        srcPtr + j * SS * REPEAT_MAX,
-                        (uint8_t)REPEAT_MAX,
-                        mode,
-                        1,
-                        1,
-                        (uint16_t)DS / dstNElemPerBlock,
-                        (uint16_t)SS / srcNElemPerBlock);
+                        srcPtr + j * SS * REPEAT_MAX, (uint8_t)REPEAT_MAX, mode,
+                        1, 1, (uint16_t)DS / dstNElemPerBlock, (uint16_t)SS / srcNElemPerBlock);
                 }
             }
             if (remainAfterLoop > 0) {
                 GenCastCall<TileDataD, TileDataS>(dstPtr + numLoop * DS * REPEAT_MAX,
-                    srcPtr + numLoop * SS * REPEAT_MAX,
-                    (uint8_t)remainAfterLoop,
-                    mode,
-                    1,
-                    1,
-                    (uint16_t)DS / dstNElemPerBlock,
-                    (uint16_t)SS / srcNElemPerBlock);
+                    srcPtr + numLoop * SS * REPEAT_MAX, (uint8_t)remainAfterLoop,
+                    mode, 1, 1, (uint16_t)DS / dstNElemPerBlock, (uint16_t)SS / srcNElemPerBlock);
             }
             set_vector_mask(-1, -1);
         }

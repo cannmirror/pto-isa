@@ -91,8 +91,8 @@ if __name__ == "__main__":
     case_params_list = [
         tcmpsParams(np.float16, 32, 32, 32, 32, 32, 32, "CmpMode::GE"),
         tcmpsParams(np.float32, 8, 64, 8, 64, 8, 64, "CmpMode::GT"),
-        tcmpsParams(np.int32, 4, 64, 4, 64, 4, 64, "CmpMode::NE"),
-        tcmpsParams(np.int32, 128, 128, 64, 64, 128, 128, "CmpMode::LT"),
+        tcmpsParams(np.float32, 4, 64, 4, 64, 4, 64, "CmpMode::NE"),
+        tcmpsParams(np.float32, 128, 128, 64, 64, 128, 128, "CmpMode::LT"),
         tcmpsParams(np.int32, 64, 64, 32, 32, 64, 64, "CmpMode::EQ"),
         tcmpsParams(np.int32, 16, 32, 16, 32, 16, 32, "CmpMode::EQ"),
         tcmpsParams(np.float32, 128, 128, 128, 128, 128, 128, "CmpMode::LE"),
