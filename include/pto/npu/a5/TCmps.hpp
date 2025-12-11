@@ -23,8 +23,7 @@ namespace pto {
 constexpr const int NUM_BITS_IN_BYTE = 8;
 
 template <typename RegTensorDst, typename RegTensorSrc, typename T>
-AICORE void GenCmpCall (RegTensorDst &dst, RegTensorSrc &src0, T src1, CmpMode cmpMode,
-        vector_bool &preg)
+AICORE void GenCmpCall (RegTensorDst &dst, RegTensorSrc &src0, T src1, CmpMode cmpMode, vector_bool &preg)
 {
     switch (static_cast<CmpMode>(cmpMode)) {
         case CmpMode::EQ:
@@ -51,13 +50,10 @@ AICORE void GenCmpCall (RegTensorDst &dst, RegTensorSrc &src0, T src1, CmpMode c
     }
 }
 
-template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0, unsigned SS>
+template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0>
 __tf__ AICORE void TCmps_8B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
-        CmpMode mode, unsigned numRepeatPerLine,
-        unsigned numRemainPerLine, unsigned validRow, unsigned validCol,
-        unsigned elementsPerRepeat, unsigned blockSizeElem,
-        unsigned dstRepeatStride, unsigned srcRepeatStride)
+        CmpMode mode, unsigned validRow, unsigned validCol)
 {
         __ubuf__ typename TileDataSrc::DType *srcPtr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
@@ -80,13 +76,10 @@ __tf__ AICORE void TCmps_8B(typename TileDataDst::TileDType __out__ dst,
 }
 
 
-template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0, unsigned SS>
+template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0>
 __tf__ AICORE void TCmps_16B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
-        CmpMode mode, unsigned numRepeatPerLine,
-        unsigned numRemainPerLine, unsigned validRow, unsigned validCol,
-        unsigned elementsPerRepeat, unsigned blockSizeElem,
-        unsigned dstRepeatStride, unsigned srcRepeatStride)
+        CmpMode mode, unsigned validRow, unsigned validCol)
 {
         __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataSrc::DType *srcPtr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
@@ -109,13 +102,10 @@ __tf__ AICORE void TCmps_16B(typename TileDataDst::TileDType __out__ dst,
 }
 
 
-template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0, unsigned SS>
+template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0>
 __tf__ AICORE void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
-        CmpMode mode, unsigned numRepeatPerLine,
-        unsigned numRemainPerLine, unsigned validRow, unsigned validCol,
-        unsigned elementsPerRepeat, unsigned blockSizeElem,
-        unsigned dstRepeatStride, unsigned srcRepeatStride)
+        CmpMode mode, unsigned validRow, unsigned validCol)
 {
         __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataSrc::DType *srcPtr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
@@ -158,61 +148,34 @@ __tf__ AICORE void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
 
 template <typename TileDataDst, typename TileDataSrc0, typename T>
 AICORE void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
-
-    uint64_t repeatWidth = 
-    static_cast<uint64_t>(max(sizeof(typename TileDataDst::DType), sizeof(typename TileDataSrc0::DType)));
-
-unsigned dstRepeatStride = 
-    repeatWidth == sizeof(typename TileDataDst::DType)
-    ? BLOCK_MAX_PER_REPEAT
-    : (BLOCK_MAX_PER_REPEAT / sizeof(typename TileDataSrc0::DType) * sizeof(typename TileDataDst::DType));
-unsigned srcRepeatStride = 
-    repeatWidth == sizeof(typename TileDataSrc0::DType)
-    ? BLOCK_MAX_PER_REPEAT
-    : (BLOCK_MAX_PER_REPEAT / sizeof(typename TileDataDst::DType) * sizeof(typename TileDataSrc0::DType));
-
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc0::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataSrc0::DType);
-    unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat + 1;
-    unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
-    constexpr unsigned SS = REPEAT_BYTE / sizeof(typename TileDataSrc0::DType);
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
     if constexpr (sizeof(typename TileDataSrc0::DType) == 4) {
         if constexpr (std::is_same<typename TileDataSrc0::DType, int32_t>::value) {
-            TCmps_32B<TileDataDst, TileDataSrc0, T, vector_s32, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, validCol, elementsPerRepeat, blockSizeElem, dstRepeatStride, srcRepeatStride);
+            TCmps_32B<TileDataDst, TileDataSrc0, T, vector_s32>(dst.data(), src0.data(), src1, cmpMode, validRow, validCol);
         }
         if constexpr (std::is_same<typename TileDataSrc0::DType, float>::value) {
-            TCmps_32B<TileDataDst, TileDataSrc0, T, vector_f32, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, validCol, elementsPerRepeat, blockSizeElem, dstRepeatStride, srcRepeatStride);
+            TCmps_32B<TileDataDst, TileDataSrc0, T, vector_f32>(dst.data(), src0.data(), src1, cmpMode, validRow, validCol);
         }
         if constexpr (std::is_same<typename TileDataSrc0::DType, uint32_t>::value) {
-            TCmps_32B<TileDataDst, TileDataSrc0, T, vector_u32, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, validCol, elementsPerRepeat, blockSizeElem, dstRepeatStride, srcRepeatStride);
+            TCmps_32B<TileDataDst, TileDataSrc0, T, vector_u32>(dst.data(), src0.data(), src1, cmpMode, validRow, validCol);
         }
-
     } else if constexpr (sizeof(typename TileDataSrc0::DType) == 2) {
         if constexpr (std::is_same<typename TileDataSrc0::DType, int16_t>::value) {
-            TCmps_16B<TileDataDst, TileDataSrc0, T, vector_s16, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, validCol, elementsPerRepeat, blockSizeElem, dstRepeatStride, srcRepeatStride);
+            TCmps_16B<TileDataDst, TileDataSrc0, T, vector_s16>(dst.data(), src0.data(), src1, cmpMode, validRow, validCol);
         }
         if constexpr (std::is_same<typename TileDataSrc0::DType, half>::value) {
-            TCmps_16B<TileDataDst, TileDataSrc0, T, vector_f16, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, validCol, elementsPerRepeat, blockSizeElem, dstRepeatStride, srcRepeatStride);
+            TCmps_16B<TileDataDst, TileDataSrc0, T, vector_f16>(dst.data(), src0.data(), src1, cmpMode, validRow, validCol);
         }
         if constexpr (std::is_same<typename TileDataSrc0::DType, uint16_t>::value) {
-            TCmps_16B<TileDataDst, TileDataSrc0, T, vector_u16, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, validCol, elementsPerRepeat, blockSizeElem, dstRepeatStride, srcRepeatStride);
+            TCmps_16B<TileDataDst, TileDataSrc0, T, vector_u16>(dst.data(), src0.data(), src1, cmpMode, validRow, validCol);
         }
     } else if constexpr (sizeof(typename TileDataSrc0::DType) == 1) {
         if constexpr (std::is_same<typename TileDataSrc0::DType, int8_t>::value) {
-            TCmps_8B<TileDataDst, TileDataSrc0, T, vector_s8, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, validCol, elementsPerRepeat, blockSizeElem, dstRepeatStride, srcRepeatStride);
+            TCmps_8B<TileDataDst, TileDataSrc0, T, vector_s8>(dst.data(), src0.data(), src1, cmpMode, validRow, validCol);
         }
         if constexpr (std::is_same<typename TileDataSrc0::DType, uint8_t>::value) {
-            TCmps_8B<TileDataDst, TileDataSrc0, T, vector_u8, SS>(dst.data(), src0.data(), src1, cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, validCol, elementsPerRepeat, blockSizeElem, dstRepeatStride, srcRepeatStride);
+            TCmps_8B<TileDataDst, TileDataSrc0, T, vector_u8>(dst.data(), src0.data(), src1, cmpMode, validRow, validCol);
         }
     }
 }

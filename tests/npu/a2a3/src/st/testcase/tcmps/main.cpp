@@ -11,7 +11,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "test_common.h"
 #include "acl/acl.h"
 #include <gtest/gtest.h>
-#include <pto/common/type.hpp>
 
 #include "acl/acl.h"
 
@@ -39,12 +38,11 @@ std::string GetGoldenDir() {
 }
 
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, CmpMode cmpMode>
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int cmpMode>
 void LaunchTCmps(uint8_t *out, T *src0, T *src1, void *stream);
 
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, CmpMode cmpMode>
+template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int cmpMode>
 void test_tcmps() {
-
     size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
     size_t file_size_dst = kTRows_ * kTCols_ / 8;
     size_t scalarfileSize = sizeof(T);
@@ -101,32 +99,32 @@ void test_tcmps() {
 }
 
 TEST_F(TCMPSTest, case_half_32x32_32x32_32x32) {
-    test_tcmps<aclFloat16, 32, 32, 32, 32, CmpMode::GE>();
+    test_tcmps<aclFloat16, 32, 32, 32, 32, 4>();
 }
 TEST_F(TCMPSTest, case_float_1x64_1x64_1x64) {
-    test_tcmps<float, 1, 64, 1, 64, CmpMode::EQ>();
+    test_tcmps<float, 1, 64, 1, 64, 0>();
 }
 TEST_F(TCMPSTest, case_float_8x64_8x64_8x64) {
-    test_tcmps<float, 8, 64, 8, 64, CmpMode::GT>();
+    test_tcmps<float, 8, 64, 8, 64, 3>();
 }
-TEST_F(TCMPSTest, case_int_4x64_4x64_4x64) {
-    test_tcmps<int32_t, 4, 64, 4, 64, CmpMode::NE>();
+TEST_F(TCMPSTest, case_float_4x64_4x64_4x64) {
+    test_tcmps<float, 4, 64, 4, 64, 1>();
 }
-TEST_F(TCMPSTest, case_int_128x128_64x64_128x128) {
-    test_tcmps<int32_t, 128, 128, 64, 64, CmpMode::LT>();
+TEST_F(TCMPSTest, case_float_128x128_64x64_128x128) {
+    test_tcmps<float, 128, 128, 64, 64, 2>();
 }
-TEST_F(TCMPSTest, case_int_64x64_32x32_64x64) {
-    test_tcmps<int32_t, 64, 64, 32, 32, CmpMode::EQ>();
+TEST_F(TCMPSTest, case_int32_64x64_32x32_64x64) {
+    test_tcmps<int32_t, 64, 64, 32, 32, 0>();
 }
-TEST_F(TCMPSTest, case_int_16x32_16x32_16x32) {
-    test_tcmps<int32_t, 16, 32, 16, 32, CmpMode::EQ>();
+TEST_F(TCMPSTest, case_int32_16x32_16x32_16x32) {
+    test_tcmps<int32_t, 16, 32, 16, 32, 0>();
 }
 TEST_F(TCMPSTest, case_float_128x128_128x128_128x128) {
-    test_tcmps<float, 128, 128, 128, 128, CmpMode::LE>();
+    test_tcmps<float, 128, 128, 128, 128, 5>();
 }
-TEST_F(TCMPSTest, case_int_77x81_32x32_77x81) {
-    test_tcmps<int32_t, 77, 81, 32, 32, CmpMode::EQ>();
+TEST_F(TCMPSTest, case_int32_77x81_32x32_77x81) {
+    test_tcmps<int32_t, 77, 81, 32, 32, 0>();
 }
-TEST_F(TCMPSTest, case_int_32x32_32x32_32x32) {
-    test_tcmps<int32_t, 32, 32, 32, 32, CmpMode::EQ>();
+TEST_F(TCMPSTest, case_int32_32x32_32x32_32x32) {
+    test_tcmps<int32_t, 32, 32, 32, 32, 0>();
 }
