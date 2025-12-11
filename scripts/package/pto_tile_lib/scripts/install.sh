@@ -1,26 +1,25 @@
 #!/bin/bash
-# ----------------------------------------------------------------------------
-# This program is free software, you can redistribute it and/or modify it.
+# --------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This file is a part of the CANN Open Software.
-# Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
-# BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# ----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 # error number and description
 OPERATE_FAILED="0x0001"
 PARAM_INVALID="0x0002"
 FILE_NOT_EXIST="0x0080"
 FILE_NOT_EXIST_DES="File not found."
-OPP_COMPATIBILITY_CEHCK_ERR="0x0092"
-OPP_COMPATIBILITY_CEHCK_ERR_DES="OppMath compatibility check error."
+PTO_COMPATIBILITY_CEHCK_ERR="0x0092"
+PTO_COMPATIBILITY_CEHCK_ERR_DES="PtoMath compatibility check error."
 PERM_DENIED="0x0093"
 PERM_DENIED_DES="Permission denied."
 
-OPP_PLATFORM_DIR=pto_tile_lib
-OPP_PLATFORM_UPPER=$(echo "${OPP_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
+PTO_PLATFORM_DIR=pto_tile_lib
+PTO_PLATFORM_UPPER=$(echo "${PTO_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 CURR_OPERATE_USER="$(id -nu 2>/dev/null)"
 CURR_OPERATE_GROUP="$(id -ng 2>/dev/null)"
 # defaults for general user
@@ -33,7 +32,7 @@ fi
 
 # run package's files info, CURR_PATH means current temp path
 CURR_PATH=$(dirname $(readlink -f $0))
-INSTALL_SHELL_FILE="${CURR_PATH}/opp_install.sh"
+INSTALL_SHELL_FILE="${CURR_PATH}/pto_install.sh"
 RUN_PKG_INFO_FILE="${CURR_PATH}/../scene.info"
 VERSION_INFO_FILE="${CURR_PATH}/../../version.info"
 COMMON_INC_FILE="${CURR_PATH}/common_func.inc"
@@ -42,13 +41,13 @@ PRE_CHECK_FILE="${CURR_PATH}/../bin/prereq_check.bash"
 VERSION_COMPAT_FUNC_PATH="${CURR_PATH}/version_compatiable.inc"
 COMMON_FUNC_V2_PATH="${CURR_PATH}/common_func_v2.inc"
 VERSION_CFG_PATH="${CURR_PATH}/version_cfg.inc"
-OPP_COMMON_FILE="${CURR_PATH}/opp_common.sh"
+PTO_COMMON_FILE="${CURR_PATH}/pto_common.sh"
 
 . "${VERSION_COMPAT_FUNC_PATH}"
 . "${COMMON_INC_FILE}"
 . "${COMMON_FUNC_V2_PATH}"
 . "${VERSION_CFG_PATH}"
-. "${OPP_COMMON_FILE}"
+. "${PTO_COMMON_FILE}"
 
 ARCH_INFO=$(grep -e "arch" "$RUN_PKG_INFO_FILE" | cut --only-delimited -d"=" -f2-)
 
@@ -57,17 +56,17 @@ ASCEND_INSTALL_INFO="ascend_install.info"
 TARGET_INSTALL_PATH="${DEFAULT_INSTALL_PATH}" #--input-path
 TARGET_USERNAME="${CURR_OPERATE_USER}"
 TARGET_USERGROUP="${CURR_OPERATE_GROUP}"
-TARGET_MOULDE_DIR=""  # TARGET_INSTALL_PATH + PKG_VERSION_DIR + OPP_PLATFORM_DIR
+TARGET_MOULDE_DIR=""  # TARGET_INSTALL_PATH + PKG_VERSION_DIR + PTO_PLATFORM_DIR
 TARGET_VERSION_DIR="" # TARGET_INSTALL_PATH + PKG_VERSION_DIR
 
 # keys of infos in ascend_install.info
 KEY_INSTALLED_UNAME="USERNAME"
 KEY_INSTALLED_UGROUP="USERGROUP"
-KEY_INSTALLED_TYPE="${OPP_PLATFORM_UPPER}_INSTALL_TYPE"
-KEY_INSTALLED_PATH="${OPP_PLATFORM_UPPER}_INSTALL_PATH_VAL"
-KEY_INSTALLED_VERSION="${OPP_PLATFORM_UPPER}_VERSION"
-KEY_INSTALLED_FEATURE="${OPP_PLATFORM_UPPER}_INSTALL_FEATURE"
-KEY_INSTALLED_CHIP="${OPP_PLATFORM_UPPER}_INSTALL_CHIP"
+KEY_INSTALLED_TYPE="${PTO_PLATFORM_UPPER}_INSTALL_TYPE"
+KEY_INSTALLED_PATH="${PTO_PLATFORM_UPPER}_INSTALL_PATH_VAL"
+KEY_INSTALLED_VERSION="${PTO_PLATFORM_UPPER}_VERSION"
+KEY_INSTALLED_FEATURE="${PTO_PLATFORM_UPPER}_INSTALL_FEATURE"
+KEY_INSTALLED_CHIP="${PTO_PLATFORM_UPPER}_INSTALL_CHIP"
 
 # keys of infos in run package
 KEY_RUNPKG_VERSION="Version"
@@ -115,25 +114,25 @@ clean_before_reinstall() {
   local installed_path=$(get_installed_info "${KEY_INSTALLED_PATH}")
   local existed_files=$(find ${TARGET_MOULDE_DIR} -type f -print 2>/dev/null)
   if [ -z "${existed_files}" ]; then
-    logandprint "[INFO]: Directory is empty, directly install opp module."
+    logandprint "[INFO]: Directory is empty, directly install pto module."
     return 0
   fi
 
   if [ "${IS_QUIET}" = "y" ]; then
-    logandprint "[WARNING]: Directory has file existed or installed opp\
- module, are you sure to keep installing opp module in it? y"
+    logandprint "[WARNING]: Directory has file existed or installed pto\
+ module, are you sure to keep installing pto module in it? y"
   else
     if [ ! -f "${TARGET_MOULDE_DIR}/ascend_install.info" ]; then
       logandprint "[INFO]: Directory has file existed, do you want to continue? [y/n]"
     else
-      logandprint "[INFO]: Opp package has been installed on the path $(get_installed_info "${KEY_INSTALLED_PATH}"),\
+      logandprint "[INFO]: Pto package has been installed on the path $(get_installed_info "${KEY_INSTALLED_PATH}"),\
  the version is $(get_installed_info "${KEY_INSTALLED_VERSION}"),\
  and the version of this package is ${RUN_PKG_VERSION}, do you want to continue? [y/n]"
     fi
     while true; do
       read yn
       if [ "$yn" = "n" ]; then
-        logandprint "[INFO]: Exit to install opp module."
+        logandprint "[INFO]: Exit to install pto module."
         exitlog
         exit 0
       elif [ "$yn" = "y" ]; then
@@ -145,11 +144,11 @@ clean_before_reinstall() {
   fi
 
   if [ "${installed_path}" = "${TARGET_VERSION_DIR}" ]; then
-    logandprint "[INFO]: Clean the installed opp module before install."
+    logandprint "[INFO]: Clean the installed pto module before install."
     if [ ! -f "${UNINSTALL_SHELL_FILE}" ]; then
       logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};ERR_DES:${FILE_NOT_EXIST_DES}.The file\
  (${UNINSTALL_SHELL_FILE}) not exists. Please set the correct install \
- path or clean the previous version opp install info (${INSTALL_INFO_FILE}) and then reinstall it."
+ path or clean the previous version pto install info (${INSTALL_INFO_FILE}) and then reinstall it."
       return 1
     fi
     bash "${UNINSTALL_SHELL_FILE}" "${TARGET_VERSION_DIR}" "upgrade" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}"
@@ -198,13 +197,13 @@ check_version_file() {
   return
 }
 
-check_opp_version_file() {
+check_pto_version_file() {
   if [ -f "${CURR_PATH}/../../version.info" ]; then
-    opp_ver_info="${CURR_PATH}/../../version.info"
-  elif [ -f "${DEFAULT_INSTALL_PATH}/${OPP_PLATFORM_DIR}/version.info" ]; then
-    opp_ver_info="${DEFAULT_INSTALL_PATH}/${OPP_PLATFORM_DIR}/version.info"
+    pto_ver_info="${CURR_PATH}/../../version.info"
+  elif [ -f "${DEFAULT_INSTALL_PATH}/${PTO_PLATFORM_DIR}/version.info" ]; then
+    pto_ver_info="${DEFAULT_INSTALL_PATH}/${PTO_PLATFORM_DIR}/version.info"
   else
-    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST}; The [${OPP_PLATFORM_DIR}] version.info not exists."
+    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST}; The [${PTO_PLATFORM_DIR}] version.info not exists."
     exitlog
     exit 1
   fi
@@ -212,12 +211,12 @@ check_opp_version_file() {
 }
 
 check_relation() {
-  opp_ver_info_val="$1"
+  pto_ver_info_val="$1"
   req_pkg_name="$2"
   req_pkg_version="$3"
   if [ -f "${COMMON_INC_FILE}" ]; then
     . "${COMMON_INC_FILE}"
-    check_pkg_ver_deps "${opp_ver_info_val}" "${req_pkg_name}" "${req_pkg_version}"
+    check_pkg_ver_deps "${pto_ver_info_val}" "${req_pkg_name}" "${req_pkg_version}"
     ret_situation=$ver_check_status
   else
     logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST}; The ${COMMON_INC_FILE} not exists."
@@ -232,9 +231,9 @@ show_relation() {
   req_pkg_name_val="$2"
   req_pkg_path="$3"
   if [ "$relation_situation" = "SUCC" ]; then
-    logandprint "[INFO]: Relationship of opp with ${req_pkg_name_val} in path ${req_pkg_path} checked successfully"
+    logandprint "[INFO]: Relationship of pto with ${req_pkg_name_val} in path ${req_pkg_path} checked successfully"
   else
-    logandprint "[WARNING]: Relationship of opp with ${req_pkg_name_val} in path ${req_pkg_path} checked failed."
+    logandprint "[WARNING]: Relationship of pto with ${req_pkg_name_val} in path ${req_pkg_path} checked failed."
   fi
   return
 }
@@ -251,8 +250,8 @@ find_version_check() {
     comp_res=$(find /usr/local -name "ccec_compiler" | grep Ascend | grep Ascend/compiler)
     ccec_compiler_path="$atc_res $fwk_res $comp_res"
   fi
-  check_opp_version_file
-  ret_check_opp_version_file=$opp_ver_info
+  check_pto_version_file
+  ret_check_pto_version_file=$pto_ver_info
   for var in ${ccec_compiler_path}; do
     run_pkg_path_val=$(dirname "${var}")
     # find run pkg name
@@ -262,7 +261,7 @@ find_version_check() {
     check_version_file "${run_pkg_path_val}" "${ret_pkg_name}"
     ret_check_version_file=$version_file
     #check relation
-    check_relation "${ret_check_opp_version_file}" "${ret_pkg_name}" "${ret_check_version_file}"
+    check_relation "${ret_check_pto_version_file}" "${ret_pkg_name}" "${ret_check_version_file}"
     ret_check_relation_val=$ret_situation
     #show relation
     show_relation "${ret_check_relation_val}" "${ret_pkg_name}" "${run_pkg_path_val}"
@@ -272,8 +271,8 @@ find_version_check() {
 
 path_version_check() {
   path_env_list="$1"
-  check_opp_version_file
-  ret_check_opp_version_file_name=$opp_ver_info
+  check_pto_version_file
+  ret_check_pto_version_file_name=$pto_ver_info
   path_list=$(echo "${path_env_list}" | cut -d"=" -f2)
   array=$(echo ${path_list} | awk '{split($0,arr,":");for(i in arr) print arr[i]}')
   for var in ${array}; do
@@ -287,7 +286,7 @@ path_version_check() {
       check_version_file "${pkg_path_val}" "${ret_pkg_name_val}"
       ret_check_version_file_val=$version_file
       #check relation
-      check_relation "${ret_check_opp_version_file_name}" "${ret_pkg_name}" "${ret_check_version_file_val}"
+      check_relation "${ret_check_pto_version_file_name}" "${ret_pkg_name}" "${ret_check_version_file_val}"
       ret_check_relation=$ret_situation
       #show relation
       show_relation "${ret_check_relation}" "${ret_pkg_name}" "${pkg_path_val}"
@@ -317,7 +316,7 @@ judgment_path() {
   . "${COMMON_INC_FILE}"
   check_install_path_valid "${1}"
   if [ $? -ne 0 ]; then
-    echo "[OpsMath][ERROR]: The opp install path ${1} is invalid, only characters in [a-z,A-Z,0-9,-,_] are supported!"
+    echo "[OpsMath][ERROR]: The pto install path ${1} is invalid, only characters in [a-z,A-Z,0-9,-,_] are supported!"
     exitlog
     exit 1
   fi
@@ -383,13 +382,13 @@ interact_pre_check() {
   exec_pre_check
   if [ "$?" != 0 ]; then
     if [ "${IS_QUIET}" = y ]; then
-      logandprint "[WARNING]: Precheck of opp module execute failed! do you want to continue install? y"
+      logandprint "[WARNING]: Precheck of pto module execute failed! do you want to continue install? y"
     else
-      logandprint "[WARNING]: Precheck of opp module execute failed! do you want to continue install?  [y/n] "
+      logandprint "[WARNING]: Precheck of pto module execute failed! do you want to continue install?  [y/n] "
       while true; do
         read yn
         if [ "$yn" = "n" ]; then
-          echo "stop install opp module!"
+          echo "stop install pto module!"
           exit 1
         elif [ "$yn" = y ]; then
           break
@@ -402,7 +401,7 @@ interact_pre_check() {
 }
 
 #get the dir of xxx.run
-#opp_install_path_curr=`echo "$2" | cut -d"/" -f2- `
+#pto_install_path_curr=`echo "$2" | cut -d"/" -f2- `
 # cut first two params from *.run
 get_run_path() {
   RUN_PATH=$(echo "$2" | cut -d"-" -f3-)
@@ -558,7 +557,7 @@ check_opts() {
 
 # init target_dir and log for install
 init_env() {
-  get_install_package_dir "TARGET_MOULDE_DIR" "${VERSION_INFO_FILE}" "${TARGET_INSTALL_PATH}" "${OPP_PLATFORM_DIR}"
+  get_install_package_dir "TARGET_MOULDE_DIR" "${VERSION_INFO_FILE}" "${TARGET_INSTALL_PATH}" "${PTO_PLATFORM_DIR}"
   TARGET_VERSION_DIR=$(dirname ${TARGET_MOULDE_DIR})
   # Splicing docker-root and install-path
   if [ "${IS_DOCKER_INSTALL}" = "y" ]; then
@@ -571,7 +570,7 @@ init_env() {
     TARGET_VERSION_DIR=${temp_path_val}${TARGET_VERSION_DIR}
   fi
 
-  UNINSTALL_SHELL_FILE="${TARGET_MOULDE_DIR}/script/opp_uninstall.sh"
+  UNINSTALL_SHELL_FILE="${TARGET_MOULDE_DIR}/script/pto_uninstall.sh"
   INSTALL_INFO_FILE="${TARGET_MOULDE_DIR}/${ASCEND_INSTALL_INFO}"
   is_multi_version_pkg "pkg_is_multi_version" "$VERSION_INFO_FILE"
   get_version_dir "PKG_VERSION_DIR" "$VERSION_INFO_FILE"
@@ -580,17 +579,17 @@ init_env() {
   # creat log folder and log file
   comm_init_log
 
-  logandprint "[INFO]: Execute the opp run package."
+  logandprint "[INFO]: Execute the pto run package."
   logandprint "[INFO]: OperationLogFile path: ${COMM_LOGFILE}."
   logandprint "[INFO]: Input params: $CMD_LIST"
 
   local installed_version=$(get_installed_info "${KEY_INSTALLED_VERSION}")
   if [ "${installed_version}" = "" ]; then
-    logandprint "[INFO]: Version of installing opp module is ${RUN_PKG_VERSION}."
+    logandprint "[INFO]: Version of installing pto module is ${RUN_PKG_VERSION}."
   else
     if [ "${RUN_PKG_VERSION}" != "" ]; then
-      logandprint "[INFO]: Existed opp module version is ${installed_version},\
- the new opp module version is ${RUN_PKG_VERSION}."
+      logandprint "[INFO]: Existed pto module version is ${installed_version},\
+ the new pto module version is ${RUN_PKG_VERSION}."
     fi
   fi
 }
@@ -613,7 +612,7 @@ check_pre_install() {
     if [ ! -f "${VERCHECK_FILE}" ]; then
       logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};ERR_DES:${FILE_NOT_EXIST_DES}.\
       The file (${VERCHECK_FILE}) not exists.\
- Please make sure that the opp module installed in (${VERCHECK_FILE}) and then set the correct install path."
+ Please make sure that the pto module installed in (${VERCHECK_FILE}) and then set the correct install path."
     fi
     bash "${VERCHECK_FILE}" "${check_path}"
     exitlog
@@ -666,7 +665,7 @@ install_package() {
   if [ "${IS_INSTALL}" = "n" ] && [ "${IS_UPGRADE}" = "n" ]; then
     return
   fi
-  # precheck before install opp module
+  # precheck before install pto module
   if [ "${IS_PRE_CHECK}" = "y" ]; then
     interact_pre_check
   fi
@@ -699,7 +698,7 @@ uninstall_package() {
 
   if [ ! -f "${UNINSTALL_SHELL_FILE}" ]; then
     logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};ERR_DES:The file\
- (${UNINSTALL_SHELL_FILE}) not exists. Please make sure that the opp module\
+ (${UNINSTALL_SHELL_FILE}) not exists. Please make sure that the pto module\
  installed in (${TARGET_VERSION_DIR}) and then set the correct install path."
     uninstall_path=$(ls "${TARGET_INSTALL_PATH}" 2>/dev/null)
     if [ "${uninstall_path}" = "" ]; then
