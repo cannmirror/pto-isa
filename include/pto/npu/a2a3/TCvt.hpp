@@ -407,7 +407,38 @@ namespace pto{
             vconv_s642s32(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
         } 
     }
-
+    template <typename TileDataD, typename TileDataS, unsigned SS, unsigned DS>
+    PTO_INST void TCvtHead(__ubuf__ typename TileDataD::DType *dstPtr, __ubuf__ typename TileDataS::DType *srcPtr,
+        RoundMode mode, unsigned numRepeatPerLine, unsigned validRow, unsigned elementsPerRepeat,
+        unsigned dstRepeatStride, unsigned srcRepeatStride) 
+    {
+        unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
+        unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
+        for (uint32_t i = 0; i < validRow; i++) {
+            if (numLoop > 0) {
+                for (uint32_t j = 0; j < numLoop; j++) {
+                    GenCastCall<TileDataD, TileDataS>(dstPtr + i * DS + j * elementsPerRepeat * REPEAT_MAX,
+                        srcPtr + i * SS + j * elementsPerRepeat * REPEAT_MAX,
+                        (uint8_t)REPEAT_MAX,
+                        mode,
+                        1,
+                        1,
+                        (uint16_t)dstRepeatStride,
+                        (uint16_t)srcRepeatStride);
+                }
+            }
+            if (remainAfterLoop > 0) {
+                GenCastCall<TileDataD, TileDataS>(dstPtr + i * DS + numLoop * elementsPerRepeat * REPEAT_MAX,
+                    srcPtr + i * SS + numLoop * elementsPerRepeat * REPEAT_MAX,
+                    (uint8_t)remainAfterLoop,
+                    mode,
+                    1,
+                    1,
+                    (uint16_t)dstRepeatStride,
+                    (uint16_t)srcRepeatStride);
+            }   
+        }
+    }
     template <typename TileDataD, typename TileDataS, unsigned SS, unsigned DS>
     __tf__ AICORE void TCvt(typename TileDataD::TileDType __out__ dst, typename TileDataS::TileDType __in__ src,
         RoundMode mode, unsigned numRepeatPerLine, unsigned numRemainPerLine, unsigned validRow, unsigned elementsPerRepeat,
@@ -420,32 +451,7 @@ namespace pto{
         constexpr unsigned srcNElemPerBlock = BLOCK_BYTE_SIZE / sizeof(typename TileDataS::DType);
 
         if (numRepeatPerLine > 0) {
-            unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
-            unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
-            for (uint32_t i = 0; i < validRow; i++) {
-                if (numLoop > 0) {
-                    for (uint32_t j = 0; j < numLoop; j++) {
-                        GenCastCall<TileDataD, TileDataS>(dstPtr + i * DS + j * elementsPerRepeat * REPEAT_MAX,
-                            srcPtr + i * SS + j * elementsPerRepeat * REPEAT_MAX,
-                            (uint8_t)REPEAT_MAX,
-                            mode,
-                            1,
-                            1,
-                            (uint16_t)dstRepeatStride,
-                            (uint16_t)srcRepeatStride);
-                    }
-                }
-                if (remainAfterLoop > 0) {
-                    GenCastCall<TileDataD, TileDataS>(dstPtr + i * DS + numLoop * elementsPerRepeat * REPEAT_MAX,
-                        srcPtr + i * SS + numLoop * elementsPerRepeat * REPEAT_MAX,
-                        (uint8_t)remainAfterLoop,
-                        mode,
-                        1,
-                        1,
-                        (uint16_t)dstRepeatStride,
-                        (uint16_t)srcRepeatStride);
-                }   
-            }
+            TCvtHead<TileDataD, TileDataS, SS, DS>(dstPtr, srcPtr, mode, numRepeatPerLine, validRow, elementsPerRepeat, dstRepeatStride, srcRepeatStride);
         }
 
         dstPtr += numRepeatPerLine * elementsPerRepeat;
