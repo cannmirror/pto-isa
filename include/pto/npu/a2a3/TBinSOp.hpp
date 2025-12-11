@@ -24,12 +24,13 @@ namespace pto
         set_mask_norm();
         SetFullVecMaskByDType<T>();
     }
-    template <typename Op, typename T>
+    template <typename Op, typename T, unsigned rowStride>
     PTO_INTERNAL void BinS2LCountMode(__ubuf__ T* dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned validCol) {
         set_mask_count();
-        SetVectorCount(validRow * validCol);
+        SetVectorCount(validCol);
         for (unsigned i = 0; i < validRow; i++) {
-            Op::BinSInstr(dst, src0, src1, 0);
+            unsigned offset = i * rowStride; 
+            Op::BinSInstr(dst + offset, src0 + offset, src1, 0);
         }
         set_mask_norm();
         SetFullVecMaskByDType<T>();
@@ -51,7 +52,7 @@ namespace pto
     PTO_INTERNAL void BinS2LNormModeColVLAlign(__ubuf__ T* dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned validCol) {
         unsigned headRepeats = validCol / elementsPerRepeat;
         for (uint32_t i = 0; i < validRow; i++) {
-            unsigned offset = headRepeats * elementsPerRepeat;
+            unsigned offset = i * rowStride;
             Op::BinSInstr(dst + offset, src0 + offset, src1, headRepeats);
         }
     }
@@ -174,11 +175,11 @@ namespace pto
             } else {
                 constexpr unsigned normColRepeat = TileData::Cols / elementsPerRepeat;
                 if constexpr ((normColRepeat > 1) && ((TileData::Rows * normColRepeat) < SMALL_RPT)) {
-                    BinS2LCountMode<Op, T>(dst, src0, src1, validRow, validCol);
+                    BinS2LCountMode<Op, T, rowStride>(dst, src0, src1, validRow, validCol);
                 } else if constexpr (TileData::Rows < (normColRepeat + 1)) {
                     unsigned tailElements = validCol % elementsPerRepeat;
                     if (tailElements) {
-                        BinS2LCountMode<Op, T>(dst, src0, src1, validRow, validCol);    
+                        BinS2LCountMode<Op, T, rowStride>(dst, src0, src1, validRow, validCol);    
                     } else {
                         BinS2LNormModeColVLAlign<Op, T, elementsPerRepeat, rowStride>(dst, src0, src1, validRow, validCol);
                     }
