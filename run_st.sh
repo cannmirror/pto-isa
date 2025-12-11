@@ -103,9 +103,9 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tsub
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tci
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tgatherb
-    python3 test/script/run_st.py -r $RUN_TYPE -v a3 -t texp
-    python3 test/script/run_st.py -r $RUN_TYPE -v a3 -t trsqrt
-    python3 test/script/run_st.py -r $RUN_TYPE -v a3 -t tsqrt
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t texp
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t trsqrt
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t tsqrt
     python3 tests/script/run_st.py -r $RUN_TYPE -v a3 -t texpands
   fi
 fi
@@ -128,6 +128,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t trowexpand -g TROWEXPANDTest.case5_float_16_8_16_127
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tgather -g TGATHERTest.case1_float
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t ttrans -g TTRANSTest.case1
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsel -g TSELTest.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsort32 -g TSort32Test.case1
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64
@@ -164,6 +165,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t trowexpand
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tgather
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t ttrans
+    python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsel
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsels
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tsort32
     python3 tests/script/run_st.py -r $RUN_TYPE -v a5 -t tadd
