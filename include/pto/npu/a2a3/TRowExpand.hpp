@@ -58,8 +58,7 @@ namespace pto {
     
     template <typename TileDataDst, typename TileDataSrc, unsigned dststride, unsigned srcstride>
     __tf__ PTO_INTERNAL void TRowExpand(typename TileDataDst::TileDType __out__ dst,
-                                                 typename TileDataSrc::TileDType __in__ src,
-                                                 unsigned validRow, unsigned validCol) {
+        typename TileDataSrc::TileDType __in__ src, unsigned validRow, unsigned validCol) {
         __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataSrc::DType *srcPtr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src);
 
@@ -69,12 +68,10 @@ namespace pto {
         constexpr unsigned DTypeSize = sizeof(typename TileDataDst::DType);
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / DTypeSize;
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / DTypeSize;
-        unsigned dupValidCol = 
-            (validCol * sizeof(typename TileDataDst::DType) + DTypeSize - 1) / DTypeSize;
+        unsigned dupValidCol = (validCol * sizeof(typename TileDataDst::DType) + DTypeSize - 1) / DTypeSize;
         unsigned numRepeatPerLine = dupValidCol / elementsPerRepeat;
         unsigned numRemainPerLine = dupValidCol % elementsPerRepeat;
-        unsigned numBlockPerLine =
-            (srcstride * DTypeSize + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE;
+        unsigned numBlockPerLine = (srcstride * DTypeSize + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE;
         unsigned dupSrcStride = numBlockPerLine * blockSizeElem;
         constexpr unsigned dupStride = trait.DupDstStride(dststride);
 
@@ -84,8 +81,7 @@ namespace pto {
             for (int i = 0; i < validRow; i++) {
                 set_flag(PIPE_V, PIPE_S, EVENT_ID0);
                 wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
-                typename TileDataSrc::DType tempValue =
-                    (typename TileDataSrc::DType)(*(srcPtr + i * dupSrcStride));
+                typename TileDataSrc::DType tempValue = (typename TileDataSrc::DType)(*(srcPtr + i * dupSrcStride));
                 DupType dupValue = trait.DupValue(tempValue);
                 set_flag(PIPE_S, PIPE_V, EVENT_ID0);
                 wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
@@ -102,8 +98,7 @@ namespace pto {
             for (int i = 0; i < validRow; i++) {
                 set_flag(PIPE_V, PIPE_S, EVENT_ID0);
                 wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
-                typename TileDataSrc::DType tempValue =
-                    (typename TileDataSrc::DType)(*(srcPtr + i * srcstride));
+                typename TileDataSrc::DType tempValue = (typename TileDataSrc::DType)(*(srcPtr + i * srcstride));
                 DupType dupValue = trait.DupValue(tempValue);
                 set_flag(PIPE_S, PIPE_V, EVENT_ID0);
                 wait_flag(PIPE_S, PIPE_V, EVENT_ID0);

@@ -19,23 +19,23 @@ np.random.seed(2025)
 def gen_golden_data(case_name, param):
     datatype = param.datatype
     m, k, n = param.row, param.src_col, param.dst_col
-    dstValidCol = param.dstValidCol
-    input = (np.random.rand(m, k) * 10).astype(datatype)
-    golden = np.zeros((m,n)).astype(datatype)
+    dst_valid_col = param.dst_valid_col
+    input_arr = (np.random.rand(m, k) * 10).astype(datatype)
+    golden = np.zeros((m, n)).astype(datatype)
     for i in range(m):
-        for j in range(dstValidCol):
-            golden[i][j] = input[i][0]
-    input.tofile("./input.bin")
+        for j in range(dst_valid_col):
+            golden[i][j] = input_arr[i][0]
+    input_arr.tofile("./input.bin")
     golden.tofile("./golden.bin")
 
 
 class TRowExpandParam:
-    def __init__(self, datatype, row, src_col, dst_col, dstValidCol):
+    def __init__(self, datatype, row, src_col, dst_col, dst_valid_col):
         self.datatype = datatype
         self.row = row
         self.src_col = src_col
         self.dst_col = dst_col
-        self.dstValidCol = dstValidCol
+        self.dst_valid_col = dst_valid_col
 
 
 def generate_case_name(idx, param):
@@ -46,7 +46,7 @@ def generate_case_name(idx, param):
         np.int16: 'int16',
         np.int32: 'int32'
     }[param.datatype]
-    return f"TROWEXPANDTest.case{idx}_{dtype_str}_{param.row}_{param.src_col}_{param.row}_{param.dstValidCol}"
+    return f"TROWEXPANDTest.case{idx}_{dtype_str}_{param.row}_{param.src_col}_{param.row}_{param.dst_valid_col}"
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))

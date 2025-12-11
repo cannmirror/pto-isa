@@ -18,25 +18,19 @@ np.random.seed(2025)
 
 
 def gen_golden_data(case_name, param):
-    datatype = param.datatype
-
+    data_type = param.data_type
     m, k, n = param.row, param.src_col, param.dst_col
-
-    input = np.random.rand(m, k) * 10
-    golden = np.repeat(input[:, 0], n, axis=0)
-
-    input = input.astype(datatype)
-
-
-    golden = golden.astype(datatype)
-
-    input.tofile("./input.bin")
+    input_arr = np.random.rand(m, k) * 10
+    golden = np.repeat(input_arr[:, 0], n, axis=0)
+    input_arr = input_arr.astype(data_type)
+    golden = golden.astype(data_type)
+    input_arr.tofile("./input.bin")
     golden.tofile("./golden.bin")
 
 
 class TRowExpand:
-    def __init__(self, datatype, row, src_col, dst_col):
-        self.datatype = datatype
+    def __init__(self, data_type, row, src_col, dst_col):
+        self.data_type = data_type
         self.row = row
         self.src_col = src_col
         self.dst_col = dst_col
@@ -53,11 +47,11 @@ if __name__ == "__main__":
     ]
 
     case_params_list = [
-        TRowExpand(np.uint16, 16 , 16, 512),
-        TRowExpand(np.uint8,    16 , 32, 256),
-        TRowExpand(np.uint32,   16 , 8,  128),
-        TRowExpand(np.float32, 16 , 32, 512),
-        TRowExpand(np.uint16,    16, 1, 255),  # valid_cols = 255
+        TRowExpand(np.uint16, 16, 16, 512),
+        TRowExpand(np.uint8, 16, 32, 256),
+        TRowExpand(np.uint32, 16, 8, 128),
+        TRowExpand(np.float32, 16, 32, 512),
+        TRowExpand(np.uint16, 16, 1, 255),
     ]
 
     for i, case_name in enumerate(case_name_list):
@@ -65,7 +59,5 @@ if __name__ == "__main__":
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-
         gen_golden_data(case_name, case_params_list[i])
-
         os.chdir(original_dir)
