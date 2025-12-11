@@ -26,14 +26,12 @@ __global__ AICORE void runTROWEXPAND( __gm__ T __out__ *out, __gm__ T __in__ *sr
     using TileDataSrc = Tile<TileType::Vec, T, rows, src_col, BLayout::RowMajor, -1, -1>;
     using TileDataDst = Tile<TileType::Vec, T, rows, dst_validCol, BLayout::RowMajor, -1, -1>;
 
-
     TileDataSrc srcTile(rows, src_validCol);
     TileDataDst dstTile(rows, dst_validCol);
     TASSIGN(srcTile, 0x0);
     TASSIGN(dstTile, 0x8000); // UB最大到0x40000
 
-
-    TLOAD(srcTile, srcGlobal);   // gm to ub
+    TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     TROWEXPAND(dstTile, srcTile);
@@ -46,14 +44,11 @@ __global__ AICORE void runTROWEXPAND( __gm__ T __out__ *out, __gm__ T __in__ *sr
     out = dstGlobal.data();
 }
 
-
 template <typename T, int rows, int src_col, int src_validCol, int dst_col, int dst_validCol>
 void launchTROWEXPAND(T *out, T *src, void* stream)
 {
     cout << "launchTROWEXPAND start!" << endl;
-
     runTROWEXPAND<T, rows, src_col, src_validCol, dst_col, dst_validCol><<<1, nullptr, stream>>>(out, src);
-
     cout << "launchTROWEXPAND end!" << endl;
 }
 

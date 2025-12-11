@@ -15,7 +15,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-
 template <typename T, int rows, int src_col, int src_validCol, int dst_col, int dst_validCol>
 void launchTROWEXPAND(T *out, T *src,void *stream);
 
@@ -43,7 +42,6 @@ bool TRowExpandFramework()
 
     aclInit(nullptr);
     aclrtSetDevice(0);
-    std::cout << "================================" << std::endl;
 
     aclrtStream stream;
     aclrtCreateStream(&stream);
@@ -65,9 +63,6 @@ bool TRowExpandFramework()
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    // PrintData(src0Host, rows* srcCols, UINT16_T, srcVaildCols);
-    // PrintData(dstHost,  rows * dstCols, UINT16_T, dstVaildCols);
-
     WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputFileSize);
 
     aclrtFree(dstDevice);
@@ -84,7 +79,6 @@ bool TRowExpandFramework()
     std::vector<float> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
-    std::cout << "================================" << std::endl;
 
     return ResultCmp(golden, devFinal, 0.001f);
 }

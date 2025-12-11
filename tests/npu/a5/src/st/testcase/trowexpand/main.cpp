@@ -47,7 +47,7 @@ void test_trowexpand() {
 
     T *dstHost, *src0Host;
     T *dstDevice, *src0Device;
-    
+
     aclrtMallocHost((void **)(&dstHost), outputFileSize);
     aclrtMallocHost((void **)(&src0Host), inputFileSize);
 

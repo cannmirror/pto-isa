@@ -46,7 +46,7 @@ __tf__ PTO_INTERNAL void TRowExpand(typename TileDataOut::TileDType __out__ dst,
             sreg = (uint32_t)(kValidCols);
             for (uint16_t j = 0; j < (uint16_t)repeatTimes; j++) {
                 preg = CreatePredicate<T>(sreg);
-                vsts(vreg1, dst, (int32_t)(j * eleCntValue + i * dstCols), distValue, preg);
+                vsts(vreg1, dstPtr, (int32_t)(j * eleCntValue + i * dstCols), distValue, preg);
             }
         }
     }
