@@ -29,7 +29,7 @@ __global__ AICORE void runTCOLMIN(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     srcTileData srcTile(src_validRow, cols);
     dstTileData dstTile(1, cols);
     TASSIGN(srcTile, 0x0);
-    TASSIGN(dstTile, 0x40000);
+    TASSIGN(dstTile, 0x28000);
 
     // 清除脏数据
     TLOAD(dstTile, dstGlobal);
