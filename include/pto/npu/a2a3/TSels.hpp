@@ -14,6 +14,121 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/constants.hpp>
 
 namespace pto {
+    template <typename T, unsigned elementsPerRepeat, unsigned stride>
+    PTO_INTERNAL void TSelsHead(
+        __ubuf__ T *dstPtr,
+        __ubuf__ T *src0Ptr,
+        __ubuf__ T *src1Ptr,
+        unsigned validRow,
+        unsigned numRepeatPerLine,
+        uint8_t opSelectionMode
+    ) {
+        unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
+        unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
+        for (uint64_t i = 0; i < validRow; i++) {
+            if (numLoop) {
+                for (int j = 0; j < numLoop; j++) {
+                    vsel(
+                        dstPtr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
+                        src0Ptr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
+                        src1Ptr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
+                        REPEAT_MAX,
+                        1, 1, 1,
+                        8, 8, 8,
+                        opSelectionMode
+                        );
+                    }
+            }
+            if (remainAfterLoop) {
+                vsel(
+                    dstPtr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
+                    src0Ptr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
+                    src1Ptr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
+                    remainAfterLoop,
+                    1, 1, 1,
+                    8, 8, 8,
+                    opSelectionMode
+                );
+            }
+        }
+    }
+    template <typename T, unsigned blockSizeElem, unsigned stride, bool strideOverFlag>
+    PTO_INTERNAL void TSelsTailHead(
+        __ubuf__ T *dstPtr,
+        __ubuf__ T *src0Ptr,
+        __ubuf__ T *src1Ptr,
+        unsigned numLoop,
+        uint8_t opSelectionMode
+    ) {
+        for (uint64_t i = 0; i < numLoop; i++) {
+            if constexpr (strideOverFlag) {
+                for (uint64_t j = 0; j < REPEAT_MAX; j++) {
+                    vsel(
+                        dstPtr + i * REPEAT_MAX * stride + j * stride,
+                        src0Ptr + i * REPEAT_MAX * stride + j * stride,
+                        src1Ptr + i * REPEAT_MAX * stride + j * stride,
+                        1,
+                        1, 1, 1,
+                        1, 1, 1,
+                        opSelectionMode
+                    );
+                }
+            } else {
+                vsel(
+                    dstPtr + i * REPEAT_MAX * stride,
+                    src0Ptr + i * REPEAT_MAX * stride,
+                    src1Ptr + i * REPEAT_MAX * stride,
+                    REPEAT_MAX,
+                    1, 1, 1,
+                    stride / blockSizeElem, stride / blockSizeElem, stride / blockSizeElem,
+                    opSelectionMode
+                );
+            }
+        }
+    }
+    template <typename T, unsigned blockSizeElem, unsigned stride>
+    PTO_INTERNAL void TSelsTail(
+        __ubuf__ T *dstPtr,
+        __ubuf__ T *src0Ptr,
+        __ubuf__ T *src1Ptr,
+        unsigned validRow,
+        unsigned numRemainPerLine,
+        uint8_t opSelectionMode
+    ) {
+        unsigned numLoop = validRow / REPEAT_MAX;
+        unsigned remainAfterLoop = validRow % REPEAT_MAX;
+        bool constexpr strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
+        SetContinuousMask(numRemainPerLine);
+        if (numLoop > 0) {
+            TSelsTailHead<T, blockSizeElem, stride, strideOverFlag>(dstPtr, src0Ptr, src1Ptr, numLoop, opSelectionMode);
+        }
+        if (remainAfterLoop > 0) {
+            if constexpr (strideOverFlag) {
+                for (uint64_t j = 0; j < remainAfterLoop; j++) {
+                    vsel(
+                        dstPtr + numLoop * REPEAT_MAX * stride + j * stride,
+                        src0Ptr + numLoop * REPEAT_MAX * stride + j * stride,
+                        src1Ptr + numLoop * REPEAT_MAX * stride + j * stride,
+                        1,
+                        1, 1, 1,
+                        1, 1, 1,
+                        opSelectionMode
+                    );
+                }
+            } else {
+                vsel(
+                    dstPtr + numLoop * REPEAT_MAX * stride,
+                    src0Ptr + numLoop * REPEAT_MAX * stride,
+                    src1Ptr + numLoop * REPEAT_MAX * stride,
+                    remainAfterLoop,
+                    1, 1, 1,
+                    stride / blockSizeElem, stride / blockSizeElem, stride / blockSizeElem,
+                    opSelectionMode
+                );
+            }
+        }
+        set_vector_mask(-1, -1);
+    }
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
     __tf__ AICORE void TSelsImpl(
         typename TileData::TileDType __out__ dst,
@@ -42,98 +157,15 @@ namespace pto {
         pipe_barrier(PIPE_V);
 
         if (numRepeatPerLine > 0) {
-            unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
-            unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
-            for (uint64_t i = 0; i < validRow; i++) {
-                if (numLoop) {
-                    for (int j = 0; j < numLoop; j++) {
-                        vsel(
-                            dstPtr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
-                            src0Ptr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
-                            src1Ptr + i * stride + j * elementsPerRepeat * REPEAT_MAX,
-                            REPEAT_MAX,
-                            1, 1, 1,
-                            8, 8, 8,
-                            opSelectionMode
-                        );
-                    }
-                }
-                if (remainAfterLoop) {
-                    vsel(
-                        dstPtr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
-                        src0Ptr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
-                        src1Ptr + i * stride + numLoop * elementsPerRepeat * REPEAT_MAX,
-                        remainAfterLoop,
-                        1, 1, 1,
-                        8, 8, 8,
-                        opSelectionMode
-                    );
-                }
-            }
+            TSelsHead<T, elementsPerRepeat, stride>(dstPtr, src0Ptr, src1Ptr, validRow, numRepeatPerLine, opSelectionMode);
         }
 
         dstPtr += numRepeatPerLine * elementsPerRepeat;
         src0Ptr += numRepeatPerLine * elementsPerRepeat;
         src1Ptr += numRepeatPerLine * elementsPerRepeat;
 
-        if (numRemainPerLine) {
-            unsigned numLoop = validRow / REPEAT_MAX;
-            unsigned remainAfterLoop = validRow % REPEAT_MAX;
-            bool constexpr strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
-            SetContinuousMask(numRemainPerLine);
-            if (numLoop > 0) {
-                for (uint64_t i = 0; i < numLoop; i++) {
-                    if constexpr (strideOverFlag) {
-                        for (uint64_t j = 0; j < REPEAT_MAX; j++) {
-                            vsel(
-                                dstPtr + i * REPEAT_MAX * stride + j * stride,
-                                src0Ptr + i * REPEAT_MAX * stride + j * stride,
-                                src1Ptr + i * REPEAT_MAX * stride + j * stride,
-                                1,
-                                1, 1, 1,
-                                1, 1, 1,
-                                opSelectionMode
-                            );
-                        }
-                    } else {
-                        vsel(
-                            dstPtr + i * REPEAT_MAX * stride,
-                            src0Ptr + i * REPEAT_MAX * stride,
-                            src1Ptr + i * REPEAT_MAX * stride,
-                            REPEAT_MAX,
-                            1, 1, 1,
-                            stride / blockSizeElem, stride / blockSizeElem, stride / blockSizeElem,
-                            opSelectionMode
-                        );
-                    }
-                }
-            }
-            if (remainAfterLoop > 0) {
-                if constexpr (strideOverFlag) {
-                    for (uint64_t j = 0; j < remainAfterLoop; j++) {
-                        vsel(
-                            dstPtr + numLoop * REPEAT_MAX * stride + j * stride,
-                            src0Ptr + numLoop * REPEAT_MAX * stride + j * stride,
-                            src1Ptr + numLoop * REPEAT_MAX * stride + j * stride,
-                            1,
-                            1, 1, 1,
-                            1, 1, 1,
-                            opSelectionMode
-                        );
-                    }
-                } else {
-                    vsel(
-                        dstPtr + numLoop * REPEAT_MAX * stride,
-                        src0Ptr + numLoop * REPEAT_MAX * stride,
-                        src1Ptr + numLoop * REPEAT_MAX * stride,
-                        remainAfterLoop,
-                        1, 1, 1,
-                        stride / blockSizeElem, stride / blockSizeElem, stride / blockSizeElem,
-                        opSelectionMode
-                    );
-                }
-            }
-            set_vector_mask(-1, -1);
+        if (numRemainPerLine > 0) {
+            TSelsTail<T, blockSizeElem, stride>(dstPtr, src0Ptr, src1Ptr, validRow, numRemainPerLine, opSelectionMode);
         }
     }
 
