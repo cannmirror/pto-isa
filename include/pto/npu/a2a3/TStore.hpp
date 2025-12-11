@@ -230,8 +230,7 @@ PTO_INTERNAL void TStoreAccNz2nd(typename GlobalData::DType *dstAddr, __cc__ typ
     PTO_ASSERT(gShape0 == 1 && gShape1 == 1 && gShape2 == 1, "NZ2ND only supports 2D-to-2D conversions.");
     PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
     PTO_ASSERT(validRow == gShape3, "The validRow of TileData must be equal to Shape3 of ND shape!");
-    PTO_ASSERT(src.GetValidRow() >= 1 && src.GetValidRow() <= 8192,
-        "When GlobalData is ND format, the range of validRow is [1, 8192].");
+    PTO_ASSERT(validRow >= 1 && validRow <= 8192, "When GlobalData is ND format, the range of validRow is [1, 8192].");
     uint16_t mSize = validRow;
     uint16_t nSize = validCol;
 
@@ -272,7 +271,7 @@ PTO_INTERNAL void TStoreAccNz2nz(typename GlobalData::DType *dstAddr, __cc__ typ
     PTO_ASSERT(validRow == gShape2 * gShape3, "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
     PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
         "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
-    PTO_ASSERT(src.GetValidRow() >= 1 && src.GetVaildRow() <= 65535 && src.GetVaildCol() % 16 == 0,
+    PTO_ASSERT(validRow >= 1 && validRow <= 65535 && validCol % 16 == 0,
         "When GlobalData is NZ format, the range of validRow is [1, 65535] and validCol must be an integer multiple of "
         "16.");
     uint16_t mSize = validRow;
@@ -387,6 +386,13 @@ PTO_INTERNAL void CheckAcc2gm(GlobalData &dst, TileData &src)
                           std::is_same_v<typename GlobalData::DType, __gm__ bfloat16_t>,
             "The output data type must be restricted to int32_t/float/half/bfloat16_t!");
     }
+    static_assert(TileData::Cols >= 1 && TileData::Cols <= 4095, "The range of Cols is [1, 4095].");
+    static_assert((GlobalData::layout == pto::Layout::ND && TileData::Rows >= 1 && TileData::Rows <= 8192) ||
+                      (GlobalData::layout == pto::Layout::NZ && TileData::Rows >= 1 && TileData::Rows <= 65535 &&
+                          TileData::Cols % 16 == 0),
+        "When GlobalData is ND format, the range of Rows is [1, 8192]."
+        "When GlobalData is NZ format, the range of Rows is [1, 65535] and Cols "
+        "must be an integer multiple of 16.");
     PTO_ASSERT(src.GetValidCol() >= 1 && src.GetValidCol() <= 4095, "The range of validCol is [1, 4095].");
 }
 
