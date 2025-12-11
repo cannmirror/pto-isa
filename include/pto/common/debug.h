@@ -21,7 +21,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
     if (!(condition)) {                                                        \
       cce::printf("[DEBUG CHECK FAILED] %s (File: %s, Line: %d)\n", message,   \
                   __FILE__, __LINE__);                                         \
-      return;                                                                  \
+      trap();                                                                  \
     }                                                                          \
   } while (0)
 
