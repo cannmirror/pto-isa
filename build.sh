@@ -169,6 +169,7 @@ clean_build_out() {
 build_package() {
   echo "---------------package start-----------------"
   clean_build_out
+  clean_build
   mkdir $BUILD_PATH
   mkdir $BUILD_OUT_PATH
   cd $BUILD_PATH

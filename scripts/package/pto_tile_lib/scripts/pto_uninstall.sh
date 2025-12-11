@@ -1,14 +1,13 @@
 #!/bin/bash
-# ----------------------------------------------------------------------------
-# This program is free software, you can redistribute it and/or modify it.
+# --------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This file is a part of the CANN Open Software.
-# Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
-# BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# ----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 
 OPERATE_FAILED="0x0001"
 PARAM_INVALID="0x0002"
@@ -20,20 +19,20 @@ FILE_READ_FAILED_DES="File read failed."
 
 CURR_PATH=$(dirname $(readlink -f $0))
 COMMON_INC_FILE="${CURR_PATH}/common_func.inc"
-OPP_COMMON_FILE="${CURR_PATH}/opp_common.sh"
+PTO_COMMON_FILE="${CURR_PATH}/pto_common.sh"
 
 . "${COMMON_INC_FILE}"
-. "${OPP_COMMON_FILE}"
+. "${PTO_COMMON_FILE}"
 
 ARCH_INFO=$(uname -m)
-OPP_PLATFORM_DIR=pto_tile_lib
-OPP_PLATFORM_UPPER=$(echo "${OPP_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
+PTO_PLATFORM_DIR=pto_tile_lib
+PTO_PLATFORM_UPPER=$(echo "${PTO_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 FILELIST_FILE="${CURR_PATH}/filelist.csv"
 COMMON_PARSER_FILE="${CURR_PATH}/install_common_parser.sh"
 TARGET_INSTALL_PATH=""
 TARGET_VERSION_DIR="${CURR_PATH}/../.."
 TARGET_VERSION_DIR=$(readlink -f ${TARGET_VERSION_DIR})     # TARGET_INSTALL_PATH + PKG_VERSION_DIR
-TARGET_MOULDE_DIR=${TARGET_VERSION_DIR}/${OPP_PLATFORM_DIR} # TARGET_INSTALL_PATH + PKG_VERSION_DIR + OPP_PLATFORM_DIR
+TARGET_MOULDE_DIR=${TARGET_VERSION_DIR}/${PTO_PLATFORM_DIR} # TARGET_INSTALL_PATH + PKG_VERSION_DIR + PTO_PLATFORM_DIR
 ASCEND_INSTALL_INFO="ascend_install.info"
 # init log file path
 INSTALL_INFO_FILE="${TARGET_MOULDE_DIR}/${ASCEND_INSTALL_INFO}"
@@ -43,10 +42,10 @@ VERSION_INFO_FILE="${TARGET_MOULDE_DIR}/version.info"
 # keys of infos in ascend_install.info
 KEY_INSTALLED_UNAME="USERNAME"
 KEY_INSTALLED_UGROUP="USERGROUP"
-KEY_INSTALLED_TYPE="${OPP_PLATFORM_UPPER}_INSTALL_TYPE"
-KEY_INSTALLED_FEATURE="${OPP_PLATFORM_UPPER}_INSTALL_FEATURE"
-KEY_INSTALLED_PATH="${OPP_PLATFORM_UPPER}_INSTALL_PATH_VAL"
-KEY_INSTALLED_VERSION="${OPP_PLATFORM_UPPER}_VERSION"
+KEY_INSTALLED_TYPE="${PTO_PLATFORM_UPPER}_INSTALL_TYPE"
+KEY_INSTALLED_FEATURE="${PTO_PLATFORM_UPPER}_INSTALL_FEATURE"
+KEY_INSTALLED_PATH="${PTO_PLATFORM_UPPER}_INSTALL_PATH_VAL"
+KEY_INSTALLED_VERSION="${PTO_PLATFORM_UPPER}_VERSION"
 
 get_opts() {
   INSTALLED_PATH="$1"
@@ -127,13 +126,13 @@ check_installed_type() {
   if [ "${type}" != "run" ] &&
     [ "${type}" != "full" ] &&
     [ "${type}" != "devel" ]; then
-    logandprint "[ERROR]: ERR_NO:${UNAME_NOT_EXIST};ERR_DES:Install type of opp module is not right!"
+    logandprint "[ERROR]: ERR_NO:${UNAME_NOT_EXIST};ERR_DES:Install type of pto module is not right!"
     exit 1
   fi
 }
 
 unsetenv() {
-  logandprint "[INFO]: Unset the environment path [ export ASCEND_PTO_TILE_LIB_PATH=${relative_path_val}/${OPP_PLATFORM_DIR}]."
+  logandprint "[INFO]: Unset the environment path [ export ASCEND_PTO_TILE_LIB_PATH=${relative_path_val}/${PTO_PLATFORM_DIR}]."
   if [ "${IS_DOCKER_INSTALL}" = y ]; then
     UNINSTALL_OPTION="--docker-root=${DOCKER_ROOT}"
   else
@@ -173,13 +172,13 @@ remove_module() {
   done
   chmod u+w ${TARGET_MOULDE_DIR}/scene.info
 
-  logandprint "[INFO]: Delete the installed opp source files in (${TARGET_VERSION_DIR})."
+  logandprint "[INFO]: Delete the installed pto source files in (${TARGET_VERSION_DIR})."
 
-  bash "${COMMON_PARSER_FILE}" --package="${OPP_PLATFORM_DIR}" --uninstall --recreate-softlink \
+  bash "${COMMON_PARSER_FILE}" --package="${PTO_PLATFORM_DIR}" --uninstall --recreate-softlink \
     --username="${TARGET_USERNAME}" --usergroup="${TARGET_USERGROUP}" --version=$RUN_PKG_VERSION \
     --version-dir=$PKG_VERSION_DIR ${UNINSTALL_OPTION} "${INSTALLED_TYPE}" "${TARGET_INSTALL_PATH}" \
     "${FILELIST_FILE}" "${IN_FEATURE}" --recreate-softlink
-  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${OPERATE_FAILED};ERR_DES:Uninstall opp module failed."
+  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${OPERATE_FAILED};ERR_DES:Uninstall pto module failed."
 
   local pyc_path=$(find "${TARGET_MOULDE_DIR}/built-in/op_impl/ai_core/tbe/impl" -name "__pycache__" 2>/dev/null)
   for var in ${pyc_path}; do
@@ -195,7 +194,7 @@ remove_module() {
   done
 }
 
-remove_opp() {
+remove_pto() {
   local ori_mod=$(stat -c %a ${TARGET_MOULDE_DIR})
   if [ "$(id -u)" != 0 ] && [ ! -w "${TARGET_MOULDE_DIR}" ]; then
     chmod u+w "${TARGET_MOULDE_DIR}" 2>/dev/null
@@ -217,7 +216,7 @@ remove_opp() {
 }
 
 remote_all_soft_link() {
-  local lib_dir=${TARGET_INSTALL_PATH}/latest/${ARCH_INFO}-linux/lib64/
+  local lib_dir=${TARGET_INSTALL_PATH}/cann/${ARCH_INFO}-linux/lib64/
   local ori_mod=$(stat -c %a ${lib_dir})
   if [ "$(id -u)" != 0 ] && [ ! -w "${lib_dir}" ]; then
     chmod u+w "${lib_dir}" 2>/dev/null
@@ -231,17 +230,17 @@ remote_all_soft_link() {
 
   chmod ${ori_mod} ${lib_dir}
   # remove aclnn_kernels
-  local arch_include_dir=${TARGET_INSTALL_PATH}/latest/${ARCH_INFO}-linux/include
+  local arch_include_dir=${TARGET_INSTALL_PATH}/cann/${ARCH_INFO}-linux/include
   ori_mod=$(stat -c %a ${arch_include_dir})
   if [ "$(id -u)" != 0 ] && [ ! -w "${arch_include_dir}" ]; then
     chmod u+w -R "${arch_include_dir}" 2>/dev/null
   fi
   [ -d ${arch_include_dir}/aclnn_kernels ] && rm -rf "${arch_include_dir}/aclnn_kernels"
   # remove all softlink
-  find ${TARGET_INSTALL_PATH}/latest/ -type l -lname "*/${OPP_PLATFORM_DIR}/*" -delete
+  find ${TARGET_INSTALL_PATH}/cann/ -type l -lname "*/${PTO_PLATFORM_DIR}/*" -delete
 }
 
-logandprint "[INFO]: Begin uninstall the opp module."
+logandprint "[INFO]: Begin uninstall the pto module."
 
 main() {
   get_opts "$@"
@@ -256,7 +255,7 @@ main() {
 
   unsetenv
 
-  remove_opp
+  remove_pto
 
   remote_all_soft_link
 
@@ -265,7 +264,7 @@ main() {
   fi
   remove_dir_if_empty ${INSTALLED_PATH}
 
-  logandprint "[INFO]: Opp package uninstalled successfully! Uninstallation takes effect immediately."
+  logandprint "[INFO]: Pto package uninstalled successfully! Uninstallation takes effect immediately."
 }
 
 main "$@"

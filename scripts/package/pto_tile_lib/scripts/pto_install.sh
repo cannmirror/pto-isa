@@ -1,14 +1,13 @@
 #!/bin/bash
-# ----------------------------------------------------------------------------
-# This program is free software, you can redistribute it and/or modify it.
+# --------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This file is a part of the CANN Open Software.
-# Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
-# BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# ----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 
 PARAM_INVALID="0x0002"
 INSTALL_FAILED="0x0000"
@@ -31,31 +30,31 @@ SCENE_FILE="${CURR_PATH}/../scene.info"
 ASCEND_INSTALL_INFO="ascend_install.info"
 
 ARCH_INFO=$(uname -m)
-OPP_PLATFORM_DIR=pto_tile_lib
-OPP_PLATFORM_UPPER=$(echo "${OPP_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
+PTO_PLATFORM_DIR=pto_tile_lib
+PTO_PLATFORM_UPPER=$(echo "${PTO_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 
 TARGET_INSTALL_PATH=""
-TARGET_MOULDE_DIR=""  # TARGET_INSTALL_PATH + PKG_VERSION_DIR + OPP_PLATFORM_DIR
+TARGET_MOULDE_DIR=""  # TARGET_INSTALL_PATH + PKG_VERSION_DIR + PTO_PLATFORM_DIR
 TARGET_VERSION_DIR="" # TARGET_INSTALL_PATH + PKG_VERSION_DIR
 
 COMMON_INC_FILE="${CURR_PATH}/common_func.inc"
 COMMON_FUNC_V2_PATH="${CURR_PATH}/common_func_v2.inc"
 VERSION_CFG="${CURR_PATH}/version_cfg.inc"
-OPP_COMMON_FILE="${CURR_PATH}/opp_common.sh"
+PTO_COMMON_FILE="${CURR_PATH}/pto_common.sh"
 
 . "${COMMON_INC_FILE}"
 . "${COMMON_FUNC_V2_PATH}"
 . "${VERSION_CFG}"
-. "${OPP_COMMON_FILE}"
+. "${PTO_COMMON_FILE}"
 
 # keys of infos in ascend_install.info
 KEY_INSTALLED_UNAME="USERNAME"
 KEY_INSTALLED_UGROUP="USERGROUP"
-KEY_INSTALLED_TYPE="${OPP_PLATFORM_UPPER}_INSTALL_TYPE"
-KEY_INSTALLED_FEATURE="${OPP_PLATFORM_UPPER}_INSTALL_FEATURE"
-KEY_INSTALLED_CHIP="${OPP_PLATFORM_UPPER}_INSTALL_CHIP"
-KEY_INSTALLED_PATH="${OPP_PLATFORM_UPPER}_INSTALL_PATH_VAL"
-KEY_INSTALLED_VERSION="${OPP_PLATFORM_UPPER}_VERSION"
+KEY_INSTALLED_TYPE="${PTO_PLATFORM_UPPER}_INSTALL_TYPE"
+KEY_INSTALLED_FEATURE="${PTO_PLATFORM_UPPER}_INSTALL_FEATURE"
+KEY_INSTALLED_CHIP="${PTO_PLATFORM_UPPER}_INSTALL_CHIP"
+KEY_INSTALLED_PATH="${PTO_PLATFORM_UPPER}_INSTALL_PATH_VAL"
+KEY_INSTALLED_VERSION="${PTO_PLATFORM_UPPER}_VERSION"
 
 get_opts() {
   TARGET_INSTALL_PATH="$1"
@@ -88,7 +87,7 @@ init_install_env() {
   else
     TARGET_VERSION_DIR=${TARGET_INSTALL_PATH}/${PKG_VERSION_DIR}
   fi
-  TARGET_MOULDE_DIR=${TARGET_VERSION_DIR}/${OPP_PLATFORM_DIR}
+  TARGET_MOULDE_DIR=${TARGET_VERSION_DIR}/${PTO_PLATFORM_DIR}
   INSTALL_INFO_FILE=${TARGET_MOULDE_DIR}/${ASCEND_INSTALL_INFO}
 
   if [ "$(id -u)" != "0" ]; then
@@ -203,7 +202,7 @@ get_install_path() {
 }
 
 setenv() {
-  logandprint "[INFO]: Set the environment path [ export ASCEND_PTO_TILE_LIB_PATH=${relative_path_val}/${OPP_PLATFORM_DIR} ]."
+  logandprint "[INFO]: Set the environment path [ export ASCEND_PTO_TILE_LIB_PATH=${relative_path_val}/${PTO_PLATFORM_DIR} ]."
   if [ "${IS_DOCKER_INSTALL}" = y ]; then
     INSTALL_OPTION="--docker-root=${DOCKER_ROOT}"
   else
@@ -328,10 +327,10 @@ create_module_include_softlink() {
   fi
 }
 
-#create latest [x86-64|aarch64]/lib64
+#create cann [x86-64|aarch64]/lib64
 create_arch_lib_softlink() {
   local dir_mode=""
-  local dst_lib_path="${TARGET_INSTALL_PATH}/latest/${ARCH_INFO}-linux/lib64"
+  local dst_lib_path="${TARGET_INSTALL_PATH}/cann/${ARCH_INFO}-linux/lib64"
   if [ -d "${dst_lib_path}" ]; then
     dir_mode=$(stat -c %a ${dst_lib_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -344,7 +343,7 @@ create_arch_lib_softlink() {
   fi
 
   dir_mode=""
-  local dst_inc_path="${TARGET_INSTALL_PATH}/latest/${ARCH_INFO}-linux/include"
+  local dst_inc_path="${TARGET_INSTALL_PATH}/cann/${ARCH_INFO}-linux/include"
   if [ -d "${dst_inc_path}" ]; then
     dir_mode=$(stat -c %a ${dst_inc_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -359,7 +358,7 @@ create_arch_lib_softlink() {
 
 create_opgraph_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/opp/built-in/op_graph
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in/op_graph
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -374,13 +373,13 @@ create_opgraph_softlink() {
 }
 
 create_tbe_kernel_softlink() {
-  local kernel_src_path=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/kernel
+  local kernel_src_path=${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/kernel
   if [ ! -d ${kernel_src_path} ]; then
-    logandprint "[INFO]: Package with no opp kernel, no need to install kernel."
+    logandprint "[INFO]: Package with no pto kernel, no need to install kernel."
     return 0
   fi
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/opp/built-in/op_impl/ai_core/tbe/kernel
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in/op_impl/ai_core/tbe/kernel
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -389,10 +388,10 @@ create_tbe_kernel_softlink() {
   fi
   comm_create_dir "${dst_path}" "${CREATE_DIR_PERM}" "${TARGET_USERNAME}:${TARGET_USERGROUP}" "${IS_FOR_ALL}"
 
-  local kernel_dirs=$(ls ${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/kernel)
+  local kernel_dirs=$(ls ${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/kernel)
   for dir in ${kernel_dirs}; do
     local kernel_src_dir=${kernel_src_path}/${dir}
-    local kernel_dst_dir_math=${dst_path}/${dir}/${OPP_PLATFORM_DIR}
+    local kernel_dst_dir_math=${dst_path}/${dir}/${PTO_PLATFORM_DIR}
     local kernel_dst_dir=${dst_path}/${dir}
     if [[ ${dir} =~ ascend* ]]; then
       echo ""
@@ -400,11 +399,11 @@ create_tbe_kernel_softlink() {
     else
       local kernel_socs=$(ls ${kernel_src_dir})
       for soc in ${kernel_socs}; do
-        soc_src_path=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/kernel/${dir}/${soc}
+        soc_src_path=${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/kernel/${dir}/${soc}
 
         local json_files_src_path=${kernel_src_path}/${dir}/${soc}
         local json_files_dst_path=${dst_path}/${dir}/${soc}/
-        local json_files_dst_path_math=${dst_path}/${dir}/${soc}/${OPP_PLATFORM_DIR}
+        local json_files_dst_path_math=${dst_path}/${dir}/${soc}/${PTO_PLATFORM_DIR}
 
         local binary_json_src_path=${json_files_src_path}/binary_info_config.json
         local binary_json_dst_path=${json_files_dst_path}/binary_info_config.json
@@ -437,7 +436,7 @@ create_tbe_kernel_softlink() {
 
 create_tbe_impl_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/opp/built-in/op_impl/ai_core/tbe/impl
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in/op_impl/ai_core/tbe/impl
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -445,7 +444,7 @@ create_tbe_impl_softlink() {
     fi
   fi
 
-  local impl_src=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/impl
+  local impl_src=${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/impl
 
   ascendc_src_dir=${impl_src}/ascendc
   ascendc_dst_dir=${dst_path}/ascendc
@@ -460,7 +459,7 @@ create_tbe_impl_softlink() {
 
 create_tbe_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/opp/built-in/op_impl/ai_core/tbe
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in/op_impl/ai_core/tbe
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -478,10 +477,10 @@ create_tbe_softlink() {
   fi
 }
 
-#create softlink latest/opp/built-in
+#create softlink cann/pto/built-in
 create_latest_builtin_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/opp/built-in
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -499,10 +498,10 @@ create_latest_builtin_softlink() {
   fi
 }
 
-#create softlink latest/opp/lib64
+#create softlink cann/pto/lib64
 create_latest_lib_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/opp/lib64
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/lib64
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -516,10 +515,10 @@ create_latest_lib_softlink() {
   fi
 }
 
-#create softlink latest/opp/include
+#create softlink cann/pto/include
 create_latest_include_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/opp/include
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/include
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -528,19 +527,19 @@ create_latest_include_softlink() {
   fi
   comm_create_dir "${dst_path}" "${CREATE_DIR_PERM}" "${TARGET_USERNAME}:${TARGET_USERGROUP}" "${IS_FOR_ALL}"
 
-  local opp_aclnnop_src_dir=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop
-  local opp_aclnnop_dst_dir=${dst_path}/aclnnop
-  local opp_aclnnop_dst_dir_math=${dst_path}/aclnnop/${OPP_PLATFORM_DIR}
+  local pto_aclnnop_src_dir=${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR}/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop
+  local pto_aclnnop_dst_dir=${dst_path}/aclnnop
+  local pto_aclnnop_dst_dir_math=${dst_path}/aclnnop/${PTO_PLATFORM_DIR}
 
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null
   fi
 }
 
-#create softlink latest/opp
-create_latest_opp_softlink() {
+#create softlink cann/pto
+create_latest_pto_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/opp/
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -560,10 +559,10 @@ create_latest_opp_softlink() {
   fi
 }
 
-#create latest [x86-64|aarch64]/include
+#create cann [x86-64|aarch64]/include
 create_arch_include_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest/${ARCH_INFO}-linux/include
+  local dst_path=${TARGET_INSTALL_PATH}/cann/${ARCH_INFO}-linux/include
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -579,7 +578,7 @@ create_arch_include_softlink() {
 
 create_latest_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/latest
+  local dst_path=${TARGET_INSTALL_PATH}/cann
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -592,15 +591,15 @@ create_latest_softlink() {
 
   create_arch_include_softlink
 
-  create_latest_opp_softlink
+  create_latest_pto_softlink
 
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null
   fi
 }
 
-install_opp() {
-  logandprint "[INFO]: Begin install opp module."
+install_pto() {
+  logandprint "[INFO]: Begin install pto module."
   local version_mod=""
   local module_mod=""
   if [ -d ${TARGET_VERSION_DIR} ]; then
@@ -620,16 +619,16 @@ install_opp() {
 
   setenv
 
-  logandprint "[INFO]: Update the opp install info."
+  logandprint "[INFO]: Update the pto install info."
 
   update_install_infos "${TARGET_USERNAME}" "${TARGET_USERGROUP}" "${INSTALL_TYPE}" "${relative_path_val}"
-  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Update opp install info failed."
+  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Update pto install info failed."
 
-  bash "${COMMON_PARSER_FILE}" --package="${OPP_PLATFORM_DIR}" --install --username="${TARGET_USERNAME}" \
+  bash "${COMMON_PARSER_FILE}" --package="${PTO_PLATFORM_DIR}" --install --username="${TARGET_USERNAME}" \
     --usergroup="${TARGET_USERGROUP}" --set-cann-uninstall --version=$RUN_PKG_VERSION \
     --version-dir=$PKG_VERSION_DIR $INSTALL_OPTION ${INSTALL_FOR_ALL} "--feature=all" "--chip=all" \
     "${INSTALL_TYPE}" "${TARGET_INSTALL_PATH}" "${FILELIST_FILE}"
-  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Install opp module files failed."
+  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Install pto module files failed."
 
   logandprint "[INFO]: upgradePercentage:30%"
 
@@ -648,21 +647,21 @@ install_opp() {
 }
 
 main() {
-  logandprint "[INFO]: Command opp_install"
+  logandprint "[INFO]: Command pto_install"
 
   get_opts "$@"
 
   init_install_env
 
-  get_package_upgrade_version_dir "upgrade_version_dir" "$TARGET_INSTALL_PATH" "${OPP_PLATFORM_DIR}"
-  get_package_last_installed_version "last_installed" "$TARGET_INSTALL_PATH" "${OPP_PLATFORM_DIR}"
+  get_package_upgrade_version_dir "upgrade_version_dir" "$TARGET_INSTALL_PATH" "${PTO_PLATFORM_DIR}"
+  get_package_last_installed_version "last_installed" "$TARGET_INSTALL_PATH" "${PTO_PLATFORM_DIR}"
   last_installed_version=$(echo ${last_installed} | cut --only-delimited -d":" -f2-)
 
   get_install_path
 
   check_env
 
-  install_opp
+  install_pto
 
   #chmod to support copy
   if [ -d "${TARGET_MOULDE_DIR}/vendors" ] && [ "$(id -u)" != "0" ]; then
@@ -690,7 +689,7 @@ main() {
 
   # change installed folder's owner and group except aicpu
   chown "${TARGET_USERNAME}":"${TARGET_USERGROUP}" "${TARGET_MOULDE_DIR}" 2>/dev/null
-  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Change opp onwership failed.."
+  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Change pto onwership failed.."
 
   logandprint "[INFO]: upgradePercentage:100%"
 
@@ -700,12 +699,12 @@ main() {
   logandprint "[INFO]: Operation log file path: (${COMM_OPERATION_LOGFILE})"
 
   if [ "${IS_SETENV}" != "y" ]; then
-    logandprint "[INFO]: Using requirements: when opp module install finished or \
- before you run the opp module, execute the command \
- [ export ASCEND_PTO_TILE_LIB_PATH=${TARGET_INSTALL_PATH}/latest/${OPP_PLATFORM_DIR} ] to set the environment path."
+    logandprint "[INFO]: Using requirements: when pto module install finished or \
+ before you run the pto module, execute the command \
+ [ export ASCEND_PTO_TILE_LIB_PATH=${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR} ] to set the environment path."
   fi
 
-  logandprint "[INFO]: Opp package installed successfully! The new version takes effect immediately."
+  logandprint "[INFO]: Pto package installed successfully! The new version takes effect immediately."
 }
 
 main "$@"

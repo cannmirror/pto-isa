@@ -11,10 +11,10 @@
     --jit                           Install with jit mode
   --uninstall                       Uninstall product with compatible run package which is installed before
     --docker-root=<docker root fs directory>    Specify the path of docker root
-    --install-path=<path>           Uninstall specific opp_math dir path
+    --install-path=<path>           Uninstall specific pto_math dir path
   --upgrade                         Upgrade product immediately
     --docker-root=<docker root fs directory>    Specify the path of docker root
-    --install-path=<path>           Upgrade specific opp_math dir path
+    --install-path=<path>           Upgrade specific pto_math dir path
     --install-for-all               Install for all user
     --quiet                         Quiet install mode, skip human-computer interactions
     --setenv                        Setting the Environment Variables Required at Run Time

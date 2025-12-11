@@ -12,7 +12,7 @@
         <check_features>true</check_features>
     </package_info>
     <generate_info value="pto_tile_lib_version.h" dst_path="pto_tile_lib" install_path="$(TARGET_ENV)/include/version" install_mod="440" install_type="devel" generator="version_header">
-       <pto_tile_lib_VERSION>$(VERSION_DIR)</pto_tile_lib_VERSION>
+       <pto_tile_lib_VERSION>$(ASCEND_VER)</pto_tile_lib_VERSION>
        <pto_tile_lib_TIMESTAMP>$(TIMESTAMP_NO)</pto_tile_lib_TIMESTAMP>
     </generate_info>
     <generate_info value="scene.info" dst_path="pto_tile_lib" install_path="pto_tile_lib" install_mod="440">
@@ -25,9 +25,15 @@
         <file value="bin" entity="true"/>
         <file value="version.info" dst_path="."/>
     </file_info>
-    <file_info copy_type="source" src_path="" dst_path="pto_tile_lib/include/pto" install_path="$(TARGET_ENV)/include/" install_type="all">
+    <file_info copy_type="source" src_path="" dst_path="pto_tile_lib/include/pto/" install_path="$(TARGET_ENV)/include/pto" install_type="all">
         <file value="common" install_mod="550" entity="true"/>
         <file value="npu" install_mod="550" entity="true"/>
+        <file value="cpu" install_mod="550" entity="true"/>
+        <file value="pto-inst.hpp" install_mod="550" entity="true"/>
+    </file_info>
+    <file_info copy_type="source" src_path="" dst_path="pto_tile_lib/include/pto/npu" install_path="$(TARGET_ENV)/include/pto/npu" install_type="all">
+        <file value="a2a3" install_mod="550" entity="true"/>
+        <file value="a5" install_mod="550" entity="true"/>
     </file_info>
     <block_info dependtree="false" dst_path="pto_tile_lib" block_conf_path="ascend">
         <block name="EngineeringCommon"/>
@@ -41,7 +47,5 @@
         <path value="$(TARGET_ENV)/include/pto/npu/a2a3"/>
         <path value="$(TARGET_ENV)/include/pto/npu/a5"/>
         <path value="$(TARGET_ENV)/include/pto/cpu"/>
-        <path value="$(TARGET_ENV)/include/pto/gpu"/>
-        <path value="$(TARGET_ENV)/include/pto/gpu/h100"/>
     </dir_info>
 </config>

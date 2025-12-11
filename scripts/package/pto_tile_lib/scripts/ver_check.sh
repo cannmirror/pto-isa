@@ -1,14 +1,13 @@
 #!/bin/bash
-# ----------------------------------------------------------------------------
-# This program is free software, you can redistribute it and/or modify it.
+# --------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This file is a part of the CANN Open Software.
-# Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
-# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
-# BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# ----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 
 req_ver_path=$1
 _CURR_PATH=$(dirname $(readlink -f $0))
@@ -92,7 +91,7 @@ check_version_file() {
   return
 }
 
-check_opp_version_file() {
+check_pto_version_file() {
   if [ -f "${_CURR_PATH}/../../version.info" ]; then
     ver_info="${_CURR_PATH}/../../version.info"
   # pto_tile_lib/version.info -> pto_tile_lib
@@ -105,13 +104,13 @@ check_opp_version_file() {
 }
 
 check_relation() {
-  opp_ver_info="$1"
+  pto_ver_info="$1"
   req_pkg_name="$2"
   req_pkg_version="$3"
   _COMMON_INC_FILE="${_CURR_PATH}/common_func.inc"
   if [ -f "${_COMMON_INC_FILE}" ]; then
     . "${_COMMON_INC_FILE}"
-    check_pkg_ver_deps "${opp_ver_info}" "${req_pkg_name}" "${req_pkg_version}"
+    check_pkg_ver_deps "${pto_ver_info}" "${req_pkg_name}" "${req_pkg_version}"
     ret_situation=$ver_check_status
   else
     logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST}; The ${_COMMON_INC_FILE} not exists."
@@ -146,8 +145,8 @@ do you want to continue.  [y/n] "
 version_check() {
   path_val="$1"
   #get pto_tile_lib version
-  check_opp_version_file
-  ret_check_opp_version_file=$ver_info
+  check_pto_version_file
+  ret_check_pto_version_file=$ver_info
   #get checked path
   check_path_pre "${path_val}"
   ret_check_path_pre=$checked_path
@@ -162,7 +161,7 @@ version_check() {
       check_version_file "${var}" "${ret_last_component}"
       ret_check_version_file=$version_file
       #check relation
-      check_relation "${ret_check_opp_version_file}" "${ret_last_component}" "${ret_check_version_file}"
+      check_relation "${ret_check_pto_version_file}" "${ret_last_component}" "${ret_check_version_file}"
       ret_check_relation=$ret_situation
       #show relation
       show_relation "${ret_check_relation}" "${ret_last_component}" "${var}"
