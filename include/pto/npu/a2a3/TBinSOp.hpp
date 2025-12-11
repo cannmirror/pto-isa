@@ -161,7 +161,7 @@ namespace pto
             if constexpr (totalRepeats > pto::REPEAT_MAX) {
                 BinS1LCountMode<Op, T>(dst, src0, src1, validRow, validCol);
             } else {
-                BinS1LNormMode<Op, T>(dst, src0, src1, validRow, TileData::Cols);
+                BinS1LNormMode<Op, T, elementsPerRepeat>(dst, src0, src1, validRow, TileData::Cols);
             }
         } else {
             if ((TileData::Cols == validCol) || (validRow == 1)) {
