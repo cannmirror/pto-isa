@@ -33,21 +33,23 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifdef __CPU_SIM
   #include "pto/cpu/tile_offsets.hpp"
+  #include "pto_tile.hpp"
+  #include <iostream>
 
   template<typename GT>
   void printRawGT(GT& tensor, const std::string name = "", int elementWidth=5, int maxR=INT32_MAX, int maxC=INT32_MAX) {
-      auto rows = tensor.GetShape(3);
-      auto cols = tensor.GetShape(4);
-      auto stride3 = std::max(tensor.GetStride(3), tensor.GetStride(4));
-      std::cout << std::format("{}: {} x {} x {} x {} x {}", name, tensor.GetShape(0), tensor.GetShape(1), tensor.GetShape(2), tensor.GetShape(3), tensor.GetShape(4)) << std::endl;
-      for(int i=0; i<tensor.GetShape(0); i++) {
-          for(int j=0; j<tensor.GetShape(1); j++) {
-              for(int k=0; k<tensor.GetShape(2); k++) {
+      auto rows = tensor.GetShape(pto::GlobalTensorDim::DIM_3);
+      auto cols = tensor.GetShape(pto::GlobalTensorDim::DIM_4);
+      auto stride3 = std::max(tensor.GetStride(pto::GlobalTensorDim::DIM_3), tensor.GetStride(pto::GlobalTensorDim::DIM_4));
+      std::cout << std::format("{}: {} x {} x {} x {} x {}", name, tensor.GetShape(pto::GlobalTensorDim::DIM_0), tensor.GetShape(pto::GlobalTensorDim::DIM_1), tensor.GetShape(pto::GlobalTensorDim::DIM_2), tensor.GetShape(pto::GlobalTensorDim::DIM_3), tensor.GetShape(pto::GlobalTensorDim::DIM_4)) << std::endl;
+      for(int i=0; i<tensor.GetShape(pto::GlobalTensorDim::DIM_0); i++) {
+          for(int j=0; j<tensor.GetShape(pto::GlobalTensorDim::DIM_1); j++) {
+              for(int k=0; k<tensor.GetShape(pto::GlobalTensorDim::DIM_2); k++) {
                   std::cout << std::format("    {}, {}, {}, r, c:\n",i,j,k);
 
                   for(int y=0; y<rows && y<maxR; y++) {
                       for(int x=0; x<cols && x<maxC; x++) {
-                          auto val = tensor.data()[i*tensor.GetStride(0) + j*tensor.GetStride(1)+k*tensor.GetStride(2)+y*stride3+x];
+                          auto val = tensor.data()[i*tensor.GetStride(pto::GlobalTensorDim::DIM_0) + j*tensor.GetStride(pto::GlobalTensorDim::DIM_1)+k*tensor.GetStride(pto::GlobalTensorDim::DIM_2)+y*stride3+x];
                           if constexpr(std::is_integral_v<typename GT::DType>) {
                               std::cout << std::format("{:{}} ", val,elementWidth);
                           } else {

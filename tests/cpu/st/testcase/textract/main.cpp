@@ -5,6 +5,7 @@
 
 using namespace std;
 using namespace PtoTestCommon;
+using namespace pto;
 
 template <typename ST, typename DT, size_t rows, size_t cols, size_t validRows, size_t validCols, uint16_t idxRow, uint16_t idxCol, uint16_t srcLayout, uint16_t dstLayout>
 AICORE inline void runTEXTRACT(__gm__ DT *out, __gm__ ST *src)

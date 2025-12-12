@@ -93,6 +93,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TUnaryOp.hpp"
 #include "pto/npu/a5/TGatherB.hpp"
 #include "pto/npu/a5/TBinSOp.hpp"
+#include "pto/npu/a5/TDiv.hpp"
+#include "pto/npu/a5/TMul.hpp"
 #endif
 
 #ifdef __CPU_SIM

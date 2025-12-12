@@ -370,8 +370,8 @@ template <typename TileData, typename GlobalData>
 AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src)
 {
     CheckTloadStaticData<TileData, GlobalData>();
-    PTO_ASSERT(src.GetShape(0) > 0 && src.GetShape(1) > 0 && src.GetShape(2) > 0 && src.GetShape(3) > 0 &&
-                   src.GetShape(4) > 0 && dst.GetValidRow() > 0 && dst.GetValidCol() > 0,
+    PTO_ASSERT(src.GetShape(pto::GlobalTensorDim::DIM_0) > 0 && src.GetShape(pto::GlobalTensorDim::DIM_1) > 0 && src.GetShape(pto::GlobalTensorDim::DIM_2) > 0 && src.GetShape(pto::GlobalTensorDim::DIM_3) > 0 &&
+                   src.GetShape(pto::GlobalTensorDim::DIM_4) > 0 && dst.GetValidRow() > 0 && dst.GetValidCol() > 0,
         "The shape of src and dst must be greater than 0!");
     constexpr bool isSameLayout =
         (GlobalData::layout == pto::Layout::ND && GetTileLayoutCustom<TileData>() == TileLayoutCustom::ND) ||
@@ -379,9 +379,9 @@ AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src)
         (GlobalData::layout == pto::Layout::NZ && GetTileLayoutCustom<TileData>() == TileLayoutCustom::NZ);
     if constexpr (TileData::Loc == pto::TileType::Vec) {
         static_assert(isSameLayout, "TLOAD(VecTile, GlobalTensor) only support ND2ND/DN2DN/NZ2NZ!");
-        TLoadGm2ub<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(0), src.GetShape(1), src.GetShape(2),
-            src.GetShape(3), src.GetShape(4), src.GetStride(0), src.GetStride(1), src.GetStride(2), src.GetStride(3),
-            src.GetStride(4), dst.GetValidRow(), dst.GetValidCol());
+        TLoadGm2ub<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(pto::GlobalTensorDim::DIM_0), src.GetShape(pto::GlobalTensorDim::DIM_1), src.GetShape(pto::GlobalTensorDim::DIM_2),
+            src.GetShape(pto::GlobalTensorDim::DIM_3), src.GetShape(pto::GlobalTensorDim::DIM_4), src.GetStride(pto::GlobalTensorDim::DIM_0), src.GetStride(pto::GlobalTensorDim::DIM_1), src.GetStride(pto::GlobalTensorDim::DIM_2), src.GetStride(pto::GlobalTensorDim::DIM_3),
+            src.GetStride(pto::GlobalTensorDim::DIM_4), dst.GetValidRow(), dst.GetValidCol());
     } else if constexpr (TileData::Loc == pto::TileType::Mat) {
         static_assert(
             isSameLayout ||
@@ -389,27 +389,27 @@ AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src)
                 (GlobalData::layout == pto::Layout::DN && GetTileLayoutCustom<TileData>() == TileLayoutCustom::ZN),
             "TLOAD(MatTile, GlobalTensor) only support ND2ND/DN2DN/NZ2NZ/ND2NZ/DN2ZN!");
         if constexpr (isSameLayout) {
-            TLoadGm2L1<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(0), src.GetShape(1), src.GetShape(2),
-                src.GetShape(3), src.GetShape(4), src.GetStride(0), src.GetStride(1), src.GetStride(2),
-                src.GetStride(3), src.GetStride(4), dst.GetValidRow(), dst.GetValidCol());
+            TLoadGm2L1<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(pto::GlobalTensorDim::DIM_0), src.GetShape(pto::GlobalTensorDim::DIM_1), src.GetShape(pto::GlobalTensorDim::DIM_2),
+                src.GetShape(pto::GlobalTensorDim::DIM_3), src.GetShape(pto::GlobalTensorDim::DIM_4), src.GetStride(pto::GlobalTensorDim::DIM_0), src.GetStride(pto::GlobalTensorDim::DIM_1), src.GetStride(pto::GlobalTensorDim::DIM_2),
+                src.GetStride(pto::GlobalTensorDim::DIM_3), src.GetStride(pto::GlobalTensorDim::DIM_4), dst.GetValidRow(), dst.GetValidCol());
         } else if constexpr (GlobalData::layout == pto::Layout::ND &&
                              GetTileLayoutCustom<TileData>() == TileLayoutCustom::NZ) {
             static_assert(
                 GlobalData::staticShape[0] == 1 && GlobalData::staticShape[1] == 1 && GlobalData::staticShape[2] == 1,
                 "GlobalTensor ony support 2 dim when ND2NZ!");
             static_assert(TileData::SFractalSize == 512, "TileData ony support SFractalSize = 512Bytes!");
-            TLoadGm2L1Nd2nz<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(0), src.GetShape(1),
-                src.GetShape(2), src.GetShape(3), src.GetShape(4), src.GetStride(0), src.GetStride(1), src.GetStride(2),
-                src.GetStride(3), src.GetStride(4), dst.GetValidRow(), dst.GetValidCol());
+            TLoadGm2L1Nd2nz<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(pto::GlobalTensorDim::DIM_0), src.GetShape(pto::GlobalTensorDim::DIM_1),
+                src.GetShape(pto::GlobalTensorDim::DIM_2), src.GetShape(pto::GlobalTensorDim::DIM_3), src.GetShape(pto::GlobalTensorDim::DIM_4), src.GetStride(pto::GlobalTensorDim::DIM_0), src.GetStride(pto::GlobalTensorDim::DIM_1), src.GetStride(pto::GlobalTensorDim::DIM_2),
+                src.GetStride(pto::GlobalTensorDim::DIM_3), src.GetStride(pto::GlobalTensorDim::DIM_4), dst.GetValidRow(), dst.GetValidCol());
         } else if constexpr (GlobalData::layout == pto::Layout::DN &&
                              GetTileLayoutCustom<TileData>() == TileLayoutCustom::ZN) {
             static_assert(
                 GlobalData::staticShape[0] == 1 && GlobalData::staticShape[1] == 1 && GlobalData::staticShape[2] == 1,
                 "GlobalTensor ony support 2 dim when DN2ZN!");
             static_assert(TileData::SFractalSize == 512, "TileData ony support SFractalSize = 512Bytes!");
-            TLoadGm2L1Dn2zn<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(0), src.GetShape(1),
-                src.GetShape(2), src.GetShape(3), src.GetShape(4), src.GetStride(0), src.GetStride(1), src.GetStride(2),
-                src.GetStride(3), src.GetStride(4), dst.GetValidRow(), dst.GetValidCol());
+            TLoadGm2L1Dn2zn<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(pto::GlobalTensorDim::DIM_0), src.GetShape(pto::GlobalTensorDim::DIM_1),
+                src.GetShape(pto::GlobalTensorDim::DIM_2), src.GetShape(pto::GlobalTensorDim::DIM_3), src.GetShape(pto::GlobalTensorDim::DIM_4), src.GetStride(pto::GlobalTensorDim::DIM_0), src.GetStride(pto::GlobalTensorDim::DIM_1), src.GetStride(pto::GlobalTensorDim::DIM_2),
+                src.GetStride(pto::GlobalTensorDim::DIM_3), src.GetStride(pto::GlobalTensorDim::DIM_4), dst.GetValidRow(), dst.GetValidCol());
         }
     }
 }

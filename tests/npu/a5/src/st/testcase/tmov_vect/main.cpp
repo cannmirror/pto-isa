@@ -32,7 +32,7 @@ std::string GetGoldenDir() {
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
     std::string fullPath = "../" + suiteName + "." + caseName;
-    return fullPath
+    return fullPath;
 }
 
 template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>

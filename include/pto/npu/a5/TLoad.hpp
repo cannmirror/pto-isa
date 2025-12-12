@@ -537,14 +537,14 @@ AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src)
     }
 
     if constexpr (TileData::Loc == pto::TileType::Vec) {
-        TLoad<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(0), src.GetShape(1), src.GetShape(2),
-            src.GetShape(3), src.GetShape(4), src.GetStride(0), src.GetStride(1), src.GetStride(2), src.GetStride(3),
-            src.GetStride(4), dst.GetValidRow(), dst.GetValidCol());
+        TLoad<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(pto::GlobalTensorDim::DIM_0), src.GetShape(pto::GlobalTensorDim::DIM_1), src.GetShape(pto::GlobalTensorDim::DIM_2),
+            src.GetShape(pto::GlobalTensorDim::DIM_3), src.GetShape(pto::GlobalTensorDim::DIM_4), src.GetStride(pto::GlobalTensorDim::DIM_0), src.GetStride(pto::GlobalTensorDim::DIM_1), src.GetStride(pto::GlobalTensorDim::DIM_2), src.GetStride(pto::GlobalTensorDim::DIM_3),
+            src.GetStride(pto::GlobalTensorDim::DIM_4), dst.GetValidRow(), dst.GetValidCol());
     } else if constexpr (TileData::Loc == pto::TileType::Mat) {
         TLoadCubeCheck<TileData, GlobalData>();
-        TLoadCube<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(0), src.GetShape(1), src.GetShape(2),
-            src.GetShape(3), src.GetShape(4), src.GetStride(0), src.GetStride(1), src.GetStride(2), src.GetStride(3),
-            src.GetStride(4), dst.GetValidRow(), dst.GetValidCol());
+        TLoadCube<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(pto::GlobalTensorDim::DIM_0), src.GetShape(pto::GlobalTensorDim::DIM_1), src.GetShape(pto::GlobalTensorDim::DIM_2),
+            src.GetShape(pto::GlobalTensorDim::DIM_3), src.GetShape(pto::GlobalTensorDim::DIM_4), src.GetStride(pto::GlobalTensorDim::DIM_0), src.GetStride(pto::GlobalTensorDim::DIM_1), src.GetStride(pto::GlobalTensorDim::DIM_2), src.GetStride(pto::GlobalTensorDim::DIM_3),
+            src.GetStride(pto::GlobalTensorDim::DIM_4), dst.GetValidRow(), dst.GetValidCol());
     }
 }
 } // namespace pto
