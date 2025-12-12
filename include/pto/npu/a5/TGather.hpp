@@ -205,18 +205,6 @@ AICORE void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
     TGather<TileDataD, TileDataS0, TileDataS1>(dst.data(), src0.data(), src1.data(), kValidCols, kValidRows);
 }
 
-template <typename T, typename U>
-PTO_INTERNAL MaskReg PSetWithType(U dist)
-{
-    if constexpr (sizeof(T) == sizeof(float)) {
-        return pset_b32(dist);
-    } else if constexpr (sizeof(T) == sizeof(half)) {
-        return pset_b16(dist);
-    } else if constexpr (sizeof(T) == sizeof(uint8_t)) {
-        return pset_b8(dist);
-    }
-}
-
 template <typename T>
 PTO_INTERNAL void PIntlvWithType(MaskReg &dst0, MaskReg &dst1, MaskReg src0, MaskReg src1)
 {

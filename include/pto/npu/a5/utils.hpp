@@ -63,6 +63,18 @@ namespace pto{
         }
         return dist;
     }
+
+    template <typename T, typename U>
+    PTO_INTERNAL MaskReg PSetWithType(U dist)
+    {
+        if constexpr (sizeof(T) == sizeof(float)) {
+            return pset_b32(dist);
+        } else if constexpr (sizeof(T) == sizeof(half)) {
+            return pset_b16(dist);
+        } else if constexpr (sizeof(T) == sizeof(uint8_t)) {
+            return pset_b8(dist);
+        }
+    }
 } // end pto
 
 #endif
