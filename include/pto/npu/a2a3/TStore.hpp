@@ -249,9 +249,9 @@ PTO_INTERNAL void TStoreAccNz2nd(typename GlobalData::DType *dstAddr, __cc__ typ
     xmReg =
         ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
         (static_cast<uint64_t>(mSize & 0xffff) << 16) |   // Xm[31:16] the m-direction size of the matrix
-        (static_cast<uint64_t>(dstD & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addresses
+        (static_cast<uint64_t>(dstD & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
     uint64_t xtReg = 0;
-    xtReg = srcStride | // Xt[15:0] the source stride between the start addresses
+    xtReg = srcStride | // Xt[15:0] the source stride between the start addr
             (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) |      // Xt[33:32] unit flag control bit
             (static_cast<uint64_t>(quantizationMode & 0x1f) << 34) | // Xt[38:34] pre-stage quantization mode
             (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);            // Xt[43] nz2nd control bit
@@ -297,9 +297,9 @@ PTO_INTERNAL void TStoreAccNz2nz(typename GlobalData::DType *dstAddr, __cc__ typ
     xmReg = (static_cast<uint64_t>(nSize & 0xfff) << 4) |   // Xm[15:4] nSize
             (static_cast<uint64_t>(mSize & 0xffff) << 16) | // Xm[31:16] mSize
             (static_cast<uint64_t>(dstStride & 0xffffffff)
-                << 32); // Xm[63:32] destination stride between the start addresses
+                << 32); // Xm[63:32] destination stride between the start addr
     uint64_t xtReg = 0;
-    xtReg = srcStride | // Xt[15:0] the source stride between the start addresses
+    xtReg = srcStride | // Xt[15:0] the source stride between the start addr
             (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) |      // Xt[33:32] unit flag control bit
             (static_cast<uint64_t>(quantizationMode & 0x1f) << 34) | // Xt[38:34] pre-stage quantization mode
             (static_cast<uint64_t>(channelSplitEn & 0x1) << 42);     // Xt[42] channel split control bit
