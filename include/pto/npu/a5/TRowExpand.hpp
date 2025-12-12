@@ -18,26 +18,29 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-template <typename TileDataOut, typename TileDataIn>
-__tf__ PTO_INTERNAL void TRowExpand(typename TileDataOut::TileDType __out__ dst,
+template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat, unsigned blockSizeElem>
+__tf__ PTO_INTERNAL OP_NAME(TROWEXPAND) OP_TYPE(broadcast)
+void TRowExpand(typename TileDataOut::TileDType __out__ dst,
                                   typename TileDataIn::TileDType __in__ src,
+                                  uint32_t dstCols,
+                                  uint32_t srcCols,
                                   unsigned kValidRows,
                                   unsigned kValidCols,
-                                  uint32_t eleCntReg,
-                                  uint32_t dstCols,
-                                  uint32_t srcCols){
+                                  unsigned version = 0){
     using T = typename TileDataOut::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
 
-    uint16_t repeatTimes = CeilDivision(kValidCols, eleCntReg);
-    constexpr auto eleCntValue = CCE_VL /sizeof(T);
+    unsigned eleCntValue = elementsPerRepeat;
+    uint16_t repeatTimes = CeilDivision(kValidCols, elementsPerRepeat);
+
     constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+
     __VEC_SCOPE__
     {
         RegTensor<T> vreg0;
         RegTensor<T> vreg1;
-        MaskReg pg0 = CreatePredicate<T>(eleCntReg);
+        MaskReg pg0 = CreatePredicate<T>(eleCntValue);
         MaskReg preg;
         uint32_t sreg;
         for (uint16_t i = 0; i < (uint16_t)kValidRows; i++) {
@@ -46,7 +49,7 @@ __tf__ PTO_INTERNAL void TRowExpand(typename TileDataOut::TileDType __out__ dst,
             sreg = (uint32_t)(kValidCols);
             for (uint16_t j = 0; j < (uint16_t)repeatTimes; j++) {
                 preg = CreatePredicate<T>(sreg);
-                vsts(vreg1, dstPtr, (int32_t)(j * eleCntValue + i * dstCols), distValue, preg);
+                vsts(vreg1, dstPtr, (int32_t)(j * elementsPerRepeat + i * dstCols), distValue, preg);
             }
         }
     }
@@ -61,14 +64,15 @@ PTO_INTERNAL void TROWEXPAND_IMPL(TileDataOut &dst, TileDataIn &src)
     static_assert(((TileDataOut::isRowMajor && (TileDataOut::SFractal == SLayout::NoneBox)) &&
                     (TileDataIn::isRowMajor && (TileDataIn::SFractal == SLayout::NoneBox))),
                     "Src and dst layout must be ND!");
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataIn::DType);
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataIn::DType);
 
     unsigned kValidCols = dst.GetValidCol();
     unsigned kValidRows = dst.GetValidRow();
-    uint32_t eleCntReg = CCE_VL / sizeof(typename TileDataIn::DType);
     uint32_t dstCols = TileDataOut::Cols;
     uint32_t srcCols = TileDataIn::Cols;
     
-    TRowExpand<TileDataOut, TileDataIn>(dst.data(), src.data(), kValidRows, kValidCols, eleCntReg, dstCols, srcCols);
+    TRowExpand<TileDataOut, TileDataIn, elementsPerRepeat, blockSizeElem>(dst.data(), src.data(), dstCols, srcCols, kValidRows, kValidCols);
 }
 }  // namespace pto
 #endif

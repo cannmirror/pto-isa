@@ -27,7 +27,7 @@ template <typename T> struct MinSOp {
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ PTO_INTERNAL
+__tf__ PTO_INTERNAL OP_NAME(TMINS) OP_TYPE(element_wise)
 void TMinS(typename TileData::TileDType __out__ dst, 
            typename TileData::TileDType __in__ src0, 
            typename TileData::DType src1,

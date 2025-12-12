@@ -22,6 +22,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 // for pto internal implementation
 #define PTO_INTERNAL AICORE PTO_INLINE
 
+#define OP_NAME(Name) __attribute__((op_name(#Name)))
+#define OP_TYPE(TypeName) __attribute__((op_kind(#TypeName)))
+
 namespace pto {
     // 01-bits patterns are read from right to left.
     // Right bits are low bits, corresponding to low index positions of data.
