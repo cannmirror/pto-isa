@@ -212,11 +212,11 @@ template <typename T, typename GlobalData, typename TileData>
 AICORE inline void UBCopyOut(GlobalData &dst, TileData &src, int rows, int cols, int startDstAddr)
 {
     constexpr uint32_t c0Size = 64;
-    int gShape0 = dst.GetShape(0);
-    int gShape1 = dst.GetShape(1);
-    int gShape4 = dst.GetShape(4);
-    int gStride0 = dst.GetStride(0);
-    int gStride1 = dst.GetStride(1);
+    int gShape0 = dst.GetShape(pto::GlobalTensorDim::DIM_0);
+    int gShape1 = dst.GetShape(pto::GlobalTensorDim::DIM_1);
+    int gShape4 = dst.GetShape(pto::GlobalTensorDim::DIM_4);
+    int gStride0 = dst.GetStride(pto::GlobalTensorDim::DIM_0);
+    int gStride1 = dst.GetStride(pto::GlobalTensorDim::DIM_1);
 
     uint16_t nBurst = gShape1;
     uint32_t lenBurst = rows * c0Size;

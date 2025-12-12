@@ -17,6 +17,19 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "TLoad.hpp"
 
 namespace pto {
+
+template <typename T, typename U>
+PTO_INTERNAL MaskReg PSetTyped(U dist)
+{
+    if constexpr (sizeof(T) == sizeof(float)) {
+        return pset_b32(dist);
+    } else if constexpr (sizeof(T) == sizeof(half)) {
+        return pset_b16(dist);
+    } else if constexpr (sizeof(T) == sizeof(uint8_t)) {
+        return pset_b8(dist);
+    }
+}
+
 template <typename T, typename DistType>
 PTO_INTERNAL void CopyValidElementsVec(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, uint64_t srcValidRow,
     uint64_t srcValidCol, unsigned srcStride, unsigned dstStride, DistType distValue) {
@@ -33,6 +46,7 @@ PTO_INTERNAL void CopyValidElementsVec(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, u
         }
     }
 }
+
 template <typename TileDataDst, typename TileDataSrc, bool inplace>
 __tf__ PTO_INTERNAL void TFillPad(typename TileDataDst::TileDType __out__ dst,
     typename TileDataSrc::TileDType __in__ src, uint64_t dstValidRow, uint64_t dstValidCol, uint64_t srcValidRow,
@@ -60,7 +74,7 @@ __tf__ PTO_INTERNAL void TFillPad(typename TileDataDst::TileDType __out__ dst,
         uint16_t padRepeatTimes = CeilDivision(padCols, elementsPerRepeat);
         RegTensor<T> vreg_pad0;
         UnalignReg ureg;
-        MaskReg pg_all = PSetWithType<T>(PAT_ALL);
+        MaskReg pg_all = PSetTyped<T>(PAT_ALL);
         vdup(vreg_pad0, padValue, pg_all, MODE_ZEROING);
         for (uint16_t i = 0; i < (uint16_t)(srcValidRow); ++i) {
             uint32_t cols = (uint32_t)(padCols);

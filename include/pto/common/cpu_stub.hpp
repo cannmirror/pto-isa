@@ -17,6 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #define __global__
 #define AICORE
+#define __aicore__
 #define __gm__
 #define __out__
 #define __in__
@@ -43,7 +44,8 @@ static inline void aclrtMallocHost(void**p, size_t sz){
 
 #define aclrtMalloc(a,b,c) aclrtMallocHost(a,b)
 
-#define aclrtMemcpy(dst, sz_dst, src, sz_src, type) std::memcpy(dst,src,sz_src)
+#define aclrtMemcpy(dst, sz_dst, src, sz_src, type) {for(size_t i = 0; i<sz_src && i<sz_dst; i++) reinterpret_cast<char*>(dst)[i] = reinterpret_cast<char*>(src)[i];} 
+
 #define aclrtSynchronizeStream(x)
 #define aclrtFree(x) free(x)
 #define aclrtFreeHost(x) free(x)

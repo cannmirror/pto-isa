@@ -31,7 +31,7 @@ __global__ AICORE void runTMOV(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     TASSIGN(dstTile, 0x20000 + 0x400*block_idx);
 
     GlobalData srcGlobal(src);
-    GlobalData dstGlobal(dst);
+    GlobalData dstGlobal(out);
 
     TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
