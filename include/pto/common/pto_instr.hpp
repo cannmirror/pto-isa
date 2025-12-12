@@ -248,9 +248,9 @@ PTO_INST void TSEL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &s
   MAP_INSTR_IMPL(TSEL, dst, selMask, src0, src1);
 }
 
-template <typename TileDataDst, typename TileDataSrc>
-PTO_INST void TTRANS(TileDataDst &dst, TileDataSrc &src) {
-  MAP_INSTR_IMPL(TTRANS, dst, src);
+template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
+PTO_INST void TTRANS(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp) {
+  MAP_INSTR_IMPL(TTRANS, dst, src, tmp);
 }
 
 template <typename TileData, typename T>

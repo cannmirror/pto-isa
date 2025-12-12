@@ -16,325 +16,264 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-template <typename T> 
+template <typename T>
 struct TransOp {
-    PTO_INTERNAL static void TransB8Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
-    {
+    PTO_INTERNAL static void TransB8Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride) {
         scatter_vnchwconv_b8(VA0, VA2, repeat, dstStride, srcStride, false, false);
         scatter_vnchwconv_b8(VA6, VA2, repeat, dstStride, srcStride, false, true);
         scatter_vnchwconv_b8(VA0, VA4, repeat, dstStride, srcStride, true, false);
         scatter_vnchwconv_b8(VA6, VA4, repeat, dstStride, srcStride, true, true);
     }
 
-    PTO_INTERNAL static void TransB16Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
-    {
+    PTO_INTERNAL static void TransB16Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride) {
         scatter_vnchwconv_b16(VA0, VA2, repeat, dstStride, srcStride);
     }
 
-    PTO_INTERNAL static void TransB32Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride)
-    {
+    PTO_INTERNAL static void TransB32Instr(uint8_t repeat, uint16_t dstStride, uint16_t srcStride) {
         scatter_vnchwconv_b32(VA0, VA2, repeat, dstStride, srcStride);
     }
 
     PTO_INTERNAL static void CopyInstr(__ubuf__ uint32_t *dstPtr, __ubuf__ uint32_t *srcPtr, uint8_t repeat,
-                                        uint16_t dstRepeatStride, uint16_t srcRepeatStride)
-    {
+        uint16_t dstRepeatStride, uint16_t srcRepeatStride) {
         vcopy(dstPtr, srcPtr, repeat, 1, 1, dstRepeatStride, srcRepeatStride);
     }
 
     PTO_INTERNAL static void CopyInstr(__ubuf__ uint16_t *dstPtr, __ubuf__ uint16_t *srcPtr, uint8_t repeat,
-                                        uint16_t dstRepeatStride, uint16_t srcRepeatStride)
-    {
+        uint16_t dstRepeatStride, uint16_t srcRepeatStride) {
         vcopy(dstPtr, srcPtr, repeat, 1, 1, dstRepeatStride, srcRepeatStride);
-    } 
+    }
 };
 
-template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-PTO_INTERNAL void TransposeB32(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
-{
-    // numSubtileY can reach REPEAT_MAX = 255 in b32 case
-    // 1 subtile = 16 * 32B = 0.5KB, UB = 192KB, so UB can contain 384 subtiles at most
-    uint64_t srcUb[16] = {0};
-    uint64_t dstUb[16] = {0};
-    const unsigned numRepeat = (numSubtileY + REPEAT_MAX - 1) / REPEAT_MAX;
-    for (unsigned repeat = 0; repeat < numRepeat;
-         ++repeat, srcPtr += 16 * REPEAT_MAX * srcStride, dstPtr += 16 * REPEAT_MAX, numSubtileY -= REPEAT_MAX) {
-        for (unsigned i = 0; i < numSubtileX; ++i) {
-            for (unsigned j = 0; j < 16; ++j) {
-                srcUb[j] = (uint64_t)(srcPtr + i * blockElemSize + j * srcStride);
-                dstUb[j] = (uint64_t)(dstPtr + ((j >> 1) + i * blockElemSize) * dstStride + (j & 1) * blockElemSize);
+template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride, unsigned srcStride>
+PTO_INTERNAL void TransB32FullSubTiles(
+    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubTileX, unsigned numSubTileY) {
+    if ((numSubTileY > 0) && (numSubTileX > 0)) {
+        constexpr uint16_t vconvSrcStride = 16 * srcStride * sizeof(T) / BLOCK_BYTE_SIZE;
+        for (int i = 0; i < numSubTileX; i++) {
+            uint64_t srcUb[16] = {0}, tmpUb[16] = {0};
+            uint64_t offset = i * blockSizeElem;
+            for (int j = 0; j < 16; j++) {
+                srcUb[j] = (uint64_t)(srcPtr + offset + j * srcStride);
+                tmpUb[j] = (uint64_t)(dstPtr + ((j >> 1) + offset) * dstStride + (j & 1) * blockSizeElem);
             }
             set_va_reg_sb(VA2, srcUb);
             set_va_reg_sb(VA3, &srcUb[8]);
-            set_va_reg_sb(VA0, dstUb);
-            set_va_reg_sb(VA1, &dstUb[8]);
-            if (numSubtileY == 1) {
+            set_va_reg_sb(VA0, tmpUb);
+            set_va_reg_sb(VA1, &tmpUb[8]);
+            if (numSubTileY == 1) {
                 Op::TransB32Instr(1, 0, 0);
-            } else if (numSubtileY < REPEAT_MAX) {
-                Op::TransB32Instr(numSubtileY, 2, 16 * srcStride / blockElemSize);
             } else {
-                Op::TransB32Instr(REPEAT_MAX, 2, 16 * srcStride / blockElemSize);
+                Op::TransB32Instr(numSubTileY, 2, vconvSrcStride);
             }
-        }
+        } // end loop num_subtile
     }
 }
 
-template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-PTO_INTERNAL void TransposeB16(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
-{
-    // numSubtileY can reach REPEAT_MAX = 255 in b16 case
-    // 1 subtile = 16 * 32B = 0.5KB, UB = 192KB, so UB can contain 384 subtiles at most
-    uint64_t srcUb[16] = {0};
-    uint64_t dstUb[16] = {0};
-    const unsigned numRepeat = (numSubtileY + REPEAT_MAX - 1) / REPEAT_MAX;
-    for (unsigned repeat = 0; repeat < numRepeat;
-         ++repeat, srcPtr += 16 * REPEAT_MAX * srcStride, dstPtr += 16 * REPEAT_MAX, numSubtileY -= REPEAT_MAX) {
-        for (unsigned i = 0; i < numSubtileX; ++i) {
-            for (unsigned j = 0; j < 16; ++j) {
-                srcUb[j] = (uint64_t)(srcPtr + i * blockElemSize + j * srcStride);
-                dstUb[j] = (uint64_t)(dstPtr + (j + i * blockElemSize) * dstStride);
+template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride, unsigned srcStride>
+PTO_INTERNAL void TransB16FullSubTiles(
+    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubTileX, unsigned numSubTileY) {
+    if ((numSubTileY > 0) && (numSubTileX > 0)) {
+        constexpr uint16_t vconvSrcStride = 16 * srcStride * sizeof(T) / BLOCK_BYTE_SIZE;
+        for (int i = 0; i < numSubTileX; i++) {
+            uint64_t srcUb[16] = {0}, tmpUb[16] = {0};
+            uint64_t offset = i * blockSizeElem;
+            for (int j = 0; j < 16; j++) {
+                srcUb[j] = (uint64_t)(srcPtr + offset + j * srcStride);
+                tmpUb[j] = (uint64_t)(dstPtr + (j + offset) * dstStride);
             }
             set_va_reg_sb(VA2, srcUb);
             set_va_reg_sb(VA3, &srcUb[8]);
-            set_va_reg_sb(VA0, dstUb);
-            set_va_reg_sb(VA1, &dstUb[8]);
-            if (numSubtileY == 1) {
+            set_va_reg_sb(VA0, tmpUb);
+            set_va_reg_sb(VA1, &tmpUb[8]);
+            if (numSubTileY == 1) {
                 Op::TransB16Instr(1, 0, 0);
-            } else if (numSubtileY < REPEAT_MAX) {
-                Op::TransB16Instr(numSubtileY, 1, 16 * srcStride / blockElemSize);
             } else {
-                Op::TransB16Instr(REPEAT_MAX, 1, 16 * srcStride / blockElemSize);
+                Op::TransB16Instr(numSubTileY, 1, vconvSrcStride);
             }
-        }
+        } // end loop num_subtile
     }
 }
 
-template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-PTO_INTERNAL void TransposeB8(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
-{
-    // numSubtileY couldn't reach REPEAT_MAX = 255 in b8 case
-    // 1 subtile = 32 * 32B = 1KB, UB = 192KB, so UB can contain 192 subtiles at most
-    uint64_t srcUb[16] = {0};
-    uint64_t dstUb[16] = {0};
-    uint64_t srcUb1[16] = {0};
-    uint64_t dstUb1[16] = {0};
-    for (unsigned i = 0; i < numSubtileX; ++i) {
-        for (unsigned j = 0; j < 16; ++j) {
-            srcUb[j] = (uint64_t)(srcPtr + i * blockElemSize + j * srcStride);
-            srcUb1[j] = srcUb[j] + 16 * srcStride;
-            dstUb[j] = (uint64_t)(dstPtr + (j + i * blockElemSize) * dstStride);
-            dstUb1[j] = dstUb[j] + 16 * dstStride;
+template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride, unsigned srcStride>
+PTO_INTERNAL void TransB8FullSubTiles(
+    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubTileX, unsigned numSubTileY) {
+    if (numSubTileX) { // [32, 32] aligned
+        uint64_t srcUb[16] = {0}, srcUb1[16] = {0}, tmpUb[16] = {0}, tmpUb1[16] = {0};
+        uint16_t vconvSrcStride = 32 * srcStride * sizeof(T) / BLOCK_BYTE_SIZE;
+        for (int i = 0; i < numSubTileX; i++) {
+            uint64_t offset = i * blockSizeElem;
+            for (int j = 0; j < 16; j++) {
+                srcUb[j] = (uint64_t)(srcPtr + offset + j * srcStride);
+                srcUb1[j] = srcUb[j] + 16 * srcStride;
+                tmpUb[j] = (uint64_t)(dstPtr + (j + offset) * dstStride);
+                tmpUb1[j] = tmpUb[j] + 16 * dstStride;
+            }
+            set_va_reg_sb(VA2, srcUb);
+            set_va_reg_sb(VA3, &srcUb[8]);
+            set_va_reg_sb(VA0, tmpUb);
+            set_va_reg_sb(VA1, &tmpUb[8]);
+
+            set_va_reg_sb(VA4, srcUb1);
+            set_va_reg_sb(VA5, &srcUb1[8]);
+            set_va_reg_sb(VA6, tmpUb1);
+            set_va_reg_sb(VA7, &tmpUb1[8]);
+            if (numSubTileY == 1) { // [32, 32]
+                Op::TransB8Instr(1, 0, 0);
+            } else { // larger then [32, 32], e.g, [32, 64]
+                Op::TransB8Instr(numSubTileY, 1, vconvSrcStride);
+            }
+        } // end of numSubTileX
+    }
+}
+
+template <typename Op, typename T, unsigned blockSizeElem, unsigned srcStride>
+PTO_INTERNAL void TransB32YTailTiles(__ubuf__ T *tmpPtr, __ubuf__ T *srcPtr, unsigned tmpStride, unsigned numSubTileX,
+    unsigned numSubTileY, unsigned remain_y) {
+    if (remain_y > 0) {
+        uint64_t srcUb[16] = {0}, tmpUb[16] = {0};
+        uint64_t offset = numSubTileY * 16;
+        for (int i = 0; i < remain_y; i++) {
+            srcUb[i] = (uint64_t)(srcPtr + (offset + i) * srcStride);
+        }
+        for (int i = 0; i < 16; i++) {
+            tmpUb[i] = (uint64_t)(tmpPtr + (i & 1) * blockSizeElem + (i >> 1) * tmpStride);
         }
         set_va_reg_sb(VA2, srcUb);
         set_va_reg_sb(VA3, &srcUb[8]);
-        set_va_reg_sb(VA0, dstUb);
-        set_va_reg_sb(VA1, &dstUb[8]);
+        set_va_reg_sb(VA0, tmpUb);
+        set_va_reg_sb(VA1, &tmpUb[8]);
+
+        if (numSubTileX == 1) {
+            Op::TransB32Instr(1, 0, 0);
+        } else {
+            uint16_t vconvSrcStride = blockSizeElem * tmpStride * sizeof(T) / BLOCK_BYTE_SIZE;
+            Op::TransB32Instr(numSubTileX, vconvSrcStride, 1);
+        }
+    }
+}
+
+template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride, unsigned srcStride>
+PTO_INTERNAL void TransB16YTailTiles(
+    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubTileX, unsigned numSubTileY, unsigned remain_y) {
+    if (remain_y) {
+        uint64_t srcUb[16] = {0}, tmpUb[16] = {0};
+        uint64_t offset = numSubTileY * 16;
+        for (int i = 0; i < remain_y; i++) {
+            srcUb[i] = (uint64_t)(srcPtr + (offset + i) * srcStride);
+        }
+        for (int i = 0; i < 16; i++) {
+            tmpUb[i] = (uint64_t)(dstPtr + offset + i * dstStride);
+        }
+        set_va_reg_sb(VA2, srcUb);
+        set_va_reg_sb(VA3, &srcUb[8]);
+        set_va_reg_sb(VA0, tmpUb);
+        set_va_reg_sb(VA1, &tmpUb[8]);
+        if (numSubTileX == 1) {
+            Op::TransB16Instr(1, 0, 0);
+        } else {
+            uint16_t vconvSrcStride = blockSizeElem * dstStride * sizeof(T) / BLOCK_BYTE_SIZE;
+            Op::TransB16Instr(numSubTileX, vconvSrcStride, 1);
+        }
+    }
+}
+
+template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride, unsigned srcStride>
+PTO_INTERNAL void TransB8YTailTiles(
+    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubTileX, unsigned numSubTileY, unsigned remain_y) {
+    if (remain_y) { // e.g., [8, 32]
+        uint64_t srcUb[16] = {0}, tmpUb[16] = {0};
+        uint64_t srcUb1[16] = {0}, tmpUb1[16] = {0};
+        uint64_t offset = numSubTileY * 32;
+        for (int i = 0; i < remain_y; i++) {
+            if (i < 16) {
+                srcUb[i] = (uint64_t)(srcPtr + (offset + i) * srcStride);
+            } else {
+                srcUb1[i - 16] = (uint64_t)(srcPtr + (offset + i) * srcStride);
+            }
+        }
+        for (int i = 0; i < 16; i++) {
+            tmpUb[i] = (uint64_t)(dstPtr + offset + i * dstStride);
+            tmpUb1[i] = tmpUb[i] + 16 * dstStride;
+        }
+        set_va_reg_sb(VA2, srcUb);
+        set_va_reg_sb(VA3, &srcUb[8]);
+        set_va_reg_sb(VA0, tmpUb);
+        set_va_reg_sb(VA1, &tmpUb[8]);
+
         set_va_reg_sb(VA4, srcUb1);
         set_va_reg_sb(VA5, &srcUb1[8]);
-        set_va_reg_sb(VA6, dstUb1);
-        set_va_reg_sb(VA7, &dstUb1[8]);
-        if (numSubtileY == 1) {
+        set_va_reg_sb(VA6, tmpUb1);
+        set_va_reg_sb(VA7, &tmpUb1[8]);
+        if (numSubTileX == 1) {
             Op::TransB8Instr(1, 0, 0);
         } else {
-            Op::TransB8Instr(numSubtileY, 1, 32 * srcStride / blockElemSize);
+            Op::TransB8Instr(numSubTileX, 32 * dstStride * sizeof(T) / BLOCK_BYTE_SIZE, 1);
         }
     }
 }
 
-template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-PTO_INTERNAL void TransposeFullSubTiles(
-    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numSubtileY)
-{
-    if (numSubtileX == 0 || numSubtileY == 0) {
-        return;
-    }
-
-    if constexpr (sizeof(T) == 4) {  // b32 case
-        TransposeB32<Op, T, blockElemSize, dstStride, srcStride>(dstPtr, srcPtr, numSubtileX, numSubtileY);
-    } else if constexpr (sizeof(T) == 2) {
-        TransposeB16<Op, T, blockElemSize, dstStride, srcStride>(dstPtr, srcPtr, numSubtileX, numSubtileY);
-    } else if constexpr (sizeof(T) == 1) {
-        TransposeB8<Op, T, blockElemSize, dstStride, srcStride>(dstPtr, srcPtr, numSubtileX, numSubtileY);
-    } else {
-        static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TTRANS: Invalid data type.");
+template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride>
+PTO_INTERNAL void CopyB32Tail(__ubuf__ T *dstPtr, __ubuf__ T *tmpPtr, unsigned tmpStride, unsigned validRow,
+    unsigned validCol, unsigned remain_y) {
+    if (remain_y > 0) {
+        // cpy tmp to dst
+        const uint16_t srcGap = tmpStride * sizeof(T) / BLOCK_BYTE_SIZE;
+        constexpr uint16_t dstGap = dstStride * sizeof(T) / BLOCK_BYTE_SIZE;
+        SetContMaskByDType<T>(remain_y);
+        pipe_barrier(PIPE_V);
+        Op::CopyInstr((__ubuf__ uint32_t *)(dstPtr + (validRow - remain_y)), (__ubuf__ uint32_t *)(tmpPtr), validCol,
+            dstGap, srcGap);
     }
 }
 
-template <typename Op, typename T, unsigned dstStride, unsigned srcStride>
-PTO_INTERNAL void CopyRowsWithMask(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numRow, unsigned numTail)
-{
-    if (numRow == 0 || numTail == 0) {
-        return;
-    }
-
-    constexpr uint16_t blockElemSize = BLOCK_BYTE_SIZE / sizeof(T);
-    constexpr uint16_t srcRepeatSize = srcStride / blockElemSize;
-    constexpr uint16_t dstRepeatSize = dstStride / blockElemSize;
-
-    if constexpr (sizeof(T) == 4) {
-        SetContMaskByDType<T>(numTail);
-        Op::CopyInstr((__ubuf__ uint32_t *)dstPtr, (__ubuf__ uint32_t *)srcPtr, numRow, dstRepeatSize, srcRepeatSize);
-    } else if constexpr (sizeof(T) == 2) {
-        SetContMaskByDType<T>(numTail);
-        Op::CopyInstr((__ubuf__ uint16_t *)dstPtr, (__ubuf__ uint16_t *)srcPtr, numRow, dstRepeatSize, srcRepeatSize);
-    } else if constexpr (sizeof(T) == 1) {
-        if (numTail > 1) {
-            SetContMaskByDType<T>(numTail >> 1);
-            Op::CopyInstr((__ubuf__ uint16_t *)dstPtr, (__ubuf__ uint16_t *)srcPtr, numRow, dstRepeatSize, srcRepeatSize);
-        }
-        // vcopy(...) doesn't support b8 data type pointers. So in rare case of odd numTail we should additionally use
-        // scalar copy from src to dst for the last dst column
-        if (numTail % 2) {
-            // The sync is necessary for scalar copy to be after all vector ops
-            set_flag(PIPE_V, PIPE_S, EVENT_ID7);
-            wait_flag(PIPE_V, PIPE_S, EVENT_ID7);
-            for (unsigned i = 0; i < numRow; ++i) {
-                dstPtr[i * dstStride + numTail - 1] = srcPtr[i * srcStride + numTail - 1];
-            }
-            set_flag(PIPE_S, PIPE_V, EVENT_ID7);
-            wait_flag(PIPE_S, PIPE_V, EVENT_ID7);
-        }
-    } else {
-        static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TTRANS: Invalid data type.");
-    }
-}
-
-template <typename Op, typename T, unsigned dstStride, unsigned srcStride>
-PTO_INTERNAL void TransposeXTailSubtiles(
-    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numTailX, unsigned numSubtileY)
-{
-    if (numTailX == 0 || numSubtileY == 0) {
-        return;
-    }
-
-    constexpr uint16_t blockElemSize = BLOCK_BYTE_SIZE / sizeof(T);
-    constexpr uint16_t tmpStride = TMP_UB_SIZE / BLOCK_BYTE_SIZE / sizeof(T);  // 8KB/32B/sizeof(T) elements
-    constexpr uint16_t fullBurst = tmpStride / blockElemSize;
-    constexpr uint16_t dstFullGap = (uint16_t)(dstStride / blockElemSize) - fullBurst;
-    constexpr uint16_t tmpSubtilesMax = sizeof(T) == 1 ? tmpStride / 32 : tmpStride / 16;
-
-    __ubuf__ T *tmpPtr = (__ubuf__ T *)(TMP_UB_OFFSET);  // 8KB, start from 184KB, UB:192KB=184+8KB
-    const unsigned fullIterNum = numSubtileY / tmpSubtilesMax;
-    for (unsigned iter = 0; iter < fullIterNum; ++iter) {
-        TransposeFullSubTiles<Op, T, blockElemSize, tmpStride, srcStride>(
-            tmpPtr, (srcPtr + iter * tmpStride * srcStride), 1, tmpSubtilesMax);
-        pipe_barrier(PIPE_V);
-        copy_ubuf_to_ubuf((dstPtr + iter * tmpStride), tmpPtr, 0, numTailX, fullBurst, 0, dstFullGap);
-        pipe_barrier(PIPE_V);
-    }
-
-    uint16_t tmpSubtilesTail = numSubtileY % tmpSubtilesMax;
-    if (tmpSubtilesTail > 0) {
-        const uint16_t tailBurst =
-            sizeof(T) == 1 ? 32 * tmpSubtilesTail / blockElemSize : 16 * tmpSubtilesTail / blockElemSize;
-        const uint16_t tmpTailGap = tmpStride / blockElemSize - tailBurst;
-        const uint16_t dstTailGap = (uint16_t)(dstStride / blockElemSize) - tailBurst;
-        TransposeFullSubTiles<Op, T, blockElemSize, tmpStride, srcStride>(
-            tmpPtr, (srcPtr + fullIterNum * tmpStride * srcStride), 1, tmpSubtilesTail);
-        pipe_barrier(PIPE_V);
-        copy_ubuf_to_ubuf((dstPtr + fullIterNum * tmpStride), tmpPtr, 0, numTailX, tailBurst, tmpTailGap, dstTailGap);
-        pipe_barrier(PIPE_V);
-    }
-}
-
-template <typename Op, typename T, unsigned dstStride, unsigned srcStride>
-PTO_INTERNAL void TransposeYTailSubtiles(
-    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numSubtileX, unsigned numTailY)
-{
-    if (numSubtileX == 0 || numTailY == 0) {
-        return;
-    }
-
-    constexpr uint16_t blockElemSize = BLOCK_BYTE_SIZE / sizeof(T);
-    constexpr uint16_t tmpStride = sizeof(T) == 1 ? 32 : 16;
-    // Here we decrement tmpSubtilesMax to make sure the copying within TMP UB buffer (8KB)
-    // and tmpRowsMax within repeatTimes limit (255)
-    constexpr uint16_t tmpSubtilesMax = TMP_UB_SIZE / BLOCK_BYTE_SIZE / tmpStride - 1;  // 8KB/32B/tmpStride-1
-    constexpr uint16_t tmpRowsMax = tmpSubtilesMax * blockElemSize;
-    static_assert(tmpRowsMax <= REPEAT_MAX);
-
-    __ubuf__ T *tmpPtr = (__ubuf__ T *)(TMP_UB_OFFSET);  // 8KB, start from 184KB, UB:192KB=184+8KB
-    const unsigned fullIterNum = numSubtileX / tmpSubtilesMax;
-    for (unsigned iter = 0; iter < fullIterNum; ++iter) {
-        TransposeFullSubTiles<Op, T, blockElemSize, tmpStride, srcStride>(
-            tmpPtr, (srcPtr + iter * tmpRowsMax), tmpSubtilesMax, 1);
-        pipe_barrier(PIPE_V);
-        CopyRowsWithMask<Op, T, dstStride, tmpStride>(
-            (dstPtr + iter * tmpRowsMax * dstStride), tmpPtr, tmpRowsMax, numTailY);
-        pipe_barrier(PIPE_V);
-    }
-
-    int tmpSubtilesTail = numSubtileX % tmpSubtilesMax;
-    if (tmpSubtilesTail > 0) {
-        TransposeFullSubTiles<Op, T, blockElemSize, tmpStride, srcStride>(
-            tmpPtr, (srcPtr + fullIterNum * tmpSubtilesMax * blockElemSize), tmpSubtilesTail, 1);
-        pipe_barrier(PIPE_V);
-        CopyRowsWithMask<Op, T, dstStride, tmpStride>(
-            (dstPtr + fullIterNum * tmpRowsMax * dstStride), tmpPtr, tmpSubtilesTail * blockElemSize, numTailY);
-        pipe_barrier(PIPE_V);
-    }
-}
-
-template <typename Op, typename T, unsigned blockElemSize, unsigned dstStride, unsigned srcStride>
-PTO_INTERNAL void TransposeXYTailSubtile(
-    __ubuf__ T *dstPtr, __ubuf__ T *srcPtr, unsigned numTailX, unsigned numTailY)
-{
-    if (numTailX == 0 || numTailY == 0) {
-        return;
-    }
-
-    constexpr unsigned tmpStride = sizeof(T) == 1 ? 32 : 16;
-
-    __ubuf__ T *tmpPtr = (__ubuf__ T *)(TMP_UB_OFFSET);  // 8KB, start from 184KB, UB:192KB=184+8KB
-    TransposeFullSubTiles<Op, T, blockElemSize, tmpStride, srcStride>(tmpPtr, srcPtr, 1, 1);
-    pipe_barrier(PIPE_V);
-    CopyRowsWithMask<Op, T, dstStride, tmpStride>(dstPtr, tmpPtr, numTailX, numTailY);
-    pipe_barrier(PIPE_V);
-}
-
-template <typename TileData, unsigned dstStride, unsigned srcStride>
-__tf__ PTO_INTERNAL void TTrans(typename TileData::TileDType __out__ dst,
-    typename TileData::TileDType __in__ src, unsigned validRow, unsigned validCol)
-{
+template <typename TileData, unsigned blockSizeElem, unsigned dstStride, unsigned srcStride>
+__tf__ PTO_INTERNAL void TTrans(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src,
+    typename TileData::TileDType __in__ tmp, unsigned validRow, unsigned validCol) {
     using T = typename TileData::DType;
-    constexpr unsigned blockElemSize = BLOCK_BYTE_SIZE / sizeof(T);
-
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
+    __ubuf__ T *tmpPtr = (__ubuf__ T *)__cce_get_tile_ptr(tmp);
 
-    const unsigned numFullSubtileX = validCol / blockElemSize;
-    const unsigned numTailX = validCol % blockElemSize;
-    const unsigned numFullSubtileY = (sizeof(T) == 1) ? validRow / 32 : validRow / 16;
-    const unsigned numTailY = (sizeof(T) == 1) ? validRow % 32 : validRow % 16;
+    constexpr unsigned yTileSizeElem = (sizeof(T) == 1) ? 32 : 16;
+    int numSubTileX = (validCol + blockSizeElem - 1) / blockSizeElem;
+    int numSubTileY = validRow / yTileSizeElem;
+    int remain_y = validRow % yTileSizeElem;
 
-    TransposeFullSubTiles<TransOp<T>, T, blockElemSize, dstStride, srcStride>(
-        dstPtr, srcPtr, numFullSubtileX, numFullSubtileY);
+    const unsigned tmpStride = (sizeof(T) == 1) ? (validRow + 31) / 32 * 32 : (validRow + 15) / 16 * 16;
 
-    TransposeXTailSubtiles<TransOp<T>, T, dstStride, srcStride>(
-        dstPtr + (validCol - numTailX) * dstStride, srcPtr + (validCol - numTailX), numTailX, numFullSubtileY);
-
-    TransposeYTailSubtiles<TransOp<T>, T, dstStride, srcStride>(
-        dstPtr + (validRow - numTailY), srcPtr + (validRow - numTailY) * srcStride, numFullSubtileX, numTailY);
-
-    TransposeXYTailSubtile<TransOp<T>, T, blockElemSize, dstStride, srcStride>(
-        dstPtr + (validCol - numTailX) * dstStride + (validRow - numTailY),
-        srcPtr + (validRow - numTailY) * srcStride + (validCol - numTailX),
-        numTailX, numTailY);
+    if constexpr (sizeof(T) == 4) { // b32
+        TransB32FullSubTiles<TransOp<T>, T, blockSizeElem, dstStride, srcStride>(
+            dstPtr, srcPtr, numSubTileX, numSubTileY);
+        TransB32YTailTiles<TransOp<T>, T, blockSizeElem, srcStride>(
+            tmpPtr, srcPtr, tmpStride, numSubTileX, numSubTileY, remain_y);
+        CopyB32Tail<TransOp<T>, T, blockSizeElem, dstStride>(dstPtr, tmpPtr, tmpStride, validRow, validCol, remain_y);
+    } else if constexpr (sizeof(T) == 2) { // b16
+        TransB16FullSubTiles<TransOp<T>, T, blockSizeElem, dstStride, srcStride>(
+            dstPtr, srcPtr, numSubTileX, numSubTileY);
+        TransB16YTailTiles<TransOp<T>, T, blockSizeElem, dstStride, srcStride>(
+            dstPtr, srcPtr, numSubTileX, numSubTileY, remain_y);
+    } else if constexpr (sizeof(T) == 1) { // b8
+        TransB8FullSubTiles<TransOp<T>, T, blockSizeElem, dstStride, srcStride>(
+            dstPtr, srcPtr, numSubTileX, numSubTileY);
+        TransB8YTailTiles<TransOp<T>, T, blockSizeElem, dstStride, srcStride>(
+            dstPtr, srcPtr, numSubTileX, numSubTileY, remain_y);
+    } else {
+        static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TTRANS: Invalid data type.");
+    }
 }
 
-template <typename TileDataDst, typename TileDataSrc>
-PTO_INTERNAL void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src)
-{
-    using T = typename TileDataSrc::DType;
-    static_assert( sizeof(T) == sizeof(typename TileDataDst::DType), "TTRANS: Inconsistent data types.");
-    static_assert(TileDataSrc::isRowMajor, "TTRANS: Inconsistent source Layout type.");
-    static_assert(TileDataDst::isRowMajor, "TTRANS: Inconsistent destination Layout type.");
-
+template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
+PTO_INTERNAL void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp) {
+    using TS = typename TileDataSrc::DType;
+    using TD = typename TileDataDst::DType;
+    static_assert(sizeof(TS) == sizeof(TD), "TTRANS: Inconsistent input and output data types.");
+    static_assert(TileDataSrc::isRowMajor, "TTRANS: not supported Layout type.");
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(TS);
     constexpr unsigned dstStride = TileDataDst::RowStride;
     constexpr unsigned srcStride = TileDataSrc::RowStride;
     unsigned validRow = src.GetValidRow();
     unsigned validCol = src.GetValidCol();
-    TTrans<TileDataSrc, dstStride, srcStride>(dst.data(), src.data(), validRow, validCol);
+    TTrans<TileDataSrc, blockSizeElem, dstStride, srcStride>(dst.data(), src.data(), tmp.data(), validRow, validCol);
 }
-}  // namespace pto
+} // namespace pto
 #endif

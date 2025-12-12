@@ -115,8 +115,8 @@ namespace pto {
         }
     }
 
-    template <typename TileDataDst, typename TileDataSrc>
-    PTO_INTERNAL void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src) {
+    template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
+    PTO_INTERNAL void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp) {
 
         using T = typename TileDataSrc::DType; 
 
