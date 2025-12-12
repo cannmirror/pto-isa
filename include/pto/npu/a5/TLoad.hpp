@@ -141,7 +141,8 @@ PTO_INTERNAL void TLoadVecNZ2NZ(typename TileData::TileDType dstAddr, typename G
 }
 
 template <typename TileData, typename GlobalData>
-__tf__ PTO_INTERNAL void TLoad(typename TileData::TileDType __out__ dst,
+__tf__ PTO_INTERNAL OP_NAME(TLOAD) OP_TYPE(memory)
+void TLoad(typename TileData::TileDType __out__ dst,
     typename GlobalData::DType __in__ *src, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
     int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {

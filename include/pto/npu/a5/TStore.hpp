@@ -387,7 +387,8 @@ PTO_INTERNAL void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ubuf__ type
     }
 }
 template <typename GlobalData, typename TileData>
-__tf__ AICORE void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+__tf__ AICORE OP_NAME(TSTORE) OP_TYPE(memory)
+void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {

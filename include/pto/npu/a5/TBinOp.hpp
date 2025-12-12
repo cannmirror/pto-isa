@@ -21,7 +21,7 @@ using namespace std;
 
 namespace pto {
 
-enum class BinOpsImpl : uint8_t {
+enum class BinOpsImpl : unsigned {
   BinOpsIMPL_DEFAULT = 0,
   BinOpsIMPL_1D_NO_POST_UPDATE = 1,
   BinOpsIMPL_2D_NO_POST_UPDATE = 2,
@@ -148,52 +148,40 @@ void TBinOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr,
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1,
-                            unsigned kValidRows, unsigned kValidCols, BinOpsImpl version) {
+PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileData::DType *dstPtr, 
+                              __ubuf__ typename TileData::DType *src0Ptr, 
+                              __ubuf__ typename TileData::DType *src1Ptr,
+                              unsigned kValidRows, unsigned kValidCols, BinOpsImpl version) {
     using T = typename TileData::DType;
     if constexpr (TileData::ValidCol == TileData::Cols) {
         switch (version) {
-        case BinOpsImpl::BinOpsIMPL_DEFAULT:
-            TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-            break;
         case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
+            TBinOps_1D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols);
+            break;
         case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
-            TBinOps_1D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
+            TBinOps_2D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols);
+            break;
+        case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
+            TBinOps_2D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols);
             break;
         case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-        case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
+        case BinOpsImpl::BinOpsIMPL_DEFAULT:
         default:
-            TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
+            TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols);
             break;
         }
     } else {
-        if (TileData::Cols == kValidCols) {
-            switch (version) {
-            case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
-            case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
-                TBinOps_1D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                break;
-            case BinOpsImpl::BinOpsIMPL_DEFAULT:
-            case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-            case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
-            default:
-                TBinOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                break;
-            }  
-        }
-        else {
-            switch (version) {
-            case BinOpsImpl::BinOpsIMPL_DEFAULT:
-            case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
-            case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
-                TBinOps_2D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                break;
-            case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-            case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
-            default:
-                TBinOps_2D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, kValidRows, kValidCols);
-                break;
-            }  
+        switch (version) {
+        case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
+        case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
+            TBinOps_2D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols);
+            break;
+        case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
+        case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
+        case BinOpsImpl::BinOpsIMPL_DEFAULT:
+        default:
+            TBinOps_2D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols);
+            break;
         }
     }
 }

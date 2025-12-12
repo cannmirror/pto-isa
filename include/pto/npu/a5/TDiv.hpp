@@ -29,7 +29,7 @@ namespace pto {
     };
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __tf__ PTO_INTERNAL
+    __tf__ PTO_INTERNAL OP_NAME(TDIV) OP_TYPE(element_wise)
     void TDiv(typename TileData::TileDType __out__ dst, 
                                 typename TileData::TileDType __in__ src0, 
                                 typename TileData::TileDType __in__ src1,
