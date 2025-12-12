@@ -31,15 +31,15 @@ inline AICORE void runTTRANS( __gm__ T __out__ *out, __gm__ T __in__ *src) {
 
     using TileDataSrc = Tile<TileType::Vec, T, kTRows_, aligned_Cols, BLayout::RowMajor>;
     using TileDataDst = Tile<TileType::Vec, T, kTCols_, aligned_Rows, BLayout::RowMajor>;
+    using TileDataTmp = Tile<TileType::Vec, T, kTCols_, aligned_Rows, BLayout::RowMajor>;
 
     TileDataSrc srcTile;
     TileDataDst dstTile;
+    TileDataDst tmpTile;
 
-
-    // TASSIGN(srcTile, 0x0 + 0x1000 * block_idx);
-    // TASSIGN(dstTile, 0x8000 + 0x1000 * block_idx);
     TASSIGN(srcTile, 0x0);
     TASSIGN(dstTile, 0x20000);
+    TASSIGN(tmpTile, 0x30000);
 
     int offset = 0;
 
@@ -56,7 +56,7 @@ inline AICORE void runTTRANS( __gm__ T __out__ *out, __gm__ T __in__ *src) {
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
 
-    TTRANS(dstTile, srcTile);
+    TTRANS(dstTile, srcTile, tmpTile);
 
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);

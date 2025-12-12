@@ -24,19 +24,29 @@ __global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, in
     using DynStrideDst = pto::Stride<-1, -1, -1, -1, -1>;
     using GlobalDataDst = GlobalTensor<T, DynShapeDst, DynStrideDst>;
 
-    constexpr int kTCols_aligned = (kTCols_ * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
-    constexpr int kTRows_aligned = (kTRows_ * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr int kTCols_aligned =
+        (kTCols_ * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr int kTRows_aligned =
+        (kTRows_ * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
     using TileDataSrc = Tile<TileType::Vec, T, kTRows_, kTCols_aligned, BLayout::RowMajor, -1, -1>;
     using TileDataDst = Tile<TileType::Vec, T, kTCols_, kTRows_aligned, BLayout::RowMajor, -1, -1>;
+    constexpr int tmpRows_aligned = kTCols_;
+    constexpr unsigned yTileSizeElem = (sizeof(T) == 1) ? 32 : 16;
+    constexpr int tmpCols_aligned = (kTRows_ + yTileSizeElem - 1) / yTileSizeElem * yTileSizeElem;
+    using TileDataTmp =
+        Tile<TileType::Vec, T, tmpRows_aligned, tmpCols_aligned, BLayout::RowMajor, tmpRows_aligned, tmpCols_aligned>;
 
     TileDataSrc srcTile(vRows, vCols);
     TileDataDst dstTile(vCols, vRows);
+    TileDataTmp tmpTile;
 
     constexpr uint32_t alignedSrcTileSize = (kTRows_ * kTCols_aligned * sizeof(T) + 0x1FF) / 0x200 * 0x200;
     constexpr uint32_t alignedDstTileSize = (kTCols_ * kTRows_aligned * sizeof(T) + 0x1FF) / 0x200 * 0x200;
-    static_assert(alignedSrcTileSize + alignedDstTileSize <= TMP_UB_OFFSET);
+    constexpr uint32_t alignedTmpTileSize = (tmpRows_aligned * tmpCols_aligned * sizeof(T) + 0x1FF) / 0x200 * 0x200;
+    static_assert(alignedSrcTileSize + alignedDstTileSize + alignedTmpTileSize <= 192 * 1024);
     TASSIGN(srcTile, 0x0);
     TASSIGN(dstTile, alignedSrcTileSize);
+    TASSIGN(tmpTile, alignedSrcTileSize + alignedDstTileSize);
 
     GlobalDataSrc srcGlobal(src, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride(1, 1, 1, kGCols_, kGRows_));
     GlobalDataDst dstGlobal(out, pto::Shape(1, 1, 1, vCols, vRows), pto::Stride(1, 1, 1, kGRows_, kGCols_));
@@ -44,18 +54,17 @@ __global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, in
     TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    TTRANS(dstTile, srcTile);
+    TTRANS(dstTile, srcTile, tmpTile);
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);
 }
 
 template <typename T, int tRows, int tCols, int vRows, int vCols>
-void LaunchTTRANS(T *out, T *src, void *stream)
-{
-    if constexpr ( std::is_same_v<T, aclFloat16> ){
-        runTTRANS<half, tRows, tCols, vRows, vCols><<<1, nullptr, stream>>>((half*)(out), (half*)(src), vRows, vCols);
-    }else {
+void LaunchTTRANS(T *out, T *src, void *stream) {
+    if constexpr (std::is_same_v<T, aclFloat16>) {
+        runTTRANS<half, tRows, tCols, vRows, vCols><<<1, nullptr, stream>>>((half *)(out), (half *)(src), vRows, vCols);
+    } else {
         runTTRANS<T, tRows, tCols, vRows, vCols><<<1, nullptr, stream>>>(out, src, vRows, vCols);
     }
 }
