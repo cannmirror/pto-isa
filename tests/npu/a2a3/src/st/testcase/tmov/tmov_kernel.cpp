@@ -75,7 +75,7 @@ template <typename cType, typename aType, typename bType, typename biasInputType
 __global__ AICORE void TMOV2BiasKernel(
     __gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ biasInputType *src2)
 {
-    // The bias address needs to be 64B aligned.
+    // The bias addr needs to be 64B aligned.
     constexpr int alignBiasN =
         ((N * sizeof(biasInputType) + BIAS_ALIGN - 1) / BIAS_ALIGN) * BIAS_ALIGN / sizeof(biasInputType);
     using GlobalDataSrc0 = std::conditional_t<isAtranspose,
@@ -155,7 +155,7 @@ template <typename cType, typename aType, typename bType, typename biasInputType
 __global__ AICORE void TMOV2BiasDyncmicKernel(
     __gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ biasInputType *src2, int m, int n, int k)
 {
-    // The bias address needs to be 64B aligned.
+    // The bias addr needs to be 64B aligned.
     constexpr int alignN =
         ((N * sizeof(biasInputType) + BIAS_ALIGN - 1) / BIAS_ALIGN) * BIAS_ALIGN / sizeof(biasInputType);
     using DynShapeBiasDim5 = pto::Shape<1, 1, 1, 1, alignN>;
@@ -321,10 +321,10 @@ template <typename cType, typename aType, typename bType, typename biasInputType
 __global__ AICORE void TMOV2BiasAndScalingDyncmicKernel(__gm__ cType *out, __gm__ aType *src0, __gm__ bType *src1,
     __gm__ biasInputType *src2, __gm__ scalingType *src3, int m, int n, int k)
 {
-    // The bias address needs to be 64B aligned.
+    // The bias addr needs to be 64B aligned.
     constexpr int alignBiasN =
         ((N * sizeof(biasInputType) + BIAS_ALIGN - 1) / BIAS_ALIGN) * BIAS_ALIGN / sizeof(biasInputType);
-    // The Scaling address needs to be 128B aligned.
+    // The Scaling addr needs to be 128B aligned.
     constexpr int alignScalingN =
         ((N * sizeof(scalingType) + SCALING_ALIGN - 1) / SCALING_ALIGN) * SCALING_ALIGN / sizeof(scalingType);
 

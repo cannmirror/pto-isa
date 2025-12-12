@@ -189,13 +189,13 @@ def gen_golden_data(case_name, param):
     
     biasNAlign = n
     scalingNAlign = n
-    # The bias address needs to be 64B aligned.
+    # The bias addr needs to be 64B aligned.
     if bias_type == np.float16:
         biasNAlign = (int)((np.ceil((n * 2) / 64) * 64) / 2)
     elif bias_type == np.float32 or bias_type == np.int32:
         biasNAlign = (int)((np.ceil((n * 4) / 64) * 64) / 4)
 
-    # The scaling address needs to be 128B aligned.
+    # The scaling addr needs to be 128B aligned.
     scalingNAlign = (int)((np.ceil((n * 8) / 128) * 128) / 8)
 
     x1_gm = np.random.randint(-1, 10, [m, k]).astype(src_type)

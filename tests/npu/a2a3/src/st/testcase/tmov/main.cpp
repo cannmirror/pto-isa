@@ -38,9 +38,9 @@ template <typename AT, typename BT, typename L0CT, typename BiasT, typename GMT,
     int IsTransA, int IsTransB, int IsBias, int IsQuant, int ReluMode = 0, int Isdynamic = 0, int IsNd = 1>
 void test_tmov()
 {
-    // The bias address needs to be 64B aligned.
+    // The bias addr needs to be 64B aligned.
     uint32_t alignBiasN = (N * sizeof(BiasT) + 63) / 64 * 64 / sizeof(BiasT);
-    // The Scaling address needs to be 128B aligned.
+    // The Scaling addr needs to be 128B aligned.
     uint32_t alignFbN = (N * sizeof(ScalingT) + 127) / 128 * 128 / sizeof(ScalingT);
     size_t aFileSize = M * K * sizeof(AT); // uint16_t represent half
     size_t bFileSize = K * N * sizeof(BT); // uint16_t represent half

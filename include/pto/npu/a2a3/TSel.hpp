@@ -34,7 +34,7 @@ void TSel(typename TileData::TileDType __out__ dst, typename MaskTile::TileDType
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
         __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
         uint32_t maskPtr = static_cast<uint32_t>(reinterpret_cast<int64_t>(reinterpret_cast<__ubuf__ int64_t*>(__cce_get_tile_ptr(selMask))));
-        __ubuf__ uint32_t *cmpMaskPtr = reinterpret_cast<__ubuf__ uint32_t *>(get_imm(TMP_UB_OFFSET));  // 8KB tmpbuf address
+        __ubuf__ uint32_t *cmpMaskPtr = reinterpret_cast<__ubuf__ uint32_t *>(get_imm(TMP_UB_OFFSET));  // 8KB tmpbuf addr
 
         set_mask_count();
         for (unsigned i = 0; i < validRow; i++) {
