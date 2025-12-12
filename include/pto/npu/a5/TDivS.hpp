@@ -40,16 +40,16 @@ namespace pto {
             else if constexpr (std::is_same<T, int32_t>::value)
             {
                 RegTensor<float> tempDst;
-                vcvt(tempDst, vregsrc, preg, RoundRType());
+                vcvt(tempDst, vregsrc, preg, ROUND_R);
                 vmuls(tempDst, tempDst, divider, preg);
-                vcvt(vregdst, tempDst, preg, RoundZType(), RS_ENABLE);
+                vcvt(vregdst, tempDst, preg, ROUND_Z, RS_ENABLE);
             }
             else if constexpr (std::is_same<T, int16_t>::value)
             {
                 RegTensor<half> tempDst;
-                vcvt(tempDst, vregsrc, preg, RoundRType());
+                vcvt(tempDst, vregsrc, preg, ROUND_R);
                 vmuls(tempDst, tempDst, divider, preg);
-                vcvt(vregdst, tempDst, preg, RoundZType(), RS_ENABLE);
+                vcvt(vregdst, tempDst, preg, ROUND_Z, RS_ENABLE);
             }
         }
     };
@@ -67,20 +67,20 @@ namespace pto {
                 RegTensor<float> tempDst;
                 RegTensor<float> tempSrc;
                 vdup(vregdst, src0, preg, MODE_ZEROING);
-                vcvt(tempDst, vregdst, preg, RoundRType());
-                vcvt(tempSrc, vregsrc, preg, RoundRType());
+                vcvt(tempDst, vregdst, preg, ROUND_R);
+                vcvt(tempSrc, vregsrc, preg, ROUND_R);
                 vdiv(tempDst, tempDst, tempSrc, preg);
-                vcvt(vregdst, tempDst, preg, RoundZType(), RS_ENABLE);
+                vcvt(vregdst, tempDst, preg, ROUND_Z, RS_ENABLE);
             }
             else if constexpr (std::is_same<T, int16_t>::value)
             {
                 RegTensor<half> tempDst;
                 RegTensor<half> tempSrc;
                 vdup(vregdst, src0, preg, MODE_ZEROING);
-                vcvt(tempDst, vregdst, preg, RoundRType());
-                vcvt(tempSrc, vregsrc, preg, RoundRType());
+                vcvt(tempDst, vregdst, preg, ROUND_R);
+                vcvt(tempSrc, vregsrc, preg, ROUND_R);
                 vdiv(tempDst, tempDst, tempSrc, preg);
-                vcvt(vregdst, tempDst, preg, RoundZType(), RS_ENABLE);
+                vcvt(vregdst, tempDst, preg, ROUND_Z, RS_ENABLE);
             }
         }
     };
