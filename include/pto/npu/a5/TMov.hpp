@@ -211,7 +211,7 @@ PTO_INTERNAL void CheckTMovL0cToUBValid()
 }
 
 template <typename DstTileData, typename SrcTileData>
-AICORE void TMovToVec(DstTileData &dst, SrcTileData &src) {
+__tf__ PTO_INTERNAL void TMovToVec(DstTileData &dst, SrcTileData &src) {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename SrcTileData::DType);
     constexpr unsigned dstStride = DstTileData::RowStride;
     constexpr unsigned srcStride = SrcTileData::RowStride;

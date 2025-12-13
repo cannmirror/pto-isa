@@ -46,6 +46,11 @@ __global__ AICORE void runTMOV(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     out = dstGlobal.data();
 }
 
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void launchTMOV(T *out, T *src, void *stream) {
+    runTMOV<T, kGRows_, kGCols_, kTRows_, kTCols_>
+        <<<1, nullptr, stream>>>(out, src);
+}
 
 template void launchTMOV<float, 64, 64, 64, 64>(float *out, float *src, void *stream);
 template void launchTMOV<aclFloat16, 64, 64, 64, 64>(aclFloat16 *out, aclFloat16 *src, void *stream);
@@ -67,8 +72,3 @@ template void launchTMOV<float, 128, 64, 128, 64>(float *out, float *src, void *
 template void launchTMOV<aclFloat16, 128, 64, 128, 64>(aclFloat16 *out, aclFloat16 *src, void *stream);
 template void launchTMOV<uint8_t, 128, 64, 128, 64>(uint8_t *out, uint8_t *src, void *stream);
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-void launchTMOV(T *out, T *src, void *stream) {
-    runTMOV<T, kGRows_, kGCols_, kTRows_, kTCols_>
-        <<<1, nullptr, stream>>>(out, src);
-}
