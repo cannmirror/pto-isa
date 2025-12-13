@@ -53,7 +53,7 @@ void TPartMax(typename TileDataDst::TileDType __out__ dst,
         TPartInstr<PartMaxOp<T>, T, dstCol, src0Col, dstRow, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride,
              src1RowStride>(dstPtr, src0Ptr, src1Ptr, src0ValidRow, src0ValidCol, src1ValidRow, src1ValidCol,
              dstValidRow, dstValidCol);
-    } else {
+    } else if (condSrc1EqDst) {
         TPartInstr<PartMaxOp<T>, T, dstCol, src1Col, dstRow, elementsPerRepeat, blockSizeElem, dstRowStride, src1RowStride,
              src0RowStride>(dstPtr, src1Ptr, src0Ptr, src1ValidRow, src1ValidCol, src0ValidRow, src0ValidCol,
              dstValidRow, dstValidCol);
@@ -85,8 +85,9 @@ void TPARTMAX_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
     unsigned src1ValidCol = src1.GetValidCol();
     unsigned dstValidRow = dst.GetValidRow();
     unsigned dstValidCol = dst.GetValidCol();
-    PTO_ASSERT(dstValidRow != static_cast<unsigned>(0) && dstValidCol != static_cast<unsigned>(0),
-        "TPARTMAX: invalid dst valid shape.");
+    if (dstValidRow == 0 || dstValidCol == 0) {
+        return;
+    }
     constexpr unsigned dstRowStride = TileDataDst::RowStride;
     constexpr unsigned src0RowStride = TileDataSrc0::RowStride;
     constexpr unsigned src1RowStride = TileDataSrc1::RowStride;
