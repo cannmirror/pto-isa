@@ -216,13 +216,13 @@ template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride>
 PTO_INTERNAL void CopyB32Tail(__ubuf__ T *dstPtr, __ubuf__ T *tmpPtr, unsigned tmpStride, unsigned validRow,
     unsigned validCol, unsigned remain_y) {
     if (remain_y > 0) {
-        // cpy tmp to dst
-        const uint16_t srcGap = tmpStride * sizeof(T) / BLOCK_BYTE_SIZE;
-        constexpr uint16_t dstGap = dstStride * sizeof(T) / BLOCK_BYTE_SIZE;
+        // copy tmp to dst
+        const uint16_t srcRepeatStride = tmpStride * sizeof(T) / BLOCK_BYTE_SIZE;
+        constexpr uint16_t dstRepeatStride = dstStride * sizeof(T) / BLOCK_BYTE_SIZE;
         SetContMaskByDType<T>(remain_y);
         pipe_barrier(PIPE_V);
         Op::CopyInstr((__ubuf__ uint32_t *)(dstPtr + (validRow - remain_y)), (__ubuf__ uint32_t *)(tmpPtr), validCol,
-            dstGap, srcGap);
+            dstRepeatStride, srcRepeatStride);
     }
 }
 
@@ -239,7 +239,7 @@ __tf__ PTO_INTERNAL void TTrans(typename TileData::TileDType __out__ dst, typena
     int numSubTileY = validRow / yTileSizeElem;
     int remain_y = validRow % yTileSizeElem;
 
-    const unsigned tmpStride = (sizeof(T) == 1) ? (validRow + 31) / 32 * 32 : (validRow + 15) / 16 * 16;
+    const unsigned tmpStride = (sizeof(T) == 1) ? (remain_y + 31) / 32 * 32 : (remain_y + 15) / 16 * 16;
 
     if constexpr (sizeof(T) == 4) { // b32
         TransB32FullSubTiles<TransOp<T>, T, blockSizeElem, dstStride, srcStride>(

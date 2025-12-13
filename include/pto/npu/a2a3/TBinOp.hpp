@@ -20,8 +20,7 @@ constexpr unsigned SMALL_RPT = 4;
 
 template <typename Op, typename T>
 PTO_INTERNAL void Bin1LCountMode(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol)
-{
+    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
     set_mask_count();
     SetVectorCount(validRow * validCol);
     Op::BinInstr(dstPtr, src0Ptr, src1Ptr, 0);
@@ -31,8 +30,7 @@ PTO_INTERNAL void Bin1LCountMode(
 
 template <typename Op, typename T, unsigned rowStride>
 PTO_INTERNAL void Bin2LCountMode(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol)
-{
+    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
     set_mask_count();
     SetVectorCount(validCol);
     for (unsigned i = 0; i < validRow; i++) {
@@ -45,11 +43,10 @@ PTO_INTERNAL void Bin2LCountMode(
 
 template <typename Op, typename T, unsigned elementsPerRepeat>
 PTO_INTERNAL void Bin1LNormMode(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol)
-{
-    unsigned numElements = validRow * validCol;  
-    unsigned headRepeats = numElements / elementsPerRepeat; 
-    unsigned tailElements = numElements % elementsPerRepeat; 
+    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
+    unsigned numElements = validRow * validCol;
+    unsigned headRepeats = numElements / elementsPerRepeat;
+    unsigned tailElements = numElements % elementsPerRepeat;
     Op::BinInstr(dstPtr, src0Ptr, src1Ptr, headRepeats); // headRepeats can be zero
     if (tailElements) {
         unsigned offset = headRepeats * elementsPerRepeat;
@@ -61,8 +58,7 @@ PTO_INTERNAL void Bin1LNormMode(
 
 template <typename Op, typename T, unsigned elementsPerRepeat, unsigned rowStride>
 PTO_INTERNAL void Bin2LNormModeColVLAlign(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol)
-{
+    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
     unsigned headRepeats = validCol / elementsPerRepeat;
     for (unsigned i = 0; i < validRow; i++) {
         unsigned offset = i * rowStride;
@@ -72,8 +68,7 @@ PTO_INTERNAL void Bin2LNormModeColVLAlign(
 
 template <typename Op, typename T, unsigned Rows, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
 PTO_INTERNAL void Bin2LNormModeHead(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned numRepeatPerLine)
-{
+    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned numRepeatPerLine) {
     if (numRepeatPerLine > 0) {
         unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
         unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
@@ -94,8 +89,7 @@ PTO_INTERNAL void Bin2LNormModeHead(
 
 template <typename Op, typename T, unsigned Rows, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
 PTO_INTERNAL void Bin2LNormModeTail(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned numRemainPerLine)
-{
+    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned numRemainPerLine) {
     unsigned numLoop = 0;
     unsigned remainAfterLoop = validRow;
     constexpr bool strideOverFlag = (stride / blockSizeElem > REPEAT_STRIDE_MAX);
@@ -111,8 +105,8 @@ PTO_INTERNAL void Bin2LNormModeTail(
             } else {
                 unsigned offset = i * REPEAT_MAX * stride;
                 uint8_t repeatStride = stride / blockSizeElem;
-                Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset,
-                            REPEAT_MAX, repeatStride, repeatStride, repeatStride);
+                Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset, REPEAT_MAX, repeatStride,
+                    repeatStride, repeatStride);
             }
         }
         remainAfterLoop = validRow % REPEAT_MAX;
@@ -126,34 +120,33 @@ PTO_INTERNAL void Bin2LNormModeTail(
         } else {
             unsigned offset = numLoop * REPEAT_MAX * stride;
             uint8_t repeatStride = stride / blockSizeElem;
-            Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset,
-                    remainAfterLoop, repeatStride, repeatStride, repeatStride);
+            Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset, remainAfterLoop, repeatStride,
+                repeatStride, repeatStride);
         }
     }
     SetFullVecMaskByDType<T>();
 }
 
-
-template <typename Op, typename T, unsigned Rows, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
+template <typename Op, typename T, unsigned Rows, unsigned elementsPerRepeat, unsigned blockSizeElem,
+    unsigned rowStride>
 PTO_INTERNAL void Bin2LNormModeRowRpt(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol)
-{
+    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
     constexpr unsigned repeatStride = rowStride / blockSizeElem;
     constexpr bool condRowRpt = ((Rows <= pto::REPEAT_MAX) && (repeatStride <= REPEAT_STRIDE_MAX));
-    if constexpr (condRowRpt) { 
-        unsigned numLoop = validCol / elementsPerRepeat; 
-        unsigned tailElements = validCol % elementsPerRepeat; 
+    if constexpr (condRowRpt) {
+        unsigned numLoop = validCol / elementsPerRepeat;
+        unsigned tailElements = validCol % elementsPerRepeat;
         for (unsigned i = 0; i < numLoop; i++) {
             unsigned offset = i * elementsPerRepeat;
-            Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset,
-                        validRow, repeatStride, repeatStride, repeatStride);
+            Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset, validRow, repeatStride, repeatStride,
+                repeatStride);
         }
 
         if (tailElements) {
             unsigned offset = numLoop * elementsPerRepeat;
             SetContMaskByDType<T>(tailElements);
-            Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset,
-                        validRow, repeatStride, repeatStride, repeatStride);
+            Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset, validRow, repeatStride, repeatStride,
+                repeatStride);
             SetFullVecMaskByDType<T>();
         }
     } else {
@@ -161,28 +154,29 @@ PTO_INTERNAL void Bin2LNormModeRowRpt(
         if constexpr (Rows > elementsPerRepeat) {
             unsigned numRepeatPerLine = validCol / elementsPerRepeat;
             numRemainPerLine = validCol % elementsPerRepeat;
-            Bin2LNormModeHead<Op, T, Rows, elementsPerRepeat, blockSizeElem, rowStride>
-                (dstPtr, src0Ptr, src1Ptr, validRow, numRepeatPerLine);
+            Bin2LNormModeHead<Op, T, Rows, elementsPerRepeat, blockSizeElem, rowStride>(
+                dstPtr, src0Ptr, src1Ptr, validRow, numRepeatPerLine);
             unsigned offset = numRepeatPerLine * elementsPerRepeat;
-            dstPtr += offset; src0Ptr += offset; src1Ptr += offset;
+            dstPtr += offset;
+            src0Ptr += offset;
+            src1Ptr += offset;
         }
-        if (numRemainPerLine){
-            Bin2LNormModeTail<Op, T, Rows, elementsPerRepeat, blockSizeElem, rowStride>
-                (dstPtr, src0Ptr, src1Ptr, validRow, numRemainPerLine);
+        if (numRemainPerLine) {
+            Bin2LNormModeTail<Op, T, Rows, elementsPerRepeat, blockSizeElem, rowStride>(
+                dstPtr, src0Ptr, src1Ptr, validRow, numRemainPerLine);
         }
     }
 }
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileData::DType *dstPtr,
-    __ubuf__ typename TileData::DType *src0Ptr, __ubuf__ typename TileData::DType *src1Ptr, unsigned validRow,
-    unsigned validCol)
-{
+PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileData::DType *dstPtr, __ubuf__ typename TileData::DType *src0Ptr,
+    __ubuf__ typename TileData::DType *src1Ptr, unsigned validRow, unsigned validCol) {
     using T = typename TileData::DType;
     // continuous check in compile time
     if constexpr ((TileData::Cols == TileData::ValidCol) || (TileData::Rows == 1)) {
         constexpr unsigned totalRepeats = (TileData::Rows * TileData::Cols + elementsPerRepeat - 1) / elementsPerRepeat;
-        if constexpr (totalRepeats > pto::REPEAT_MAX) {  // comments: [1, 96] (non-VL aligned can go into this branch)
+        constexpr bool nonVLAligned = ((TileData::Cols % elementsPerRepeat) != 0);
+        if constexpr (nonVLAligned || (totalRepeats > pto::REPEAT_MAX)) {
             Bin1LCountMode<Op, T>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
         } else {
             Bin1LNormMode<Op, T, elementsPerRepeat>(dstPtr, src0Ptr, src1Ptr, validRow, TileData::Cols);
@@ -191,16 +185,17 @@ PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileData::DType *dstPtr,
         // continuous check in runtime(merge axis)
         if ((TileData::Cols == validCol) || (validRow == 1)) {
             unsigned totalRepeats = (validRow * validCol + elementsPerRepeat - 1) / elementsPerRepeat;
-            if (totalRepeats > pto::REPEAT_MAX) {
+            bool nonVLAligned = ((validCol % elementsPerRepeat) != 0);
+            if (nonVLAligned || (totalRepeats > pto::REPEAT_MAX)) {
                 Bin1LCountMode<Op, T>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
             } else {
                 Bin1LNormMode<Op, T, elementsPerRepeat>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
             }
-        } else {  // not - continuous
+        } else { // not - continuous
             constexpr unsigned normColRepeat = TileData::Cols / elementsPerRepeat;
             if constexpr ((normColRepeat > 1) && ((TileData::Rows * normColRepeat) < SMALL_RPT)) {
                 Bin2LCountMode<Op, T, rowStride>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
-            } else if constexpr (TileData::Rows < (normColRepeat + 1)) { 
+            } else if constexpr (TileData::Rows < (normColRepeat + 1)) {
                 unsigned tailElements = validCol % elementsPerRepeat;
                 if (tailElements) {
                     Bin2LCountMode<Op, T, rowStride>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
@@ -216,5 +211,5 @@ PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileData::DType *dstPtr,
     }
 }
 
-}  // namespace pto
+} // namespace pto
 #endif
