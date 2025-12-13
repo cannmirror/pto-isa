@@ -26,7 +26,7 @@ def gen_golden_data_tsel(param):
     input0 = np.random.rand(row * col).astype(dtype)
     input1 = np.random.rand(row * col).astype(dtype)
     mask_size = row * mask_col
-    mask = np.random.randint(0, 255, size = mask_size, dtype=np.uint8)
+    mask = np.random.randint(0, 255, size=mask_size, dtype=np.uint8)
     golden = np.zeros(row * col).astype(dtype)
 
     i = 0

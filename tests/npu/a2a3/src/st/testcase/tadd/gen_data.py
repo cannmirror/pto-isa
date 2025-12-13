@@ -53,6 +53,7 @@ class TAddParams:
         self.valid_row = valid_row
         self.valid_col = valid_col
 
+
 def generate_case_name(param):
     dtype_str = {
         np.float32: 'float',
