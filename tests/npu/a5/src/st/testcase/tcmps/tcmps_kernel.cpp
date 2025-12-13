@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, CmpMode cmpMode>
-__global__ AICORE void runTCmps( __gm__ uint32_t __out__ *out, __gm__ T __in__ *src0,  T src1) {
+__global__ AICORE void runTCmps( __gm__ uint32_t __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kTCols_, 1>;
     using GlobalData_src0 = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
@@ -33,7 +33,7 @@ __global__ AICORE void runTCmps( __gm__ uint32_t __out__ *out, __gm__ T __in__ *
     TLOAD(src0Tile, src0Global);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    TCMPS(dstTile, src0Tile, src1, cmpMode);
+    TCMPS(dstTile, src0Tile, src1[0], cmpMode);
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);
