@@ -79,6 +79,7 @@ class TPartaddParams:
         self.src1_vr = src1_vr
         self.src1_vc = src1_vc
 
+
 def generate_case_name(param):
     dtype_str = {
         np.float32: 'float',
