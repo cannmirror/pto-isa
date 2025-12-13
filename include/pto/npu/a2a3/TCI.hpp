@@ -13,45 +13,38 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/constants.hpp>
 
-
 namespace pto {
-    template <typename TileData, typename T>
-    PTO_INTERNAL void CheckValid() {
-        static_assert((std::is_same<typename TileData::DType, T>::value),
-                      "expect src and dst same datatype");
-        static_assert((sizeof(typename TileData::DType) == 4 || (sizeof(typename TileData::DType) == 2)),
-                      "expect b32 or b16");
-        static_assert((TileData::Cols != 1),
-                      "expect row is 1");
-    }
+template <typename TileData, typename T>
+PTO_INTERNAL void CheckValid() {
+    static_assert((std::is_same<typename TileData::DType, T>::value), "expect src and dst same datatype");
+    static_assert(
+        (sizeof(typename TileData::DType) == 4 || (sizeof(typename TileData::DType) == 2)), "expect b32 or b16");
+    static_assert((TileData::Cols != 1), "expect row is 1");
+}
 
-    template <typename TileData, typename T, int descending>
-    __tf__ AICORE void TCI(typename TileData::TileDType __out__ dst, T S, unsigned validCol)
-    {
-        __ubuf__ typename TileData::DType *dstPtr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
+template <typename TileData, typename T, int descending>
+__tf__ AICORE void TCI(typename TileData::TileDType __out__ dst, T S, unsigned validCol) {
+    __ubuf__ typename TileData::DType *dstPtr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
 
-        //scalar
-        if(descending)
-        {
-            for(int32_t i = 0; i < validCol; i++) {
-                *(dstPtr + i) = S - i;
-            }
+    // scalar
+    if constexpr (descending) {
+        for (int32_t i = 0; i < validCol; i++) {
+            *(dstPtr + i) = S - i;
         }
-        else
-        {
-            for(int32_t i = 0; i < validCol; i++) {
-                *(dstPtr + i) = S + i;
-            }
+    } else {
+        for (int32_t i = 0; i < validCol; i++) {
+            *(dstPtr + i) = S + i;
         }
-    }
-
-    template <typename TileData, typename T, int descending>
-    AICORE void TCI_IMPL(TileData &dst, T S) {
-        CheckValid<TileData, T>();
-
-        unsigned validCol = dst.GetValidCol();
-
-        TCI<TileData, T, descending>(dst.data(), S, validCol);
     }
 }
+
+template <typename TileData, typename T, int descending>
+AICORE void TCI_IMPL(TileData &dst, T S) {
+    CheckValid<TileData, T>();
+
+    unsigned validCol = dst.GetValidCol();
+
+    TCI<TileData, T, descending>(dst.data(), S, validCol);
+}
+} // namespace pto
 #endif
