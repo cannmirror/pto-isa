@@ -35,7 +35,7 @@ class TMoveParams:
 if __name__ == "__main__":
     case_name_list = [f"TMOVTest.vect_copy_case{i}" for i in range(1, 16)]
 
-    case_name_list = [
+    case_params_list = [
         TMoveParams(np.float32, 64, 64, 64, 64),
         TMoveParams(np.float32, 32, 32, 32, 32),
         TMoveParams(np.float32, 128, 128, 128, 128),
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         original_dir = os.getcwd()
         os.chdir(case_name)
 
-        get_golden_data(case_name, case_name_list[i])
+        get_golden_data(case_name, case_params_list[i])
 
         os.chdir(original_dir)
     
