@@ -159,8 +159,8 @@ template <typename DstTileData, typename SrcTileData>
 PTO_INTERNAL constexpr void CommonCheck()
 {
     static_assert(is_textract_supported_type<typename DstTileData::DType>,
-        "Unsupported data type! Supported types: int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
-            half, bfloat16_t, float");
+        "TMov: Unsupported data type! Supported types: int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
+            half, bfloat16_t, float, float4_e2m1x2_t, float4_e1m2x2_t");
     static_assert(std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value,
         "TMov: Destination and Source tile data types must be the same.");
 
