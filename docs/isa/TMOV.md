@@ -27,13 +27,22 @@ TMOV %Src , -> %Dst
 template <typename DstTileData, typename SrcTileData>
 PTO_INST void TMOV(DstTileData &dst, SrcTileData &src);
 
-template <typename DstTileData, typename SrcTileData, L0cToUBMode mode>
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
 PTO_INST void TMOV(DstTileData &dst, SrcTileData &src);
 
-template <typename DstTileData, typename SrcTileData, L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
+template <typename DstTileData, typename SrcTileData, AccToVecMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INST void TMOV(DstTileData &dst, SrcTileData &src);
+
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
 PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar);
 
-template <typename DstTileData, typename SrcTileData, typename FpTileData, L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
+template <typename DstTileData, typename SrcTileData, AccToVecMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar);
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, FpTileData &fp);
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, AccToVecMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
 PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, FpTileData &fp);
 ```
 
