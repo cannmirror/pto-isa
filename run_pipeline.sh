@@ -16,6 +16,7 @@ python3 tests/script/build_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
 python3 tests/script/build_st.py -r npu -v a3 -t textract -g TEXTRACTTest.case31_float_1_1_29_29_36_param
 python3 tests/script/build_st.py -r npu -v a3 -t tmov -g TMOVTest.case4_bias_dynamic_half_half_0_1_1_0_0_param
 python3 tests/script/build_st.py -r npu -v a3 -t tmov -g TMOVTest.case11_scaling_static_int32_int8_0_1_0_1_0_param
+python3 tests/script/build_st.py -r npu -v a3 -t tmov_acc2mat -g TMOVTest.TMOVTest.case_nz2nz_fb_quant_4
 python3 tests/script/build_st.py -r npu -v a3 -t tmrgsort -g TMRGSORTTest.case_topk1
 python3 tests/script/run_st.py -r npu -v a3 -t tstore -g TStoreTest.ND_int16_t_1_2_1_23_121_3_2_2_35_125
 python3 tests/script/run_st.py -r npu -v a3 -t tstore_acc2gm -g TStoreAcc2gmTest.case7

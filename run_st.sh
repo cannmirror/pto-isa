@@ -52,6 +52,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tci -g TCITest.case1_int32
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcvt -g TCVTTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmov -g TMOVTest.case14_scaling_dynamic_int32_int8_0_1_1_1_0_param
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmov_acc2mat -g TMOVTest.case_nz2nz_fb_quant_4
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t textract -g TEXTRACTTest.case1_half_0_1_param
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmrgsort -g TMRGSORTTest.case_topk1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmul -g TMULTest.case_float_64x64_64x64_64x64
@@ -89,6 +90,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcvt
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmatmul
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmov
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmov_acc2mat
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t textract
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmrgsort
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tstore
