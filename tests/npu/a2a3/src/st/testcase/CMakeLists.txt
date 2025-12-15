@@ -110,6 +110,7 @@ tcolmax
 tcolmin
 texpands
 tcolsum
+tcmp
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
