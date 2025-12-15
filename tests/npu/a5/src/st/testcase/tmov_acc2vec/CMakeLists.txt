@@ -8,4 +8,4 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # --------------------------------------------------------------------------------
 
-pto_mix_st(tmov_l0c2ub)
+pto_mix_st(tmov_acc2vec)

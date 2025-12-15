@@ -184,7 +184,6 @@ PTO_INST void TPARTMIN(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
   MAP_INSTR_IMPL(TPARTMIN, dst, src0, src1);
 }
 
-
 template <typename TileDataD, typename TileDataS>
 PTO_INST void TCVT(TileDataD &dst, TileDataS &src, RoundMode mode) {
   MAP_INSTR_IMPL(TCVT, dst, src, mode);
@@ -195,19 +194,35 @@ PTO_INST void TMOV(DstTileData &dst, SrcTileData &src) {
   MAP_INSTR_IMPL(TMOV, dst, src);
 }
 
-template <typename DstTileData, typename SrcTileData, L0cToUBMode mode>
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
 PTO_INST void TMOV(DstTileData &dst, SrcTileData &src) {
-  TMOV_IMPL<DstTileData, SrcTileData, mode>(dst, src);
+  TMOV_IMPL<DstTileData, SrcTileData, reluMode>(dst, src);
 }
 
-template <typename DstTileData, typename SrcTileData, L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
-PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar) {
-  TMOV_IMPL<DstTileData, SrcTileData, mode>(dst, src, preQuantScalar);
+template <typename DstTileData, typename SrcTileData, L0cToUBMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INST void TMOV(DstTileData &dst, SrcTileData &src) {
+  TMOV_IMPL<DstTileData, SrcTileData, mode, reluMode>(dst, src);
 }
 
-template <typename DstTileData, typename SrcTileData, typename FpTileData, L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
+template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
 PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, FpTileData &fp) {
-  TMOV_IMPL<DstTileData, SrcTileData, FpTileData, mode>(dst, src, fp);
+  TMOV_IMPL<DstTileData, SrcTileData, FpTileData, reluMode>(dst, src, fp);
+}
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, L0cToUBMode mode,
+    ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, FpTileData &fp) {
+  TMOV_IMPL<DstTileData, SrcTileData, FpTileData, mode, reluMode>(dst, src, fp);
+}
+
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar) {
+  TMOV_IMPL<DstTileData, SrcTileData, reluMode>(dst, src, preQuantScalar);
+}
+
+template <typename DstTileData, typename SrcTileData, L0cToUBMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INST void TMOV(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar) {
+  TMOV_IMPL<DstTileData, SrcTileData, mode, reluMode>(dst, src, preQuantScalar);
 }
 
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>

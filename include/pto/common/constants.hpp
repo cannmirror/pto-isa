@@ -58,6 +58,11 @@ enum class L0cToUBMode : uint8_t {
     DualModeSplitN = 3,
 };
 
+enum class ReluPreMode : uint8_t {
+    NoRelu = 0,
+    NormalRelu = 1,
+};
+
 enum class AtomicType : uint8_t {
     AtomicNone = 0,
     AtomicAdd = 1,
