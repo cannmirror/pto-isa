@@ -214,9 +214,9 @@ __global__ AICORE void RunTMOV(__gm__ OutType *out, __gm__ AType *src0, __gm__ B
         }
     } else {
         if constexpr (isRelu) {
-            TMOV<DstTileData, AccTile, static_cast<L0cToUBMode>(mode), ReluPreMode::NormalRelu>(dstTileData, cTile);
+            TMOV<DstTileData, AccTile, static_cast<AccToVecMode>(mode), ReluPreMode::NormalRelu>(dstTileData, cTile);
         } else {
-            TMOV<DstTileData, AccTile, static_cast<L0cToUBMode>(mode)>(dstTileData, cTile);
+            TMOV<DstTileData, AccTile, static_cast<AccToVecMode>(mode)>(dstTileData, cTile);
         }
     }
 
@@ -273,10 +273,10 @@ __global__ AICORE void RunTMOVFBQuant(__gm__ OutType *out, __gm__ AType *src0, _
         }
     } else {
         if constexpr (isRelu) {
-            TMOV<DstTileData, AccTile, FbTile, static_cast<L0cToUBMode>(mode), ReluPreMode::NormalRelu>(
+            TMOV<DstTileData, AccTile, FbTile, static_cast<AccToVecMode>(mode), ReluPreMode::NormalRelu>(
                 dstTileData, cTile, fbTile);
         } else {
-            TMOV<DstTileData, AccTile, FbTile, static_cast<L0cToUBMode>(mode)>(dstTileData, cTile, fbTile);
+            TMOV<DstTileData, AccTile, FbTile, static_cast<AccToVecMode>(mode)>(dstTileData, cTile, fbTile);
         }
     }
 
@@ -329,10 +329,10 @@ __global__ AICORE void RunTMOVSCQuant(__gm__ OutType *out, __gm__ AType *src0, _
         }
     } else {
         if constexpr (isRelu) {
-            TMOV<DstTileData, AccTile, static_cast<L0cToUBMode>(mode), ReluPreMode::NormalRelu>(
+            TMOV<DstTileData, AccTile, static_cast<AccToVecMode>(mode), ReluPreMode::NormalRelu>(
                 dstTileData, cTile, preScalar);
         } else {
-            TMOV<DstTileData, AccTile, static_cast<L0cToUBMode>(mode)>(dstTileData, cTile, preScalar);
+            TMOV<DstTileData, AccTile, static_cast<AccToVecMode>(mode)>(dstTileData, cTile, preScalar);
         }
     }
 
@@ -388,7 +388,7 @@ __global__ AICORE void RunSplitNTMOVNz2Nz(__gm__ OutType *out, __gm__ AType *src
 
     constexpr int dualDstCtl = splitM ? 1 : 2;
     constexpr uint64_t mode = getMode<0, dualDstCtl>();
-    TMOV<DstTileData, AccTile, static_cast<L0cToUBMode>(mode)>(dstTileData, cTile);
+    TMOV<DstTileData, AccTile, static_cast<AccToVecMode>(mode)>(dstTileData, cTile);
 
     set_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
@@ -452,7 +452,7 @@ __global__ AICORE void RunSplitMTMOVNz2Nz(__gm__ OutType *out, __gm__ AType *src
 
     constexpr int dualDstCtl = splitM ? 1 : 2;
     constexpr uint64_t mode = getMode<0, dualDstCtl>();
-    TMOV<DstTileData, AccTile, static_cast<L0cToUBMode>(mode)>(dstTileData, cTile);
+    TMOV<DstTileData, AccTile, static_cast<AccToVecMode>(mode)>(dstTileData, cTile);
 
     set_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
@@ -516,7 +516,7 @@ __global__ AICORE void RunSplitTMOV(__gm__ OutType *out, __gm__ AType *src0, __g
 
     constexpr int dualDstCtl = splitM ? 1 : 2;
     constexpr uint8_t mode = getMode<0, dualDstCtl>();
-    TMOV<DstTileData, AccTile, static_cast<L0cToUBMode>(mode)>(dstTileData, cTile);
+    TMOV<DstTileData, AccTile, static_cast<AccToVecMode>(mode)>(dstTileData, cTile);
 
     set_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
