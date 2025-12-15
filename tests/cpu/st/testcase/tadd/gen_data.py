@@ -19,28 +19,21 @@ def gen_golden_data_tadd(case_name, param):
     dtype = param.dtype
 
     row, col = [param.tile_row, param.tile_col]
-    h_valid, w_valid = [param.valid_row, param.valid_col]
+    row_valid, col_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
     input1 = np.random.randint(1, 10, size=[row, col]).astype(dtype)
     input2 = np.random.randint(1, 10, size=[row, col]).astype(dtype)
 
     # Perform the addbtraction
-    golden = input1 + input2
-
-    # Apply valid region constraints
-    output = np.zeros([row, col]).astype(dtype)
-    for h in range(row):
-        for w in range(col):
-            if h >= h_valid or w >= w_valid:
-                golden[h][w] = output[h][w]
+    golden = np.zeros([row, col]).astype(dtype)
+    golden[:row_valid,:col_valid] = (input1 + input2)[:row_valid,:col_valid]
 
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
     input2.tofile("input2.bin")
     golden.tofile("golden.bin")
 
-    return output, input1, input2, golden
 
 
 class TAddParams:

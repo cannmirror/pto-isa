@@ -54,7 +54,7 @@ template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kV
 void LaunchTExpandS(void *out, float scalar, void *stream)
 {
     if constexpr ( std::is_same_v<T, aclFloat16> )
-        runTEXPANDS<half, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, padValueType>((half *) out, scalar);
+        runTEXPANDS<half, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, padValueType>((half *) out, static_cast<half>(scalar));
     else 
         runTEXPANDS<T, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, padValueType>((T *) out, scalar);
 }
