@@ -36,7 +36,6 @@ void LaunchTMins(T *out, T *src0, T *scalar, void *stream);
 
 template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int kPadValue_>
 void test_tmins() {
-
     size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
     if (kPadValue_ == PAD_VALUE_MAX) {
         fileSize = kGRows_ * kGCols_ * sizeof(T);
