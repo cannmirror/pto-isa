@@ -1,3 +1,12 @@
+/**
+Copyright (c) 2025 Huawei Technologies Co., Ltd.
+This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+CANN Open Software License Agreement Version 2.0 (the "License").
+Please refer to the License for details. You may not use this file except in compliance with the License.
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+See LICENSE in the root of the software repository for the full text of the License.
+*/
 #include <pto/pto-inst.hpp>
 #include "test_common.h"
 #include <gtest/gtest.h>
@@ -40,9 +49,7 @@ AICORE inline void runTEXTRACT(__gm__ DT *out, __gm__ ST *src)
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
     /**********************************TMOV && TEXTRACT**********************************/
-//    printTile(srcTile,"Mat");
     TEXTRACT(dstTile, srcTile, idxRow, idxCol);
-//    printTile(dstTile,"A");
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
 
@@ -50,6 +57,7 @@ AICORE inline void runTEXTRACT(__gm__ DT *out, __gm__ ST *src)
     TSTORE(dstGlobal,dstTile);
     out = dstGlobal.data();
 }
+
 class TEXTRACTTest : public testing::Test {
 protected:
     void SetUp() override
@@ -78,7 +86,7 @@ void textract_test()
     aclrtCreateStream(&stream);
 
     uint8_t *dstHost, *srcHost;
-    uint8_t *dstDevice,*srcDevice;
+    uint8_t *dstDevice, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
     aclrtMallocHost((void **)(&srcHost), srcFileSize);
