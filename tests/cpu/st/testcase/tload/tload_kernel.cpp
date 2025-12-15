@@ -1,3 +1,13 @@
+/**
+Copyright (c) 2025 Huawei Technologies Co., Ltd.
+This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+CANN Open Software License Agreement Version 2.0 (the "License").
+Please refer to the License for details. You may not use this file except in compliance with the License.
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+See LICENSE in the root of the software repository for the full text of the License.
+*/
+
 #include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
 #include <limits>
@@ -10,7 +20,7 @@ using namespace pto;
 #define PRINTLOG 4
 #define DEBUGLOG
 #ifdef DEBUGLOG
-#define LOG(x) *(gLog++)=x;
+#define LOG(x) (*(gLog++)=x)
 #else
 #define LOG(x) 
 #endif
@@ -53,7 +63,6 @@ AICORE __inline__ auto getOptDynShape(int gShape0, int gShape1, int gShape2, int
 //case shape is static, but testing would do dynamic or static test
 template <typename T, int shape0, int shape1, int shape2, int shape3, int shape4, int tRows, int tCols, BLayout major, int dyn>
 AICORE __inline__ auto getGlobalTensor(__gm__ T* addr, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4) {
-
 	if constexpr ( dyn )
 	{
 		int stride0 = gShape1*gShape2*shape3*shape4;
@@ -94,7 +103,7 @@ AICORE __inline__ auto getGlobalTensor(__gm__ T* addr, int gShape0, int gShape1,
 }
 
 #define type_32_aligned(T) (32/sizeof(T))
-#define align_to_32B(x,T) ((((x)+type_32_aligned(T)-1)/type_32_aligned(T))*(type_32_aligned(T)));
+#define align_to_32B(x,T) ((((x)+type_32_aligned(T)-1)/type_32_aligned(T))*(type_32_aligned(T)))
 
 template <typename T, int shape0, int shape1, int shape2, int shape3, int shape4, int kTRows_, int kTCols_, int dyn_, PadValue PadVal_= PadValue::Null>
 AICORE void runTLOADND(__gm__ T *out, __gm__ T *src, int gShape0, int gShape1, int gShape2, int gRows, int gCols, __gm__ uint64_t* gLog) {
@@ -176,8 +185,6 @@ extern "C" __global__ AICORE void launchTLOAD_10(__gm__ uint8_t *out, __gm__ uin
 {
 	runTLOADDN<float,  2, 2, 2, 255, 60, 256, 64, 1, PadValue::Null>((__gm__ float*)out, (__gm__ float*)src, gShape0, gShape1, gShape2, gRows, gCols, gLog);
 }
-
-
 
 template <int32_t testKey>
 void launchTLOAD(uint8_t *out, uint8_t *src, uint64_t *gLog, void *stream)

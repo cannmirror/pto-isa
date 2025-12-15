@@ -38,7 +38,6 @@ void LaunchTROWMAX(T *out, T *src,  void *stream);
 
 template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void test_trowmax() {
-
     size_t dstFileSize = kTRows_ * sizeof(T);
     size_t srcFileSize = kTRows_ * kTCols_ * sizeof(T);
 
