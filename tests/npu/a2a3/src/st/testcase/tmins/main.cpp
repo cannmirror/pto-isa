@@ -38,7 +38,6 @@ void LaunchTMins(T *out, T *src0, T *src1, void *stream);
 
 template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void test_tmins() {
-
     size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
     size_t scalarFileSize = sizeof(T);
 

@@ -17,47 +17,51 @@ np.random.seed(19)
 PAD_VALUE_NULL = "PAD_VAL_NULL"
 PAD_VALUE_MAX = "PAD_VAL_MAX"
 
+
 def gen_golden_data_tsels(case_name, param):
     dtype = param.dtype
 
     if param.pad_value == PAD_VALUE_MAX:
-        H, W = [param.global_row, param.global_col]
+        height, width = [param.global_row, param.global_col]
     else:
-        H, W = [param.tile_row, param.tile_col]
+        height, width = [param.tile_row, param.tile_col]
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
     if dtype in (np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32):
-        input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-        input2 = np.random.randint(10, 20, size=[H, W]).astype(dtype)
+        input1 = np.random.randint(1, 10, size=[height, width]).astype(dtype)
+        input2 = np.random.randint(10, 20, size=[height, width]).astype(dtype)
     else:
-        input1 = np.random.uniform(low=-1303.033, high=33003.033, size=[H, W]).astype(dtype)
-        input2 = np.random.uniform(low=-1303.033, high=33003.033, size=[H, W]).astype(dtype)
-    selectMode = np.random.randint(0, 2, dtype=np.uint8)
+        input1 = np.random.uniform(low=-1303.033, high=33003.033, size=[height, width]).astype(dtype)
+        input2 = np.random.uniform(low=-1303.033, high=33003.033, size=[height, width]).astype(dtype)
+    select_mode = np.random.randint(0, 2, dtype=np.uint8)
 
     golden = np.empty_like(input1)
 
-    for i in range(H):
-        for j in range(W):
-            golden[i, j] = input1[i, j] if selectMode == 1 else input2[i, j]
+    for i in range(height):
+        for j in range(width):
+            golden[i, j] = input1[i, j] if select_mode == 1 else input2[i, j]
 
     # Apply valid region constraints
-    output = np.zeros([H, W]).astype(dtype)
-    for h in range(H):
-        for w in range(W):
+    output = np.zeros([height, width]).astype(dtype)
+    for h in range(height):
+        for w in range(width):
             if h >= h_valid or w >= w_valid:
                 golden[h][w] = output[h][w]
 
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
     input2.tofile("input2.bin")
-    selectMode.tofile("input_scalar.bin")
+    select_mode.tofile("input_scalar.bin")
     golden.tofile("golden.bin")
 
     return output, input1, input2, golden
 
+
 class TestParams:
-    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col, pad_value=PAD_VALUE_NULL):
+    def __init__(self, dtype, global_row, global_col, tile_row, tile_col,
+                 valid_row, valid_col,
+                 pad_value=PAD_VALUE_NULL):
         self.dtype = dtype
         self.global_row = global_row
         self.global_col = global_col
@@ -78,7 +82,8 @@ def generate_case_name(param):
         np.int8: 'int8',
         np.uint8: 'uint8',
     }[param.dtype]
-    return f"TSELSTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+    return f"TSELSTest.case_{dtype_str}_{param.global_row}x{param.global_col}"\
+        f"_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script

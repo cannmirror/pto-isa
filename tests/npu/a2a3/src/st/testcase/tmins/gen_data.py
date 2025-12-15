@@ -14,26 +14,27 @@ import os
 import numpy as np
 np.random.seed(19)
 
+
 def gen_golden_data_tmins(case_name, param):
     dtype = param.dtype
 
-    H, W = [param.tile_row, param.tile_col]
+    height, width = [param.tile_row, param.tile_col]
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
     if dtype in (np.int16, np.int32):
-        input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+        input1 = np.random.randint(1, 10, size=[height, width]).astype(dtype)
         input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
     else:
-        input1 = np.random.uniform(low=-13.033, high=101.011, size=[H, W]).astype(dtype)
+        input1 = np.random.uniform(low=-13.033, high=101.011, size=[height, width]).astype(dtype)
         input2 = np.random.uniform(low=-13.033, high=101.011, size=[1]).astype(dtype)
 
     golden = np.minimum(input1, input2)
 
     # Apply valid region constraints
-    output = np.zeros([H, W]).astype(dtype)
-    for h in range(H):
-        for w in range(W):
+    output = np.zeros([height, width]).astype(dtype)
+    for h in range(height):
+        for w in range(width):
             if h >= h_valid or w >= w_valid:
                 golden[h][w] = output[h][w]
 
@@ -44,7 +45,8 @@ def gen_golden_data_tmins(case_name, param):
 
     return output, input1, input2, golden
 
-class tminsParams:
+
+class TminsParams:
     def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
         self.dtype = dtype
         self.global_row = global_row
@@ -61,7 +63,8 @@ def generate_case_name(param):
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TMINSTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+    return f"TMINSTest.case_{dtype_str}_{param.global_row}x{param.global_col}"\
+        f"_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -73,11 +76,11 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tminsParams(np.float32, 64, 64, 64, 64, 64, 64),
-        tminsParams(np.int32, 64, 64, 64, 64, 64, 64),
-        tminsParams(np.int16, 64, 64, 64, 64, 64, 64),
-        tminsParams(np.float16, 64, 64, 64, 64, 64, 64),
-        tminsParams(np.float16, 16, 256, 16, 256, 16, 256),
+        TminsParams(np.float32, 64, 64, 64, 64, 64, 64),
+        TminsParams(np.int32, 64, 64, 64, 64, 64, 64),
+        TminsParams(np.int16, 64, 64, 64, 64, 64, 64),
+        TminsParams(np.float16, 64, 64, 64, 64, 64, 64),
+        TminsParams(np.float16, 16, 256, 16, 256, 16, 256),
     ]
 
     for i, param in enumerate(case_params_list):
