@@ -328,5 +328,10 @@ PTO_INST void TCOLMIN(TileDataOut &dst, TileDataIn &src) {
   MAP_INSTR_IMPL(TCOLMIN, dst, src);
 }
 
+template <typename TileData, typename TileInd>
+PTO_INST void TSCATTER(TileData &dst, TileData &src, TileInd &indexes) {
+  MAP_INSTR_IMPL(TSCATTER, dst, src, indexes);
+}
+
 } // namespace pto
 #endif

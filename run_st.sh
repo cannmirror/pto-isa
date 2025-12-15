@@ -82,6 +82,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tadds -g TADDSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t texpands -g TEXPANDSTest.case_float_64x64_64x64_64x64_PAD_VALUE_NULL
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmp -g TCMPTest.case_float_1x64_1x64_1x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tscatter -g TSCATTERTest.case1
 
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
@@ -116,6 +117,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tsqrt
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t texpands
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmp
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tscatter
   fi
 fi
 
