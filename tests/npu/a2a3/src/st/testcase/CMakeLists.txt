@@ -85,6 +85,7 @@ tstore
 tsels
 tdiv
 tmov_vect
+tmov_acc2mat
 trowexpand
 tcvt
 tmul
