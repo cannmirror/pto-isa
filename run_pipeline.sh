@@ -35,8 +35,9 @@ python3 tests/script/build_st.py -r npu -v a5 -t tcvt -g TCVTTest.case1
 python3 tests/script/build_st.py -r npu -v a5 -t tmatmul -g TMATMULTest.case1
 python3 tests/script/build_st.py -r npu -v a5 -t textract -g TEXTRACTTest.case1
 python3 tests/script/build_st.py -r npu -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
-python3 tests/script/build_st.py -r npu -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nd_1
-python3 tests/script/build_st.py -r npu -v a5 -t tmov_l0c2ub -g TMOVTest.case_nz2nz_vector_quant_pre_1
+python3 tests/script/build_st.py -r npu -v a5 -t tmov_acc2vec -g TMOVTest.case_nz2nd_1
+python3 tests/script/build_st.py -r npu -v a5 -t tmov_acc2vec -g TMOVTest.case_nz2nz_fb_quant_1
+python3 tests/script/build_st.py -r npu -v a5 -t tmov_acc2mat -g TMOVTest.case_nz2nz_1
 python3 tests/script/build_st.py -r npu -v a5 -t tstore -g TStoreTest.case1
 python3 tests/script/build_st.py -r npu -v a5 -t trowsum -g TROWSUMTest.test1
 python3 tests/script/build_st.py -r npu -v a5 -t tcolsum -g TCOLSUMTest.test01

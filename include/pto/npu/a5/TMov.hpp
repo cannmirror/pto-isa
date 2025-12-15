@@ -76,7 +76,7 @@ __tf__ AICORE void TMovToFb(typename DstTileData::TileDType __out__ dst, typenam
     __fbuf__ DstType *dstAddrP = (__fbuf__ DstType *)(dst);
 
     constexpr uint16_t burstNum = 1;
-    constexpr int BURST_LEN_UNIT_SHIFT = 6;  //BURST_LEN_UNIT = 64;
+    constexpr int BURST_LEN_UNIT_SHIFT = 6; // BURST_LEN_UNIT = 64;
     constexpr uint16_t burstLen = srcRow * srcCol * sizeof(SrcType) >> BURST_LEN_UNIT_SHIFT;
     constexpr uint16_t srcGap = 0;
     constexpr uint16_t dstGap = 0;
@@ -107,7 +107,7 @@ PTO_INTERNAL void SetLoop3Para()
 }
 
 template <typename DstTileData, typename SrcTileData>
-PTO_INTERNAL constexpr uint32_t GetTmovL0cToUBDstStride()
+PTO_INTERNAL constexpr uint32_t GetTmovAccDstStride()
 {
     if constexpr (DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) {
         return DstTileData::Cols;
@@ -125,9 +125,37 @@ PTO_INTERNAL constexpr uint32_t GetTmovL0cToUBDstStride()
     return DstTileData::Rows * c0Size;
 }
 
-template <typename DstTileData, typename SrcTileData, L0cToUBMode mode, QuantMode_t quantPre>
-__tf__ AICORE void TMovL0cToUB(typename DstTileData::TileDType __out__ dst,
-    typename SrcTileData::TileDType __in__ src, uint16_t validRow, uint16_t validCol)
+template <typename DstTileData, typename SrcTileData, QuantMode_t QuantPre, ReluPreMode reluMode>
+__tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+    uint16_t validRow, uint16_t validCol)
+{
+    using dstType = typename DstTileData::DType;
+    using srcType = typename SrcTileData::DType;
+    constexpr bool enableNz2Nd = (DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox);
+    constexpr bool enableNz2Dn = (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox);
+    constexpr bool channelSplitEnable = (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) &&
+                                        (std::is_same_v<typename DstTileData::DType, float>) &&
+                                        (DstTileData::SFractalSize == 512);
+    constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
+
+    if constexpr (enableNz2Nd || enableNz2Dn) {
+        SetLoop3Para();
+    }
+    if constexpr (enableNz2Dn) {
+        constexpr uint64_t channelPara = static_cast<uint64_t>(1) << 48;
+        set_channel_para(channelPara);
+    }
+
+    __cbuf__ dstType *dstAddr = (__cbuf__ dstType *)__cce_get_tile_ptr(dst);
+    __cc__ srcType *srcData = (__cc__ srcType *)(src);
+
+    copy_matrix_cc_to_cbuf(dstAddr, srcData, 0, validCol, validRow, dstStride, SrcTileData::Rows, 0, 0, 0, QuantPre,
+        reluMode, channelSplitEnable, enableNz2Nd, 0, 0, false, false, 0, false, false, false, false, false, enableNz2Dn);
+}
+
+template <typename DstTileData, typename SrcTileData, L0cToUBMode mode, QuantMode_t quantPre, ReluPreMode reluMode>
+__tf__ AICORE void TMovCcToUb(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+    uint16_t validRow, uint16_t validCol)
 {
     using dstType = typename DstTileData::DType;
     using srcType = typename SrcTileData::DType;
@@ -138,7 +166,7 @@ __tf__ AICORE void TMovL0cToUB(typename DstTileData::TileDType __out__ dst,
     constexpr bool channelSplitEnable = (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) &&
                                         (std::is_same_v<typename DstTileData::DType, float>) &&
                                         (DstTileData::SFractalSize == 512);
-    constexpr uint32_t dstStride = GetTmovL0cToUBDstStride<DstTileData, SrcTileData>();
+    constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
 
     if constexpr (enableNz2Nd) {
         SetLoop3Para();
@@ -151,8 +179,8 @@ __tf__ AICORE void TMovL0cToUB(typename DstTileData::TileDType __out__ dst,
     __ubuf__ dstType *dstAddr = (__ubuf__ dstType *)__cce_get_tile_ptr(dst);
     __cc__ srcType *srcData = (__cc__ srcType *)(src);
     copy_matrix_cc_to_ub(dstAddr, srcData, 0, validCol, validRow, dstStride, SrcTileData::Rows, dualDstCtl, subBlockId,
-        0, 0, quantPre, 0, channelSplitEnable, enableNz2Nd, 0, 0, false, false, 0, false, false, false, false, false,
-        enableNz2Dn);
+        0, 0, quantPre, reluMode, channelSplitEnable, enableNz2Nd, 0, 0, false, false, 0, false, false, false, false,
+        false, enableNz2Dn);
 }
 
 template <typename DstTileData, typename SrcTileData>
@@ -169,11 +197,10 @@ PTO_INTERNAL constexpr void CommonCheck()
         "TMov: SrcTile Invalid Fractal.");
 }
 
-template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isQuant>
-PTO_INTERNAL void CheckTMovL0cToUBValid()
+template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isQuant = false>
+PTO_INTERNAL void CheckTMovAccValid()
 {
     static_assert((SrcTileData::Loc == TileType::Acc), "Source TileType only support Acc.");
-    static_assert((DstTileData::Loc == TileType::Vec), "Destination TileType only support Vec.");
     static_assert((!SrcTileData::isRowMajor && SrcTileData::SFractal == SLayout::RowMajor),
         "Src fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
     static_assert(((std::is_same<SrcType, float>::value) || (std::is_same<SrcType, int32_t>::value)),
@@ -203,7 +230,7 @@ PTO_INTERNAL void CheckTMovL0cToUBValid()
                       (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
                       (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor)),
         "Only support nz2nz, nz2nd or nz2dn.");
-    constexpr uint32_t dstStride = GetTmovL0cToUBDstStride<DstTileData, SrcTileData>();
+    constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
     static_assert(((dstStride * sizeof(DstType) % C0_SIZE_BYTE == 0) && ((dstStride) > 0)),
         "Dst Tile Cols * sizeof(dstT) must be multiples of 32 and not 0 when nz2nd. \
             Dst Tile Rows * sizeof(dstT) must be multiples of 32 and not 0 when nz2dn. \
@@ -223,10 +250,8 @@ __tf__ PTO_INTERNAL void TMovToVec(DstTileData &dst, SrcTileData &src) {
     uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
     TPartCopyInstr<typename DstTileData::DType, DstTileData, SrcTileData, blockSizeElem, dstStride, srcStride>(
         (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst.data()),
-        (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src.data()),
-        validRow, validCol, 0);
+        (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src.data()), validRow, validCol, 0);
 }
-
 
 template <typename DstTileData, typename SrcTileData>
 AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
@@ -258,41 +283,76 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
             }
         }
     } else if constexpr (SrcTileData::Loc == TileType::Acc) {
+        CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
+        uint16_t m = src.GetValidRow();
+        uint16_t n = src.GetValidCol();
+        constexpr QuantMode_t quantPre =
+            GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
         if constexpr (DstTileData::Loc == TileType::Vec) {
-            CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType,
-                false>();
-            constexpr QuantMode_t quantPre =
-                GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
-            uint16_t m = src.GetValidRow();
-            uint16_t n = src.GetValidCol();
-            TMovL0cToUB<DstTileData, SrcTileData, L0cToUBMode::SingleModeUB0, quantPre>(dst.data(), src.data(), m, n);
+            TMovCcToUb<DstTileData, SrcTileData, L0cToUBMode::SingleModeUB0, quantPre, ReluPreMode::NoRelu>(
+                dst.data(), src.data(), m, n);
+        } else if constexpr (DstTileData::Loc == TileType::Mat) {
+            TMovCcToCb<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data(), m, n);
         }
     } else if constexpr (SrcTileData::Loc == TileType::Vec && DstTileData::Loc == TileType::Vec) {
         TMovToVec<DstTileData, SrcTileData>(dst, src);
     }
 }
 
-template <typename DstTileData, typename SrcTileData, L0cToUBMode mode>
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
 AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
-    CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, false>();
-    constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
     uint16_t m = src.GetValidRow();
     uint16_t n = src.GetValidCol();
-    TMovL0cToUB<DstTileData, SrcTileData, mode, quantPre>(dst.data(), src.data(), m, n);
+    constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    if constexpr (DstTileData::Loc == TileType::Vec) {
+        TMovCcToUb<DstTileData, SrcTileData, L0cToUBMode::SingleModeUB0, quantPre, reluMode>(
+            dst.data(), src.data(), m, n);
+    } else if constexpr (DstTileData::Loc == TileType::Mat) {
+        TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(), m, n);
+    }
 }
 
-template <typename DstTileData, typename SrcTileData, L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
+template <typename DstTileData, typename SrcTileData, L0cToUBMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
+AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
-    CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
-    static_assert((mode == L0cToUBMode::SingleModeUB0) || (mode == L0cToUBMode::SingleModeUB1),
-        "Quant is not support in dual Dst Mode.");
-    constexpr QuantMode_t quantPre = GetScalarPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
-    set_quant_pre(preQuantScalar);
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
+    static_assert((DstTileData::Loc == TileType::Vec), "Destination location only support Vec.");
     uint16_t m = src.GetValidRow();
     uint16_t n = src.GetValidCol();
-    TMovL0cToUB<DstTileData, SrcTileData, mode, quantPre>(dst.data(), src.data(), m, n);
+    constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    TMovCcToUb<DstTileData, SrcTileData, mode, quantPre, reluMode>(dst.data(), src.data(), m, n);
+}
+
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
+AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
+{
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    uint16_t m = src.GetValidRow();
+    uint16_t n = src.GetValidCol();
+    constexpr QuantMode_t quantPre = GetScalarPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    set_quant_pre(preQuantScalar);
+    if constexpr (DstTileData::Loc == TileType::Vec) {
+        TMovCcToUb<DstTileData, SrcTileData, L0cToUBMode::SingleModeUB0, quantPre, reluMode>(
+            dst.data(), src.data(), m, n);
+    } else if constexpr (DstTileData::Loc == TileType::Mat) {
+        TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(), m, n);
+    }
+}
+
+template <typename DstTileData, typename SrcTileData, L0cToUBMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
+AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
+{
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    static_assert((mode == L0cToUBMode::SingleModeUB0) || (mode == L0cToUBMode::SingleModeUB1),
+        "Quant is not support in dual Dst Mode.");
+    static_assert((DstTileData::Loc == TileType::Vec), "Destination location only support Vec.");
+    uint16_t m = src.GetValidRow();
+    uint16_t n = src.GetValidCol();
+    constexpr QuantMode_t quantPre = GetScalarPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    set_quant_pre(preQuantScalar);
+    TMovCcToUb<DstTileData, SrcTileData, mode, quantPre, reluMode>(dst.data(), src.data(), m, n);
 }
 
 template <typename FpTileData>
@@ -303,19 +363,37 @@ __tf__ PTO_INTERNAL void SetFPC(typename FpTileData::TileDType __in__ fp)
     set_fpc(deqTensorAddr);
 }
 
-template <typename DstTileData, typename SrcTileData, typename FpTileData,
-    L0cToUBMode mode = L0cToUBMode::SingleModeUB0>
+template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
 AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
 {
-    CheckTMovL0cToUBValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    static_assert(FpTileData::Loc == TileType::Scaling, "Fp only support Scaling.");
+    uint16_t m = src.GetValidRow();
+    uint16_t n = src.GetValidCol();
+    constexpr QuantMode_t quantPre = GetVectorPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    SetFPC<FpTileData>(fp.data());
+    if constexpr (DstTileData::Loc == TileType::Vec) {
+        TMovCcToUb<DstTileData, SrcTileData, L0cToUBMode::SingleModeUB0, quantPre, reluMode>(
+            dst.data(), src.data(), m, n);
+    } else if constexpr (DstTileData::Loc == TileType::Mat) {
+        TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(), m, n);
+    }
+}
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, L0cToUBMode mode,
+    ReluPreMode reluMode = ReluPreMode::NoRelu>
+AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
+{
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
     static_assert((mode == L0cToUBMode::SingleModeUB0) || (mode == L0cToUBMode::SingleModeUB1),
         "Quant is not support in dual Dst Mode.");
+    static_assert((DstTileData::Loc == TileType::Vec), "Destination location only support Vec.");
     static_assert(FpTileData::Loc == TileType::Scaling, "Fp only support Scaling.");
     constexpr QuantMode_t quantPre = GetVectorPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
     uint16_t m = src.GetValidRow();
     uint16_t n = src.GetValidCol();
     SetFPC<FpTileData>(fp.data());
-    TMovL0cToUB<DstTileData, SrcTileData, mode, quantPre>(dst.data(), src.data(), m, n);
+    TMovCcToUb<DstTileData, SrcTileData, mode, quantPre, reluMode>(dst.data(), src.data(), m, n);
 }
 } // namespace pto
 #endif

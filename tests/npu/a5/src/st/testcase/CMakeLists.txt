@@ -126,7 +126,7 @@ set(ALL_TESTCASES
     tmul
     tdiv
     tcmps
-    tmov_l0c2ub
+    tmov_acc2vec
     tsel
     tsels
     trsqrt
@@ -141,6 +141,7 @@ set(ALL_TESTCASES
     tpartmax
     tmov_vect
     texpands
+    tmov_acc2mat
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
