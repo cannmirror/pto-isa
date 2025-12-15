@@ -32,6 +32,7 @@ tmatmul
 tload
 tstore
 textract
+texpands
 tmov
 trowsum
 tadd

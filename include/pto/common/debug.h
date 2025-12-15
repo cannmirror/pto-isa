@@ -32,6 +32,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #endif
 
 #ifdef __CPU_SIM
+  #include <iostream>
   #include "pto/cpu/tile_offsets.hpp"
   #include "pto_tile.hpp"
   #include <iostream>

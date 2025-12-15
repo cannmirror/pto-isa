@@ -4,6 +4,7 @@
 #include <pto/common/constants.hpp>
 
 using namespace std;
+using namespace pto;
 using namespace PtoTestCommon;
 using namespace pto;
 
