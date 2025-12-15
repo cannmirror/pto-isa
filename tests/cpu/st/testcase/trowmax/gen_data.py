@@ -59,7 +59,7 @@ def generate_case_name(param):
     def substring(a, b) -> str:
         return f"_{a}x{b}"
         
-    name = f"TADDTest.case_{dtype_str}" 
+    name = f"TROWMAXTest.case_{dtype_str}" 
     name += substring(param.global_row, param.global_col)
     name += substring(param.tile_row, param.tile_col)
     name += substring(param.valid_row, param.valid_col)
