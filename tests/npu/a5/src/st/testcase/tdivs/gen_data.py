@@ -37,26 +37,28 @@ def gen_golden_data(param):
         f.write(struct.pack('f', np.float32(divider[0, 0])))
     output_arr.tofile('golden.bin')
 
-class tdivsParams:
+
+class TDivsParams:
     def __init__(self, name, data_type, row, col):
         self.name = name
         self.data_type = data_type
         self.row = row
         self.col = col
 
+
 if __name__ == "__main__":
     case_params_list = [
-        tdivsParams("TDIVSTest.case1", np.float32, 32, 64),
-        tdivsParams("TDIVSTest.case2", np.float16, 63, 64),
-        tdivsParams("TDIVSTest.case3", np.int32, 31, 128),
-        tdivsParams("TDIVSTest.case4", np.int16, 15, 64 * 3),
-        tdivsParams("TDIVSTest.case5", np.float32, 32, 64),
-        tdivsParams("TDIVSTest.case6", np.float16, 63, 64),
-        tdivsParams("TDIVSTest.case7", np.int32, 31, 128),
-        tdivsParams("TDIVSTest.case8", np.int16, 15, 64 * 3),
+        TDivsParams("TDIVSTest.case1", np.float32, 32, 64),
+        TDivsParams("TDIVSTest.case2", np.float16, 63, 64),
+        TDivsParams("TDIVSTest.case3", np.int32, 31, 128),
+        TDivsParams("TDIVSTest.case4", np.int16, 15, 64 * 3),
+        TDivsParams("TDIVSTest.case5", np.float32, 32, 64),
+        TDivsParams("TDIVSTest.case6", np.float16, 63, 64),
+        TDivsParams("TDIVSTest.case7", np.int32, 31, 128),
+        TDivsParams("TDIVSTest.case8", np.int16, 15, 64 * 3),
     ]
 
-    for i, case in enumerate(case_params_list):
+    for case in case_params_list:
         if not os.path.exists(case.name):
             os.makedirs(case.name)
         original_dir = os.getcwd()
