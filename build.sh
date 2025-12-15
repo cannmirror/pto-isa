@@ -25,6 +25,8 @@ export INCLUDE_PATH="${ASCEND_HOME_PATH}/include"
 export ASCEND_ENV_PATH="${ASCEND_HOME_PATH}/bin"
 export BUILD_PATH="${BASE_PATH}/build"
 export BUILD_OUT_PATH="${BASE_PATH}/build_out"
+CANN_3RD_LIB_PATH="${BASE_PATH}/third_party"
+CMAKE_ARGS=""
 
 #print usage message
 usage() {
@@ -109,6 +111,11 @@ checkopts() {
         RUN_TYPE=npu
         shift
         ;;
+      --cann_3rd_lib_path)
+        shift
+        CANN_3RD_LIB_PATH="$1"
+        shift
+        ;;
       --)
         shift
         break
@@ -119,6 +126,7 @@ checkopts() {
         ;;
     esac
   done
+  CMAKE_ARGS="$CMAKE_ARGS -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"
 }
 
 run_simple_st() {
@@ -174,7 +182,7 @@ build_package() {
   mkdir $BUILD_PATH
   mkdir $BUILD_OUT_PATH
   cd $BUILD_PATH
-  cmake ..
+  cmake ${CMAKE_ARGS} ..
   make package
   echo "---------------package end------------------"
 }
