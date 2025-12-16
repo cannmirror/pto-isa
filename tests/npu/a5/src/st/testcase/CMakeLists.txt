@@ -142,6 +142,7 @@ set(ALL_TESTCASES
     tmov_vect
     texpands
     tmov_acc2mat
+    tassign
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

@@ -113,6 +113,7 @@ tcolmin
 texpands
 tcolsum
 tcmp
+tassign
 tscatter
 )
 

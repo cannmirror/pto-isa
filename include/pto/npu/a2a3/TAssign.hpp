@@ -11,11 +11,32 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TTILE_ASSIGN
 #define TTILE_ASSIGN
 #include <cstdint>
+#include <pto/common/pto_tile.hpp>
 
-namespace pto{
-    template <typename TileData>
-    AICORE void TASSIGN_IMPL(TileData &tile, uint32_t addr) {
-        tile.assignData(reinterpret_cast<typename TileData::TileDType>(static_cast<std::uintptr_t>(addr)));
-    }
+namespace pto {
+using namespace std;
+template <typename T, typename AddrType>
+PTO_INTERNAL void TASSIGN_IMPL(T &obj, AddrType addr) {
+  if constexpr (is_tile_data_v<T>) {
+#ifndef __PTO_AUTO__
+    static_assert(is_integral_v<AddrType>,
+                  "Tile can only be assigned with address of int type.");
+    obj.assignData(reinterpret_cast<typename T::TileDType>(
+        static_cast<std::uintptr_t>(addr)));
+#else
+    return;
+#endif
+  } else {
+    static_assert(is_global_data_v<T>,
+                  "Only Tile and GlobalTensor data types are supported.");
+    static_assert(
+        is_pointer_v<AddrType>,
+        "GlobalTensor can only be assigned with address of pointer type.");
+    static_assert(
+        is_same_v<remove_cv_t<remove_pointer_t<AddrType>>, typename T::DType>,
+        "GlobalTensor can only be assigned with pointer of same data type.");
+    obj.SetAddr(addr);
+  }
 }
+} // namespace pto
 #endif

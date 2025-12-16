@@ -17,9 +17,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define MAP_INSTR_IMPL(API, ...) API##_IMPL(__VA_ARGS__)
 
 namespace pto {
-template <typename TileData>
-PTO_INST void TASSIGN(TileData &tile, uint32_t addr) {
-  MAP_INSTR_IMPL(TASSIGN, tile, addr);
+template <typename T, typename AddrType>
+PTO_INST void TASSIGN(T &obj, AddrType addr) {
+  MAP_INSTR_IMPL(TASSIGN, obj, addr);
 }
 
 template <typename TileData>
