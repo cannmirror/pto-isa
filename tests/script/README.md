@@ -1,41 +1,45 @@
-# TileOP测试
-- 编译-src指令目录（递归）的所有.cpp文件
-- jcore: 编译，qemu/gfrun的运行 + 功能验证
-- cpu: 编译 + 运行
+# tests/script/
 
-## 参数解释：
-- options:
-    -h                 show this help message and exit
-    -lib               TileOP库的根目录， case: /xx/PTOTileLib/
-    -src               需要编译的目录（递归的），case: /xx/PTOTileLib/test/tileop_api/src/
-                       默认等于lib
-    -m                 test model: cmp or run, default cmp
-    -lc                linx clang++ path, case: /xx/linx_blockisa_llvm/bin/clang++
-    -hc                cpu clang++ path, case: /xx/llvm-15.0.4/bin/clang++
-    -qemu              qemu-linx path
-    -gfrun             gfrun path
+Entry scripts for building and running the repository test suites.
 
-- 选择模式
--m:
-cmp or run, default cmp
-cmp: 仅编译
-run: 编译 + 运行
+## NPU ST (sim / npu)
 
-- 选择验证模型
--qemu
--gfrun
-给那个参数，就验证那个，两个都给就两个都验证
+- Build + run: `tests/script/run_st.py`
+- Build only: `tests/script/build_st.py`
 
-## 使用实例
+Common arguments:
 
-- 编译 cpu版本
-python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/tileop_api/src -hc /xx/llvm-15.0.4/bin/clang++
+- `-r, --run-mode`: `sim` or `npu`
+- `-v, --soc-version`: `a3` or `a5` (mapped to an internal `SOC_VERSION`)
+- `-t, --testcase`: testcase name (e.g., `tmatmul`)
+- `-g, --gtest_filter`: optional gtest filter (run a single case)
+- `-d, --debug-enable`: optional debug build (only in `run_st.py`)
 
-- 编译 jcore版本
-python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/tileop_api/src -lc /xx/linx_blockisa_llvm/bin/clang++
+Examples:
 
-- 编译 + 运行 cpu版本
-python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/tileop_api/src -hc /xx/llvm-15.0.4/bin/clang++ -m run
+```bash
+python3 tests/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
+python3 tests/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
+```
 
-- 编译 + 运行 + 功能验证 jcore版本
-python3 /xx/test.py -lib /xx/PTOTileLib/ -src /xx/PTOTileLib/test/tileop_api/src -lc /xx/linx_blockisa_llvm/bin/clang++ -hc /xx/llvm-15.0.4/bin/clang++ -qemu /xx/qemu-linx -m run
+## CPU ST
+
+- Batch build + run: `tests/script/all_cpu_tests.py`
+
+Options:
+
+- `-v, --verbose`: print build/run output
+- `-b, --build-folder`: build directory (default: `build_tests`)
+
+Example:
+
+```bash
+python3 tests/script/all_cpu_tests.py --verbose
+```
+
+## Convenience Wrappers
+
+- Recommended suites: `run_st.sh`
+- CPU tests: `run_cpu_tests.sh`
+
+For the latest arguments, run `python3 <script> -h`.
