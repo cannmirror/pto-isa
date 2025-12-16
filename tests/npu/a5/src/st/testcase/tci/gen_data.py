@@ -14,11 +14,13 @@ import os
 import numpy as np
 np.random.seed(19)
 
+
 def save_to_binary_file(data, filename, dtype):
     """
     将数据保存成指定dtype的二进制文件;
     """
-    np.array(data, dtype = dtype).tofile(filename)
+    np.array(data, dtype=dtype).tofile(filename)
+
 
 def gen_golden_data_tci(case_name, param):
     dtype = param.dtype
@@ -28,14 +30,13 @@ def gen_golden_data_tci(case_name, param):
         result = [param.begin + i for i in range(param.length)]
     elif param.reverse == 1:
         # 生成递减索引
-        result = [param.begin - i for i in range(0,param.length)]
-    print("####golden: ", result)
+        result = [param.begin - i for i in range(0, param.length)]
     save_to_binary_file(result, "golden.bin", dtype)
     save_to_binary_file(param.begin, "begin_index.bin", dtype)
     save_to_binary_file(param.reverse, "reverse.bin", dtype)
 
 
-class tciParams:
+class TciParams:
     def __init__(self, dtype, begin, reverse, length, name):
         self.dtype = dtype
         self.begin = begin
@@ -56,28 +57,26 @@ def generate_case_name(param):
 if __name__ == "__main__":
     # Get the absolute path of the script
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    print("#####script_dir: ", script_dir)
     testcases_dir = os.path.join(script_dir, "testcases")
     # Ensure the testcases directory exists
     if not os.path.exists(testcases_dir):
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tciParams(np.int32, 100, 1, 128, "TCITest.case1"),
-        tciParams(np.int16, -1, 0, 128, "TCITest.case2"),
-        tciParams(np.int16, -1, 1, 128, "TCITest.case3"),
-        tciParams(np.int16, -1, 1, 192, "TCITest.case4"),
-        tciParams(np.int32, -1, 1, 192, "TCITest.case5"),
-        tciParams(np.int32, 0, 1, 600, "TCITest.case6"),
-        tciParams(np.int16, 0, 0, 800, "TCITest.case7"),
-        tciParams(np.int32, 0, 1, 2560, "TCITest.case8"),
-        tciParams(np.int32, 0, 0, 3200, "TCITest.case9"),
-        tciParams(np.int32, 0, 0, 8, "TCITest.case10"),
+        TciParams(np.int32, 100, 1, 128, "TCITest.case1"),
+        TciParams(np.int16, -1, 0, 128, "TCITest.case2"),
+        TciParams(np.int16, -1, 1, 128, "TCITest.case3"),
+        TciParams(np.int16, -1, 1, 192, "TCITest.case4"),
+        TciParams(np.int32, -1, 1, 192, "TCITest.case5"),
+        TciParams(np.int32, 0, 1, 600, "TCITest.case6"),
+        TciParams(np.int16, 0, 0, 800, "TCITest.case7"),
+        TciParams(np.int32, 0, 1, 2560, "TCITest.case8"),
+        TciParams(np.int32, 0, 0, 3200, "TCITest.case9"),
+        TciParams(np.int32, 0, 0, 8, "TCITest.case10"),
     ]
 
     for i, param in enumerate(case_params_list):
         case_name = param.name
-        print(f"#####case_name: {case_name}")
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()

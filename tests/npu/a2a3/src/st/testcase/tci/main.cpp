@@ -59,7 +59,6 @@ void test_vci_b32() {
 
     size_t FileSize = ROW * COL * sizeof(T);
 
-    
     int32_t *dstHost;
     int32_t *dstDevice;
 
@@ -79,7 +78,6 @@ void test_vci_b32() {
         launchTCI_demo_b32_case4<descending>(dstDevice, stream);
     }
     
-
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, FileSize, dstDevice, FileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
@@ -110,7 +108,6 @@ void test_vci_b16() {
 
     size_t FileSize = ROW * COL * sizeof(T);
 
-    
     int16_t *dstHost;
     int16_t *dstDevice;
 
@@ -130,7 +127,6 @@ void test_vci_b16() {
         launchTCI_demo_b16_case4<descending>(dstDevice, stream);
     }
     
-
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, FileSize, dstDevice, FileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
