@@ -48,7 +48,7 @@ __tf__ AICORE void TGather_b32(typename TileDataD::TileDType __out__ dst,
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < innerLoopNum; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TShape1 + j * batchSize), NORM);
+                vlds(index, src1Ptr, (i * TileDataS1::Cols + j * batchSize), NORM);
 
                 uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = CreatePredicate<typename TileDataS1::DType>(count);
@@ -77,7 +77,7 @@ __tf__ AICORE void TGather_b16(typename TileDataD::TileDType __out__ dst,
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < loop_num; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TShape1 + j * batchSize), NORM);
+                vlds(index, src1Ptr, (i * TileDataS1::Cols + j * batchSize), NORM);
 
                 uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = CreatePredicate<typename TileDataS1::DType>(count);
@@ -99,6 +99,7 @@ __tf__ AICORE void TGather_b16_bc(typename TileDataD::TileDType __out__ dst,
     __ubuf__ typename TileDataS0::DType *src0Ptr = (__ubuf__ typename TileDataS0::DType *)__cce_get_tile_ptr(src0);
     __ubuf__ typename TileDataS1::DType *src1Ptr = (__ubuf__ typename TileDataS1::DType *)__cce_get_tile_ptr(src1);
     unsigned TShapeDst = TileDataD::Cols;
+    unsigned TShapeIdx = TileDataS1::Cols;
     __VEC_SCOPE__
     {
         uint16_t batchSize = 256 / static_cast<uint16_t>(sizeof(typename TileDataS1::DType));
@@ -106,7 +107,7 @@ __tf__ AICORE void TGather_b16_bc(typename TileDataD::TileDType __out__ dst,
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < loop_num; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TShapeDst + j * batchSize), NORM);
+                vlds(index, src1Ptr, (i * TShapeIdx + j * batchSize), NORM);
 
                 uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = CreatePredicate<typename TileDataS1::DType>(count);
@@ -135,7 +136,7 @@ __tf__ AICORE void TGather_fp8_e4m3(typename TileDataD::TileDType __out__ dst,
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < loopNum; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TDstShape + j * batchSize), NORM);
+                vlds(index, src1Ptr, (i * TileDataS1::Cols + j * batchSize), NORM);
 
                 uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = plt_b16(count, POST_UPDATE);
@@ -164,7 +165,7 @@ __tf__ AICORE void TGather_fp8_e5m2(typename TileDataD::TileDType __out__ dst,
         for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
             for (uint16_t j = 0; j < loopNum; ++j) {
                 RegTensor<typename TileDataS1::DType> index;
-                vlds(index, src1Ptr, (i * TShape1 + j * batchSize), NORM);
+                vlds(index, src1Ptr, (i * TileDataS1::Cols + j * batchSize), NORM);
 
                 uint32_t count = ((j + 1) * batchSize >= validCol ? validCol - j * batchSize : batchSize);
                 vector_bool preg = plt_b16(count, POST_UPDATE);

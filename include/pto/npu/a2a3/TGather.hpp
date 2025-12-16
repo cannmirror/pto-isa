@@ -39,6 +39,7 @@ __tf__ AICORE void TGather(typename TileDataD::TileDType __out__ dst, typename T
 
     unsigned TShape0 = TileDataD::Rows;
     unsigned TShape1 = TileDataD::Cols;
+    unsigned idx_stride = TileDataS1::Cols;
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataD::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataD::DType);
     constexpr unsigned stride = TileDataD::RowStride;
@@ -55,7 +56,7 @@ __tf__ AICORE void TGather(typename TileDataD::TileDType __out__ dst, typename T
         set_mask_count();
         for (int i = 0; i < validRow; i++) {
             set_vector_mask(0, validCol);
-            vmuls((__ubuf__ int32_t *)(dstPtr + i * TShape1), (__ubuf__ int32_t *)(src1Ptr + i * TShape1),
+            vmuls((__ubuf__ int32_t *)(dstPtr + i * TShape1), (__ubuf__ int32_t *)(src1Ptr + i * idx_stride),
                 sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
             pipe_barrier(PIPE_V);
             vgather((__ubuf__ uint32_t *)(dstPtr + i * TShape1), (__ubuf__ uint32_t *)(dstPtr + i * TShape1),
@@ -70,7 +71,7 @@ __tf__ AICORE void TGather(typename TileDataD::TileDType __out__ dst, typename T
         set_mask_count();
         for (int i = 0; i < validRow; i++) {
             set_vector_mask(0, validCol);
-            vmuls((__ubuf__ int32_t *)(dstPtr + i * TShape1), (__ubuf__ int32_t *)(src1Ptr + i * TShape1),
+            vmuls((__ubuf__ int32_t *)(dstPtr + i * TShape1), (__ubuf__ int32_t *)(src1Ptr + i * idx_stride),
                 sizeof(typename TileDataD::DType), 1, 1, 1, 8, 8);
             pipe_barrier(PIPE_V);
             vgather((__ubuf__ uint16_t *)(dstPtr + i * TShape1), (__ubuf__ uint32_t *)(dstPtr + i * TShape1),
