@@ -15,8 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/utils.hpp>
 
 namespace pto {
-
-constexpr unsigned SMALL_RPT = 4;
+constexpr unsigned SMALL_RPT_BINOP = 4;
 
 template <typename Op, typename T>
 PTO_INTERNAL void Bin1LCountMode(
@@ -41,9 +40,17 @@ PTO_INTERNAL void Bin2LCountMode(
     SetFullVecMaskByDType<T>();
 }
 
-template <typename Op, typename T, unsigned elementsPerRepeat>
+template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride,
+    unsigned Cols>
 PTO_INTERNAL void Bin1LNormMode(
     __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
+    if constexpr (Cols <= elementsPerRepeat) {
+        SetContMaskByDType<T>(validCol);
+        constexpr uint16_t repeatStride = rowStride / blockSizeElem;
+        Op::BinInstr(dstPtr, src0Ptr, src1Ptr, validRow, repeatStride, repeatStride, repeatStride);
+        SetFullVecMaskByDType<T>();
+        return;
+    }
     unsigned numElements = validRow * validCol;
     unsigned headRepeats = numElements / elementsPerRepeat;
     unsigned tailElements = numElements % elementsPerRepeat;
@@ -175,25 +182,28 @@ PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileData::DType *dstPtr, __ubuf_
     // continuous check in compile time
     if constexpr ((TileData::Cols == TileData::ValidCol) || (TileData::Rows == 1)) {
         constexpr unsigned totalRepeats = (TileData::Rows * TileData::Cols + elementsPerRepeat - 1) / elementsPerRepeat;
-        constexpr bool nonVLAligned = ((TileData::Cols % elementsPerRepeat) != 0);
+        constexpr bool nonVLAligned =
+            (((TileData::Cols % elementsPerRepeat) != 0) && (TileData::Cols > elementsPerRepeat));
         if constexpr (nonVLAligned || (totalRepeats > pto::REPEAT_MAX)) {
             Bin1LCountMode<Op, T>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
         } else {
-            Bin1LNormMode<Op, T, elementsPerRepeat>(dstPtr, src0Ptr, src1Ptr, validRow, TileData::Cols);
+            Bin1LNormMode<Op, T, elementsPerRepeat, blockSizeElem, rowStride, TileData::Cols>(
+                dstPtr, src0Ptr, src1Ptr, validRow, TileData::Cols);
         }
     } else {
         // continuous check in runtime(merge axis)
-        if ((TileData::Cols == validCol) || (validRow == 1)) {
+        if ((TileData::Cols == validCol) || (validRow == 1)) [[likely]] {
             unsigned totalRepeats = (validRow * validCol + elementsPerRepeat - 1) / elementsPerRepeat;
-            bool nonVLAligned = ((validCol % elementsPerRepeat) != 0);
-            if (nonVLAligned || (totalRepeats > pto::REPEAT_MAX)) {
+            bool nonVLAligned = ((validCol > elementsPerRepeat) && ((validCol % elementsPerRepeat) != 0));
+            if (nonVLAligned || (totalRepeats > pto::REPEAT_MAX)) [[unlikely]] {
                 Bin1LCountMode<Op, T>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
             } else {
-                Bin1LNormMode<Op, T, elementsPerRepeat>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
+                Bin1LNormMode<Op, T, elementsPerRepeat, blockSizeElem, rowStride, TileData::Cols>(
+                    dstPtr, src0Ptr, src1Ptr, validRow, validCol);
             }
         } else { // not - continuous
             constexpr unsigned normColRepeat = TileData::Cols / elementsPerRepeat;
-            if constexpr ((normColRepeat > 1) && ((TileData::Rows * normColRepeat) < SMALL_RPT)) {
+            if constexpr ((normColRepeat > 1) && ((TileData::Rows * normColRepeat) < SMALL_RPT_BINOP)) {
                 Bin2LCountMode<Op, T, rowStride>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
             } else if constexpr (TileData::Rows < (normColRepeat + 1)) {
                 unsigned tailElements = validCol % elementsPerRepeat;
