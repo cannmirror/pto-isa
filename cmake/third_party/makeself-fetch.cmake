@@ -10,7 +10,7 @@
 # ----------------------------------------------------------------------------
 
 set(MAKESELF_NAME "makeself")
-set(MAKESELF_PATH "${CMAKE_BINARY_DIR}/${MAKESELF_NAME}")
+set(MAKESELF_PATH ${CANN_3RD_LIB_PATH}/makeself)
 
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
