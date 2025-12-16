@@ -143,6 +143,7 @@ set(ALL_TESTCASES
     texpands
     tmov_acc2mat
     tassign
+    tmov_ub2l1
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

@@ -650,7 +650,7 @@ struct Tile {
 
     static_assert(InnerRows != 0 && InnerCols != 0,
                   "rows or cols of fractal size is 0.");
-    static_assert(Rows % InnerRows == 0,
+    static_assert((Loc == TileType::Vec) || (Rows % InnerRows == 0),
                   "Layout rows must be divisible by inner box rows");
     static_assert(Cols % InnerCols == 0,
                   "Layout cols must be divisible by inner box cols");
@@ -658,7 +658,7 @@ struct Tile {
     static_assert(
         (BFractal_ == BLayout::RowMajor && SFractal_ == SLayout::NoneBox && Cols * sizeof(DType) % TileConfig::alignedSize == 0) ||
         (BFractal_ == BLayout::ColMajor && SFractal_ == SLayout::NoneBox && Rows * sizeof(DType) % TileConfig::alignedSize == 0) ||
-        (SFractal_ != SLayout::NoneBox) && (Rows % InnerRows == 0 && Cols % InnerCols == 0),
+        (SFractal_ != SLayout::NoneBox) && (((Loc == TileType::Vec) || (Rows % InnerRows == 0)) && Cols % InnerCols == 0),
         "BFractal_ is RowMajor and SFractal_ is NoneBox: Rows must be 32 bytes align, \
          BFractal_ is ColMajor and SFractal_ is NoneBox: Cols must be 32 bytes align, \
          SFractal_ in not NoneBox: Rows/Cols must be integer multiple of InnerRows/InnerCols."
