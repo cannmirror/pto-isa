@@ -67,6 +67,7 @@ class TGatherParamsBase:
     def __init__(self, name):
         self.testname = name
 
+
 class TGatherParamsMasked(TGatherParamsBase):
     def __init__(self, name, dstType, srcType, row, col, pattern):
         super().__init__(name)
@@ -75,6 +76,7 @@ class TGatherParamsMasked(TGatherParamsBase):
         self.row = row
         self.col = col
         self.pattern = pattern
+
 
 class TGatherParams1D(TGatherParamsBase):
     def __init__(self, name, srcType, srcRow, srcCol, dstRow, dstCol):
@@ -85,11 +87,13 @@ class TGatherParams1D(TGatherParamsBase):
         self.dstRow = dstRow
         self.dstCol = dstCol
 
+
 def Gather1D(src, indices):
     output = np.zeros_like(indices, dtype=src.dtype)
     for i in range(indices.shape[0]):
         output[i] = src[indices[i]]
     return output
+
 
 def gen_golden_data(param: TGatherParamsBase):
     if isinstance(param, TGatherParamsMasked):
@@ -102,26 +106,26 @@ def gen_golden_data(param: TGatherParamsBase):
         x1_gm.tofile("./x1_gm.bin")
         res = np.zeros((row, col))
         if pattern == P0101 :
-          res = x1_gm[:, 0::2]
+            res = x1_gm[:, 0::2]
         elif pattern == P1010 :
-          res = x1_gm[:, 1::2]
+            res = x1_gm[:, 1::2]
         elif pattern == P0001 :
-          res = x1_gm[:, 0::4]
+            res = x1_gm[:, 0::4]
         elif pattern == P0010 :
-          res = x1_gm[:, 1::4]
+            res = x1_gm[:, 1::4]
         elif pattern == P0100 :
-          res = x1_gm[:, 2::4]
+            res = x1_gm[:, 2::4]
         elif pattern == P1000 :
-          res = x1_gm[:, 3::4]
+            res = x1_gm[:, 3::4]
         elif pattern == P1111 :
-          res = x1_gm[:, :]
+            res = x1_gm[:, :]
         
         golden = res.flatten()
 
         x1_gm.tofile("./x1_gm.bin")
         golden.tofile("./golden.bin")
         os.chdir(original_dir)
-    elif isinstance(param, TGatherParams1D):
+    elif isinstance(param, TGatherParams1D): 
         output = np.zeros([param.dstRow*param.dstCol]).astype(param.srcType)
         src_data = np.random.randint(-20, 20, (param.srcRow*param.srcCol)).astype(param.srcType)
         src_data.tofile("./src0.bin")
@@ -129,16 +133,7 @@ def gen_golden_data(param: TGatherParamsBase):
         indices.tofile("./src1.bin")
         golden = Gather1D(src_data, indices)
         golden.tofile("./golden.bin")
-        pass
 
-class tgatherParams:
-    def __init__(self, testname, dsttype, srctype, row, col, pattern):
-        self.testname = testname
-        self.dsttype = dsttype
-        self.srctype = srctype
-        self.row = row
-        self.col = col
-        self.pattern = pattern
 
 if __name__ == "__main__":
     case_params_list = [
