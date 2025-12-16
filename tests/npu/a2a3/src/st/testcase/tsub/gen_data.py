@@ -17,20 +17,20 @@ np.random.seed(19)
 def gen_golden_data_tsub(case_name, param):
     dtype = param.dtype
 
-    H, W = [param.tile_row, param.tile_col]
+    height, width = [param.tile_row, param.tile_col]
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    input2 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+    input1 = np.random.randint(1, 10, size=[height, width]).astype(dtype)
+    input2 = np.random.randint(1, 10, size=[height, width]).astype(dtype)
 
     # Perform the subtraction
     golden = input1 - input2
 
     # Apply valid region constraints
-    output = np.zeros([H, W]).astype(dtype)
-    for h in range(H):
-        for w in range(W):
+    output = np.zeros([height, width]).astype(dtype)
+    for h in range(height):
+        for w in range(width):
             if h >= h_valid or w >= w_valid:
                 golden[h][w] = output[h][w]
     
@@ -41,7 +41,8 @@ def gen_golden_data_tsub(case_name, param):
 
     return output, input1, input2, golden
 
-class tsubParams:
+
+class TSubParams:
     def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
         self.dtype = dtype
         self.global_row = global_row
@@ -50,6 +51,7 @@ class tsubParams:
         self.tile_col = tile_col
         self.valid_row = valid_row
         self.valid_col = valid_col
+
 
 def generate_case_name(param):
     dtype_str = {
@@ -61,6 +63,7 @@ def generate_case_name(param):
     }[param.dtype]
     return f"TSUBTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
 
+
 if __name__ == "__main__":
     # Get the absolute path of the script
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -71,10 +74,10 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tsubParams(np.float32, 64, 64, 64, 64, 64, 64),
-        tsubParams(np.int32, 64, 64, 64, 64, 64, 64),
-        tsubParams(np.float16, 64, 64, 64, 64, 64, 64),
-        tsubParams(np.int16, 64, 64, 64, 64, 64, 64),
+        TSubParams(np.float32, 64, 64, 64, 64, 64, 64),
+        TSubParams(np.int32, 64, 64, 64, 64, 64, 64),
+        TSubParams(np.float16, 64, 64, 64, 64, 64, 64),
+        TSubParams(np.int16, 64, 64, 64, 64, 64, 64),
     ]
     
     for i, param in enumerate(case_params_list):
