@@ -330,6 +330,9 @@ struct GlobalTensor {
         return -1;
     }
 
+    template <typename T, typename AddrType>
+    friend AICORE void TASSIGN_IMPL(T &src, AddrType addr);
+
     AICORE DType *data()
     {
         return data_;
@@ -355,6 +358,8 @@ private:
             return StaticStride;
         }
     }
+
+    AICORE void SetAddr(DType *addr) { data_ = addr; }
 
     DType *data_;
     Shape shape_ = defaultShape;
@@ -554,9 +559,6 @@ static constexpr int fractalCSize = 1024;
 static constexpr int cElemSize = 4;
 } // namespace TileConfig
 
-template <typename TileData>
-AICORE void TASSIGN_IMPL(TileData &tile, uint32_t addr);
-
 template <TileType Loc_, typename Element_, const int Rows_, const int Cols_,
           const BLayout BFractal_ = BLayout::RowMajor,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_,
@@ -702,10 +704,8 @@ struct Tile {
         return ColMaskInternal;
     }
 
-    friend AICORE void
-    TASSIGN_IMPL<>(Tile<Loc_, Element_, Rows_, Cols_, BFractal_, RowValid_,
-                   ColValid_, SFractal_, SFractalSize_, PadVal_> &tile,
-              uint32_t addr);
+    template <typename T, typename AddrType>
+    friend AICORE void TASSIGN_IMPL(T &tile, AddrType addr);
 
   private:
     AICORE void assignData(TileDType data) { data_ = data; }
@@ -750,10 +750,12 @@ struct is_global<GlobalTensor<Element_, Layout_, Stride_>> : std::true_type {};
 
 template <TileType Loc_, typename Element_, const int Rows_, const int Cols_,
           const BLayout BFractal_, const int RowValid_, const int ColValid_,
-          const SLayout SFractal_, const int SFractalSize_>
+          const SLayout SFractal_, const int SFractalSize_,
+          const PadValue PadVal_>
 struct is_tile<Tile<Loc_, Element_, Rows_, Cols_, BFractal_, RowValid_,
-                    ColValid_, SFractal_, SFractalSize_>> : std::true_type {
-    static constexpr SLayout layout_enum = SFractal_;
+                    ColValid_, SFractal_, SFractalSize_, PadVal_>>
+    : std::true_type {
+  static constexpr SLayout layout_enum = SFractal_;
 };
 
 template <typename T>
