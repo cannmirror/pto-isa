@@ -29,6 +29,7 @@ endfunction()
 
 set(ALL_TESTCASES
 tmatmul
+tabs
 tload
 tstore
 textract
@@ -38,7 +39,9 @@ trowsum
 tadd
 texp
 trowmax
+tsqrt
 tfillpad
+ttrans
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})
