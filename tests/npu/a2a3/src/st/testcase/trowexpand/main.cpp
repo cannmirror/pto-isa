@@ -75,8 +75,8 @@ bool TRowExpandFramework()
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
+    std::vector<T> golden(outputFileSize);
+    std::vector<T> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
@@ -110,6 +110,24 @@ TEST_F(TROWEXPANDTest, case3)
 
 TEST_F(TROWEXPANDTest, case4)
 {
-    bool ret = TRowExpandFramework<uint16_t, 16, 16, 1, 255, 256>();
+    bool ret = TRowExpandFramework<uint16_t, 16, 16, 1, 256, 255>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case5)
+{
+    bool ret = TRowExpandFramework<uint8_t, 16, 32, 1, 512, 511>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case6)
+{
+    bool ret = TRowExpandFramework<uint32_t, 16, 8, 1, 128, 127>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case7)
+{
+    bool ret = TRowExpandFramework<float, 16, 8, 1, 128, 127>();
     EXPECT_TRUE(ret);
 }

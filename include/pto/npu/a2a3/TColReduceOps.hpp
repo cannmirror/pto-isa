@@ -84,10 +84,10 @@ namespace pto {
                       "The input data type is not supported by this instruction.");
         static_assert(std::is_same_v<typename TileDataOut::DType, T>,
                       "The input data type must be consistent with the output data type.");
-        PTO_ASSERT(SrcValidCol != 0 && SrcValidCol != 0, 
-                   "The input shape is invalid, validRow or validCol is 0.");
-        PTO_ASSERT(SrcValidCol == DstValidCol, 
-                   "The input valid col must be consistent with the output valid row.");
+        PTO_ASSERT(SrcValidCol == DstValidCol, "The input valid col must be consistent with the output valid row.");
+        if (SrcValidRow == 0 || SrcValidCol == 0 || DstValidCol == 0) {
+            return;
+        }
     }
 }
 #endif
