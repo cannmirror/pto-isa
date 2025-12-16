@@ -91,6 +91,8 @@ tcvt
 tmul
 tadd
 tpartadd
+tpartmin
+tpartmax
 tsel
 tsub
 tmins
