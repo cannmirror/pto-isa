@@ -109,6 +109,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
     #include "pto/cpu/TMatmul.hpp"
     #include "pto/cpu/TAssign.hpp"
     #include "pto/cpu/TAdd.hpp"
+    #include "pto/cpu/TAbs.hpp"
     #include "pto/cpu/TLoad.hpp"
     #include "pto/cpu/TStore.hpp"
     #include "pto/cpu/TExpands.hpp"
@@ -117,10 +118,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
     #include "pto/cpu/TMrgSort.hpp"
     #include "pto/cpu/TMov.hpp"
     #include "pto/cpu/TExtract.hpp"
+    #include "pto/cpu/TSqrt.hpp"
     #include "pto/cpu/TRowSum.hpp"
     #include "pto/cpu/TMax.hpp"
     #include "pto/cpu/TExtract.hpp"
     #include "pto/cpu/TFillPad.hpp"
+    #include "pto/cpu/TTrans.hpp"
 #endif
 
 #endif

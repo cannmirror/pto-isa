@@ -28,6 +28,11 @@ PTO_INST void TADD(TileData &dst, TileData &src0, TileData &src1) {
 }
 
 template <typename TileData>
+PTO_INST void TABS(TileData &dst, TileData &src) {
+  MAP_INSTR_IMPL(TABS, dst, src);
+}
+
+template <typename TileData>
 PTO_INST void TSUB(TileData &dst, TileData &src0, TileData &src1) {
   MAP_INSTR_IMPL(TSUB, dst, src0, src1);
 }
