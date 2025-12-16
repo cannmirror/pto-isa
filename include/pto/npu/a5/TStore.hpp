@@ -151,12 +151,17 @@ PTO_INTERNAL void CheckStaticVec()
                       ((GlobalData::layout == pto::Layout::DN) &&
                           (!TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox))) ||
                       ((GlobalData::layout == pto::Layout::NZ) &&
-                          (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))),
-        "Src and dst layout must be same!");
+                          (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))) ||
+                      (TileData::Rows == 1) || (TileData::Cols == 1),
+        "Src and dst layout must be same, only support ND/DN/NZ or the special case of one row/one column!");
     static_assert(
         ((GlobalData::layout == pto::Layout::ND) && (TileData::Cols * sizeof(typename TileData::DType) % 32 == 0)) ||
         ((GlobalData::layout == pto::Layout::DN) && (TileData::Rows * sizeof(typename TileData::DType) % 32 == 0)) ||
-        (GlobalData::layout == pto::Layout::NZ));
+        (GlobalData::layout == pto::Layout::NZ) ||
+        ((GlobalData::layout == pto::Layout::ND) && (TileData::Rows * sizeof(typename TileData::DType) % 32 == 0) &&
+            (TileData::Cols == 1)) ||
+        ((GlobalData::layout == pto::Layout::DN) && (TileData::Cols * sizeof(typename TileData::DType) % 32 == 0) &&
+            (TileData::Rows == 1)));
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant>

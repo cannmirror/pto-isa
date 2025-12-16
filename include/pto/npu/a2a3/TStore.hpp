@@ -368,8 +368,9 @@ PTO_INTERNAL void CheckStaticVec()
                       ((GlobalData::layout == pto::Layout::DN) &&
                           (!TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox))) ||
                       ((GlobalData::layout == pto::Layout::NZ) &&
-                          (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))),
-        "Src and dst layout must be same, only support ND/DN/NZ!");
+                          (!TileData::isRowMajor && (TileData::SFractal == SLayout::RowMajor))) ||
+                      (TileData::Rows == 1) || (TileData::Cols == 1),
+        "Src and dst layout must be same, only support ND/DN/NZ or the special case of one row/one column!");
     if constexpr (std::is_same_v<typename TileData::DType, int64_t> ||
                   std::is_same_v<typename TileData::DType, uint64_t>) {
         static_assert((GlobalData::layout == pto::Layout::ND &&
