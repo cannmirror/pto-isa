@@ -418,7 +418,7 @@ inline AICORE void implTCVT(TileDataD &dst, TileDataS &src)
 {
     uint16_t rows = src.GetValidRow();
     uint16_t cols = src.GetValidCol();
-    __VEC_SCOPE__ {
+    {
         for(uint16_t row = 0; row < rows; row++){
             int32_t dstOffset=row*TileDataD::Cols;
             int32_t srcOffset=row*TileDataS::Cols;
@@ -431,6 +431,7 @@ inline AICORE void implTCVT(TileDataD &dst, TileDataS &src)
 template <typename TileDataD, typename TileDataS>
 AICORE void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
 {
+    __VEC_SCOPE__ 
     switch (mode) {
         case RoundMode::CAST_RINT:
             implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
