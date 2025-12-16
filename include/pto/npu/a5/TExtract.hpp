@@ -125,6 +125,33 @@ __tf__ AICORE void TExtractToB(typename DstTileData::TileDType __out__ dst, type
     }
 }
 
+template <typename DstTileData, typename SrcTileData>
+__tf__ AICORE void TExtractVecToMat(typename DstTileData::TileDType __out__ dst,
+    typename SrcTileData::TileDType __in__ src, uint16_t indexRow, uint16_t indexCol, uint32_t srcValidRow,
+    uint32_t srcValidCol, uint32_t dstValidRow, uint32_t dstValidCol)
+{
+    using T = typename SrcTileData::DType;
+    constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(T);
+    uint32_t offset = srcValidRow * c0Size * (indexCol / c0Size) + (indexRow * c0Size + (indexCol % c0Size));
+    if constexpr (SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::NoneBox)) {
+        offset = indexRow * srcValidCol + indexCol;
+    }
+
+    __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src) + offset;
+    __cbuf__ T *dstPtr = (__cbuf__ T *)__cce_get_tile_ptr(dst);
+    if constexpr (SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::NoneBox)) {
+        uint16_t blockLen = dstValidRow * dstValidCol * sizeof(T) / BLOCK_BYTE_SIZE;
+        //dst, src, sid, nBurst, lenBurst, srcStride, dstStride
+        copy_ubuf_to_cbuf(dstPtr, srcPtr, 0, 1, blockLen, 0, 0);
+    } else if constexpr (!SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::RowMajor)) {
+        uint16_t blockCout = CeilDivision(dstValidCol, c0Size);
+        uint16_t blockLen = dstValidRow * c0Size * sizeof(T) / BLOCK_BYTE_SIZE;
+        constexpr uint16_t srcStride = (SrcTileData::Rows >= (DstTileData::Rows + 1)) ?
+            (SrcTileData::Rows - DstTileData::Rows) / BLOCK_BYTE_SIZE : 0;
+        copy_ubuf_to_cbuf(dstPtr, srcPtr, 0, blockCout, blockLen, srcStride, 0);
+    }
+}
+
 template<typename T>
 constexpr bool is_textract_supported_type = std::disjunction_v<
     std::is_same<T, int8_t>,
@@ -168,6 +195,9 @@ AICORE void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow,
         } else {
             TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
         }
+    } else if constexpr (SrcTileData::Loc == TileType::Vec && DstTileData::Loc == TileType::Mat) {
+        TExtractVecToMat<DstTileData, SrcTileData>(dst.data(), src.data(), indexRow, indexCol,
+            src.GetValidRow(), src.GetValidCol(), dst.GetValidRow(), dst.GetValidCol());
     }
 }
 } // namespace pto
