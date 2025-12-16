@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
 template <typename T> struct TPartMinOp {
-    static constexpr T PadVal = Padding<T>::Min;
+    static constexpr typename Padding<T>::Type PadVal = Padding<T>::Max;
     PTO_INTERNAL static void BinInstr(RegTensor<T> &dst, RegTensor<T> &src0, RegTensor<T> &src1,
         MaskReg preg)
     {

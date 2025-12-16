@@ -75,7 +75,7 @@ struct Padding<int16_t>{
     using Type = uint16_t;
     static constexpr Type Null = (Type)0;
     static constexpr Type Zero = (Type)0;
-    static constexpr Type Min  = (Type)0xffffUL;
+    static constexpr Type Min  = (Type)0x8000UL;
     static constexpr Type Max  = (Type)0x7fffUL;
 };
 
@@ -106,6 +106,25 @@ struct Padding<uint8_t>{
     static constexpr Type Max  = (Type)0xffUL;
 };
 
+template <typename Op, typename T, unsigned elementsPerRepeat, unsigned dstStride>
+PTO_INTERNAL void TPadOp(__ubuf__ T * dstPtr, uint64_t DstvalidRow, uint64_t DstvalidCol)
+{
+    constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+    RegTensor<typename Padding<T>::Type> vreg;
+    MaskReg preg;
+    vbr(vreg, Op::PadVal);
+    uint16_t repeatTimes = CeilDivision(DstvalidCol, elementsPerRepeat);
+    for (uint16_t i = 0; i < (uint16_t)DstvalidRow; ++i){
+        uint32_t sreg = (uint32_t)(DstvalidCol);
+        for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j){
+            preg = CreatePredicate<T>(sreg);
+            vsts((RegTensor<T> &)vreg, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
+        }
+    }
+
+    mem_bar(VST_VLD);
+}
+
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned src0Stride, unsigned src1Stride, unsigned dstStride>
 __tf__ PTO_INTERNAL void TCopyPadOp(typename TileData::TileDType __out__ dst,
     typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1,
@@ -121,23 +140,15 @@ __tf__ PTO_INTERNAL void TCopyPadOp(typename TileData::TileDType __out__ dst,
 
     __VEC_SCOPE__
     {
+        TPadOp<Op, T, elementsPerRepeat, dstStride>(dstPtr, DstvalidRow, DstvalidCol);
+
         MaskReg preg;
         RegTensor<T> vreg0;
         RegTensor<T> vreg1;
         RegTensor<T> vreg2;
+
         constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-
         uint16_t repeatTimes = CeilDivision(DstvalidCol, elementsPerRepeat);
-        vbr(vreg0, Op::PadVal);
-        for (uint16_t i = 0; i < (uint16_t)DstvalidRow; ++i){
-            uint32_t sreg = (uint32_t)(DstvalidCol);
-            for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j){
-                preg = CreatePredicate<T>(sreg);
-                vsts((RegTensor<T> &)vreg0, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
-            }
-        }
-
-        mem_bar(VST_VLD);
 
         // COPY source0 into dst
         repeatTimes = CeilDivision(Src0validCol, elementsPerRepeat);
