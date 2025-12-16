@@ -283,6 +283,21 @@ PTO_INST void TROWEXPAND(TileDataDst &dst, TileDataSrc &src) {
   MAP_INSTR_IMPL(TROWEXPAND, dst, src);
 }
 
+template <typename TileDataDst, typename TileDataSrc1>
+PTO_INST void TROWEXPANDDIV(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1) {
+  MAP_INSTR_IMPL(TROWEXPANDDIV, dst, src0, src1);
+}
+
+template <typename TileDataDst, typename TileDataSrc1>
+PTO_INST void TROWEXPANDMUL(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1) {
+  MAP_INSTR_IMPL(TROWEXPANDMUL, dst, src0, src1);
+}
+
+template <typename TileDataDst, typename TileDataSrc1>
+PTO_INST void TROWEXPANDSUB(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1) {
+  MAP_INSTR_IMPL(TROWEXPANDSUB, dst, src0, src1);
+}
+
 template <typename TileData>
 PTO_INST void TRSQRT(TileData &dst, TileData &src) {
   MAP_INSTR_IMPL(TRSQRT, dst, src);

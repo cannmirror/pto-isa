@@ -62,6 +62,9 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowsum -g TROWSUMTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpand -g TROWEXPANDTest.case0
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpanddiv -g TROWEXPANDDIVTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandmul -g TROWEXPANDMULTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandsub -g TROWEXPANDSUBTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tgather -g TGATHERTest.case1_float_P0101
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t ttrans -g TTRANSTest.case1_float_16_8_16_8
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tsels -g TSELSTest.case_float_64x64_64x64_64x64
@@ -99,6 +102,9 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tstore_acc2gm
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowsum
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpand
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpanddiv
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandmul
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandsub
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tgather
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t ttrans
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tsort32

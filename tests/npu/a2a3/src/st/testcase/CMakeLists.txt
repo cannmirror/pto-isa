@@ -87,6 +87,9 @@ tdiv
 tmov_vect
 tmov_acc2mat
 trowexpand
+trowexpanddiv
+trowexpandmul
+trowexpandsub
 tcvt
 tmul
 tadd
