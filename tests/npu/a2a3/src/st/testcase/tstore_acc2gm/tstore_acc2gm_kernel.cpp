@@ -53,8 +53,8 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
 
     using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
     using TileMatBData = Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
-    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
-    using RightTile = TileRight<srcDataType, K, N, K, N>;
+    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, validM, validK, SLayout::RowMajor, 512>;
+    using RightTile = TileRight<srcDataType, K, N, validK, validN>;
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
@@ -71,20 +71,30 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
+    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
+    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
+    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
+    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile);
+    pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
 }
 
@@ -120,8 +130,8 @@ __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcData
     using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
     using TileMatBData = Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
 
-    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
-    using RightTile = TileRight<srcDataType, K, N, K, N>;
+    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, validM, validK, SLayout::RowMajor, 512>;
+    using RightTile = TileRight<srcDataType, K, N, validK, validN>;
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     TileMatAData aMatTile;
@@ -139,22 +149,32 @@ __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcData
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
+    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
+    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-
+    
+    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
+    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
+    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile);
+    pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
 }
 
@@ -188,8 +208,8 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
     using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
     using TileMatBData = Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
 
-    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
-    using RightTile = TileRight<srcDataType, K, N, K, N>;
+    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, validM, validK, SLayout::RowMajor, 512>;
+    using RightTile = TileRight<srcDataType, K, N, validK, validN>;
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
@@ -205,19 +225,26 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
-
+    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
+    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-
+    
+    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
+    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     uint64_t preQuantScalar = static_cast<uint64_t>(*reinterpret_cast<int32_t *>(&scalarQuant));
@@ -226,7 +253,9 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
         preQuantScalar = (preQuantScalar & ~(static_cast<uint64_t>(1) << 46)) | (static_cast<uint64_t>(sign) << 46);
     }
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
+    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile, preQuantScalar);
+    pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
 }
 
@@ -263,8 +292,8 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
     using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
     using TileMatBData = Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, K, N, SLayout::RowMajor, 512>;
 
-    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
-    using RightTile = TileRight<srcDataType, K, N, K, N>;
+    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, validM, validK, SLayout::RowMajor, 512>;
+    using RightTile = TileRight<srcDataType, K, N, validK, validN>;
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
@@ -281,18 +310,26 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
+    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
+    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
+    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
+    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     uint64_t preQuantScalar = static_cast<uint64_t>(*reinterpret_cast<int32_t *>(&scalarQuant));
@@ -301,7 +338,9 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
         preQuantScalar = (preQuantScalar & ~(static_cast<uint64_t>(1) << 46)) | (static_cast<uint64_t>(sign) << 46);
     }
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
+    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile, preQuantScalar);
+    pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
 }
 
@@ -339,8 +378,8 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
     using TileMatScalingData =
         Tile<TileType::Mat, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
-    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
-    using RightTile = TileRight<srcDataType, K, N, K, N>;
+    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, validM, validK, SLayout::RowMajor, 512>;
+    using RightTile = TileRight<srcDataType, K, N, validK, validN>;
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
     using ScalingTile = Tile<TileType::Scaling, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
@@ -360,24 +399,36 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
     TASSIGN(cTile, 0x0);
     TASSIGN(scalingTile, 0x0);
 
+    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
+    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
+    pipe_barrier(PIPE_ALL);
     __cbuf__ uint64_t *srcScalingAddr = scalingMatTile.data();
     DynGM2L1NZ2NZ<uint64_t>(srcScalingAddr, quantTensor, 1, N);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
+    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
+    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMOV(scalingTile, scalingMatTile);
+    pipe_barrier(PIPE_ALL);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
+    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
+    pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
 }
 
@@ -417,8 +468,8 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nz(
     using TileMatScalingData =
         Tile<TileType::Mat, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
-    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, M, K, SLayout::RowMajor, 512>;
-    using RightTile = TileRight<srcDataType, K, N, K, N>;
+    using LeftTile = Tile<TileType::Left, srcDataType, M, K, BLayout::RowMajor, validM, validK, SLayout::RowMajor, 512>;
+    using RightTile = TileRight<srcDataType, K, N, validK, validN>;
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
     using ScalingTile = Tile<TileType::Scaling, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
@@ -438,24 +489,36 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nz(
     TASSIGN(cTile, 0x0);
     TASSIGN(scalingTile, 0x0);
 
+    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
+    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
+    pipe_barrier(PIPE_ALL);
     __cbuf__ uint64_t *srcScalingAddr = scalingMatTile.data();
     DynGM2L1NZ2NZ<uint64_t>(srcScalingAddr, quantTensor, 1, N);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
+    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
+    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    pipe_barrier(PIPE_ALL);
     TMOV(scalingTile, scalingMatTile);
+    pipe_barrier(PIPE_ALL);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
+    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
+    pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
 }
 
