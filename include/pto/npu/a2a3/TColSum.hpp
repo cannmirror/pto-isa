@@ -49,9 +49,9 @@ namespace pto {
     template <typename T, typename TileDataDst, typename TileDataSrc, typename TileDataTmp, int srcstride,
               int dststride, int tmpstride, bool IsBinary>
     __tf__ PTO_INTERNAL void TColSum(typename TileDataDst::TileDType __out__ dst,
-                                              typename TileDataSrc::TileDType __in__ src,
-                                              typename TileDataTmp::TileDType __in__ tmp,
-                                              int validRow, int validCol) {
+                                     typename TileDataSrc::TileDType __in__ src,
+                                     typename TileDataTmp::TileDType __in__ tmp,
+                                     int validRow, int validCol) {
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
         __ubuf__ T *tmpPtr = (__ubuf__ T *)__cce_get_tile_ptr(tmp);
@@ -98,11 +98,12 @@ namespace pto {
                       "The input data type is not supported by this instruction.");
         static_assert(std::is_same_v<typename TileDataDst::DType, T> && std::is_same_v<typename TileDataTmp::DType, T>,
                       "The input data type must be consistent with the output data type and the tmp data type.");
-        PTO_ASSERT(src.GetValidRow != 0 && src.GetValidCol() != 0, 
-                   "The input shape is invalid, validRow or validCol is 0.");
         PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), 
                    "The input valid col must be consistent with the output valid row.");
 
+        if (src.GetValidRow() == 0 || src.GetValidCol() == 0) {
+            return;
+        }
         constexpr int srcstride = TileDataSrc::RowStride;
         constexpr int dststride = TileDataDst::RowStride;
         constexpr int tmpstride = TileDataTmp::RowStride;
