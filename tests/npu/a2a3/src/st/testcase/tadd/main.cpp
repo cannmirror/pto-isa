@@ -39,7 +39,6 @@ void LaunchTAdd(T *out, T *src0, T *src1, void *stream);
 
 template<typename T, int kTRows_, int kTCols_, int vRows, int vCols>
 void test_tadd() {
-
     size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
 
     aclInit(nullptr);
