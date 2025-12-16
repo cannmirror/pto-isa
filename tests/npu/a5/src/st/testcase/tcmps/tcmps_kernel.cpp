@@ -52,7 +52,7 @@ void LaunchTCmps(uint32_t *out, T *src0, T *src1, void *stream)
         runTCmps<T, kGRows_, kGCols_, kTRows_, kTCols_, modeValue><<<1, nullptr, stream>>>(out, src0, src1);
 }
 
-template void LaunchTCmps<float, 1, 64, 1, 64, 0>(uint32_t *out, float *src0, float *src1, void *stream);
+template void LaunchTCmps<aclFloat16, 32, 32, 32, 32, 0>(uint32_t *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
 template void LaunchTCmps<float, 8, 64, 8, 64, 3>(uint32_t *out, float *src0, float *src1, void *stream);
 template void LaunchTCmps<float, 4, 64, 4, 64, 1>(uint32_t *out, float *src0, float *src1, void *stream);
 template void LaunchTCmps<float, 128, 128, 64, 64, 2>(uint32_t *out, float *src0, float *src1, void *stream);
