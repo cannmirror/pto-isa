@@ -116,9 +116,9 @@ PTO_INTERNAL void TStoreUb2gmNz2nz(typename GlobalData::DType *dstAddr, __ubuf__
 }
 
 template <typename GlobalData, typename TileData, AtomicType currentAtomicType = AtomicType::AtomicNone>
-__tf__ AICORE void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src, int gShape0,
-    int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
-    int gStride4, int validRow, int validCol)
+__tf__ PTO_INTERNAL void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
 {
     __ubuf__ typename TileData::DType *srcAddr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src);
     typename GlobalData::DType *dstAddr = dst;
@@ -131,6 +131,120 @@ __tf__ AICORE void TStore(typename GlobalData::DType __out__ *dst, typename Tile
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
         TStoreUb2gmNz2nz<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+    }
+}
+
+template <typename GlobalData, typename TileData>
+PTO_INTERNAL void TStoreMat2GmInstr(typename GlobalData::DType *dstAddr, __cbuf__ typename TileData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gStride0, int gStride1, int gStride2, int64_t srcStride2,
+    uint16_t nBurst, uint16_t lenBurst, uint16_t dstStride, uint16_t srcStride)
+{
+    typename GlobalData::DType *dstAddrP = dstAddr;
+    __cbuf__ typename TileData::DType *srcAddrP = srcAddr;
+
+    int64_t srcStride1 = gShape2 * srcStride2;
+    int64_t srcStride0 = gShape1 * srcStride1;
+    for (uint32_t i = 0; i < gShape0; i++) {
+        int64_t dstAddr0 = i * gStride0;
+        int64_t srcAddr0 = i * srcStride0;
+        for (uint32_t j = 0; j < gShape1; j++) {
+            int64_t dstAddr1 = j * gStride1;
+            int64_t srcAddr1 = j * srcStride1;
+            for (uint32_t k = 0; k < gShape2; k++) {
+                srcAddrP = srcAddr + srcAddr0 + srcAddr1 + k * srcStride2;
+                dstAddrP = dstAddr + dstAddr0 + dstAddr1 + k * gStride2;
+                copy_cbuf_to_gm(dstAddrP, srcAddrP, (uint8_t)0, nBurst, lenBurst, srcStride, dstStride);
+            }
+        }
+    }
+}
+
+template <typename GlobalData, typename TileData>
+PTO_INTERNAL void TStoreMat2GmNd2Nd(typename GlobalData::DType *dstAddr, __cbuf__ typename TileData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    PTO_ASSERT(gShape4 * sizeof(typename TileData::DType) % BLOCK_BYTE_SIZE == 0,
+        "The 5th dim of ND shape must be 32 bytes aligned!");
+    PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
+    PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
+        "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
+    uint16_t nBurst = gShape3;
+    uint16_t lenBurst = (validCol * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+    uint16_t dstStride = ((gStride3 - gShape4) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+    uint16_t srcStride = ((TileData::Cols - validCol) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+
+    int64_t srcStride2 = gShape3 * TileData::Cols;
+    TStoreMat2GmInstr<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gStride0, gStride1, gStride2,
+        srcStride2, nBurst, lenBurst, dstStride, srcStride);
+}
+
+template <typename GlobalData, typename TileData>
+PTO_INTERNAL void TStoreMat2GmDn2Dn(typename GlobalData::DType *dstAddr, __cbuf__ typename TileData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    PTO_ASSERT(gShape3 * sizeof(typename TileData::DType) % BLOCK_BYTE_SIZE == 0,
+        "The 4th dim of DN shape must be 32 bytes aligned!");
+    PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
+    PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
+        "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
+    uint16_t nBurst = gShape4;
+    uint16_t lenBurst = (validRow * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+    uint16_t dstStride = ((gStride4 - gShape3) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+    uint16_t srcStride = ((TileData::Rows - gShape3) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+
+    int64_t srcStride2 = gShape4 * TileData::Rows;
+    TStoreMat2GmInstr<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gStride0, gStride1, gStride2,
+        srcStride2, nBurst, lenBurst, dstStride, srcStride);
+}
+
+template <typename GlobalData, typename TileData>
+PTO_INTERNAL void TStoreMat2GmNz2Nz(typename GlobalData::DType *dstAddr, __cbuf__ typename TileData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    static_assert(GlobalData::staticShape[3] == FRACTAL_NZ_ROW &&
+                      GlobalData::staticShape[4] == BLOCK_BYTE_SIZE / sizeof(typename TileData::DType),
+        "When TileData is NZ format, the last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
+    PTO_ASSERT(validRow == gShape2 * gShape3, "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
+    PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
+        "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
+    uint16_t nBurst = gShape1;
+    uint32_t lenBurst = validRow;
+    uint32_t dstStride =
+        ((gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
+    uint32_t srcStride = TileData::Rows - validRow;
+
+    typename GlobalData::DType *dstAddrP = dstAddr;
+    __cbuf__ typename TileData::DType *srcAddrP = srcAddr;
+
+    int64_t tileStride = TileData::Rows * gShape1 * gShape4;
+
+    for (uint32_t i = 0; i < gShape0; i++) {
+        dstAddrP = dstAddr + i * gStride0;
+        srcAddrP = srcAddr + i * tileStride;
+        copy_cbuf_to_gm(dstAddrP, srcAddrP, 0, nBurst, lenBurst, srcStride, dstStride);
+    }
+}
+
+template <typename GlobalData, typename TileData, AtomicType atomicType = AtomicType::AtomicNone>
+__tf__ AICORE void TStoreMat(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    __cbuf__ typename TileData::DType *srcAddr = (__cbuf__ typename TileData::DType *)__cce_get_tile_ptr(src);
+    typename GlobalData::DType *dstAddr = dst;
+
+    if constexpr (TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
+        TStoreMat2GmNd2Nd<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+    } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::NoneBox)) {
+        TStoreMat2GmDn2Dn<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
+            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+    } else if constexpr (!TileData::isRowMajor & (TileData::SFractal == SLayout::RowMajor)) {
+        TStoreMat2GmNz2Nz<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
 }
@@ -351,7 +465,7 @@ __tf__ AICORE void TStoreAccFp(typename GlobalData::DType __out__ *dst, typename
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void CheckStaticVec()
+PTO_INTERNAL void CheckStaticForVecAndMat()
 {
     static_assert(
         std::is_same_v<typename TileData::DType, int8_t> || std::is_same_v<typename TileData::DType, uint8_t> ||
@@ -408,15 +522,20 @@ PTO_INTERNAL void CheckAcc2gm(GlobalData &dst, TileData &src)
 template <typename TileData, typename GlobalData, AtomicType currentAtomicType = AtomicType::AtomicNone>
 AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
-    static_assert(TileData::Loc == pto::TileType::Vec || TileData::Loc == pto::TileType::Acc,
-        "Source TileType only suport Vec/Acc!");
-    PTO_ASSERT(dst.GetShape(pto::GlobalTensorDim::DIM_0) > 0 && dst.GetShape(pto::GlobalTensorDim::DIM_1) > 0 && dst.GetShape(pto::GlobalTensorDim::DIM_2) > 0 && dst.GetShape(pto::GlobalTensorDim::DIM_3) > 0 &&
+    static_assert(TileData::Loc == pto::TileType::Vec || TileData::Loc == pto::TileType::Acc ||
+                      TileData::Loc == pto::TileType::Mat,
+        "Source TileType only suport Vec/Acc/Mat!");
+    PTO_ASSERT(dst.GetShape(pto::GlobalTensorDim::DIM_0) > 0 && dst.GetShape(pto::GlobalTensorDim::DIM_1) > 0 &&
+                   dst.GetShape(pto::GlobalTensorDim::DIM_2) > 0 && dst.GetShape(pto::GlobalTensorDim::DIM_3) > 0 &&
                    dst.GetShape(pto::GlobalTensorDim::DIM_4) > 0 && src.GetValidRow() > 0 && src.GetValidCol() > 0,
         "The shape of src and dst must be greater than 0!");
     if constexpr (TileData::Loc == pto::TileType::Vec) {
-        CheckStaticVec<TileData, GlobalData>();
-        TStore<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
-            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+        CheckStaticForVecAndMat<TileData, GlobalData>();
+        TStore<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+            dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+            dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+            dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
             dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
     } else if constexpr (TileData::Loc == pto::TileType::Acc) {
         CheckAcc2gm<TileData, GlobalData, false>(dst, src);
@@ -424,12 +543,23 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
             SetAtomicAdd<typename GlobalData::DType>();
         }
         constexpr QuantMode_t quantMode = GetCastPreQuantMode<typename TileData::DType, typename GlobalData::DType>();
-        TStoreAcc<GlobalData, TileData, quantMode>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
-            dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2),
-            dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
+        TStoreAcc<GlobalData, TileData, quantMode>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+            dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+            dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+            dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+            dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
         if constexpr (currentAtomicType == AtomicType::AtomicAdd) {
             SetAtomicNone();
         }
+    } else if constexpr (TileData::Loc == pto::TileType::Mat) {
+        CheckStaticForVecAndMat<TileData, GlobalData>();
+        TStoreMat<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+            dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+            dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+            dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+            dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
     }
 }
 
