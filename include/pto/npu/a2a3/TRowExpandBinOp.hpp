@@ -15,12 +15,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/utils.hpp>
 
 namespace pto {
-template <typename Op, typename T, unsigned rowStride>
+template <typename Op, typename T, unsigned blockSizeElem, unsigned rowStride>
 PTO_INTERNAL
-void TRowExpandBinaryInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
+void TRowExpandBinaryCountMode(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
     unsigned validRow, unsigned validCol)
 {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T); 
     set_mask_count();
     SetVectorCount(validCol);
     for (unsigned i = 0; i < validRow; i++) {
@@ -31,29 +30,80 @@ void TRowExpandBinaryInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *
     SetFullVecMaskByDType<T>();
 }
 
-template <typename Op, typename T, typename U, unsigned rowStride>
+template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
+PTO_INTERNAL
+void TRowExpandBinaryNormMode(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
+    unsigned validRow, unsigned validCol)
+{
+    constexpr uint8_t repeatStride = (uint8_t)(rowStride / blockSizeElem); // rowStride / blockSizeElem>256不会进到norm mode
+    if constexpr (rowStride <= elementsPerRepeat) {
+        SetContMaskByDType<T>(validCol);
+        Op::RowExpandBinInstr(dstPtr, src0Ptr, src1Ptr, validRow, repeatStride, repeatStride);
+        SetFullVecMaskByDType<T>();
+    } else {
+        unsigned numLoop = validCol / elementsPerRepeat;
+        unsigned numRemainAfterLoop = validCol % elementsPerRepeat;
+        for (unsigned i = 0; i < numLoop; i++) {
+            Op::RowExpandBinInstr(dstPtr, src0Ptr, src1Ptr, validRow, repeatStride, repeatStride);
+            dstPtr += elementsPerRepeat;
+            src0Ptr += elementsPerRepeat;
+        }
+        if (numRemainAfterLoop) {
+            SetContMaskByDType<T>(numRemainAfterLoop);
+            Op::RowExpandBinInstr(dstPtr, src0Ptr, src1Ptr, validRow, repeatStride, repeatStride);
+            SetFullVecMaskByDType<T>();
+        }
+    }
+}
+
+template <typename Op, typename T, typename U, int row, unsigned rowStride>
 PTO_INTERNAL
 void TRowExpandBinaryInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ U *src1Ptr, __ubuf__ T *tmpPtr,
     __ubuf__ U *tmpPtr_, unsigned validRow, unsigned validCol)
 {
-    constexpr int repeatMax = 32; // tmpbuf只能存放vbrcb 32个repeat的数据
-    int repeatTimes = CeilDivision(validRow, 8);
-    int numLoop = repeatTimes / repeatMax;
-    int numRemainAfterLoop = repeatTimes % repeatMax;
-    unsigned offset = 256 * rowStride;
-    for ( unsigned i = 0; i < numLoop; i++) {
-        vbrcb(tmpPtr_, src1Ptr, 1, 8, repeatMax);
+    constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
+    unsigned repeatTimes = CeilDivision(validRow, 8);
+    constexpr bool repeatStrideOverflow = rowStride / blockSizeElem > 255;
+    bool useCountMode = repeatStrideOverflow || rowStride / blockSizeElem > validRow;
+    constexpr unsigned repeatMax = 30; // tmpbuf只能存放vbrcb 32个repeat的数据,32个repeat256行大于REPEAT_MAX，不好处理，所以取30repeat240行
+    constexpr unsigned MAX_ROW = 240;
+    if constexpr (row < 256) {
+        vbrcb(tmpPtr_, src1Ptr, 1, 8, repeatTimes);
         pipe_barrier(PIPE_V);
-        TRowExpandBinaryInstr<Op, T, rowStride>(dstPtr, src0Ptr, tmpPtr, 256, validCol);
-        pipe_barrier(PIPE_V);
-        dstPtr += offset;
-        src0Ptr += offset;
-        src1Ptr += 256;
-    }
-    if (numRemainAfterLoop) {
-        vbrcb(tmpPtr_, src1Ptr, 1, 8, numRemainAfterLoop);
-        pipe_barrier(PIPE_V);
-        TRowExpandBinaryInstr<Op, T, rowStride>(dstPtr, src0Ptr, tmpPtr, validRow % 256, validCol);
+        if (useCountMode) {
+            TRowExpandBinaryCountMode<Op, T, blockSizeElem, rowStride>(dstPtr, src0Ptr, tmpPtr, validRow, validCol);
+        } else {
+            TRowExpandBinaryNormMode<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, tmpPtr, validRow, validCol);
+        }
+    } else {
+        if (validRow < 256) {
+            vbrcb(tmpPtr_, src1Ptr, 1, 8, repeatTimes);
+            pipe_barrier(PIPE_V);
+            if (useCountMode) {
+                TRowExpandBinaryCountMode<Op, T, blockSizeElem, rowStride>(dstPtr, src0Ptr, tmpPtr, validRow, validCol);
+            } else {
+                TRowExpandBinaryNormMode<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, tmpPtr, validRow, validCol);
+            }
+        } else {
+            unsigned numLoop = repeatTimes / repeatMax;
+            unsigned numRemainAfterLoop = repeatTimes % repeatMax;
+            unsigned offset = MAX_ROW * rowStride;
+            for ( unsigned i = 0; i < numLoop; i++) {
+                vbrcb(tmpPtr_, src1Ptr, 1, 8, repeatMax);
+                pipe_barrier(PIPE_V);
+                TRowExpandBinaryNormMode<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, tmpPtr, MAX_ROW, validCol); // 大于256行时repeatstride不会越界，可以用norm mode
+                pipe_barrier(PIPE_V);
+                dstPtr += offset;
+                src0Ptr += offset;
+                src1Ptr += MAX_ROW;
+            }
+            if (numRemainAfterLoop) {
+                vbrcb(tmpPtr_, src1Ptr, 1, 8, numRemainAfterLoop);
+                pipe_barrier(PIPE_V);
+                TRowExpandBinaryNormMode<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, tmpPtr, validRow % 240, validCol);
+            }
+        }
     }
 }
 }  // namespace pto

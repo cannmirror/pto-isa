@@ -21,6 +21,11 @@ template <typename T> struct RowExpandMulOp {
     {
         vmul(dst, src0, src1, repeats, 1, 1, 0, 8, 8, 0);
     }
+    PTO_INTERNAL static void RowExpandBinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
+        uint8_t dstRepeatStride, uint8_t src0RepeatStride)
+    {
+        vmul(dst, src0, src1, repeats, 1, 1, 0, dstRepeatStride, src0RepeatStride, 1);
+    }
 };
 
 template <typename TileDataDst, typename TileDataSrc1, unsigned rowStride>
@@ -36,7 +41,8 @@ void TRowExpandMul(typename TileDataDst::TileDType __out__ dst, typename TileDat
     __ubuf__ U *src1Ptr = (__ubuf__ U *)__cce_get_tile_ptr(src1);
     __ubuf__ T *tmpPtr = (__ubuf__ T *)(TMP_UB_OFFSET);  // 8KB tmpbuf address
     __ubuf__ U *tmpPtr_ = (__ubuf__ U *)(TMP_UB_OFFSET);  // 8KB tmpbuf address
-    TRowExpandBinaryInstr<RowExpandMulOp<T>, T, U, rowStride>(dstPtr, src0Ptr, src1Ptr, tmpPtr, tmpPtr_, validRow, validCol);
+    TRowExpandBinaryInstr<RowExpandMulOp<T>, T, U, TileDataDst::Rows, rowStride>(
+        dstPtr, src0Ptr, src1Ptr, tmpPtr, tmpPtr_, validRow, validCol);
 }
 
 template <typename TileDataDst, typename TileDataSrc1>
