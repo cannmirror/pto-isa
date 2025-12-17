@@ -370,6 +370,7 @@ def perform_build(args, source_dir, build_dir, cxx, cc) -> bool:
         verbose=args.verbose,
     )
     logging.info(f"[PASS] build ({_format_seconds(cfg_time + build_time)})")
+    return True
 
 
 def execute_tests(args, source_dir, build_dir) -> int:

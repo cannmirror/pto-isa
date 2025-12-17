@@ -85,6 +85,8 @@ python3 tests/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
 
 ```bash
 ./run_cpu_tests.sh
+
+python3 run_cpu.py --verbose
 ```
 
 ## Build / Run Instructions (Reference Repository Scripts)
