@@ -30,6 +30,21 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define __tf__
 
 typedef void* aclrtStream;
+typedef int pipe_t;
+const pipe_t PIPE_S = 0;
+const pipe_t PIPE_V = 1;
+const pipe_t PIPE_MTE1 = 2;
+const pipe_t PIPE_MTE2 = 3;
+const pipe_t PIPE_MTE3 = 4;
+const pipe_t PIPE_M = 5;
+const pipe_t PIPE_ALL = 6;
+inline void pipe_barrier(pipe_t pipe)
+{
+    (void)pipe;
+}
+
+constexpr pipe_t opPipeList[] = {
+};
 
 #define aclFloat16ToFloat(x) ((float)(x)
 #define aclInit(x)
