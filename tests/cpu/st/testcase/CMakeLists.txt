@@ -42,6 +42,7 @@ trowmax
 tsqrt
 tfillpad
 ttrans
+tsels
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})
