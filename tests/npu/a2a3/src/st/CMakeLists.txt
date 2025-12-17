@@ -72,4 +72,8 @@ include_directories(
     ${ASCEND_DRIVER_PATH}/kernel/inc
 )
 
+if (DEFINED ENV{ACCURATE_RSQRT})
+    add_compile_definitions(ACCURATE_RSQRT)
+endif ()
+
 add_subdirectory(testcase)
