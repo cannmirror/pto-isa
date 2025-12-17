@@ -55,7 +55,7 @@ PTO_INTERNAL void Bin1LNormMode(
     unsigned headRepeats = numElements / elementsPerRepeat;
     unsigned tailElements = numElements % elementsPerRepeat;
     Op::BinInstr(dstPtr, src0Ptr, src1Ptr, headRepeats); // headRepeats can be zero
-    if (tailElements) {
+    if (tailElements) [[unlikely]] {
         unsigned offset = headRepeats * elementsPerRepeat;
         SetContMaskByDType<T>(tailElements);
         Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset, 1);
@@ -80,7 +80,7 @@ PTO_INTERNAL void Bin2LNormModeHead(
         unsigned numLoop = numRepeatPerLine / REPEAT_MAX;
         unsigned remainAfterLoop = numRepeatPerLine % REPEAT_MAX;
         for (int i = 0; i < validRow; i++) {
-            if (numLoop) {
+            if (numLoop) [[unlikely]] {
                 for (int j = 0; j < numLoop; j++) {
                     unsigned offset = i * stride + j * elementsPerRepeat * REPEAT_MAX;
                     Op::BinInstr(dstPtr + offset, src0Ptr + offset, src1Ptr + offset, REPEAT_MAX);
