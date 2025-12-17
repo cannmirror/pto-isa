@@ -117,6 +117,7 @@ texpands
 tcolsum
 tcmp
 tassign
+tstore_mat2gm
 tscatter
 )
 
