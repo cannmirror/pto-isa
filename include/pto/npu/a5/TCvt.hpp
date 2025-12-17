@@ -418,45 +418,44 @@ inline AICORE void implTCVT(TileDataD &dst, TileDataS &src)
 {
     uint16_t rows = src.GetValidRow();
     uint16_t cols = src.GetValidCol();
-    {
-        for(uint16_t row = 0; row < rows; row++){
-            int32_t dstOffset=row*TileDataD::Cols;
-            int32_t srcOffset=row*TileDataS::Cols;
+    for(uint16_t row = 0; row < rows; row++){
+        int32_t dstOffset=row*TileDataD::Cols;
+        int32_t srcOffset=row*TileDataS::Cols;
 
-            castData<R>(dst.data(), src.data(), dstOffset, srcOffset, cols);
-        }
+        castData<R>(dst.data(), src.data(), dstOffset, srcOffset, cols);
     }
 }
 
 template <typename TileDataD, typename TileDataS>
 AICORE void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
 {
-    __VEC_SCOPE__ 
-    switch (mode) {
-        case RoundMode::CAST_RINT:
-            implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
-            break;
-        case RoundMode::CAST_ROUND:
-            implTCVT<TileDataD,TileDataS,RoundAType>(dst,src);
-            break;
-        case RoundMode::CAST_FLOOR:
-            implTCVT<TileDataD,TileDataS,RoundFType>(dst,src);
-            break;
-        case RoundMode::CAST_CEIL:
-            implTCVT<TileDataD,TileDataS,RoundCType>(dst,src);
-            break;
-        case RoundMode::CAST_TRUNC:
-            implTCVT<TileDataD,TileDataS,RoundZType>(dst,src);
-            break;
-        case RoundMode::CAST_ODD:
-            if constexpr (std::is_same<typename TileDataD::DType, half>::value && 
-                std::is_same<typename TileDataS::DType, float>::value) {
-                implTCVT<TileDataD,TileDataS,RoundOType>(dst,src);
-            } 
-            break;
-        default:
-            implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
-            break;
+    __VEC_SCOPE__ { 
+        switch (mode) {
+            case RoundMode::CAST_RINT:
+                implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
+                break;
+            case RoundMode::CAST_ROUND:
+                implTCVT<TileDataD,TileDataS,RoundAType>(dst,src);
+                break;
+            case RoundMode::CAST_FLOOR:
+                implTCVT<TileDataD,TileDataS,RoundFType>(dst,src);
+                break;
+            case RoundMode::CAST_CEIL:
+                implTCVT<TileDataD,TileDataS,RoundCType>(dst,src);
+                break;
+            case RoundMode::CAST_TRUNC:
+                implTCVT<TileDataD,TileDataS,RoundZType>(dst,src);
+                break;
+            case RoundMode::CAST_ODD:
+                if constexpr (std::is_same<typename TileDataD::DType, half>::value && 
+                    std::is_same<typename TileDataS::DType, float>::value) {
+                    implTCVT<TileDataD,TileDataS,RoundOType>(dst,src);
+                } 
+                break;
+            default:
+                implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
+                break;
+        }
     }
 }
 
