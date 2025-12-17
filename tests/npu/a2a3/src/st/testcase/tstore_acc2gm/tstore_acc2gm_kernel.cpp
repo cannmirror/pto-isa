@@ -427,7 +427,7 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
     pipe_barrier(PIPE_ALL);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
     pipe_barrier(PIPE_ALL);
-    TSTORE<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
+    TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
     pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
 }
@@ -517,7 +517,7 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nz(
     pipe_barrier(PIPE_ALL);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
     pipe_barrier(PIPE_ALL);
-    TSTORE<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
+    TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
     pipe_barrier(PIPE_ALL);
     out = dstGlobal.data();
 }

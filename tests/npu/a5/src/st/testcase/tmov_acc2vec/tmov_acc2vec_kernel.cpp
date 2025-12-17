@@ -267,9 +267,9 @@ __global__ AICORE void RunTMOVFBQuant(__gm__ OutType *out, __gm__ AType *src0, _
     constexpr uint8_t mode = getMode<subBlockId, 0>();
     if constexpr (subBlockId == 0) {
         if constexpr (isRelu) {
-            TMOV<DstTileData, AccTile, FbTile, ReluPreMode::NormalRelu>(dstTileData, cTile, fbTile);
+            TMOV_FP<DstTileData, AccTile, FbTile, ReluPreMode::NormalRelu>(dstTileData, cTile, fbTile);
         } else {
-            TMOV<DstTileData, AccTile, FbTile>(dstTileData, cTile, fbTile);
+            TMOV_FP<DstTileData, AccTile, FbTile>(dstTileData, cTile, fbTile);
         }
     } else {
         if constexpr (isRelu) {

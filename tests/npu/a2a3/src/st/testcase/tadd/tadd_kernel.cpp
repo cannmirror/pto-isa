@@ -31,14 +31,13 @@ __global__ AICORE void runTAdd( __gm__ T __out__ *out, __gm__ T __in__ *src0,  _
     GlobalData src1Global(src1);
     GlobalData dstGlobal(out);
 
+    Event<Op::TLOAD, Op::TADD> event0;
+    Event<Op::TADD, Op::TSTORE_VEC> event1;
+
     TLOAD(src0Tile, src0Global);
-    TLOAD(src1Tile, src1Global);
-    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    TADD(dstTile, src0Tile, src1Tile);
-    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-    TSTORE(dstGlobal, dstTile);
+    event0 = TLOAD(src1Tile, src1Global);
+    event1 = TADD(dstTile, src0Tile, src1Tile, event0);
+    TSTORE(dstGlobal, dstTile, event1);
     out = dstGlobal.data();
 }
 

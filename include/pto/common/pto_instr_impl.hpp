@@ -16,6 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifdef MEMORY_BASE
 #include "pto/npu/a2a3/TAssign.hpp"
+#include "pto/npu/a2a3/TSync.hpp"
 #include "pto/npu/a2a3/TAdd.hpp"
 #include "pto/npu/a2a3/TMins.hpp"
 #include "pto/npu/a2a3/TAddS.hpp"
@@ -64,6 +65,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifdef REGISTER_BASE
 #include "pto/npu/a5/TAssign.hpp"
+#include "pto/npu/a5/TSync.hpp"
 #include "pto/npu/a5/TAdd.hpp"
 #include "pto/npu/a5/TAddS.hpp"
 #include "pto/npu/a5/TDivS.hpp"
@@ -101,6 +103,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TDiv.hpp"
 #include "pto/npu/a5/TMul.hpp"
 #endif
+
+#include <pto/common/event.hpp>
 
 #ifdef __CPU_SIM
     #include "pto/cpu/TSub.hpp"
