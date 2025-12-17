@@ -11,6 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "test_common.h"
 #include <pto/pto-inst.hpp>
 #include <gtest/gtest.h>
+#include <filesystem>
 
 using namespace std;
 using namespace PtoTestCommon;
@@ -26,6 +27,15 @@ protected:
     void SetUp() override {}
     void TearDown() override {}
 };
+
+void CreateDirectory(const std::string& path){
+    try {
+        std::filesystem::path dirPath(path);
+        std::filesystem::create_directory(dirPath);
+    } catch (const std::filesystem::filesystem_error& e){
+        std::cerr<< e.what() << std::endl;
+    }
+} 
 
 std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
@@ -97,9 +107,11 @@ void tfillpad_test()
 #ifdef DEBUGLOG
     aclrtMemcpy(logHost, sizeof(logHost), logDevice, sizeof(logHost), ACL_MEMCPY_DEVICE_TO_HOST);
 #endif
-    std::ofstream inFile(GetGoldenDir()+"/input.bin", std::ios::binary | std::ios::out);
-    std::ofstream outFile(GetGoldenDir()+"/output.bin", std::ios::binary | std::ios::out);
-    std::ofstream goldFile(GetGoldenDir()+"/golden.bin", std::ios::binary | std::ios::out);
+    std::string goldenDir = GetGoldenDir();
+    CreateDirectory(goldenDir);
+    std::ofstream inFile(goldenDir+"/input.bin", std::ios::binary | std::ios::out);
+    std::ofstream outFile(goldenDir+"/output.bin", std::ios::binary | std::ios::out);
+    std::ofstream goldFile(goldenDir+"/golden.bin", std::ios::binary | std::ios::out);
     inFile.write((const char*)srcHost, actual_out_byteSize);
     outFile.write((const char*)dstHost, actual_out_byteSize);
     goldFile.write((const char*)goldHost, actual_out_byteSize);
@@ -125,8 +137,8 @@ void tfillpad_test()
     std::vector<T> golden(elements);
     std::vector<T> devFinal(elements);
     size_t oFileSize = actual_out_byteSize;
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir()+"/golden.bin", oFileSize, golden.data(), oFileSize)); 
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir()+"/output.bin", oFileSize, devFinal.data(), oFileSize));
+    CHECK_RESULT_GTEST(ReadFile(goldenDir+"/golden.bin", oFileSize, golden.data(), oFileSize)); 
+    CHECK_RESULT_GTEST(ReadFile(goldenDir+"/output.bin", oFileSize, devFinal.data(), oFileSize));
     bool ret = ResultCmp(golden, devFinal, 0);
 
 #ifdef DEBUGLOG
