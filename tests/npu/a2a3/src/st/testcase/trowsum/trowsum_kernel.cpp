@@ -31,7 +31,7 @@ PTO_INTERNAL void runTRowSum(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     dstTileData dstTile(vaildRow, dstCol);
     TASSIGN(srcTile, 0x0);
     TASSIGN(tmpTile, row * srcCol * sizeof(T));
-    TASSIGN(dstTile, row * (srcCol + dstTileMinCol) * sizeof(T));
+    TASSIGN(dstTile, 2 * row * srcCol * sizeof(T));
 
     // 搬运数据
     TLOAD(srcTile, srcGlobal);

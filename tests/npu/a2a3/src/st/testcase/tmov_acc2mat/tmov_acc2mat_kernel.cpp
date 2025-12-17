@@ -230,7 +230,7 @@ __global__ AICORE void runVectorQuantTMOV_nz2nz(
     TASSIGN(dstTileData, 0x0);
 
     TMOV(fbTile, fbMatTile);  // L1-> FB1
-    TMOV<DstTileData, AccTile, FbTile>(dstTileData, cTile, fbTile);
+    TMOV_FP<DstTileData, AccTile, FbTile>(dstTileData, cTile, fbTile);
 
     set_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);

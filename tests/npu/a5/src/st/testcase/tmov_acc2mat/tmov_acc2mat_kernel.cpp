@@ -276,9 +276,9 @@ __global__ AICORE void RunTMOVFBQuant(__gm__ OutType *out, __gm__ AType *src0, _
     TMOV(fbTile, fbMatTile);
 
     if constexpr (isRelu) {
-        TMOV<SrcTileData, AccTile, FbTile, ReluPreMode::NormalRelu>(srcTileData, cTile, fbTile);
+        TMOV_FP<SrcTileData, AccTile, FbTile, ReluPreMode::NormalRelu>(srcTileData, cTile, fbTile);
     } else {
-        TMOV<SrcTileData, AccTile, FbTile>(srcTileData, cTile, fbTile);
+        TMOV_FP<SrcTileData, AccTile, FbTile>(srcTileData, cTile, fbTile);
     }
 
     set_flag(PIPE_FIX, PIPE_MTE1, EVENT_ID0);

@@ -220,7 +220,7 @@ __global__ AICORE void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, __gm_
     TMOV(fbTile, fbMatTile);
 
     /********************************TSTORE****************************/
-    TSTORE<AccTile, GlobalDataOut, FbTile>(dstGlobal, cTile, fbTile);
+    TSTORE_FP<AccTile, GlobalDataOut, FbTile>(dstGlobal, cTile, fbTile);
     out = dstGlobal.data();
 }
 

@@ -331,7 +331,7 @@ AICORE inline void TStoreAcc2gmNZ2NDFp(__gm__ dstDataType *out, __gm__ srcDataTy
 
     TMOV(scalingTile, scalingMatTile);
 
-    TSTORE<AccTile, GlobalDataOut, ScalingTile>(dstGlobal, cTile, scalingTile);
+    TSTORE_FP<AccTile, GlobalDataOut, ScalingTile>(dstGlobal, cTile, scalingTile);
 
     set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
