@@ -1,0 +1,165 @@
+/**
+Copyright (c) 2025 Huawei Technologies Co., Ltd.
+This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+CANN Open Software License Agreement Version 2.0 (the "License").
+Please refer to the License for details. You may not use this file except in compliance with the License.
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+See LICENSE in the root of the software repository for the full text of the License.
+*/
+
+#ifndef ELEMENT_TILE_OP_HPP
+#define ELEMENT_TILE_OP_HPP
+
+#include "pto/cpu/ElementOp.h"
+
+namespace pto {
+    template<typename tile_shape, ElementOp op>
+    void BinaryElementTileOp_Impl(typename tile_shape::TileDType dst, typename tile_shape::TileDType src0,
+                              typename tile_shape::TileDType src1, unsigned validRow, unsigned validCol,
+                              size_t extra = 0)
+    {
+        using DType = typename tile_shape::DType;
+        for(size_t c = 0; c < validCol; c++) {
+            for(size_t r=0; r < validRow; r++) {
+                size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], extra);
+            }
+        }
+    }
+
+    template<typename tile_shape, ElementOp op>
+    void UnaryElementTileOp_Impl(typename tile_shape::TileDType dst, typename tile_shape::TileDType src,
+                             unsigned validRow, unsigned validCol)
+    {
+        using DType = typename tile_shape::DType;
+        for (int i = 0; i < validRow; ++i) {
+            for (int j = 0; j < validCol; ++j) {
+                size_t idx = GetTileElementOffset<tile_shape>(i,j);
+                ElementOpCal<DType, op>::apply(dst[idx], src[idx]);
+            }
+        }
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TREM_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_REM>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TSHL_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_SHL>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TSHR_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_SHR>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TAND_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_AND>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TOR_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_OR>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TXOR_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_XOR>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TMIN_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_MIN>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TCMP_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_CMP>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TLOG_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_LOG>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TNEG_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_NEG>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TNOT_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_NOT>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TRECIP_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_RECIP>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TPRELU_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_PRELU>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template<typename tile_shape, ElementOp op>
+    void ElementTileOpWithCarry_Impl(typename tile_shape::TileDType dst, typename tile_shape::TileDType src0,
+                                  typename tile_shape::TileDType src1, typename tile_shape::TileDType src2,
+                                  unsigned validRow, unsigned validCol)
+    {
+        using DType = typename tile_shape::DType;
+        for(size_t c = 0; c < validCol; c++) {
+            for(size_t r=0; r < validRow; r++) {
+                size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], src2[idx]);
+            }
+        }
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TADDC_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1, tile_shape &src2) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        ElementTileOpWithCarry_Impl<tile_shape, ElementOp::OP_ADDC>(dst.data(), src0.data(), src1.data(), src2.data(),
+                                                                    row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TSUBC_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1, tile_shape &src2) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        ElementTileOpWithCarry_Impl<tile_shape, ElementOp::OP_SUBC>(dst.data(), src0.data(), src1.data(), src2.data(),
+                                                                    row, col);
+    }
+}
+#endif
