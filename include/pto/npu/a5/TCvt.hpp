@@ -133,10 +133,10 @@ inline AICORE void cast16to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dst
         vlds(v_input_0, src, srcOffset, NORM);
         
         vector_bool preg_f16 = plt_b16(len, POST_UPDATE); // len is subtructed here by ELE_CNT_B32
-        if constexpr (EN_FIRST) {
+        if constexpr (EN_RS) {
             //FP16 -> I16
             vcvt(v_output, v_input_0, preg_f16, R(), RS_ENABLE);
-        } else if constexpr (EN_RS){
+        } else if constexpr (EN_FIRST){
             //BF16 -> FP16
             vcvt(v_output, v_input_0, preg_f16, RS_ENABLE, R());
         } else {
