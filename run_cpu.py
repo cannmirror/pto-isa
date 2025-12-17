@@ -1,0 +1,456 @@
+#!/usr/bin/env python3
+# coding=utf-8
+# --------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# --------------------------------------------------------------------------------
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+import site
+import time
+import logging
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+
+def _format_cmd(command: List[str]) -> str:
+    return " ".join(map(str, command))
+
+
+def run_command(
+    command: List[str],
+    cwd: Optional[Path] = None,
+    *,
+    title: Optional[str] = None,
+    verbose: bool = False,
+) -> float:
+    cwd_str = str(cwd) if cwd is not None else None
+    start = time.perf_counter()
+    if title:
+        logging.info(f"{title}")
+    if verbose:
+        logging.info(f"  $ {_format_cmd(command)}" + (f"\n  cwd: {cwd_str}" if cwd_str else ""))
+    try:
+        completed = subprocess.run(
+            [str(x) for x in command],
+            cwd=cwd_str,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if completed.returncode != 0 or verbose:
+            if completed.stdout:
+                logging.info(completed.stdout.rstrip())
+            if completed.stderr:
+                logging.info(completed.stderr.rstrip())
+        if completed.returncode != 0:
+            raise subprocess.CalledProcessError(
+                completed.returncode,
+                command,
+                output=completed.stdout,
+                stderr=completed.stderr,
+            )
+    except FileNotFoundError as e:
+        raise RuntimeError(f"command not found: {command[0]}") from e
+    return time.perf_counter() - start
+
+
+def add_user_scripts_to_path() -> None:
+    if os.name == "nt":
+        appdata = os.environ.get("APPDATA")
+        if not appdata:
+            return
+        major, minor = sys.version_info[:2]
+        scripts_dir = Path(appdata) / "Python" / f"Python{major}{minor}" / "Scripts"
+    else:
+        scripts_dir = Path(site.getuserbase()) / "bin"
+
+    if scripts_dir.exists():
+        scripts_str = str(scripts_dir)
+        current_path = os.environ.get("PATH", "")
+        if scripts_str not in current_path.split(os.pathsep):
+            os.environ["PATH"] = scripts_str + os.pathsep + current_path
+
+
+def ensure_cmake_tools() -> None:
+    if shutil.which("cmake") and shutil.which("ctest"):
+        return
+    logging.info("cmake/ctest not found, installing via pip...")
+    run_command([sys.executable, "-m", "pip", "install", "--user", "cmake>=3.16"])
+    add_user_scripts_to_path()
+    if not (shutil.which("cmake") and shutil.which("ctest")):
+        raise RuntimeError(
+            "cmake/ctest still not found after installation; please add user Scripts/bin directory to PATH"
+        )
+
+
+def detect_compilers(cxx_arg: Optional[str], cc_arg: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+    cxx = cxx_arg or os.environ.get("CXX")
+    cc = cc_arg or os.environ.get("CC")
+
+    if not cxx:
+        cxx = shutil.which("clang++") or shutil.which("g++")
+    elif not Path(cxx).is_absolute():
+        cxx = shutil.which(cxx) or cxx
+
+    if not cc:
+        if cxx and Path(cxx).name in ("clang++", "clang-cl"):
+            cc = shutil.which("clang")
+        elif cxx and Path(cxx).name == "g++":
+            cc = shutil.which("gcc")
+    elif not Path(cc).is_absolute():
+        cc = shutil.which(cc) or cc
+
+    return cxx, cc
+
+
+def cmake_build(build_dir: Path, build_type: str) -> None:
+    cmd: List[str] = ["cmake", "--build", str(build_dir), "--parallel"]
+
+    # Multi-config generators (e.g. VS) need --config; single-config ignores it.
+    cmd.extend(["--config", build_type])
+    run_command(cmd)
+
+
+def generate_golden(build_dir: Path, gen_script: Path) -> None:
+    dst = build_dir / "gen_data.py"
+    shutil.copyfile(gen_script, dst)
+    run_command([sys.executable, str(dst.name)], cwd=build_dir)
+
+
+def find_binaries(build_dir: Path, build_type: str) -> Dict[str, Path]:
+    bin_dir = build_dir / "bin"
+    if os.name == "nt":
+        config_dir = bin_dir / build_type
+        if config_dir.exists():
+            bin_dir = config_dir
+
+    if not bin_dir.exists():
+        return {}
+
+    binaries: Dict[str, Path] = {}
+    for p in bin_dir.iterdir():
+        if not p.is_file():
+            continue
+        if os.name == "nt":
+            if p.suffix.lower() != ".exe":
+                continue
+            binaries[p.stem] = p
+        else:
+            binaries[p.name] = p
+    return binaries
+
+
+def run_gtest_binary(binary: Path, gtest_filter: Optional[str], xml_output: Optional[Path], build_type: str,
+                     verbose: bool) -> None:
+    cmd: List[str] = [str(binary)]
+    if gtest_filter:
+        cmd.append(f"--gtest_filter={gtest_filter}")
+    if xml_output:
+        xml_output.parent.mkdir(parents=True, exist_ok=True)
+        cmd.append(f"--gtest_output=xml:{xml_output}")
+
+    # CPU ST test data is under build_dir/..., and tests use paths like "../<suite.case>/input1.bin".
+    # For multi-config generators on Windows, binaries are under build/bin/<Config>/, so we run from build/bin/.
+    run_cwd = binary.parent
+    if os.name == "nt" and binary.parent.name.lower() == build_type.lower():
+        run_cwd = binary.parent.parent
+    run_command(cmd, cwd=run_cwd, verbose=verbose)
+
+
+def run_binary(binary: Path, build_type: str, cwd: Optional[Path] = None) -> None:
+    run_cwd = cwd or binary.parent
+    if os.name == "nt" and binary.parent.name.lower() == build_type.lower():
+        run_cwd = binary.parent.parent
+    run_command([str(binary)], cwd=run_cwd)
+
+
+def build_and_run_demo(repo_root: Path, build_type: str, cxx: Optional[str], cc: Optional[str], *,
+                       verbose: bool) -> None:
+    demo_src = repo_root / "demo"
+    if not demo_src.exists():
+        raise RuntimeError(f"demo dir not found: {demo_src}")
+
+    demo_build = demo_src / "build"
+    if demo_build.exists():
+        shutil.rmtree(demo_build)
+    demo_build.mkdir(parents=True, exist_ok=True)
+
+    run_command(
+        ["cmake", "-S", str(demo_src), "-B", str(demo_build), f"-DCMAKE_BUILD_TYPE={build_type}"],
+        title="[STEP] demo: cmake configure",
+        verbose=verbose,
+    )
+    run_command(
+        ["cmake", "--build", str(demo_build), "--parallel", "--config", build_type],
+        title="[STEP] demo: cmake build",
+        verbose=verbose,
+    )
+
+    exe_name = "gemm_demo.exe" if os.name == "nt" else "gemm_demo"
+    exe = demo_build / exe_name
+    if os.name == "nt":
+        exe = demo_build / build_type / exe_name
+
+    if not exe.exists():
+        raise RuntimeError(f"demo binary not found: {exe}")
+
+    run_command([str(exe)],
+                cwd=(exe.parent.parent
+                    if (os.name == "nt" and exe.parent.name.lower() == build_type.lower())
+                    else exe.parent),
+                title="[STEP] demo: run gemm_demo", verbose=verbose)
+
+
+def _format_seconds(seconds: float) -> str:
+    if seconds < 1:
+        return f"{seconds*1000:.0f}ms"
+    return f"{seconds:.2f}s"
+
+
+def _render_table(headers: List[str], rows: List[List[str]]) -> str:
+    widths = [len(h) for h in headers]
+    for row in rows:
+        for i, cell in enumerate(row):
+            widths[i] = max(widths[i], len(cell))
+
+    def fmt_row(cols: List[str]) -> str:
+        return "| " + " | ".join(c.ljust(widths[i]) for i, c in enumerate(cols)) + " |"
+
+    sep = "+-" + "-+-".join("-" * w for w in widths) + "-+"
+    out = [sep, fmt_row(headers), sep]
+    out.extend(fmt_row(r) for r in rows)
+    out.append(sep)
+    return "\n".join(out)
+
+
+def _parse_duration_seconds(s: str) -> float:
+    if s.endswith("ms"):
+        return float(s[:-2]) / 1000.0
+    if s.endswith("s"):
+        return float(s[:-1])
+    return 0.0
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Build & run CPU(x86) ST unit tests (tests/cpu/st)",
+        epilog=("Examples:\n  python run_cpu.py --build-type Release\n"
+            "  python run_cpu.py --testcase tadd --build-type Release\n"
+            "  python run_cpu.py --no-build --gtest_filter TADDTest.*\n"
+            "  python run_cpu.py --demo gemm\n"
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument("--verbose", action="store_true", help="Show full output from cmake/msbuild/gtest (default: \
+                        quiet, only structured logs).",)
+    parser.add_argument("-t", "--testcase", help="Run a single testcase (e.g. tadd). Default: run all built bin.",)
+    parser.add_argument("-g", "--gtest_filter", help="Optional gtest filter (e.g. 'TADDTest.case1').",)
+    parser.add_argument("--cxx", help="C++ compiler (e.g. clang++). Default: $CXX or auto-detect.")
+    parser.add_argument("--cc", help="C compiler (e.g. clang). Default: $CC or auto-detect.")
+    parser.add_argument("--build-type", default="Release", choices=["Release", "Debug", "RelWithDebInfo", "MinSizeRel"],
+                        help="CMake build type.",)
+    parser.add_argument("--build-dir", default=None, help="Build directory. Default: tests/cpu/st/build",)
+    parser.add_argument("--no-clean", action="store_true", help="(Deprecated) No-op; kept for backward compatibility.")
+    parser.add_argument("--clean", action="store_true", help="Delete build dir and rebuild.")
+    parser.add_argument("--rebuild", action="store_true", help="Force re-configure and rebuild .")
+    parser.add_argument("--no-build", action="store_true", help="Skip cmake configure/build, only run existing bin")
+    parser.add_argument("--no-gen", action="store_true", help="Skip running testcase gen_data.py.")
+    parser.add_argument("--xml-dir", default=None, help="If set, write gtest xml reports under this directory")
+    parser.add_argument("--no-install", action="store_true", help="Do not auto-install missing tools/deps (numpy).")
+    parser.add_argument("--demo", choices=["gemm"], default=None, help="Build & run demo program (e.g. 'gemm'). \
+                        Note: demo runs alone (does not run CPU ST).")
+    parser.add_argument("--demo-only", action="store_true", help="Same as --demo (demo runs without CPU ST).")
+    args = parser.parse_args()
+    return args
+
+
+def setup_environment(args) -> None:
+    if not args.no_install:
+        add_user_scripts_to_path()
+        ensure_cmake_tools()
+
+
+def log_build_info(args, cxx, cc) -> None:
+    logging.info(f"[INFO] build_type={args.build_type}")
+    if cxx:
+        logging.info(f"[INFO] cxx={cxx}")
+    if cc:
+        logging.info(f"[INFO] cc={cc}")
+
+
+def run_demo_mode(args, repo_root, cxx, cc) -> int:
+    if args.demo_only and not args.demo:
+        logging.info("error: --demo-only requires --demo", file=sys.stderr)
+        return 2
+    demo_name = args.demo or "gemm"
+    if not args.demo:
+        # should not happen due to demo_name assignment, but keep the guard
+        pass
+
+    if demo_name == "gemm":
+        logging.info("\n== DEMO ==")
+        t0 = time.perf_counter()
+        build_and_run_demo(repo_root=repo_root, build_type=args.build_type, cxx=cxx, cc=cc, verbose=args.verbose)
+        demo_time = time.perf_counter() - t0
+        logging.info(f"[PASS] demo: gemm_demo ({_format_seconds(demo_time)})")
+    return 0
+
+
+def run_test_mode(args, repo_root, cxx, cc) -> int:
+    source_dir = repo_root / "tests" / "cpu" / "st"
+    if not source_dir.exists():
+        logging.info(f"error: not found CPU ST dir: {source_dir}", file=sys.stderr)
+        return 2
+
+    build_dir = Path(args.build_dir) if args.build_dir else (source_dir / "build")
+    if not build_dir.is_absolute():
+        build_dir = (repo_root / build_dir).resolve()
+
+    if args.clean:
+        if build_dir.exists():
+            shutil.rmtree(build_dir)
+
+    need_build = determine_need_build(args, build_dir)
+    if need_build:
+        if not perform_build(args, source_dir, build_dir, cxx, cc):
+            return 2
+    else:
+        logging.info("\n== BUILD ==")
+        logging.info("[SKIP] build (already built)")
+    return execute_tests(args, source_dir, build_dir)
+
+
+def determine_need_build(args, build_dir) -> bool:
+    binaries_before = find_binaries(build_dir, args.build_type) if build_dir.exists() else {}
+    have_requested_binary = True
+    if args.testcase:
+        have_requested_binary = args.testcase in binaries_before
+    else:
+        have_requested_binary = bool(binaries_before)
+
+    need_build = (
+        (not args.no_build)
+        and (args.rebuild or args.clean or not (build_dir / "CMakeCache.txt").exists() or not have_requested_binary)
+    )
+    return need_build
+
+
+def perform_build(args, source_dir, build_dir, cxx, cc) -> bool:
+    build_dir.mkdir(parents=True, exist_ok=True)
+    logging.info("\n== BUILD ==")
+    cfg_time = run_command(
+        [
+            "cmake",
+            "-S",
+            str(source_dir),
+            "-B",
+            str(build_dir),
+            f"-DCMAKE_BUILD_TYPE={args.build_type}",
+            *([f"-DTEST_CASE={args.testcase}"] if args.testcase else []),
+            *([f"-DCMAKE_C_COMPILER={cc}"] if cc else []),
+            *([f"-DCMAKE_CXX_COMPILER={cxx}", f"-DCMAKE_COMPILER={cxx}"] if cxx else []),
+        ],
+        title="[STEP] cmake configure",
+        verbose=args.verbose,
+    )
+    build_time = run_command(
+        ["cmake", "--build", str(build_dir), "--parallel", "--config", args.build_type],
+        title="[STEP] cmake build",
+        verbose=args.verbose,
+    )
+    logging.info(f"[PASS] build ({_format_seconds(cfg_time + build_time)})")
+
+
+def execute_tests(args, source_dir, build_dir) -> int:
+    binaries = find_binaries(build_dir, args.build_type)
+    if not binaries:
+        logging.info(f"error: no binaries found under {build_dir / 'bin'} (did build succeed?)", file=sys.stderr)
+        return 2
+
+    selected: list[tuple[str, Path]]
+    if args.testcase:
+        if args.testcase not in binaries:
+            known = ", ".join(sorted(binaries.keys()))
+            logging.info(f"error: unknown testcase '{args.testcase}'. Built binaries: {known}", file=sys.stderr)
+            return 2
+        selected = [(args.testcase, binaries[args.testcase])]
+    else:
+        selected = sorted(binaries.items(), key=lambda x: x[0])
+
+    xml_dir: Optional[Path] = None
+    if args.xml_dir:
+        xml_dir = Path(args.xml_dir)
+        if not xml_dir.is_absolute():
+            xml_dir = build_dir / xml_dir
+
+    results = run_selected_tests(args, source_dir, build_dir, selected, xml_dir)
+    if results:
+        print_test_summary(results)
+    return 0
+
+
+def run_selected_tests(args, source_dir, build_dir, selected, xml_dir) -> List[List[str]]:
+    logging.info("\n== TESTS ==")
+    results: List[List[str]] = []
+    for testcase, binary in selected:
+        gen_script = source_dir / "testcase" / testcase / "gen_data.py"
+        if not args.no_gen and gen_script.exists():
+            logging.info(f"[STEP] gen_data: {testcase}")
+            generate_golden(build_dir=build_dir, gen_script=gen_script)
+
+        xml_output = (xml_dir / f"{testcase}.xml") if xml_dir else None
+        t0 = time.perf_counter()
+        try:
+            run_gtest_binary(
+                binary=binary,
+                gtest_filter=args.gtest_filter,
+                xml_output=xml_output,
+                build_type=args.build_type,
+                verbose=args.verbose
+            )
+            status = "PASS"
+        except Exception:
+            status = "FAIL"
+            raise
+        finally:
+            elapsed = time.perf_counter() - t0
+            results.append([testcase, status, _format_seconds(elapsed)])
+            logging.info(f"[{status}] {testcase} ({_format_seconds(elapsed)})")
+    return results
+
+
+def print_test_summary(results) -> None:
+    logging.info("\n== SUMMARY ==")
+    total_time_s = sum(_parse_duration_seconds(r[2]) for r in results)
+    results.append(["TOTAL", "", _format_seconds(total_time_s)])
+    logging.info(_render_table(["Target", "Status", "Time"], results))
+
+
+def main() -> int:
+    args = parse_arguments()
+    setup_environment(args)
+    repo_root = Path(__file__).resolve().parent
+
+    cxx, cc = detect_compilers(args.cxx, args.cc)
+    log_build_info(args, cxx, cc)
+
+    if args.demo or args.demo_only:
+        return run_demo_mode(args, repo_root, cxx, cc)
+
+    return run_test_mode(args, repo_root, cxx, cc)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s - %(filename)s:%(lineno)d - %(levelname)s: %(message)s', level=logging.INFO)
+    raise SystemExit(main())
