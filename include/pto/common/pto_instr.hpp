@@ -441,6 +441,18 @@ PTO_INST RecordEvent TEXP(TileData &dst, TileData &src, WaitEvents&... events) {
   return {};
 }
 
+template <typename TileData, typename... WaitEvents>
+PTO_INST void TLOG(TileData &dst, TileData &src, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TLOG, dst, src);
+}
+
+template <typename TileData, typename... WaitEvents>
+PTO_INST void TRECIP(TileData &dst, TileData &src, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TRECIP, dst, src);
+}
+
 template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset, typename... WaitEvents>
 PTO_INST RecordEvent TGATHERB(TileDataDst &dst, TileDataSrc &src, TileDataOffset &offset, WaitEvents&... events) {
   TSYNC(events...);

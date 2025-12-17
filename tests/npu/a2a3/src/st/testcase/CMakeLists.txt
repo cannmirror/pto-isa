@@ -106,6 +106,9 @@ tstore_acc2gm
 trsqrt
 tsqrt
 texp
+tabs
+tlog
+trecip
 tdivs
 tmuls
 tadds
