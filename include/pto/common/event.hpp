@@ -53,9 +53,9 @@ namespace pto {
     TCOLMAX,
     TCOLMIN,
     TTRANS,
+#endif
     TSTORE_VEC,
     TLOAD,
-#endif
 #ifdef __DAV_CUBE__
     TMOV_M2B,
     TMOV_M2L,
@@ -64,11 +64,65 @@ namespace pto {
     TMOV_A2V,
     TSTORE_ACC,
     TMATMUL,
-    TMATMUL_ACC,
-    TMATMUL_BIAS,
     TEXTRACT,
 #endif
     OP_COUNT, // OpCode总数，新增OpCode请添加在OP_COUNT之前
+  };
+
+  // opPipeList maps each operation in Op enum to its corresponding pipeline type.
+  // This array is used to determine which hardware pipeline should be used for each operation.
+  constexpr pipe_t opPipeList[] = {
+    PIPE_S,     // SCALAR
+#ifdef __DAV_VEC__
+    PIPE_V,     // VECTOR
+    PIPE_V,     // TADD
+    PIPE_V,     // TADDS
+    PIPE_V,     // TSUB
+    PIPE_V,     // TMUL
+    PIPE_V,     // TMULS
+    PIPE_V,     // TDIV
+    PIPE_V,     // TDIVS
+    PIPE_V,     // TMIN
+    PIPE_V,     // TMINS
+    PIPE_V,     // TMAX
+    PIPE_V,     // TSEL
+    PIPE_V,     // TEXP
+    PIPE_V,     // TSELS
+    PIPE_V,     // TSQRT
+    PIPE_V,     // TRSQRT
+    PIPE_V,     // TEXPANDS
+    PIPE_V,     // TPARTADD
+    PIPE_V,     // TPARTMAX
+    PIPE_V,     // TPARTMIN
+    PIPE_V,     // TCMPS
+    PIPE_V,     // TMRGSORT
+    PIPE_V,     // TSORT32
+    PIPE_V,     // TCI
+    PIPE_V,     // TGATHER
+    PIPE_V,     // TGATHERB
+    PIPE_V,     // TCVT
+    PIPE_V,     // TMOV_V2V
+    PIPE_V,     // TROWSUM
+    PIPE_V,     // TROWMAX
+    PIPE_V,     // TROWMIN
+    PIPE_V,     // TROWEXPAND
+    PIPE_V,     // TCOLSUM
+    PIPE_V,     // TCOLMAX
+    PIPE_V,     // TCOLMIN
+    PIPE_V,     // TTRANS
+#endif
+    PIPE_MTE3,  // TSTORE_VEC
+    PIPE_MTE2,  // TLOAD
+#ifdef __DAV_CUBE__
+    PIPE_MTE1,  // TMOV_M2B
+    PIPE_MTE1,  // TMOV_M2L
+    PIPE_MTE1,  // TMOV_M2R
+    PIPE_FIX,   // TMOV_M2S
+    PIPE_FIX,   // TMOV_A2V
+    PIPE_FIX,   // TSTORE_ACC
+    PIPE_M,     // TMATMUL
+    PIPE_MTE1,  // TEXTRACT
+#endif
   };
 
   template <Op OpCode>
@@ -94,6 +148,7 @@ namespace pto {
 
   struct RecordEvent {};
 
+// 该结构体仅在device侧定义 --CceEventIdType仅在device侧定义
 #ifdef __CCE_AICORE__
   template <Op SrcOp, Op DstOp>
   struct Event {
@@ -103,7 +158,7 @@ namespace pto {
       (srcPipe == PIPE_M) && (dstPipe == PIPE_V) ||
       (srcPipe == PIPE_V) && (dstPipe == PIPE_M);  // 标记该event跨核cube <-> Vec 根据不同平台修改set/wait指令
 
-    CceEventIdType token = {nullptr};
+    CceEventIdType token = {};
 
     static_assert(srcPipe != PIPE_ALL, "SrcOp is invalid.");
     static_assert(dstPipe != PIPE_ALL, "DstOp is invalid.");
@@ -111,13 +166,10 @@ namespace pto {
     static_assert(dstPipe != srcPipe, "SrcPipe is not allowed to be equal to dstPipe.");
 
     PTO_INTERNAL void Wait() {
-      if (token.__opaque_token != nullptr) {
-        if constexpr (setIntraBlock) {
-          // CrossCoreEventWait
-        } else {
-          __pto_wait_flag(srcPipe, dstPipe, token);
-        }
-        token.__opaque_token = nullptr;
+      if constexpr (setIntraBlock) {
+        // CrossCoreEventWait
+      } else {
+        __pto_wait_flag(srcPipe, dstPipe, token);
       }
     }
 
