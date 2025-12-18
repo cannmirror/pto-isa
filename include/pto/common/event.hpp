@@ -43,7 +43,7 @@ namespace pto {
     TGATHER,
     TGATHERB,
     TCVT,
-    TMOV_V2V,
+    TMOV_V2V, /* Vec to Vec */
     TROWSUM,
     TROWMAX,
     TROWMIN,
@@ -54,11 +54,11 @@ namespace pto {
     TTRANS,
 #endif
 #ifdef __DAV_CUBE__
-    TMOV_M2B,
-    TMOV_M2L,
-    TMOV_M2R,
-    TMOV_M2S,
-    TMOV_A2V,
+    TMOV_M2B, /* Mat to Bias */
+    TMOV_M2L, /* Mat to Left */
+    TMOV_M2R, /* Mat to Right */
+    TMOV_M2S, /* Mat to Scaling */
+    TMOV_A2V, /* Acc to Vec */
     TSTORE_ACC,
     TMATMUL,
     TEXTRACT,
@@ -78,7 +78,7 @@ namespace pto {
     PIPE_V /* TMIN */, PIPE_V /* TMINS */, PIPE_V /* TMAX */, PIPE_V /* TSEL */,
     PIPE_V /* TEXP */, PIPE_V /* TSELS */, PIPE_V /* TSQRT */, PIPE_V /* TRSQRT */,
     PIPE_V /* TEXPANDS */, PIPE_V /* TPARTADD */, PIPE_V /* TPARTMAX */,PIPE_V /* TPARTMIN */,
-    PIPE_V /* TCMPS */, PIPE_V /* TMRGSORT */, PIPE_V /* TSORT32 */, PIPE_V /* TCI */,
+    PIPE_V /* TCMPS */, PIPE_V /* TMRGSORT */, PIPE_V /* TSORT32 */, PIPE_S /* TCI */,
     PIPE_V /* TGATHER */, PIPE_V /* TGATHERB */, PIPE_V /* TCVT */, PIPE_V /* TMOV_V2V */,
     PIPE_V /* TROWSUM */, PIPE_V /* TROWMAX */, PIPE_V /* TROWMIN */, PIPE_V /* TROWEXPAND */,
     PIPE_V /* TCOLSUM */, PIPE_V /* TCOLMAX */, PIPE_V /* TCOLMIN */, PIPE_V /* TTRANS */,
