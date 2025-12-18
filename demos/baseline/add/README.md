@@ -12,12 +12,11 @@
 |   |   ├── README.md             // 模块使用说明  
 ```
 ## 新增自定义KERNEL_LAUNCH算子
-支持Ascend C实现自定义算子Kernel，并集成在Pytorch框架，通过Pytorch的API调用实现算子。
+支持PTO实现自定义算子Kernel，并集成在Pytorch框架，通过Pytorch的API调用实现算子。
 ### kernel实现
-  本小节主要介绍如何实现Kernel算子，本样例基于Ascend C进行开发算子。如何使用Ascend C实现算子kernel，可以参考昇腾社区文档[昇腾Ascend C](https://www.hiascend.com/ascend-c)。
+  本小节主要介绍如何实现Kernel算子，本样例基于PTO进行开发算子。
 
-
-  新增一个算子实现，需要在./cpp_extension/csrc/kernel目录下添加Kernel算子文件。Ascend C编写的算子，是否需要workspace具有不同编译选项。样例中提供了两种算子的实现，add和matmul_leakyrelu(需要workspace)。用户可按需新增算子实现，并将对应kernel文件在CMakeLists.txt中添加到编译。具体编译选项说明和使用方法可参考昇腾社区文档[昇腾Ascend C](https://www.hiascend.com/ascend-c)。
+  新增一个算子实现，需要在./cpp_extension/csrc/kernel目录下添加Kernel算子文件。用户可按需新增算子实现，并将对应kernel文件在CMakeLists.txt中添加到编译。具体编译选项说明和使用方法可参考昇腾社区文档[昇腾Ascend C](https://www.hiascend.com/ascend-c)。
 
   add kernel在CMakeLists.txt中添加样例
   ```
@@ -29,8 +28,7 @@ ascendc_library(no_workspace_kernel STATIC
 
 ### 将Kernel实现与Pytorch集成
   本小节主要介绍如何封装实现的kernel算子，以及注册为pythorch的API。
-  代码实现在./cpp_extension/csrc/host 目录下，其中子目录tiling存放算子的tiling函数。
-
+  代码实现在./cpp_extension/csrc/host 目录下。
 #### Aten IR定义
 pytorch通过`TORCH_LIBRARY`宏提供了一个简单方法，将C++算子实现绑定到python。python侧可以通过`torch.ops.namespace.op_name`方式进行调用。这种方式包括Aten IR的定义和注册。我们通过`TORCH_LIBRARY`实现注册，如果相同namespace在不同文件中有注册，需要使用`TORCH_LIBRARY_FRAGMENT`。
 例如将自定义`my_add`函数注册在`npu`命名空间下：
@@ -99,8 +97,7 @@ TORCH_LIBRARY_IMPL(npu, PrivateUse1, m)
   2. 运行setup脚本，编译生成whl包。
   设置PTO软件包的路径
     ```bash
-    git clone https://gitcode.com/csjlchen/pto-tile-lib-dev
-    export PTO_LIB_PATH=[YOUR_PATH]/pto-tile-lib-dev
+    export PTO_LIB_PATH=[YOUR_PATH]/pto-tile-lib
     ```
     ```bash
     rm -fr build op_extension.egg-info
