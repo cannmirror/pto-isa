@@ -1,97 +1,88 @@
 # TEXTRACT
 
-## 说明
-**子块截取（Extract）**
+## Introduction
 
-- 功能：子块截取
+Extract a sub-tile from a source tile.
 
-从 `src` 中以 `(indexRow, indexCol)` 为起点截取子块写入 `dst`（截取尺寸由 `dst` 形状决定）。
+## Math Interpretation
 
----
+Conceptually copies a window starting at `(indexRow, indexCol)` from `src` into `dst`. Exact mapping depends on layouts.
 
-## 汇编语法
-```asm
-TEXTRACT %Src, row, col , -> %Dst
+$$ \mathrm{dst}_{i,j} = \mathrm{src}_{\mathrm{indexRow}+i,\; \mathrm{indexCol}+j} $$
+
+## IR Syntax
+
+Synchronous form (from `docs/ir/PTO-IR.md`):
+
+```mlir
+%dst = pto.tile.extract %src[%r0, %r1]
+    : tile<SrcShape x Ts, #pto.tile_info<loc=Mat, layout=Ls>>
+   -> tile<DstShape x Ts, #pto.tile_info<loc=Left|Right, layout=Ld>>
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
-
-## C++ Intrinsic 接口
-```cpp
-template <typename DstTileData, typename SrcTileData>
-PTO_INST void TEXTRACT(DstTileData &dst, SrcTileData &src,
-                            uint16_t indexRow = 0, uint16_t indexCol = 0);
+```mlir
+%dst, %e = pto.tile.extract %src[%r0, %r1] wait(%e0)
+    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TEXTRACT>>
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| dst | 输出 Tile（写入结果） |
-| src | 输入 Tile |
-| indexRow | 截取的行偏移 |
-| indexCol | 截取的列偏移 |
+## C++ Intrinsic
 
----
+Declared in `include/pto/common/pto_instr.hpp`:
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
-
----
-
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-- 支持数据类型（编译期检查）：SrcTileData::DType, int8_t, half, bfloat16_t, float
-- 编译期约束：
-  - TExtract: Destination and Source tile data types must be the same.
-  - TExtract: Invalid data type.
-  - TExtract: SrcTile Invalid Fractal.
-  - TExtract: LeftTile Invalid Fractal.
-  - TExtract: RightTile Invalid Fractal.
-- 运行期约束：
-  - The sum of indexRow and dstRow should be less than srcRow!
-  - The sum of indexCol and dstCol should be less than srcCol!
-
-### 实现检查（A5）
-- 支持数据类型（编译期检查）：SrcTileData::DType
-- 编译期约束：
-  - Unsupported data type! Supported types: int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
-        half, bfloat16_t, float
-  - TExtract: Destination and Source tile data types must be the same
-  - TExtract: SrcTile Invalid Fractal
-  - TExtract: DstTile Invalid Fractal
-  - TExtract: DstTile Invalid Fractal
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
+PTO_INST RecordEvent TEXTRACT(DstTileData& dst, SrcTileData& src, uint16_t indexRow = 0, uint16_t indexCol = 0,
+                              WaitEvents&... events);
+```
+
+## Constraints
+
+- **Implementation checks (A2A3)**:
+  - `DstTileData::DType` must equal `SrcTileData::DType` and must be one of: `int8_t`, `half`, `bfloat16_t`, `float`.
+  - Source fractal must satisfy: `(SFractal == ColMajor && isRowMajor)` or `(SFractal == RowMajor && !isRowMajor)`.
+  - Runtime bounds checks:
+    - `indexRow + DstTileData::Rows <= SrcTileData::Rows`
+    - `indexCol + DstTileData::Cols <= SrcTileData::Cols`
+  - Destination must be `TileType::Left` or `TileType::Right` with a target-supported fractal configuration.
+- **Implementation checks (A5)**:
+  - `DstTileData::DType` must equal `SrcTileData::DType` and must be one of: `int8_t`, `hifloat8_t`, `float8_e5m2_t`, `float8_e4m3fn_t`, `half`, `bfloat16_t`, `float`, `float4_e2m1x2_t`, `float4_e1m2x2_t`.
+  - Source fractal must satisfy: `(SFractal == ColMajor && isRowMajor)` or `(SFractal == RowMajor && !isRowMajor)`.
+  - Destination supports `Mat -> Left/Right` and also supports `Vec -> Mat` for specific tile locations (no explicit runtime bounds assertions are enforced in `TEXTRACT_IMPL` on this target).
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-template <typename T>
-void example() {
-  using SrcTile = Tile<TileType::Vec, T, 16, 16, BLayout::RowMajor>;
-  using DstTile = Tile<TileType::Vec, T, 8, 8, BLayout::RowMajor>;
-  SrcTile src;
-  DstTile dst;
+
+void example_auto() {
+  using SrcT = Tile<TileType::Mat, float, 16, 16, BLayout::RowMajor, 16, 16, SLayout::ColMajor>;
+  using DstT = TileLeft<float, 16, 16>;
+  SrcT src;
+  DstT dst;
   TEXTRACT(dst, src, /*indexRow=*/0, /*indexCol=*/0);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using SrcT = Tile<TileType::Mat, float, 16, 16, BLayout::RowMajor, 16, 16, SLayout::ColMajor>;
+  using DstT = TileLeft<float, 16, 16>;
+  SrcT src;
+  DstT dst;
+  TASSIGN(src, 0x1000);
+  TASSIGN(dst, 0x2000);
+  TEXTRACT(dst, src, /*indexRow=*/0, /*indexCol=*/0);
+}
+```

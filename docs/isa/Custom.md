@@ -1,2 +1,5 @@
-# 自定义操作（Custom Op）
-当前 `include/pto/common/pto_instr.hpp` 未提供 GETINDEX/GETTILEPTR 等自定义辅助指令。如需扩展，请在头文件新增接口后补充文档。
+# Custom Ops
+
+`include/pto/common/pto_instr.hpp` currently does not expose any "custom helper" intrinsics (for example `GETINDEX` / `GETTILEPTR`).
+
+If additional helper intrinsics are introduced, document them here and link to per-instruction pages under `docs/isa/`.

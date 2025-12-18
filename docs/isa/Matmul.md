@@ -1,9 +1,12 @@
-# 矩阵乘（MATMUL Op）
+# Matrix Multiply
 
-| 指令 | 功能 | 接口示例 | 单指令文档 |
-| :-- | :-- | :-- | :-- |
-| TMATMUL | 基础 GEMM | `TMATMUL %Left, %Right -> %Acc` | docs/isa/TMATMUL.md |
-| TMATMUL_ACC | GEMM 累加 | `TMATMUL_ACC %Left, %Right, %Acc -> %Acc` | docs/isa/TMATMUL_ACC.md |
-| TMATMUL_BIAS | GEMM + Bias | `TMATMUL_BIAS %Left, %Right, %Bias -> %Acc` | docs/isa/TMATMUL_BIAS.md |
+This page groups the matmul family of instructions.
 
-约束要点：Left/Right 维度需对齐；Bias/Acc 形状需匹配；类型需符合硬件支持。
+- Source of truth (C++ intrinsics): `include/pto/common/pto_instr.hpp`
+- Shared notation and events: `docs/isa/conventions.md`
+
+| Instruction | Summary | Reference |
+| :-- | :-- | :-- |
+| `TMATMUL` | GEMM producing an accumulation tile | `docs/isa/TMATMUL.md` |
+| `TMATMUL_ACC` | GEMM accumulating into an existing accumulation tile | `docs/isa/TMATMUL_ACC.md` |
+| `TMATMUL_BIAS` | GEMM with a bias tile | `docs/isa/TMATMUL_BIAS.md` |

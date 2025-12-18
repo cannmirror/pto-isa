@@ -1,83 +1,106 @@
 # TMATMUL
 
-## 说明
-**矩阵乘（MatMul）**
+## Introduction
 
-- 功能：基础 GEMM
+Matrix multiply (GEMM) producing an accumulator/output tile.
 
-$$ \mathrm{C} = \mathrm{A} \times \mathrm{B} $$
+## Math Interpretation
 
----
+For matrix shapes `A` (MxK), `B` (KxN), `C` (MxN):
 
-## 汇编语法
-```asm
-TMATMUL %Left, %Right , -> %Acc
+$$ \mathrm{C}_{i,j} = \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cdot \mathrm{B}_{k,j} $$
+
+Exact accumulator behavior and datatype promotion are target/implementation-defined.
+
+## IR Syntax
+
+Synchronous form (from `docs/ir/PTO-IR.md`):
+
+```mlir
+%acc = pto.tile.matmul %a, %b
+    : tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
+   -> tile<MxNxTc, #pto.tile_info<loc=Acc,   layout=Lc>>
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
-
-## C++ Intrinsic 接口
-```cpp
-template <typename TileRes, typename TileLeft, typename TileRight>
-PTO_INST void TMATMUL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix);
+```mlir
+%acc, %e = pto.tile.matmul %a, %b wait(%e0, %e1)
+    : tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
+   -> tile<MxNxTc, #pto.tile_info<loc=Acc,   layout=Lc>>,
+      !pto.event<producer = #pto.op<TMATMUL>>
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| cMatrix | 输出/累加矩阵 Tile |
-| aMatrix | 左矩阵 Tile |
-| bMatrix | 右矩阵 Tile |
+## C++ Intrinsic
 
----
+Declared in `include/pto/common/pto_instr.hpp`:
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
-
----
-
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-
-### 实现检查（A5）
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+template <typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
+PTO_INST RecordEvent TMATMUL(TileRes& cMatrix, TileLeft& aMatrix, TileRight& bMatrix, WaitEvents&... events);
+```
+
+## Constraints
+
+- **Implementation checks (A2A3)**:
+  - Supported `(CType, AType, BType)` triples:
+    - `(int32_t, int8_t, int8_t)`
+    - `(float, half, half)`
+    - `(float, float, float)`
+    - `(float, bfloat16_t, bfloat16_t)`
+  - Static shape constraints: `TileLeft::Rows == TileRes::Rows`, `TileLeft::Cols == TileRight::Rows`, `TileRight::Cols == TileRes::Cols`.
+  - Tile locations: `TileLeft::Loc == Left`, `TileRight::Loc == Right`, `TileRes::Loc == Acc`.
+  - Runtime: `m/k/n` (taken from `aMatrix.GetValidRow()`, `aMatrix.GetValidCol()`, `bMatrix.GetValidCol()`) must be in `[1, 4095]`.
+- **Implementation checks (A5)**:
+  - Accumulator type must be `int32_t` or `float`.
+    - If `int32_t`: `AType == int8_t` and `BType == int8_t`.
+    - If `float`: supports `half/bfloat16_t/float` and selected fp8 pairs (target-defined).
+  - Static shape constraints: `TileLeft::Rows == TileRes::Rows`, `TileLeft::Cols == TileRight::Rows`, `TileRight::Cols == TileRes::Cols`.
+  - Fractal/layout constraints are enforced:
+    - Left: `Loc == Left`, `!isRowMajor`, `SFractal == RowMajor`
+    - Right: `Loc == Right`, `isRowMajor`, `SFractal == ColMajor`
+    - Acc: `Loc == Acc`, `!isRowMajor`, `SFractal == RowMajor`
+  - No explicit runtime range checks on `m/k/n` are enforced in `TMATMUL_IMPL` on this target.
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-template <typename T>
-void example() {
-  // 注意：实际 Matmul TileType/布局需与实现约束匹配
-  using Left = TileLeft<T, 16, 16>;
-  using Right = TileRight<T, 16, 16>;
-  using Acc = TileAcc<float, 16, 16>;  // Acc 常用更高精度，按实际实现选择
 
-  Left left;
-  Right right;
-  Acc acc;
-
-  // 典型流程：TLOAD/布局变换 -> TMATMUL -> TSTORE
-  // TMATMUL(acc, left, right);
+void example_auto() {
+  using A = TileLeft<half, 16, 16>;
+  using B = TileRight<half, 16, 16>;
+  using C = TileAcc<float, 16, 16>;
+  A a;
+  B b;
+  C c;
+  TMATMUL(c, a, b);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using A = TileLeft<half, 16, 16>;
+  using B = TileRight<half, 16, 16>;
+  using C = TileAcc<float, 16, 16>;
+  A a;
+  B b;
+  C c;
+  TASSIGN(a, 0x1000);
+  TASSIGN(b, 0x2000);
+  TASSIGN(c, 0x3000);
+  TMATMUL(c, a, b);
+}
+```

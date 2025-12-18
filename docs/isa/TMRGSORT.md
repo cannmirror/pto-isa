@@ -1,104 +1,103 @@
 # TMRGSORT
 
-## 说明
-**归并排序（Merge Sort）**
+## Introduction
 
-- 功能：归并排序（多路/块）
+Merge sort for multiple sorted lists (implementation-defined element format and layout).
 
-对多个已排序片段执行归并排序，重载形式支持 2/3/4 路归并及块级归并。
+## Math Interpretation
 
----
+Merges sorted input lists into `dst`. Ordering, element format (e.g., value/index pairs), and the meaning of executed counts depend on the implementation.
 
-## 汇编语法
-```asm
-TMRGSORT %Src... , -> %Dst
+$$ \mathrm{dst} = \mathrm{merge}(\mathrm{src}_0, \mathrm{src}_1, \ldots) $$
+
+## IR Syntax
+
+Synchronous form (conceptual):
+
+```mlir
+%dst, %executed = pto.tile.mrgsort %src0, %src1 {exhausted = false}
+    : tile<...>, tile<...> -> (tile<...>, vector<4xi16>)
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
+```mlir
+%dst, %executed, %e = pto.tile.mrgsort %src0, %src1 {exhausted = false} wait(%e0, %e1)
+    : tile<...>, tile<...> -> (tile<...>, vector<4xi16>), !pto.event<producer = #pto.op<TMRGSORT>>
+```
 
-## C++ Intrinsic 接口
+## C++ Intrinsic
+
+Declared in `include/pto/common/pto_instr.hpp`:
+
 ```cpp
 template <typename DstTileData, typename TmpTileData, typename Src0TileData,
           typename Src1TileData, typename Src2TileData, typename Src3TileData,
-          bool exhausted>
-PTO_INST void TMRGSORT(DstTileData &dst, MrgSortExecutedNumList &executedNumList,
-         TmpTileData &tmp, Src0TileData &src0, Src1TileData &src1,
-         Src2TileData &src2, Src3TileData &src3);
+          bool exhausted, typename... WaitEvents>
+PTO_INST RecordEvent TMRGSORT(DstTileData& dst, MrgSortExecutedNumList& executedNumList,
+                             TmpTileData& tmp, Src0TileData& src0, Src1TileData& src1,
+                             Src2TileData& src2, Src3TileData& src3, WaitEvents&... events);
 
 template <typename DstTileData, typename TmpTileData, typename Src0TileData,
-          typename Src1TileData, typename Src2TileData, bool exhausted>
-PTO_INST void TMRGSORT(DstTileData &dst,
-                            MrgSortExecutedNumList &executedNumList,
-                            TmpTileData &tmp, Src0TileData &src0,
-                            Src1TileData &src1, Src2TileData &src2);
+          typename Src1TileData, typename Src2TileData, bool exhausted, typename... WaitEvents>
+PTO_INST RecordEvent TMRGSORT(DstTileData& dst, MrgSortExecutedNumList& executedNumList,
+                             TmpTileData& tmp, Src0TileData& src0, Src1TileData& src1,
+                             Src2TileData& src2, WaitEvents&... events);
 
 template <typename DstTileData, typename TmpTileData, typename Src0TileData,
-          typename Src1TileData, bool exhausted>
-PTO_INST void TMRGSORT(DstTileData &dst, MrgSortExecutedNumList &executedNumList,
-         TmpTileData &tmp, Src0TileData &src0, Src1TileData &src1);
+          typename Src1TileData, bool exhausted, typename... WaitEvents>
+PTO_INST RecordEvent TMRGSORT(DstTileData& dst, MrgSortExecutedNumList& executedNumList,
+                             TmpTileData& tmp, Src0TileData& src0, Src1TileData& src1, WaitEvents&... events);
 
-template <typename DstTileData, typename SrcTileData>
-PTO_INST void TMRGSORT(DstTileData &dst, SrcTileData &src,
-                            uint32_t blockLen);
+template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
+PTO_INST RecordEvent TMRGSORT(DstTileData& dst, SrcTileData& src, uint32_t blockLen, WaitEvents&... events);
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| dst | 输出 Tile（写入结果） |
-| executedNumList | 归并执行计数列表（实现定义） |
-| tmp | 临时 Tile（用于中间结果） |
-| src0 | 输入 Tile 0 |
-| src1 | 输入 Tile 1 |
-| src | 输入 Tile |
-| blockLen | 块长（需满足实现约束） |
+## Constraints
 
----
+- **Implementation checks (A2A3/A5)**:
+  - Element type must be `half` or `float` and must match across `dst/tmp/src*` tiles.
+  - All tiles must be `TileType::Vec`, row-major, and have `Rows == 1` (list stored in a single row).
+  - UB memory usage is checked (compile-time and runtime) against target limits (total `Cols` across inputs plus `tmp`/`dst`).
+- **Single-list variant (`TMRGSORT(dst, src, blockLen)`)**:
+  - `blockLen` must be a multiple of 64 (as checked by the implementation).
+  - `src.GetValidCol()` must be an integer multiple of `blockLen * 4`.
+  - `repeatTimes = src.GetValidCol() / (blockLen * 4)` must be in `[1, 255]`.
+- **Multi-list variants**:
+  - `tmp` is required and `executedNumList` is written by the implementation; supported list counts and exact semantics are target-defined.
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
+## Examples
 
----
+### Auto
 
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-- 支持数据类型（编译期检查）：float
-- 运行期约束：
-  - ERROR: Total memory usage exceeds UB limit!
-
-### 实现检查（A5）
-- 支持数据类型（编译期检查）：float
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-// 归并排序的重载较多，以下仅示意 blockLen 版本
-template <typename T>
-void example() {
-  using Data = Tile<TileType::Vec, T, 16, 16, BLayout::RowMajor>;
-  Data src, dst;
+
+void example_auto() {
+  using SrcT = Tile<TileType::Vec, float, 1, 256>;
+  using DstT = Tile<TileType::Vec, float, 1, 256>;
+  SrcT src;
+  DstT dst;
   TMRGSORT(dst, src, /*blockLen=*/64);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using SrcT = Tile<TileType::Vec, float, 1, 256>;
+  using DstT = Tile<TileType::Vec, float, 1, 256>;
+  SrcT src;
+  DstT dst;
+  TASSIGN(src, 0x1000);
+  TASSIGN(dst, 0x2000);
+  TMRGSORT(dst, src, /*blockLen=*/64);
+}
+```

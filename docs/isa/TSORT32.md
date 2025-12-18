@@ -1,84 +1,92 @@
 # TSORT32
 
-## 说明
-**块排序（Sort32）**
+## Introduction
 
-- 功能：32 元素块排序
+Sort a fixed-size 32-element block and produce an index mapping.
 
-以 32 元素为粒度对 `src` 排序，并输出到 `dst`（索引/临时缓冲由参数提供）。
+## Math Interpretation
 
----
+Sorts values from `src` into `dst` and produces an index mapping in `idx`. Conceptually, for each row `i`:
 
-## 汇编语法
-```asm
-TSORT32 %Src, %Idx , -> %Dst
+$$ \mathrm{dst}_{i,k} = \mathrm{src}_{i,\pi_i(k)} $$
+
+where $\pi_i$ is a permutation of the indices in the row. Sort order and stability are target-defined.
+
+## IR Syntax
+
+Synchronous form:
+
+```mlir
+%dst, %idx = pto.tile.sort32 %src : tile<...> -> (tile<...>, tile<...>)
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
+```mlir
+%dst, %idx, %e = pto.tile.sort32 %src wait(%e0)
+    : tile<...> -> (tile<...>, tile<...>), !pto.event<producer = #pto.op<TSORT32>>
+```
 
-## C++ Intrinsic 接口
+## C++ Intrinsic
+
+Declared in `include/pto/common/pto_instr.hpp`:
+
 ```cpp
 template <typename DstTileData, typename SrcTileData, typename IdxTileData>
-PTO_INST void TSORT32(DstTileData &dst, SrcTileData &src,
-                           IdxTileData &idx);
+PTO_INST RecordEvent TSORT32(DstTileData& dst, SrcTileData& src, IdxTileData& idx);
 
-template <typename DstTileData, typename SrcTileData, typename IdxTileData,
-          typename TmpTileData>
-PTO_INST void TSORT32(DstTileData &dst, SrcTileData &src, IdxTileData &idx,
-                           TmpTileData &tmp);
+template <typename DstTileData, typename SrcTileData, typename IdxTileData, typename TmpTileData>
+PTO_INST RecordEvent TSORT32(DstTileData& dst, SrcTileData& src, IdxTileData& idx, TmpTileData& tmp);
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| dst | 输出 Tile（写入结果） |
-| src | 输入 Tile |
-| idx | 索引 Tile（排序/聚集用） |
-| tmp | 临时 Tile（用于中间结果） |
+## Constraints
 
----
+- `TSORT32` does not take `WaitEvents&...` and does not call `TSYNC(...)` internally; synchronize explicitly if needed.
+- **Implementation checks (A2A3/A5)**:
+  - `DstTileData::DType` must be `half` or `float`.
+  - `SrcTileData::DType` must match `DstTileData::DType`.
+  - `IdxTileData::DType` must be `uint32_t`.
+  - `dst/src/idx` tile location must be `TileType::Vec`, and all must be row-major (`isRowMajor`).
+- **Valid region**:
+  - The implementation uses `dst.GetValidRow()` as the number of rows and uses `src.GetValidCol()` to determine how many 32-element blocks to sort per row.
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
+## Examples
 
----
+### Auto
 
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-
-### 实现检查（A5）
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-template <typename T>
-void example() {
-  using Data = Tile<TileType::Vec, T, 16, 16, BLayout::RowMajor>;
-  using Idx = Tile<TileType::Vec, int32_t, 16, 16, BLayout::RowMajor>;
-  Data src, dst;
-  Idx idx;
+
+void example_auto() {
+  using SrcT = Tile<TileType::Vec, float, 1, 32>;
+  using DstT = Tile<TileType::Vec, float, 1, 32>;
+  using IdxT = Tile<TileType::Vec, uint32_t, 1, 32>;
+  SrcT src;
+  DstT dst;
+  IdxT idx;
   TSORT32(dst, src, idx);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using SrcT = Tile<TileType::Vec, float, 1, 32>;
+  using DstT = Tile<TileType::Vec, float, 1, 32>;
+  using IdxT = Tile<TileType::Vec, uint32_t, 1, 32>;
+  SrcT src;
+  DstT dst;
+  IdxT idx;
+  TASSIGN(src, 0x1000);
+  TASSIGN(dst, 0x2000);
+  TASSIGN(idx, 0x3000);
+  TSORT32(dst, src, idx);
+}
+```
