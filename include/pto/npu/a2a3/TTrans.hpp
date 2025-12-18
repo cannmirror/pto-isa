@@ -216,13 +216,18 @@ template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride>
 PTO_INTERNAL void CopyB32Tail(__ubuf__ T *dstPtr, __ubuf__ T *tmpPtr, unsigned tmpStride, unsigned validRow,
     unsigned validCol, unsigned remain_y) {
     if (remain_y > 0) {
-        // copy tmp to dst
-        const uint16_t srcRepeatStride = tmpStride * sizeof(T) / BLOCK_BYTE_SIZE;
-        constexpr uint16_t dstRepeatStride = dstStride * sizeof(T) / BLOCK_BYTE_SIZE;
-        SetContMaskByDType<T>(remain_y);
-        pipe_barrier(PIPE_V);
-        Op::CopyInstr((__ubuf__ uint32_t *)(dstPtr + (validRow - remain_y)), (__ubuf__ uint32_t *)(tmpPtr), validCol,
-            dstRepeatStride, srcRepeatStride);
+        if (validCol > REPEAT_MAX) {
+            uint16_t lenBurst = dstStride / blockSizeElem;
+            uint16_t srcGap = (tmpStride - dstStride) / blockSizeElem;
+            copy_ubuf_to_ubuf(dstPtr + (validRow - remain_y), tmpPtr, 0, validCol, lenBurst, srcGap, 0);
+        } else {
+            const uint16_t srcRepeatStride = tmpStride / blockSizeElem;
+            constexpr uint16_t dstRepeatStride = dstStride / blockSizeElem;
+            SetContMaskByDType<T>(remain_y);
+            pipe_barrier(PIPE_V);
+            Op::CopyInstr((__ubuf__ uint32_t *)(dstPtr + (validRow - remain_y)), (__ubuf__ uint32_t *)(tmpPtr),
+                validCol, dstRepeatStride, srcRepeatStride);
+        }
     }
 }
 

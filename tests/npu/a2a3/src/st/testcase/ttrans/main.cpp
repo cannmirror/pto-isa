@@ -20,10 +20,8 @@ void LaunchTTRANS(T *out, T *src, void *stream);
 
 class TTRANSTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 std::string GetGoldenDir() {
@@ -34,9 +32,8 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template<typename T, int tRows, int tCols, int vRows, int vCols>
-void test_ttrans()
-{
+template <typename T, int tRows, int tCols, int vRows, int vCols>
+void test_ttrans() {
     uint32_t M = tRows;
     uint32_t N = tCols;
     size_t srcFileSize = M * N * sizeof(T);
@@ -85,21 +82,24 @@ void test_ttrans()
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TTRANSTest, case1_float_16_8_16_8){
+TEST_F(TTRANSTest, case1_float_16_8_16_8) {
     test_ttrans<float, 16, 8, 16, 8>();
 }
-TEST_F(TTRANSTest, case2_half_16_16_16_16){
+TEST_F(TTRANSTest, case2_half_16_16_16_16) {
     test_ttrans<aclFloat16, 16, 16, 16, 16>();
 }
-TEST_F(TTRANSTest, case3_int8_32_32_32_32){
+TEST_F(TTRANSTest, case3_int8_32_32_32_32) {
     test_ttrans<uint8_t, 32, 32, 32, 32>();
 }
-TEST_F(TTRANSTest, case4_float_32_16_31_15){
+TEST_F(TTRANSTest, case4_float_32_16_31_15) {
     test_ttrans<float, 32, 16, 31, 15>();
 }
-TEST_F(TTRANSTest, case5_half_32_32_31_31){
+TEST_F(TTRANSTest, case5_half_32_32_31_31) {
     test_ttrans<aclFloat16, 32, 32, 31, 31>();
 }
-TEST_F(TTRANSTest, case6_int8_64_64_22_63){
+TEST_F(TTRANSTest, case6_int8_64_64_22_63) {
     test_ttrans<uint8_t, 64, 64, 22, 63>();
+}
+TEST_F(TTRANSTest, case7_float_2_512_2_512) {
+    test_ttrans<float, 2, 512, 2, 512>();
 }
