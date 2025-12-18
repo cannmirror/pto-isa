@@ -20,8 +20,8 @@ __global__ AICORE void runROWEXPANDMUL(__gm__ T __out__ *out, __gm__ T __in__ *s
 
     using DynShapeDim5 = Shape<1, 1, 1, src1Row, src1Col>;
     using DynStridDim5 = pto::Stride<1, 1, 1, src1Col, 1>;
-    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<TileType::Vec, T, src1Row, 16, BLayout::RowMajor, -1, -1>;
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5, Layout::DN>;
+    using TileData = Tile<TileType::Vec, T, src1Row, 1, BLayout::ColMajor, -1, -1>;
 
     using DstDynShapeDim5 = Shape<1, 1, 1, dstRow, dstCol>;
     using DstDynStridDim5 = pto::Stride<1, 1, 1, dstCol, 1>;
@@ -31,9 +31,10 @@ __global__ AICORE void runROWEXPANDMUL(__gm__ T __out__ *out, __gm__ T __in__ *s
     DstTileData src0Tile(dstRow, dstCol);
     TileData src1Tile(src1Row, 1);
     DstTileData dstTile(dstRow, dstCol);
+    size_t size = dstRow * dstCol * sizeof(T);
     TASSIGN(src0Tile, 0x0);
-    TASSIGN(src1Tile, 0x10000);
-    TASSIGN(dstTile, 0x20000);
+    TASSIGN(src1Tile, size);
+    TASSIGN(dstTile, 0x0);
 
     int offset = 0;
     DstGlobalData src0Global(src0 + offset);
@@ -64,8 +65,8 @@ void launchTRowExpandMul(T *out, T*src0, T*src1, void *stream) {
     }
 }
 
-template void launchTRowExpandMul<float, 15, 32, 15, 1>(float *out, float *src0, float *src1, void *stream);
-template void launchTRowExpandMul<float, 7, 128, 7, 1>(float *out, float *src0, float *src1, void *stream);
-template void launchTRowExpandMul<aclFloat16, 20, 64, 20, 1>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
-template void launchTRowExpandMul<aclFloat16, 6, 128, 6, 1>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void launchTRowExpandMul<float, 16, 32, 16, 1>(float *out, float *src0, float *src1, void *stream);
+template void launchTRowExpandMul<float, 56, 128, 56, 1>(float *out, float *src0, float *src1, void *stream);
+template void launchTRowExpandMul<aclFloat16, 48, 64, 48, 1>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void launchTRowExpandMul<aclFloat16, 16, 128, 16, 1>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
 }

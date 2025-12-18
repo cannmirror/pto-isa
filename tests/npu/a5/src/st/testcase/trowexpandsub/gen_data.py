@@ -63,9 +63,9 @@ if __name__ == "__main__":
 
     case_params_list = [
         TrowexpandParams(np.float32, 8, 128, 8, 128, 8, 1),
-        TrowexpandParams(np.float32, 18, 32, 18, 32, 18, 1),
-        TrowexpandParams(np.float16, 10, 256, 10, 256, 10, 1),
-        TrowexpandParams(np.float16, 12, 64, 12, 64, 12, 1),
+        TrowexpandParams(np.float32, 24, 32, 24, 32, 24, 1),
+        TrowexpandParams(np.float16, 16, 256, 16, 256, 16, 1),
+        TrowexpandParams(np.float16, 48, 64, 48, 64, 48, 1),
     ]
 
     for _, param in enumerate(case_params_list):
