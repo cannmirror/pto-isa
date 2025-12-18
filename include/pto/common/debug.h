@@ -35,7 +35,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
   #include <iostream>
   #include "pto/cpu/tile_offsets.hpp"
   #include "pto_tile.hpp"
-  #include <iostream>
 
   template<typename GT>
   void printRawGT(GT& tensor, const std::string name = "", int elementWidth=5, int maxR=INT32_MAX, int maxC=INT32_MAX) {

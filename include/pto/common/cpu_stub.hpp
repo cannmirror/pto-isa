@@ -69,5 +69,6 @@ static inline void aclrtMallocHost(void**p, size_t sz){
 #define aclFinalize(x)
 #define set_flag(a,b,c)
 #define wait_flag(a,b,c)
+#define pipe_barriar(a)
 
 #endif

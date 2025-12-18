@@ -38,6 +38,7 @@ tmov
 trowsum
 tadd
 texp
+tgather
 trowmax
 tsqrt
 tfillpad
