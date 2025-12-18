@@ -103,3 +103,12 @@ TEST_F(TTRANSTest, case6_int8_64_64_22_63) {
 TEST_F(TTRANSTest, case7_float_2_512_2_512) {
     test_ttrans<float, 2, 512, 2, 512>();
 }
+TEST_F(TTRANSTest, case8_float_9_512_9_512) {
+    test_ttrans<float, 9, 512, 9, 512>();
+}
+TEST_F(TTRANSTest, case9_float_32_16_23_15) {
+    test_ttrans<float, 32, 16, 23, 15>();
+}
+TEST_F(TTRANSTest, case10_float_64_128_27_77) {
+    test_ttrans<float, 64, 128, 27, 77>();
+}
