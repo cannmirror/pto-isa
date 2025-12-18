@@ -174,10 +174,12 @@ void tmov_acc2mat_fb_quant_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtFree(dstDevice);
     aclrtFree(src0Device);
     aclrtFree(src1Device);
+    aclrtFree(src2Device);
 
     aclrtFreeHost(dstHost);
     aclrtFreeHost(src0Host);
     aclrtFreeHost(src1Host);
+    aclrtFreeHost(src2Host);
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
@@ -204,7 +206,7 @@ TEST_F(TMOVTest, case_nz2nz_2)
 
 TEST_F(TMOVTest, case_nz2nz_3)
 {
-    tmov_acc2mat_test<1, uint32_t, uint16_t, uint16_t, 3>(112, 48, 96);
+    tmov_acc2mat_test<1, uint32_t, uint16_t, uint16_t, 3>(16, 16, 8);
 }
 
 TEST_F(TMOVTest, case_nz2nz_4)
@@ -227,6 +229,11 @@ TEST_F(TMOVTest, case_nz2nd_3)
     tmov_acc2mat_test<2, uint16_t, uint16_t, uint16_t, 3>(80, 128, 112);
 }
 
+TEST_F(TMOVTest, case_nz2nd_4)
+{
+    tmov_acc2mat_test<2, uint32_t, uint16_t, uint16_t, 4>(6, 7, 8);
+}
+
 TEST_F(TMOVTest, case_nz2dn_1)
 {
     tmov_acc2mat_test<3, uint16_t, uint16_t, uint16_t, 1>(80, 40, 66);
@@ -240,6 +247,11 @@ TEST_F(TMOVTest, case_nz2dn_2)
 TEST_F(TMOVTest, case_nz2dn_3)
 {
     tmov_acc2mat_test<3, uint16_t, uint16_t, uint16_t, 3>(48, 80, 60);
+}
+
+TEST_F(TMOVTest, case_nz2dn_4)
+{
+    tmov_acc2mat_test<3, uint32_t, uint16_t, uint16_t, 4>(8, 7, 6);
 }
 
 TEST_F(TMOVTest, case_nz2nz_fb_quant_1)
