@@ -29,12 +29,14 @@ def check(x,n):
         x = x[1:]
     return x
 
+
 def cast(c, dtype):
     if dtype == 'fp16':
         c = np.array(c).astype(np.float16)
     elif dtype == 'fp32':
         c = np.array(c).astype(np.float32)
     return c
+
 
 def HF8(input):
     if len(input) < 8:
@@ -119,6 +121,7 @@ def HF8(input):
         input = (1 + m3/2) * 2 ** (f2 * (8 + e2 * 4 + e3 * 2 + e4)) * f1
         return input
 
+
 def gen_golden_data(case_name, param):
     is_hifloat = False
     a_type = param.atype
@@ -187,10 +190,11 @@ class tmatmulParams:
         else:
             self.bias_type = ctype
 
+
 if __name__ == "__main__":
     # 用例名称
     case_name_list = [
-        "TMATMULTest.case1", # 此名称要和TEST_F(TMATMULTest, case1)定义的名称一致
+        "TMATMULTest.case1",
         "TMATMULTest.case2",
         "TMATMULTest.case3",
         "TMATMULTest.case4",
@@ -201,42 +205,40 @@ if __name__ == "__main__":
         "TMATMULTest.case9",
         "TMATMULTest.case10",
 
-        "TMATMULBIASTest.case1",
-        "TMATMULBIASTest.case2",
-        "TMATMULBIASTest.case3",
-        "TMATMULBIASTest.case4",
-        "TMATMULBIASTest.case5",
-        "TMATMULBIASTest.case6",
-        "TMATMULBIASTest.case7",
-        "TMATMULBIASTest.case8",
-        "TMATMULBIASTest.case9",
-        "TMATMULBIASTest.case10",
-        "TMATMULBIASTest.case11",
+        "TMATMULTest.case_bias_1",
+        "TMATMULTest.case_bias_2",
+        "TMATMULTest.case_bias_3",
+        "TMATMULTest.case_bias_4",
+        "TMATMULTest.case_bias_5",
+        "TMATMULTest.case_bias_6",
+        "TMATMULTest.case_bias_7",
+        "TMATMULTest.case_bias_8",
+        "TMATMULTest.case_bias_9",
+        "TMATMULTest.case_bias_10",
     ]
 
     case_params_list = [
-        tmatmulParams(np.float16, np.float16, np.float32, 127, 128, 64, False), # half * half -> float 128
-        tmatmulParams(np.int8, np.int8, np.int32, 128, 127, 64, False),
+        tmatmulParams(np.float16, np.float16, np.float32, 40, 50, 60, False),
+        tmatmulParams(np.int8, np.int8, np.int32, 6, 7, 8, False),
         tmatmulParams(np.float16, np.float16, np.float32, 127, 128, 61, False),
-        tmatmulParams(np.float32, np.float32, np.float32, 127, 127, 63, False),
-        tmatmulParams(bfloat16, bfloat16, np.float32, 128, 128, 64, False),
-        tmatmulParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 128, 128, 64, False),
-        tmatmulParams(fp8_e4m3fn, fp8_e5m2, np.float32, 128, 128, 64, False),
-        tmatmulParams(fp8_e5m2, fp8_e4m3fn, np.float32, 128, 128, 64, False),
-        tmatmulParams(fp8_e5m2, fp8_e5m2, np.float32, 128, 128, 64, False),
-        tmatmulParams(np.uint8, np.uint8, np.float32, 128, 128, 64, False),
+        tmatmulParams(np.float32, np.float32, np.float32, 120, 110, 50, False),
+        tmatmulParams(bfloat16, bfloat16, np.float32, 144, 80, 48, False),
+        tmatmulParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 32, 64, 96, False),
+        tmatmulParams(fp8_e4m3fn, fp8_e5m2, np.float32, 128, 96, 64, False),
+        tmatmulParams(fp8_e5m2, fp8_e4m3fn, np.float32, 145, 115, 85, False),
+        tmatmulParams(fp8_e5m2, fp8_e5m2, np.float32, 120, 90, 160, False),
+        tmatmulParams(np.uint8, np.uint8, np.float32, 30, 90, 60, False),
 
-        tmatmulParams(np.int8, np.int8, np.int32, 128, 128, 64, True),
-        tmatmulParams(np.float16, np.float16, np.float32, 128, 128, 64, True, np.float16),
-        tmatmulParams(np.float16, np.float16, np.float32, 128, 127, 64, True, bfloat16),
-        tmatmulParams(bfloat16, bfloat16, np.float32, 128, 128, 63, True, bfloat16),
-        tmatmulParams(np.float16, np.float16, np.float32, 127, 128, 63, True),
+        tmatmulParams(np.int8, np.int8, np.int32, 8, 7, 6, True),
+        tmatmulParams(np.float16, np.float16, np.float32, 16, 15, 16, True, np.float16),
+        tmatmulParams(np.float16, np.float16, np.float32, 112, 127, 80, True, bfloat16),
+        tmatmulParams(bfloat16, bfloat16, np.float32, 80, 112, 63, True, bfloat16),
         tmatmulParams(np.float32, np.float32, np.float32, 127, 128, 63, True),
-        tmatmulParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 128, 128, 64, True),
-        tmatmulParams(fp8_e4m3fn, fp8_e5m2, np.float32, 128, 128, 64, True),
-        tmatmulParams(fp8_e5m2, fp8_e4m3fn, np.float32, 128, 128, 64, True),
-        tmatmulParams(fp8_e5m2, fp8_e5m2, np.float32, 128, 128, 64, True),
-        tmatmulParams(np.uint8, np.uint8, np.float32, 128, 128, 64, True),
+        tmatmulParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 120, 90, 160, True),
+        tmatmulParams(fp8_e4m3fn, fp8_e5m2, np.float32, 32, 64, 96, True),
+        tmatmulParams(fp8_e5m2, fp8_e4m3fn, np.float32, 128, 96, 64, True),
+        tmatmulParams(fp8_e5m2, fp8_e5m2, np.float32, 30, 90, 60, True),
+        tmatmulParams(np.uint8, np.uint8, np.float32, 145, 115, 85, True),
     ]
 
     for i, case_name in enumerate(case_name_list):

@@ -366,7 +366,7 @@ void LaunchTMOVAcc2MatNZ2NZ(uint8_t *out, uint8_t *src0, uint8_t *src1, void *st
         RunTMOV<float, half, half, 128, 64, 128, 128, 128, false, Layout::NZ, 1024><<<1, nullptr, stream>>>(
             reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
     } else if constexpr (tilingKey == 3) {
-        RunTMOV<float, half, half, 112, 48, 96, 112, 96, true, Layout::NZ><<<1, nullptr, stream>>>(
+        RunTMOV<float, half, half, 16, 16, 8, 32, 32, true, Layout::NZ><<<1, nullptr, stream>>>(
             reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
     } else if constexpr (tilingKey == 4) {
         RunTMOV<bfloat16_t, half, half, 32, 128, 64, 32, 64, false, Layout::NZ><<<1, nullptr, stream>>>(
@@ -391,12 +391,16 @@ void LaunchTMOVAcc2MatNZ2ND(uint8_t *out, uint8_t *src0, uint8_t *src1, void *st
     } else if constexpr (tilingKey == 3) {
         RunTMOV<bfloat16_t, half, half, 80, 128, 112, 80, 112><<<1, nullptr, stream>>>(
             reinterpret_cast<bfloat16_t *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
+    } else if constexpr (tilingKey == 4) {
+        RunTMOV<float, half, half, 6, 7, 8, 32, 32><<<1, nullptr, stream>>>(
+            reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
     }
 }
 
 template void LaunchTMOVAcc2MatNZ2ND<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void LaunchTMOVAcc2MatNZ2ND<2>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void LaunchTMOVAcc2MatNZ2ND<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void LaunchTMOVAcc2MatNZ2ND<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
 void LaunchTMOVAcc2MatNZ2DN(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
@@ -410,12 +414,16 @@ void LaunchTMOVAcc2MatNZ2DN(uint8_t *out, uint8_t *src0, uint8_t *src1, void *st
     } else if constexpr (tilingKey == 3) {
         RunTMOV<bfloat16_t, half, half, 48, 80, 60, 48, 64, true, Layout::DN><<<1, nullptr, stream>>>(
             reinterpret_cast<bfloat16_t *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
+    } else if constexpr (tilingKey == 4) {
+        RunTMOV<float, half, half, 8, 7, 6, 32, 32, true, Layout::DN><<<1, nullptr, stream>>>(
+            reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
     }
 }
 
 template void LaunchTMOVAcc2MatNZ2DN<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void LaunchTMOVAcc2MatNZ2DN<2>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void LaunchTMOVAcc2MatNZ2DN<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void LaunchTMOVAcc2MatNZ2DN<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
 void LaunchTMOVAcc2MatFBQuantNZ2NZ(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream)
