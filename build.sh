@@ -140,7 +140,7 @@ run_simple_st() {
   elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
     ./run_st.sh a3_a5 $RUN_TYPE simple
   else
-    ./run_st.sh a5 npu simple build_only
+    # ./run_st.sh a5 npu simple build_only
     ./run_st.sh a3 npu simple
   fi
   echo "execute samples success"

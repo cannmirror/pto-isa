@@ -27,15 +27,14 @@ def gen_golden_data_tgatherb(case_name, param):
         ValueError(f"{dtype} unsupported data type!!")
     blockSizeElem = int(32/data_size)
 
-    src_shape = [param.srcS1, param.srcS0]
-    dst_shape = [param.dstS1, param.dstS0]
-    offset_col = int(param.dstS0 / blockSizeElem)
-    offset_shape = [param.dstS1, offset_col]
-    offset_elt_num = param.dstS1 * offset_col
-    dst_elt_num = param.dstS1 * param.dstS0
+    src_shape = [param.src_s1, param.src_s0]
+    dst_shape = [param.dst_s1, param.dst_s0]
+    offset_col = int(param.dst_s0 / blockSizeElem)
+    offset_shape = [param.dst_s1, offset_col]
+    offset_elt_num = param.dst_s1 * offset_col
+    dst_elt_num = param.dst_s1 * param.dst_s0
 
-    src = np.arange(param.srcS1 * param.srcS0).astype(dtype)
-    # src = np.random.uniform(low=0, high=10000, size=(param.srcS1*param.srcS0)).astype(dtype)
+    src = np.arange(param.src_s1 * param.src_s0).astype(dtype)
     offset = np.zeros(offset_elt_num)
     for i in range(offset_elt_num):
         offset[i] = i * 32
@@ -58,15 +57,17 @@ def gen_golden_data_tgatherb(case_name, param):
     srcAddr = 0x0
     return output, src, offset, srcAddr, golden
 
-class tgatherbParams:
-    def __init__(self, dtype, dstS1, dstS0, offsetS1, offsetS0, srcS1, srcS0):
+
+class TGatherBParams:
+    def __init__(self, dtype, dst_s1, dst_s0, offset_s1, offset_s0, src_s1, src_s0):
         self.dtype = dtype
-        self.dstS1 = dstS1
-        self.dstS0 = dstS0
-        self.offsetS1 = offsetS1
-        self.offsetS0 = offsetS0
-        self.srcS1 = srcS1
-        self.srcS0 = srcS0
+        self.dst_s1 = dst_s1
+        self.dst_s0 = dst_s0
+        self.offset_s1 = offset_s1
+        self.offset_s0 = offset_s0
+        self.src_s1 = src_s1
+        self.src_s0 = src_s0
+
 
 def generate_case_name(param):
     dtype_str = {
@@ -79,7 +80,8 @@ def generate_case_name(param):
         np.int8: 'int8',
         np.uint8: 'uint8',
     }[param.dtype]
-    return f"TGATHERBTest.case_{dtype_str}_{param.dstS1}x{param.dstS0}_{param.offsetS1}x{param.offsetS0}_{param.srcS1}x{param.srcS0}"
+    return (f"TGATHERBTest.case_{dtype_str}_{param.dst_s1}x{param.dst_s0}_{param.offset_s1}x"
+            f"{param.offset_s0}_{param.src_s1}x{param.src_s0}")
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -91,15 +93,15 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
     
     case_params_list = [
-        tgatherbParams(np.float32, 2, 128, 2, 16, 2, 128),
-        tgatherbParams(np.int32, 2, 128, 2, 16, 2, 128),
-        tgatherbParams(np.uint32, 2, 128, 2, 16, 2, 128),
-        tgatherbParams(np.int16, 1, 32768, 1, 2048, 1, 32768),
-        tgatherbParams(np.uint16, 257, 128, 257, 8, 257, 128),
-        tgatherbParams(np.float16, 1, 32768, 1, 2048, 1, 32768),
-        tgatherbParams(np.int8, 2, 256, 2, 8, 2, 256),
-        tgatherbParams(np.int8, 2, 32768, 2, 1024, 2, 32768),
-        tgatherbParams(np.uint8, 2, 32768, 2, 1024, 2, 32768),
+        TGatherBParams(np.float32, 2, 128, 2, 16, 2, 128),
+        TGatherBParams(np.int32, 2, 128, 2, 16, 2, 128),
+        TGatherBParams(np.uint32, 2, 128, 2, 16, 2, 128),
+        TGatherBParams(np.int16, 1, 32768, 1, 2048, 1, 32768),
+        TGatherBParams(np.uint16, 257, 128, 257, 8, 257, 128),
+        TGatherBParams(np.float16, 1, 32768, 1, 2048, 1, 32768),
+        TGatherBParams(np.int8, 2, 256, 2, 8, 2, 256),
+        TGatherBParams(np.int8, 2, 32768, 2, 1024, 2, 32768),
+        TGatherBParams(np.uint8, 2, 32768, 2, 1024, 2, 32768),
     ]
 
     for i, param in enumerate(case_params_list):

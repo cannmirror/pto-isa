@@ -33,7 +33,7 @@ namespace pto {
       (GetDistVst<T, DistVST::DIST_NORM>())>();
 
     // 获取nLoop的 最高比特位-1 为循环次数, 等价于while(nLoop > 1)
-    uint16_t BinaryAccLoopTimes = nLoop > 0 ? 63 - __builtin_clzll(nLoop) : 0;
+    uint16_t BinaryAccLoopTimes = nLoop > 0 ? 63 - __builtin_clzll((uint32_t)nLoop) : 0;
     for (int i = 0; i < BinaryAccLoopTimes; ++i) {
       remain = nLoop % 2;
       nLoop /= 2;
