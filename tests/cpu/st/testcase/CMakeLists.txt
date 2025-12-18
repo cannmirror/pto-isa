@@ -62,6 +62,12 @@ tsubc
 tsubs
 trems
 tmaxs
+tands
+tors
+txors
+tlrelu
+taddsc
+tsubsc
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})
