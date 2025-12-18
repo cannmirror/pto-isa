@@ -18,7 +18,9 @@ namespace pto
     template <typename TileData, typename TileIndex>
     __tf__ PTO_INTERNAL void TScatter(typename TileData::TileDType __out__ dst,
                                 typename TileData::TileDType __in__ src0,
-                                typename TileIndex::TileDType __in__ src1
+                                typename TileIndex::TileDType __in__ src1,
+                                unsigned validRow,
+                                unsigned validCol
                                 ) 
     {
         using T = typename TileData::DType;
@@ -27,8 +29,8 @@ namespace pto
         __ubuf__ typename TileIndex::DType *indPtr = (__ubuf__ typename TileIndex::DType *)__cce_get_tile_ptr(src1);
         set_flag(PIPE_V, PIPE_S, EVENT_ID0);
         wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
-        for (int i = 0; i < TileData::Rows; i++) {
-            for (int j = 0; j < TileData::Cols; j++) {
+        for (int i = 0; i < validRow; i++) {
+            for (int j = 0; j < validCol; j++) {
                 typename TileIndex::DType index = (typename TileIndex::DType)(*(indPtr + i * TileIndex::Cols + j));
                 int dstOffset = index * TileData::Cols + j;
                 dstPtr[dstOffset] = src0Ptr[i * TileData::Cols + j];
@@ -56,8 +58,11 @@ namespace pto
         
         PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
         PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
-
-        TScatter<TileData, TileIndex>(dst.data(), src0.data(), indexes.data());
+        PTO_ASSERT(src0.GetValidCol() == indexes.GetValidCol(), "Number of columns of src and indexes must be the same.");
+        PTO_ASSERT(src0.GetValidRow() == indexes.GetValidRow(), "Number of rows of src and indexes must be the same.");
+        unsigned validRow = dst.GetValidRow();
+        unsigned validCol = dst.GetValidCol();
+        TScatter<TileData, TileIndex>(dst.data(), src0.data(), indexes.data(), validRow, validCol);
     }
 }
 
