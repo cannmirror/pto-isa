@@ -18,14 +18,26 @@ namespace pto
   template <typename T>
   struct TRowSumOp : TRowReduceOp<T, TRowSumOp<T>> {
     using ReduceOp = TRowReduceOp<T, TRowSumOp<T>>;
-    PTO_INTERNAL static void BinInstrImpl(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t rptTimes,
-      uint16_t dstRptStride, uint16_t src0RptStride, uint16_t src1RptStride) {
-      vadd(dst, src0, src1, rptTimes, 1, 1, 1, dstRptStride, src0RptStride, src1RptStride);
+    PTO_INTERNAL static void
+    BinInstrImpl(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1,
+                 uint8_t rptTimes, uint16_t dstRptStride,
+                 uint16_t src0RptStride, uint16_t src1RptStride,
+                 uint8_t dstBlockStride = 1, uint8_t src0BlockStride = 1,
+                 uint8_t src1BlockStride = 1) {
+      vadd(dst, src0, src1, rptTimes, dstBlockStride, src0BlockStride,
+           src1BlockStride, dstRptStride, src0RptStride, src1RptStride);
     }
 
     PTO_INTERNAL static void ReduceInstrImpl(__ubuf__ T *dst, __ubuf__ T *src, uint8_t rptTimes,
       uint16_t dstRptStride, uint16_t srcBlkStride, uint16_t srcRptStride) {
       vcadd(dst, src, rptTimes, dstRptStride, srcBlkStride, srcRptStride, false);
+    }
+
+    PTO_INTERNAL static void
+    GroupReduceInstrImpl(__ubuf__ T *dst, __ubuf__ T *src, uint8_t rptTimes,
+                         uint16_t dstRptStride, uint16_t src0Stride,
+                         uint16_t src1Stride) {
+      vcgadd(dst, src, rptTimes, dstRptStride, src0Stride, src1Stride);
     }
 
     template <int TmpCols, int SrcCols, uint32_t TmpStride, uint32_t SrcStride, uint8_t ElemPerRpt>

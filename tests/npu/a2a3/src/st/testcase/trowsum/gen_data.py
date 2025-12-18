@@ -50,7 +50,11 @@ if __name__ == "__main__":
         TRowSumParams("TROWSUMTest.case3", np.float32, 31, 31, 64 * 2, 64 * 2 - 1),
         TRowSumParams("TROWSUMTest.case4", np.float32, 15, 15, 64 * 3, 64 * 3),
         TRowSumParams("TROWSUMTest.case5", np.float32, 7, 7, 64 * 7, 64 * 7 - 1),
-        TRowSumParams("TROWSUMTest.case6", np.float16, 256, 256, 16, 16 - 1)
+        TRowSumParams("TROWSUMTest.case6", np.float16, 256, 256, 16, 16 - 1),
+        TRowSumParams("TROWSUMTest.case7", np.float32, 64, 64, 128, 128),
+        TRowSumParams("TROWSUMTest.case8", np.float32, 32, 32, 256, 256),
+        TRowSumParams("TROWSUMTest.case9", np.float32, 16, 16, 512, 512),
+        TRowSumParams("TROWSUMTest.case10", np.float32, 8, 8, 1024, 1024)
     ]
 
     for _, case in enumerate(case_params_list):

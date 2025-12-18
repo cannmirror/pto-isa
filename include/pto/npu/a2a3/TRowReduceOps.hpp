@@ -31,6 +31,92 @@ namespace pto
         InstrOp::ReduceInstrImpl(dst, src, rptTimes, dstRptStride, srcBlkStride, srcRptStride);
     }
 
+    template <int Rows, int ValidRow, int Cols, int ValidCol>
+    PTO_INTERNAL static void
+    ReduceOptFP32_64x128(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp) {
+      static_assert(std::is_same_v<T, float>,
+                    "This optimization is only for float type.");
+      static_assert(Rows == 64 && ValidRow == 64 && Cols == 128 &&
+                        ValidCol == 128,
+                    "This optimization is only for [64, 128] input.");
+      // [64, 128] -> [64, 16]
+      InstrOp::GroupReduceInstrImpl(tmp, src, ValidRow * 2, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      // [64, 16] -> [64, 8]
+      InstrOp::BinInstrImpl(tmp, tmp, tmp + 8, ValidRow / 8, 8, 16, 16, 1, 2, 2);
+      pipe_barrier(PIPE_V);
+      // [64, 8] -> [64, 1]
+      InstrOp::GroupReduceInstrImpl(dst, tmp, ValidRow / 8, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      return;
+    }
+
+    template <int Rows, int ValidRow, int Cols, int ValidCol>
+    PTO_INTERNAL static void
+    ReduceOptFP32_32x256(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp) {
+      static_assert(std::is_same_v<T, float>,
+                    "This optimization is only for float type.");
+      static_assert(Rows == 32 && ValidRow == 32 && Cols == 256 &&
+                        ValidCol == 256,
+                    "This optimization is only for [32, 256] input.");
+      // [32, 256] -> [32, 32]
+      InstrOp::GroupReduceInstrImpl(tmp, src, ValidRow * 4, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      // [32, 32] -> [32, 16]
+      InstrOp::BinInstrImpl(tmp, tmp, tmp + 8, ValidRow / 4, 8, 16, 16, 1, 2, 2);
+      pipe_barrier(PIPE_V);
+      // [32, 16] -> [32, 8]
+      InstrOp::BinInstrImpl(tmp, tmp, tmp + 8, ValidRow / 8, 8, 16, 16, 1, 2, 2);
+      pipe_barrier(PIPE_V);
+      // [32, 8] -> [32, 1]
+      InstrOp::GroupReduceInstrImpl(dst, tmp, ValidRow / 8, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      return;
+    }
+
+    template <int Rows, int ValidRow, int Cols, int ValidCol>
+    PTO_INTERNAL static void
+    ReduceOptFP32_16x512(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp) {
+      static_assert(std::is_same_v<T, float>,
+                    "This optimization is only for float type.");
+      static_assert(Rows == 16 && ValidRow == 16 && Cols == 512 &&
+                        ValidCol == 512,
+                    "This optimization is only for [16, 512] input.");
+      // [16, 512] -> [16, 64]
+      InstrOp::GroupReduceInstrImpl(tmp, src, ValidRow * 8, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      // [16, 64] -> [16, 8]
+      InstrOp::GroupReduceInstrImpl(tmp, tmp, ValidRow, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      // [16, 8] -> [16, 1]
+      InstrOp::GroupReduceInstrImpl(dst, tmp, ValidRow / 8, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      return;
+    }
+
+    template <int Rows, int ValidRow, int Cols, int ValidCol>
+    PTO_INTERNAL static void
+    ReduceOptFP32_8x1024(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp) {
+      static_assert(std::is_same_v<T, float>,
+                    "This optimization is only for float type.");
+      static_assert(Rows == 8 && ValidRow == 8 && Cols == 1024 &&
+                        ValidCol == 1024,
+                    "This optimization is only for [8, 1024] input.");
+      // [8, 1024] -> [8, 128]
+      InstrOp::GroupReduceInstrImpl(tmp, src, ValidRow * 16, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      // [8, 128] -> [8, 16]
+      InstrOp::GroupReduceInstrImpl(tmp, tmp, ValidRow * 2, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      // [8, 16] -> [8, 8]
+      InstrOp::BinInstrImpl(tmp, tmp, tmp + 8, ValidRow / 8, 8, 16, 16, 1, 2, 2);
+      pipe_barrier(PIPE_V);
+      // [8, 8] -> [8, 1]
+      InstrOp::GroupReduceInstrImpl(dst, tmp, ValidRow / 8, 1, 1, 8);
+      pipe_barrier(PIPE_V);
+      return;
+    }
+
     template <bool CntModeEn, int Cols, uint32_t DstStride, uint32_t SrcStride, uint8_t ElemPerRpt>
     PTO_INTERNAL static void ReduceInstrByMode(__ubuf__ T *dst, __ubuf__ T *src, unsigned rptTimes) {
       if constexpr (DstStride > B16_REPEAT_MAX) {
@@ -92,8 +178,10 @@ namespace pto
       "This instruction only support Vec Tile");
     static_assert(TileDataIn::isRowMajor && TileDataIn::SFractal == SLayout::NoneBox,
       "This instruction only support Nd fractal Tile");
-    static_assert(TileDataOut::isRowMajor && TileDataOut::SFractal == SLayout::NoneBox,
-      "This instruction only support Nd fractal Tile");
+    static_assert((!TileDataOut::isBoxedLayout &&
+                   (TileDataOut::isRowMajor ||
+                    (!TileDataOut::isRowMajor && TileDataOut::Cols == 1))),
+                  "This instruction only support Nd fractal Tile or DN Tile with Col is 1.");
     static_assert(std::is_same_v<typename TileDataIn::DType, half> ||
       std::is_same_v<typename TileDataIn::DType, float>,
       "The input data type is not supported by this instruction.");
@@ -128,8 +216,55 @@ namespace pto
     set_vector_mask(-1, -1);
   }
 
+  template <typename InstrOp, typename T, typename TileOut, typename TileIn>
+  PTO_INTERNAL bool TryOptimizeFP32Reduce(__ubuf__ T *dst, __ubuf__ T *src,
+                                          __ubuf__ T *tmp) {
+    if constexpr (!TileOut::isBoxedLayout && !TileOut::isRowMajor &&
+                  TileOut::ValidCol == 1) {
+      if constexpr (std::is_same_v<T, float>) {
+        constexpr bool ShapeOf64x128 =
+            TileIn::Rows == 64 && TileIn::ValidRow == 64 &&
+            TileIn::Cols == 128 && TileIn::ValidCol == 128;
+        constexpr bool ShapeOf32x256 =
+            TileIn::Rows == 32 && TileIn::ValidRow == 32 &&
+            TileIn::Cols == 256 && TileIn::ValidCol == 256;
+        constexpr bool ShapeOf16x512 =
+            TileIn::Rows == 16 && TileIn::ValidRow == 16 &&
+            TileIn::Cols == 512 && TileIn::ValidCol == 512;
+        constexpr bool ShapeOf8x1024 =
+            TileIn::Rows == 8 && TileIn::ValidRow == 8 &&
+            TileIn::Cols == 1024 && TileIn::ValidCol == 1024;
+        if constexpr (ShapeOf64x128) {
+          InstrOp::template ReduceOptFP32_64x128<
+              TileIn::Rows, TileIn::ValidRow, TileIn::Cols, TileIn::ValidCol>(
+              dst, src, tmp);
+          return true;
+        } else if constexpr (ShapeOf32x256) {
+          InstrOp::template ReduceOptFP32_32x256<
+              TileIn::Rows, TileIn::ValidRow, TileIn::Cols, TileIn::ValidCol>(
+              dst, src, tmp);
+          return true;
+        } else if constexpr (ShapeOf16x512) {
+          InstrOp::template ReduceOptFP32_16x512<
+              TileIn::Rows, TileIn::ValidRow, TileIn::Cols, TileIn::ValidCol>(
+              dst, src, tmp);
+          return true;
+        } else if constexpr (ShapeOf8x1024) {
+          InstrOp::template ReduceOptFP32_8x1024<
+              TileIn::Rows, TileIn::ValidRow, TileIn::Cols, TileIn::ValidCol>(
+              dst, src, tmp);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   template <typename InstrOp, typename T, typename TileDataOut, typename TileDataIn, typename TileDataTmp>
   PTO_INTERNAL void TRowReduceInstr(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *tmp, int validCol, int validRow) {
+    if (TryOptimizeFP32Reduce<InstrOp, T, TileDataOut, TileDataIn>(dst, src, tmp)) {
+      return;
+    }
     constexpr uint8_t elemPerBlock = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr uint8_t elemPerRpt = REPEAT_BYTE / sizeof(T);
     constexpr uint32_t dstRptStride = TileDataOut::Cols;

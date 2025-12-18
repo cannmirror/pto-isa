@@ -15,37 +15,62 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace pto;
 
-template <typename T, int row, int vaildRow, int srcCol, int srcVaildCol,
-          int dstCol>
+template <typename T, int row, int validRow, int srcCol, int srcValidCol,
+          int dstCol, bool isRowMajor = true>
 PTO_INTERNAL void runTRowMax(__gm__ T *out, __gm__ T *src) {
   using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
   using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
   using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
-  GlobalData srcGlobal(src, DynDim2Shape(vaildRow, srcVaildCol),
+  GlobalData srcGlobal(src, DynDim2Shape(validRow, srcValidCol),
                        DynDim2Stride(row, srcCol));
-  GlobalData dstGlobal(out, DynDim2Shape(vaildRow, dstCol),
+  GlobalData dstGlobal(out, DynDim2Shape(validRow, dstCol),
                        DynDim2Stride(row, dstCol));
 
-  using srcTileData =
-      Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
-  using dstTileData =
-      Tile<TileType::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
-  srcTileData srcTile(vaildRow, srcVaildCol);
-  srcTileData tmpTile(vaildRow, srcVaildCol);
-  dstTileData dstTile(vaildRow, dstCol);
-  TASSIGN(srcTile, 0x0);
-  TASSIGN(tmpTile, 0x14000);
-  TASSIGN(dstTile, 0x28000);
+  if constexpr (isRowMajor) {
+    using srcTileData =
+        Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
+    using dstTileData =
+        Tile<TileType::Vec, T, row, 16, BLayout::RowMajor, -1, -1>;
+    srcTileData srcTile(validRow, srcValidCol);
+    srcTileData tmpTile(validRow, srcValidCol);
+    dstTileData dstTile(validRow, dstCol);
+    TASSIGN(srcTile, 0x0);
+    TASSIGN(tmpTile, row * srcCol * sizeof(T));
+    TASSIGN(dstTile, 2 * row * srcCol * sizeof(T));
 
-  // 搬运数据
-  TLOAD(srcTile, srcGlobal);
+    // 搬运数据
+    TLOAD(srcTile, srcGlobal);
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    TROWMAX(dstTile, srcTile, tmpTile);
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    TSTORE(dstGlobal, dstTile);
+  } else {
+    using srcTileData =
+        Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, row, srcCol>;
+    using dstTileDataDN =
+        Tile<TileType::Vec, T, row, 1, BLayout::ColMajor, row, 1>;
+    srcTileData srcTile;
+    srcTileData tmpTile;
+    dstTileDataDN dstTile;
+    TASSIGN(srcTile, 0x0);
+    TASSIGN(tmpTile, row * srcCol * sizeof(T));
+    TASSIGN(dstTile, 2 * row * srcCol * sizeof(T));
 
-  set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-  wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-  TROWMAX(dstTile, srcTile, tmpTile);
-  set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-  wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-  TSTORE(dstGlobal, dstTile);
+    // 搬运数据
+    TLOAD(srcTile, srcGlobal);
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    TROWMAX(dstTile, srcTile, tmpTile);
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    using dstTileDataND =
+        Tile<TileType::Vec, T, 1, row, BLayout::RowMajor, 1, row>;
+    dstTileDataND dstTileND;
+    TRESHAPE(dstTileND, dstTile);
+    TSTORE(dstGlobal, dstTileND);
+  }
 }
 
 extern "C" __global__ AICORE void launchTROWMAXCase1(__gm__ float *out,
@@ -103,6 +128,22 @@ extern "C" __global__ AICORE void launchTROWMAXCase13(__gm__ float *out,
 extern "C" __global__ AICORE void launchTROWMAXCase14(__gm__ float *out,
                                                           __gm__ float *src) {
   runTRowMax<float, 238, 121, 40, 16, 1>(out, src);
+}
+extern "C" __global__ AICORE void launchTROWMAXCase15(__gm__ float *out,
+                                                      __gm__ float *src) {
+  runTRowMax<float, 64, 64, 128, 128, 1, false>(out, src);
+}
+extern "C" __global__ AICORE void launchTROWMAXCase16(__gm__ float *out,
+                                                      __gm__ float *src) {
+  runTRowMax<float, 32, 32, 256, 256, 1, false>(out, src);
+}
+extern "C" __global__ AICORE void launchTROWMAXCase17(__gm__ float *out,
+                                                      __gm__ float *src) {
+  runTRowMax<float, 16, 16, 512, 512, 1, false>(out, src);
+}
+extern "C" __global__ AICORE void launchTROWMAXCase18(__gm__ float *out,
+                                                      __gm__ float *src) {
+  runTRowMax<float, 8, 8, 1024, 1024, 1, false>(out, src);
 }
 
 template <uint32_t caseId>
@@ -164,6 +205,22 @@ void launchTROWMAXTestCase(void *out, void *src, aclrtStream stream) {
     launchTROWMAXCase14<<<1, nullptr, stream>>>((float *)out, (float *)src);
     break;
   }
+  case 15: {
+    launchTROWMAXCase15<<<1, nullptr, stream>>>((float *)out, (float *)src);
+    break;
+  }
+  case 16: {
+    launchTROWMAXCase16<<<1, nullptr, stream>>>((float *)out, (float *)src);
+    break;
+  }
+  case 17: {
+    launchTROWMAXCase17<<<1, nullptr, stream>>>((float *)out, (float *)src);
+    break;
+  }
+  case 18: {
+    launchTROWMAXCase18<<<1, nullptr, stream>>>((float *)out, (float *)src);
+    break;
+  }
   default: {
   }
   }
@@ -196,4 +253,12 @@ template void launchTROWMAXTestCase<12>(void *out, void *src,
 template void launchTROWMAXTestCase<13>(void *out, void *src,
                                         aclrtStream stream);
 template void launchTROWMAXTestCase<14>(void *out, void *src,
+                                        aclrtStream stream);
+template void launchTROWMAXTestCase<15>(void *out, void *src,
+                                        aclrtStream stream);
+template void launchTROWMAXTestCase<16>(void *out, void *src,
+                                        aclrtStream stream);
+template void launchTROWMAXTestCase<17>(void *out, void *src,
+                                        aclrtStream stream);
+template void launchTROWMAXTestCase<18>(void *out, void *src,
                                         aclrtStream stream);
