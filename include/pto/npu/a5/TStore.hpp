@@ -417,13 +417,7 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
     static_assert(TileData::Loc == pto::TileType::Vec || TileData::Loc == pto::TileType::Acc,
         "Source TileType only suport Vec/Acc!");
-    if constexpr (TileData::Loc == pto::TileType::Vec) {
-        CheckStaticVec<TileData, GlobalData>();
-
-        TStore<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
-            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
-            dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
-    } else if constexpr (TileData::Loc == pto::TileType::Acc) {
+    if constexpr (TileData::Loc == pto::TileType::Acc) {
         using L0cT = typename TileData::DType;
         using DstT = typename GlobalData::DType;
         CheckStaticAcc<TileData, GlobalData, false>();
@@ -432,12 +426,24 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
             SetAtomicAdd<DstT>();
         }
         constexpr QuantMode_t quantPre = GetCastPreQuantModeGm<L0cT, DstT>();
-        TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
-            dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2),
-            dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
+        TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+            dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+            dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+            dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+            dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
         if constexpr (atomicType == AtomicType::AtomicAdd) {
             set_st_atomic_cfg(atomic_type_t::ATOMIC_NONE, atomic_op_t::ATOMIC_SUM);
         }
+    } else if constexpr (TileData::Loc == pto::TileType::Vec) {
+        CheckStaticVec<TileData, GlobalData>();
+
+        TStore<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+            dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+            dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+            dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+            dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
     }
 }
 
@@ -453,8 +459,11 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantScalar)
     }
     constexpr QuantMode_t quantPre = GetScalarPreQuantModeGm<L0cT, DstT>();
     set_quant_pre(preQuantScalar);
-    TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
-        dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+    TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+        dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+        dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+        dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+        dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
         dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
     if constexpr (atomicType == AtomicType::AtomicAdd) {
         set_st_atomic_cfg(atomic_type_t::ATOMIC_NONE, atomic_op_t::ATOMIC_SUM);
@@ -464,17 +473,21 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantScalar)
 template <typename TileData, typename GlobalData, typename FpTileData, AtomicType atomicType = AtomicType::AtomicNone>
 AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src, FpTileData &fp)
 {
-    using L0cT = typename TileData::DType;
     using DstT = typename GlobalData::DType;
+    using L0cT = typename TileData::DType;
     CheckStaticAcc<TileData, GlobalData, true>();
 
     if constexpr (atomicType == AtomicType::AtomicAdd) {
         SetAtomicAdd<DstT>();
     }
     constexpr QuantMode_t quantPre = GetVectorPreQuantModeGm<L0cT, DstT>();
-    TStoreAccFp<GlobalData, TileData, FpTileData, quantPre>(dst.data(), src.data(), fp.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
-        dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
-        dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
+    TStoreAccFp<GlobalData, TileData, FpTileData, quantPre>(dst.data(), src.data(), fp.data(),
+        dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
+        dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3),
+        dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0),
+        dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2),
+        dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(),
+        src.GetValidCol());
     if constexpr (atomicType == AtomicType::AtomicAdd) {
         set_st_atomic_cfg(atomic_type_t::ATOMIC_NONE, atomic_op_t::ATOMIC_SUM);
     }
