@@ -147,6 +147,7 @@ set(ALL_TESTCASES
     tmov_acc2mat
     tassign
     tmov_ub2l1
+    tcmp
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
