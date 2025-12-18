@@ -44,6 +44,7 @@ class TciParams:
         self.length = length
         self.name = name
 
+
 def generate_case_name(param):
     dtype_str = {
         np.float32: 'float',
@@ -75,7 +76,7 @@ if __name__ == "__main__":
         TciParams(np.int32, 0, 0, 8, "TCITest.case10"),
     ]
 
-    for i, param in enumerate(case_params_list):
+    for _, param in enumerate(case_params_list):
         case_name = param.name
         if not os.path.exists(case_name):
             os.makedirs(case_name)

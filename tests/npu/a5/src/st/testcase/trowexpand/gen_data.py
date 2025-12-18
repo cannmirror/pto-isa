@@ -16,6 +16,7 @@ import ctypes
 import numpy as np
 np.random.seed(2025)
 
+
 def gen_golden_data(case_name, param):
     datatype = param.datatype
     m, k, n = param.row, param.src_col, param.dst_col

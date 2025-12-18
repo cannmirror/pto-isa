@@ -62,21 +62,21 @@ void LaunchTPartMax(T *out, T *src0, T *src1, aclrtStream stream)
         kTRowsD_, kTColsD_, kTRowsS0_, kTColsS0_, kTRowsS1_, kTColsS1_><<<1, nullptr, stream>>>(out, src0, src1);
 }
 
-template void LaunchTPartMax<float, 16, 32, 16, 16, 16, 32,
-    16, 32, 16, 16, 16, 32>(float *out, float *src0, float *src1, aclrtStream stream);
-template void LaunchTPartMax<float, 22, 32, 22, 32, 16, 32,
-    22, 32, 22, 32, 16, 32>(float *out, float *src0, float *src1, aclrtStream stream);
-template void LaunchTPartMax<float, 22, 40, 22, 40, 22, 32,
-    22, 40, 22, 40, 22, 32>(float *out, float *src0, float *src1, aclrtStream stream);
-template void LaunchTPartMax<float, 22, 40, 22, 40, 8, 40,
-    22, 40, 22, 40, 8, 40>(float *out, float *src0, float *src1, aclrtStream stream);
-template void LaunchTPartMax<float, 64, 128, 64, 128, 64, 128,
-    64, 128, 64, 128, 64, 128>(float *out, float *src0, float *src1, aclrtStream stream);
-template void LaunchTPartMax<float, 16, 32, 16, 0, 16, 32,
-    16, 32, 16, 8, 16, 32>(float *out, float *src0, float *src1, aclrtStream stream);
-template void LaunchTPartMax<float, 16, 32, 0, 32, 16, 32,
-    16, 32, 8, 32, 16, 32>(float *out, float *src0, float *src1, aclrtStream stream);
-template void LaunchTPartMax<float, 16, 32, 16, 32, 16, 0,
-    16, 32, 16, 32, 16, 8>(float *out, float *src0, float *src1, aclrtStream stream);
-template void LaunchTPartMax<float, 16, 32, 16, 32, 0, 32,
-    16, 32, 16, 32, 8, 32>(float *out, float *src0, float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 16, 32, 16, 16, 16, 32, 16, 32, 16, 16, 16, 32>(float *out, float *src0,
+    float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 22, 32, 22, 32, 16, 32, 22, 32, 22, 32, 16, 32>(float *out, float *src0,
+    float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 22, 40, 22, 40, 22, 32, 22, 40, 22, 40, 22, 32>(float *out, float *src0,
+    float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 22, 40, 22, 40, 8, 40, 22, 40, 22, 40, 8, 40>(float *out, float *src0,
+    float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 64, 128, 64, 128, 64, 128, 64, 128, 64, 128, 64, 128>(float *out, float *src0,
+    float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 16, 32, 16, 0, 16, 32, 16, 32, 16, 8, 16, 32>(float *out, float *src0,
+    float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 16, 32, 0, 32, 16, 32, 16, 32, 8, 32, 16, 32>(float *out, float *src0,
+    float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 16, 32, 16, 32, 16, 0, 16, 32, 16, 32, 16, 8>(float *out, float *src0,
+    float *src1, aclrtStream stream);
+template void LaunchTPartMax<float, 16, 32, 16, 32, 0, 32, 16, 32, 16, 32, 8, 32>(float *out, float *src0,
+    float *src1, aclrtStream stream);
