@@ -572,9 +572,12 @@ PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantS
     }
     set_quant_pre(preQuantScalar);
     constexpr QuantMode_t quantMode = GetScalarPreQuantMode<typename TileData::DType, typename GlobalData::DType>();
-    TStoreAcc<GlobalData, TileData, quantMode>(dst.data(), src.data(), dst.GetShape(0), dst.GetShape(1),
-        dst.GetShape(2), dst.GetShape(3), dst.GetShape(4), dst.GetStride(0), dst.GetStride(1), dst.GetStride(2),
-        dst.GetStride(3), dst.GetStride(4), src.GetValidRow(), src.GetValidCol());
+    TStoreAcc<GlobalData, TileData, quantMode>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+        dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+        dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+        dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+        dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+        dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
     if constexpr (currentAtomicType == AtomicType::AtomicAdd) {
         SetAtomicNone();
     }
@@ -589,9 +592,13 @@ PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src, FpTileData &fp)
         SetAtomicAdd<typename GlobalData::DType>();
     }
     constexpr QuantMode_t quantMode = GetVectorPreQuantMode<typename TileData::DType, typename GlobalData::DType>();
-    TStoreAccFp<GlobalData, TileData, FpTileData, quantMode>(dst.data(), src.data(), fp.data(), dst.GetShape(0),
-        dst.GetShape(1), dst.GetShape(2), dst.GetShape(3), dst.GetShape(4), dst.GetStride(0), dst.GetStride(1),
-        dst.GetStride(2), dst.GetStride(3), dst.GetStride(4), src.GetValidRow(), src.GetValidCol());
+    TStoreAccFp<GlobalData, TileData, FpTileData, quantMode>(dst.data(), src.data(), fp.data(),
+        dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
+        dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3),
+        dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0),
+        dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2),
+        dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(),
+        src.GetValidCol());
     if constexpr (currentAtomicType == AtomicType::AtomicAdd) {
         SetAtomicNone();
     }
