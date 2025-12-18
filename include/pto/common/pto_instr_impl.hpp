@@ -82,6 +82,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TMrgSort.hpp"
 #include "pto/npu/a5/TMatmul.hpp"
 #include "pto/npu/a5/TCmps.hpp"
+#include "pto/npu/a5/TCmp.hpp"
 #include "pto/npu/a5/TColSum.hpp"
 #include "pto/npu/a5/TColMax.hpp"
 #include "pto/npu/a5/TReshape.hpp"
