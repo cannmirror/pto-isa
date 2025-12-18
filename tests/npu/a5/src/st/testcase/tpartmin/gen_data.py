@@ -20,7 +20,7 @@ def gen_golden_data_tpartmin(case_name, param):
 
     dst_rows, dst_cols = [param.dst_vr, param.dst_vc]
     src0_rows, src0_cols = [param.src0_vr, param.src0_vc]
-    src1_rows, src1_cols = [param.src1_vr, param.src1_vr]
+    src1_rows, src1_cols = [param.src1_vr, param.src1_vc]
 
     # Generate random input arrays
     src0_in = np.random.uniform(low=-255, high=255, size=(src0_rows, src0_cols)).astype(dtype)
@@ -83,7 +83,7 @@ def generate_case_name(param):
         np.uint32: 'u32',
     }[param.dtype]
     return (f"TPARTMINTest.case_{dtype_str}_{param.dst_vr}x{param.dst_vc}_{param.src0_vr}x"
-            f"{param.src0_vc}_{param.src1_vr}x{param.src1_vr}")
+            f"{param.src0_vc}_{param.src1_vr}x{param.src1_vc}")
 
 
 if __name__ == "__main__":
