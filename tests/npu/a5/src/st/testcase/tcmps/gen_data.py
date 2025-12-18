@@ -25,17 +25,17 @@ def gen_golden_data_tcmps(case_name, param):
     input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
 
     if param.mode == "CmpMode::EQ":
-        golden = (abs(input1 - input2) < 10e-9)
+        golden = np.equal(input1, input2[0])
     if param.mode == "CmpMode::NE":
-        golden = (abs(input1 - input2) > 10e-9) 
+        golden = np.not_equal(input1, input2[0]) 
     if param.mode == "CmpMode::LT":
-        golden = (input1 < input2) 
+        golden = np.less(input1, input2[0]) 
     if param.mode == "CmpMode::GT":
-        golden = (input1 > input2) 
+        golden = np.greater(input1, input2[0]) 
     if param.mode == "CmpMode::GE":
-        golden = (input1 >= input2) 
+        golden = np.greater_equal(input1, input2[0]) 
     if param.mode == "CmpMode::LE":
-        golden = (input1 <= input2) 
+        golden = np.less_equal(input1, input2[0]) 
 
     # Apply valid region constraints
     output = np.zeros([H, W]).astype(dtype)
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tcmpsParams(np.float16, 32, 32, 32, 32, 32, 32, "CmpMode::GE"),
+        tcmpsParams(np.float16, 32, 32, 32, 32, 32, 32, "CmpMode::EQ"),
         tcmpsParams(np.float32, 8, 64, 8, 64, 8, 64, "CmpMode::GT"),
         tcmpsParams(np.float32, 4, 64, 4, 64, 4, 64, "CmpMode::NE"),
         tcmpsParams(np.float32, 128, 128, 64, 64, 128, 128, "CmpMode::LT"),
