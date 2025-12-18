@@ -43,6 +43,25 @@ tsqrt
 tfillpad
 ttrans
 tsels
+trem
+tshl
+tshr
+tand
+tor
+txor
+tmin
+tcmp
+tlog
+tneg
+tnot
+trecip
+trelu
+tprelu
+taddc
+tsubc
+tsubs
+trems
+tmaxs
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})

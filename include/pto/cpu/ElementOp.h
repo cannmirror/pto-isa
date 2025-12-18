@@ -74,7 +74,7 @@ namespace pto {
     template<typename DType, ElementOp op>
     struct ElementOpCal {
         static void apply(DType &dst, DType &src0, DType &src1, size_t) {
-            static_assert(false, "Unsupport element op.");;
+            static_assert(false, "Unsupport element op.");
         }
     };
 
@@ -197,7 +197,7 @@ namespace pto {
                     dst = (src0 <= src1);
                     break;
                 default:
-                    static_assert(false, "Unsupport CMP_MODE.");
+                    dst = (src0 == src1);
                     break;
             }
         }
@@ -206,7 +206,7 @@ namespace pto {
     template<typename DType>
     struct ElementOpCal<DType, ElementOp::OP_PRELU> {
         static void apply(DType &dst, DType &src0, DType &src1, size_t) {
-            dst = ((src0 > 0) ? src0 : (src0 * src1));
+            dst = ((src0 > static_cast<DType>(0)) ? src0 : (src0 * src1));
         }
     };
 
@@ -277,7 +277,7 @@ namespace pto {
     template<typename DType>
     struct ElementOpCal<DType, ElementOp::OP_RELU> {
         static void apply(DType &dst, DType &src) {
-            dst = std::max(src, 0);
+            dst = std::max(src, static_cast<DType>(0));
         }
     };
 

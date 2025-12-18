@@ -91,38 +91,46 @@ namespace pto {
     }
 
     template <typename tile_shape>
-    PTO_INTERNAL void TCMP_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+    PTO_INTERNAL void TCMP_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1, CmpMode mode) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
-        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_CMP>(dst.data(), src0.data(), src1.data(), row, col);
+        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_CMP>(dst.data(), src0.data(), src1.data(), row, col,
+                                                                static_cast<size_t>(mode));
     }
 
     template <typename tile_shape>
-    PTO_INTERNAL void TLOG_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+    PTO_INTERNAL void TLOG_IMPL(tile_shape &dst, tile_shape &src) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
-        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_LOG>(dst.data(), src0.data(), src1.data(), row, col);
+        UnaryElementTileOp_Impl<tile_shape, ElementOp::OP_LOG>(dst.data(), src.data(), row, col);
     }
 
     template <typename tile_shape>
-    PTO_INTERNAL void TNEG_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+    PTO_INTERNAL void TNEG_IMPL(tile_shape &dst, tile_shape &src) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
-        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_NEG>(dst.data(), src0.data(), src1.data(), row, col);
+        UnaryElementTileOp_Impl<tile_shape, ElementOp::OP_NEG>(dst.data(), src.data(), row, col);
     }
 
     template <typename tile_shape>
-    PTO_INTERNAL void TNOT_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+    PTO_INTERNAL void TNOT_IMPL(tile_shape &dst, tile_shape &src) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
-        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_NOT>(dst.data(), src0.data(), src1.data(), row, col);
+        UnaryElementTileOp_Impl<tile_shape, ElementOp::OP_NOT>(dst.data(), src.data(), row, col);
     }
 
     template <typename tile_shape>
-    PTO_INTERNAL void TRECIP_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
+    PTO_INTERNAL void TRECIP_IMPL(tile_shape &dst, tile_shape &src) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
-        BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_RECIP>(dst.data(), src0.data(), src1.data(), row, col);
+        UnaryElementTileOp_Impl<tile_shape, ElementOp::OP_RECIP>(dst.data(), src.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TRELU_IMPL(tile_shape &dst, tile_shape &src) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        UnaryElementTileOp_Impl<tile_shape, ElementOp::OP_RELU>(dst.data(), src.data(), row, col);
     }
 
     template <typename tile_shape>
