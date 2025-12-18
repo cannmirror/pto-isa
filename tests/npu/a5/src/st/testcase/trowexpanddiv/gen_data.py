@@ -46,6 +46,7 @@ class TrowexpandParams:
         self.src1_row = src1_row
         self.src1_col = src1_col
 
+
 def generate_case_name(param):
     dtype_str = {
         np.float32: 'fp32',
@@ -67,7 +68,7 @@ if __name__ == "__main__":
         TrowexpandParams(np.float16, 5, 512, 5, 512, 5, 1)
     ]
 
-    for i, param in enumerate(case_params_list):
+    for _, param in enumerate(case_params_list):
         case_name = generate_case_name(param)
         if not os.path.exists(case_name):
             os.makedirs(case_name)

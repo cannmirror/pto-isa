@@ -18,9 +18,9 @@ np.random.seed(19)
 def gen_golden_data_tpartmax(case_name, param):
     dtype = param.dtype
 
-    dst_rows, dst_cols = [param.dstVR, param.dstVC]
-    src0_rows, src0_cols = [param.src0VR, param.src0VC]
-    src1_rows, src1_cols = [param.src1VR, param.src1VC]
+    dst_rows, dst_cols = [param.dst_vr, param.dst_vc]
+    src0_rows, src0_cols = [param.src0_vr, param.src0_vc]
+    src1_rows, src1_cols = [param.src1_vr, param.src1_vc]
 
     # Generate random input arrays
     src0_in = np.random.uniform(low=-255, high=255, size=(src0_rows, src0_cols)).astype(dtype)
@@ -38,13 +38,13 @@ def gen_golden_data_tpartmax(case_name, param):
     }.get(dtype)
 
     if src0_rows < dst_rows or src0_cols < dst_cols:
-        padded_src0 = np.full((dst_rows, dst_cols) , pad_value, dtype=dtype)
+        padded_src0 = np.full((dst_rows, dst_cols), pad_value, dtype=dtype)
         padded_src0[:src0_rows, :src0_cols] = src0_in
     else:
         padded_src0 = src0_in
 
     if src1_rows < dst_rows or src1_cols < dst_cols:
-        padded_src1 = np.full((dst_rows, dst_cols) , pad_value, dtype=dtype)
+        padded_src1 = np.full((dst_rows, dst_cols), pad_value, dtype=dtype)
         padded_src1[:src1_rows, :src1_cols] = src1_in
     else:
         padded_src1 = src1_in
@@ -53,22 +53,22 @@ def gen_golden_data_tpartmax(case_name, param):
     src0_in.tofile("input1.bin")
     src1_in.tofile("input2.bin")
     
-    dst_out = np.maximum(padded_src0, padded_src1) #elemwise max
+    dst_out = np.maximum(padded_src0, padded_src1) # elemwise max
     dst_out.tofile("golden.bin")
 
     output = np.zeros((dst_rows, dst_cols)).astype(dtype)
     return output, src0_in, src1_in, dst_out
 
 
-class tpartmaxParams:
-    def __init__(self, dtype, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC):
+class TPartMaxParams:
+    def __init__(self, dtype, dst_vr, dst_vc, src0_vr, src0_vc, src1_vr, src1_vc):
         self.dtype = dtype
-        self.dstVR = dstVR
-        self.dstVC = dstVC
-        self.src0VR = src0VR
-        self.src0VC = src0VC
-        self.src1VR = src1VR
-        self.src1VC = src1VC
+        self.dst_vr = dst_vr
+        self.dst_vc = dst_vc
+        self.src0_vr = src0_vr
+        self.src0_vc = src0_vc
+        self.src1_vr = src1_vr
+        self.src1_vc = src1_vc
 
 
 def generate_case_name(param):
@@ -82,7 +82,9 @@ def generate_case_name(param):
         np.uint16: 'u16',
         np.uint32: 'u32',
     }[param.dtype]
-    return f"TPARTMAXTest.case_{dtype_str}_{param.dstVR}x{param.dstVC}_{param.src0VR}x{param.src0VC}_{param.src1VR}x{param.src1VC}"
+    return (f"TPARTMAXTest.case_{dtype_str}_{param.dst_vr}x{param.dst_vc}_{param.src0_vr}x{param.src0_vc}_"
+            f"{param.src1_vr}x{param.src1_vc}")
+
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -94,18 +96,18 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tpartmaxParams(np.float32, 64, 64, 64, 64, 64, 64),
-        tpartmaxParams(np.float32, 2, 24, 2, 24, 2, 8),
-        tpartmaxParams(np.float32, 128, 64, 128, 64, 96, 64),
-        tpartmaxParams(np.float32, 95, 95, 95, 95, 95, 95),
-        tpartmaxParams(np.float32, 122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.float16, 122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.int8, 122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.int16, 122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.int32, 122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.uint8, 122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.uint16, 122, 123, 104, 123, 122, 110),
-        tpartmaxParams(np.uint32, 122, 123, 104, 123, 122, 110)
+        TPartMaxParams(np.float32, 64, 64, 64, 64, 64, 64),
+        TPartMaxParams(np.float32, 2, 24, 2, 24, 2, 8),
+        TPartMaxParams(np.float32, 128, 64, 128, 64, 96, 64),
+        TPartMaxParams(np.float32, 95, 95, 95, 95, 95, 95),
+        TPartMaxParams(np.float32, 122, 123, 104, 123, 122, 110),
+        TPartMaxParams(np.float16, 122, 123, 104, 123, 122, 110),
+        TPartMaxParams(np.int8, 122, 123, 104, 123, 122, 110),
+        TPartMaxParams(np.int16, 122, 123, 104, 123, 122, 110),
+        TPartMaxParams(np.int32, 122, 123, 104, 123, 122, 110),
+        TPartMaxParams(np.uint8, 122, 123, 104, 123, 122, 110),
+        TPartMaxParams(np.uint16, 122, 123, 104, 123, 122, 110),
+        TPartMaxParams(np.uint32, 122, 123, 104, 123, 122, 110)
     ]
 
     for param in case_params_list:

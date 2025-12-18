@@ -52,7 +52,7 @@ if __name__ == "__main__":
         TRowMinParams("TROWMINTest.case14", np.float32, 238, 121, 40, 16)
     ]
 
-    for i, case in enumerate(case_params_list):
+    for _, case in enumerate(case_params_list):
         if not os.path.exists(case.name):
             os.makedirs(case.name)
         original_dir = os.getcwd()
