@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
     template<typename tile_shape, ElementOp op>
-    void ZeroTileScalarOp_Impl(tile_shape &dst, typename tile_shape::DType &scalar, unsigned validRow,
+    void ZeroTileScalarOp_Impl(typename tile_shape::TileDType dst, typename tile_shape::DType scalar, unsigned validRow,
                                unsigned validCol)
     {
         using DType = typename tile_shape::DType;
@@ -28,8 +28,9 @@ namespace pto {
     }
 
     template<typename tile_shape, ElementOp op>
-    void UnaryTileScalarOpImpl(tile_shape &dst, tile_shape &src, typename tile_shape::DType &scalar, unsigned validRow,
-                               unsigned validCol, size_t extra = 0)
+    void UnaryTileScalarOpImpl(typename tile_shape::TileDType dst, typename tile_shape::TileDType src,
+                               typename tile_shape::DType scalar, unsigned validRow, unsigned validCol,
+                               size_t extra = 0)
     {
         using DType = typename tile_shape::DType;
         for (int i = 0; i < validRow; ++i) {
@@ -38,6 +39,55 @@ namespace pto {
                 ElementOpCal<DType, op>::apply(dst[idx], src[idx], scalar, extra);
             }
         }
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TSUBS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_SUBS>(dst.data(), src.data(), scalar, row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TREMS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_REMS>(dst.data(), src.data(), scalar, row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TMAXS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_MAXS>(dst.data(), src.data(), scalar, row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TANDS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_ANDS>(dst.data(), src.data(), scalar, row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TORS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_ORS>(dst.data(), src.data(), scalar, row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TXORS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_XORS>(dst.data(), src.data(), scalar, row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TLRELU_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
+        unsigned row = dst.GetValidRow();
+        unsigned col = dst.GetValidCol();
+        UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_LRELU>(dst.data(), src.data(), scalar, row, col);
     }
 }
 #endif

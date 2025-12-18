@@ -19,7 +19,9 @@ if __name__ == "__main__":
     case_name_list = [
         "TLOADTest.case_float_GT_128_128_VT_128_128_BLK1", # 此名称需要和 TEST_F(TMATMULTest, xxxx)定义的名称一致
         "TLOADTest.case_float_GT_2_2_2_256_64_VT_256_64_BLK8", 
-        "TLOADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX", 
+        "TLOADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX",
+        "TLOADTest.case_float_GT_32_64_128_VT_64_128_BLK32_DN",
+        "TLOADTest.case_float_GT_2_2_2_255_60_VT_256_64_BLK8_DN",
         "TLOADTest.case_s16_GT_128_127_VT_128_128_BLK1_PADMAX", 
         "TLOADTest.case_u8_GT_128_127_VT_128_128_BLK1_PADMIN", 
         "TLOADTest.case_float_GT_32_64_128_VT_64_128_BLK32_DYN", 
