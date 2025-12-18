@@ -44,9 +44,9 @@ namespace pto {
         EQ = 0,
         NE = 1,
         LT = 2,
-        GT = 3,
-        GE = 4,
-        LE = 5,
+        LE = 3,
+        GT = 4,
+        GE = 5,
     };
 }
 
