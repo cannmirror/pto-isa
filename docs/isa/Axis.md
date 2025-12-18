@@ -1,14 +1,19 @@
-# 按轴归约/扩展（Axis Op）
-行/列维度的归约与广播，接口来自 `include/pto/common/pto_instr.hpp`。
+# Axis Reduce / Expand
 
-| 指令 | 功能 | 接口示例 | 单指令文档 |
-| :-- | :-- | :-- | :-- |
-| TROWSUM | 行求和 | `TROWSUM %Src -> %Dst` | docs/isa/TROWSUM.md |
-| TROWMAX | 行最大 | `TROWMAX %Src -> %Dst` | docs/isa/TROWMAX.md |
-| TROWMIN | 行最小 | `TROWMIN %Src -> %Dst` | docs/isa/TROWMIN.md |
-| TROWEXPAND | 行首元素广播整行 | `TROWEXPAND %Src -> %Dst` | docs/isa/TROWEXPAND.md |
-| TCOLSUM | 列求和 | `TCOLSUM %Src -> %Dst` | docs/isa/TCOLSUM.md |
-| TCOLMAX | 列最大 | `TCOLMAX %Src -> %Dst` | docs/isa/TCOLMAX.md |
-| TCOLMIN | 列最小 | `TCOLMIN %Src -> %Dst` | docs/isa/TCOLMIN.md |
+This page groups instructions that reduce over a row/column dimension, or broadcast a reduced value back across an axis.
 
-约束要点：源 Tile 形状需满足行/列归约；必要时提供 tmp（如 TROWSUM/TCOLSUM）；遵循对齐与掩码约束。
+- Source of truth (C++ intrinsics): `include/pto/common/pto_instr.hpp`
+- Shared notation and events: `docs/isa/conventions.md`
+
+| Instruction | Summary | Reference |
+| :-- | :-- | :-- |
+| `TROWSUM` | Row-wise sum reduction | `docs/isa/TROWSUM.md` |
+| `TROWMAX` | Row-wise max reduction | `docs/isa/TROWMAX.md` |
+| `TROWMIN` | Row-wise min reduction | `docs/isa/TROWMIN.md` |
+| `TROWEXPAND` | Broadcast each row's first element across the row | `docs/isa/TROWEXPAND.md` |
+| `TROWEXPANDDIV` | Row-wise broadcast divide | `docs/isa/TROWEXPANDDIV.md` |
+| `TROWEXPANDMUL` | Row-wise broadcast multiply | `docs/isa/TROWEXPANDMUL.md` |
+| `TROWEXPANDSUB` | Row-wise broadcast subtract | `docs/isa/TROWEXPANDSUB.md` |
+| `TCOLSUM` | Column-wise sum reduction | `docs/isa/TCOLSUM.md` |
+| `TCOLMAX` | Column-wise max reduction | `docs/isa/TCOLMAX.md` |
+| `TCOLMIN` | Column-wise min reduction | `docs/isa/TCOLMIN.md` |

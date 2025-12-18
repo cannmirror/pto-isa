@@ -1,81 +1,87 @@
 # TPARTMIN
 
-## 说明
-**分段最小（Part Min）**
+## Introduction
 
-- 功能：分段掩码最小
+Partial elementwise min with implementation-defined handling of mismatched valid regions.
 
-对满足分段/掩码条件的元素执行运算，未命中区域的行为由实现定义。
+## Math Interpretation
 
----
+For each element `(i, j)` in the destination valid region:
 
-## 汇编语法
-```asm
-TPARTMIN %Src0, %Src1 , -> %Dst
+$$
+\mathrm{dst}_{i,j} =
+\begin{cases}
+\min(\mathrm{src0}_{i,j}, \mathrm{src1}_{i,j}) & \text{if both inputs are defined at } (i,j) \\
+\mathrm{src0}_{i,j} & \text{if only src0 is defined at } (i,j) \\
+\mathrm{src1}_{i,j} & \text{if only src1 is defined at } (i,j)
+\end{cases}
+$$
+
+## IR Syntax
+
+Synchronous form:
+
+```mlir
+%dst = pto.tile.partmin %src0, %src1 : tile<...> -> tile<...>
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
-
-## C++ Intrinsic 接口
-```cpp
-template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-PTO_INST void TPARTMIN(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1);
+```mlir
+%dst, %e = pto.tile.partmin %src0, %src1 wait(%e0, %e1)
+    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TPARTMIN>>
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| dst | 输出 Tile（写入结果） |
-| src0 | 输入 Tile 0 |
-| src1 | 输入 Tile 1 |
+## C++ Intrinsic
 
----
+Declared in `include/pto/common/pto_instr.hpp`:
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
-
----
-
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-- 编译期约束：
-  - TPARTMIN: src and dst data type is different!
-  - TPARTMIN: Invalid data type.
-  - TPARTMIN: not supported BLayout type.
-- 运行期约束：
-  - TPARTMIN: invalid dst valid shape.
-
-### 实现检查（A5）
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
+PTO_INST RecordEvent TPARTMIN(TileDataDst& dst, TileDataSrc0& src0, TileDataSrc1& src1, WaitEvents&... events);
+```
+
+## Constraints
+
+- **Implementation checks (A2A3)**:
+  - `dst/src0/src1` element types must be identical, and must be one of: `int32_t`, `int`, `int16_t`, `half`, `float16_t`, `float`, `float32_t`.
+  - All three tiles must be row-major (`isRowMajor`).
+  - Runtime: if `dst.GetValidRow() == 0` or `dst.GetValidCol() == 0`, the op returns early.
+  - Runtime: the implementation requires at least one input's valid region to match `dst`'s valid region (otherwise it asserts).
+- **Implementation checks (A5)**:
+  - `dst/src0/src1` element types must be identical and must be one of: `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `int32_t`, `uint32_t`, `half`, `float`, `bfloat16_t`.
+  - Runtime: if any of `src0/src1/dst` has a zero valid region, the op returns early.
+  - Requires `src0` and `src1` valid region to be `<= dst` valid region in both dimensions; other patterns are not supported (target-defined behavior).
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-template <typename T>
-void example() {
-  using Data = Tile<TileType::Vec, T, 16, 16, BLayout::RowMajor>;
-  Data a, b, out;
-  // TPARTADD(out, a, b);
+
+void example_auto() {
+  using TileT = Tile<TileType::Vec, float, 16, 16>;
+  TileT src0, src1, dst;
+  TPARTMIN(dst, src0, src1);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using TileT = Tile<TileType::Vec, float, 16, 16>;
+  TileT src0, src1, dst;
+  TASSIGN(src0, 0x1000);
+  TASSIGN(src1, 0x2000);
+  TASSIGN(dst,  0x3000);
+  TPARTMIN(dst, src0, src1);
+}
+```

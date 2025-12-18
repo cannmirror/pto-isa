@@ -1,0 +1,99 @@
+# TSTORE_FP
+
+## Introduction
+
+Store an accumulator tile into global memory using a scaling (`fp`) tile for vector quantization parameters.
+
+`TSTORE_FP` is the fp-quantization overload of `TSTORE` (see `docs/isa/TSTORE.md`).
+
+## Math Interpretation
+
+Conceptually stores a quantized/dequantized value derived from `src` and `fp` into the destination tensor:
+
+$$ \mathrm{dst}[\cdots] = \mathrm{Convert}\!\left(\mathrm{src};\ \mathrm{fp}\right) $$
+
+## IR Syntax
+
+Synchronous form:
+
+```mlir
+pto.tile.store.fp %src, %fp, %sv_out[%c0, %c0]
+    : tile<...>, tile<...>, pto.memref<...>
+```
+
+Asynchronous form:
+
+```mlir
+%e = pto.tile.store.fp %src, %fp, %sv_out[%c0, %c0] wait(%e0)
+    : tile<...>, tile<...>, pto.memref<...>, !pto.event<producer = #pto.op<TSTORE_ACC>>
+```
+
+## C++ Intrinsic
+
+Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/constants.hpp`:
+
+```cpp
+template <typename TileData, typename GlobalData, typename FpTileData,
+          AtomicType atomicType = AtomicType::AtomicNone, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE_FP(GlobalData& dst, TileData& src, FpTileData& fp, WaitEvents&... events);
+```
+
+## Constraints
+
+- **Implementation checks (A2A3)**:
+  - The fp store path is implemented via `TSTORE_IMPL(dst, src, fp)` and uses the same accumulator-to-GM legality checks as quantized accumulator stores:
+    - Destination layout must be ND or NZ.
+    - Source dtype must be `int32_t` or `float`.
+    - Static shape constraints: `1 <= TileData::Cols <= 4095`; if ND then `1 <= TileData::Rows <= 8192`; if NZ then `1 <= TileData::Rows <= 65535` and `TileData::Cols % 16 == 0`.
+    - Runtime: `1 <= src.GetValidCol() <= 4095`.
+  - No explicit `static_assert` is enforced on `FpTileData` (the implementation uses `fp` to set FPC state).
+- **Implementation checks (A5)**:
+  - Implemented via `TSTORE_IMPL(dst, src, fp)` and validated by `CheckStaticAcc<..., true>()` for the accumulator path (ND/NZ only, `int32_t/float` source dtype, rows/cols ranges).
+  - No explicit `static_assert` is enforced on `FpTileData` (the implementation uses `fp` to set FPC state).
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_auto(__gm__ int8_t* out) {
+  using AccT = TileAcc<float, 16, 16>;
+  using FpT = Tile<TileType::Scaling, uint64_t, 1, 16, BLayout::RowMajor, 1, DYNAMIC, SLayout::NoneBox>;
+  using GShape = Shape<1, 1, 1, 16, 16>;
+  using GStride = BaseShape2D<int8_t, 16, 16, Layout::ND>;
+  using GT = GlobalTensor<int8_t, GShape, GStride, Layout::ND>;
+
+  GT gout(out);
+  AccT acc;
+  FpT fp(16);
+  TSTORE_FP(gout, acc, fp);
+}
+```
+
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual(__gm__ int8_t* out) {
+  using AccT = TileAcc<float, 16, 16>;
+  using FpT = Tile<TileType::Scaling, uint64_t, 1, 16, BLayout::RowMajor, 1, DYNAMIC, SLayout::NoneBox>;
+  using GShape = Shape<1, 1, 1, 16, 16>;
+  using GStride = BaseShape2D<int8_t, 16, 16, Layout::ND>;
+  using GT = GlobalTensor<int8_t, GShape, GStride, Layout::ND>;
+
+  GT gout(out);
+  AccT acc;
+  FpT fp(16);
+  TASSIGN(acc, 0x1000);
+  TASSIGN(fp,  0x2000);
+  TSTORE_FP(gout, acc, fp);
+}
+```
+

@@ -1,0 +1,90 @@
+# TCMP
+
+## Introduction
+
+Compare two tiles and write a packed predicate mask.
+
+## Math Interpretation
+
+Conceptually, for each element `(i, j)` in the valid region, define a predicate:
+
+$$ p_{i,j} = \left(\mathrm{src0}_{i,j}\ \mathrm{cmpMode}\ \mathrm{src1}_{i,j}\right) $$
+
+The predicate mask is stored in `dst` using an implementation-defined packed layout.
+
+## IR Syntax
+
+Synchronous form:
+
+```mlir
+%dst = pto.tile.cmp %src0, %src1 {cmpMode = #pto.cmp<EQ>}
+    : tile<...> -> tile<...>
+```
+
+Asynchronous form:
+
+```mlir
+%dst, %e = pto.tile.cmp %src0, %src1 {cmpMode = #pto.cmp<EQ>} wait(%e0, %e1)
+    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TCMP>>
+```
+
+## C++ Intrinsic
+
+Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/type.hpp`:
+
+```cpp
+template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
+PTO_INST RecordEvent TCMP(TileDataDst& dst, TileDataSrc& src0, TileDataSrc& src1, CmpMode cmpMode,
+                          WaitEvents&... events);
+```
+
+## Constraints
+
+- **Implementation checks (A2A3)**:
+  - `src0/src1/dst` tile location must be `TileType::Vec`.
+  - Static valid bounds: `TileDataSrc::ValidRow <= TileDataSrc::Rows` and `TileDataSrc::ValidCol <= TileDataSrc::Cols`.
+  - Runtime: `src0.GetValidRow() == dst.GetValidRow()` and `src0.GetValidCol() == dst.GetValidCol()`.
+  - Note: `src1` shape/valid is not validated by explicit runtime assertions in this implementation.
+  - For `TileDataSrc::DType == int32_t`, the implementation uses the `EQ` compare path regardless of `cmpMode`.
+- **Implementation checks (A5)**:
+  - No `TCMP_IMPL` implementation is currently included for this target in `include/pto/common/pto_instr_impl.hpp`.
+- **Mask encoding**:
+  - The mask tile is interpreted as packed predicate bits in a target-defined layout.
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_auto() {
+  using SrcT = Tile<TileType::Vec, float, 16, 16>;
+  using MaskT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  SrcT src0, src1;
+  MaskT mask;
+  TCMP(mask, src0, src1, CmpMode::GT);
+}
+```
+
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using SrcT = Tile<TileType::Vec, float, 16, 16>;
+  using MaskT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  SrcT src0, src1;
+  MaskT mask;
+  TASSIGN(src0, 0x1000);
+  TASSIGN(src1, 0x2000);
+  TASSIGN(mask, 0x3000);
+  TCMP(mask, src0, src1, CmpMode::GT);
+}
+```
+

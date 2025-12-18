@@ -1,108 +1,92 @@
 # TSELS
 
-## 说明
-**模式选择（Tile Select Mode）**
+## Introduction
 
-- 功能：模式选择
+Select one of two source tiles using a scalar `selectMode` (global select).
 
-按 `selectMode` 选择 `src0` 或 `src1`，并将结果写入 `dst`（部分实现仅支持 0/1 作为全局选择）。
+For per-element selection, use `TSEL`.
 
----
+## Math Interpretation
 
-## 汇编语法
-```asm
-TSELS %Src0, %Src1, selectMode , -> %Dst
+For each element `(i, j)` in the valid region:
+
+$$
+\mathrm{dst}_{i,j} =
+\begin{cases}
+\mathrm{src0}_{i,j} & \text{if } \mathrm{selectMode} = 1 \\
+\mathrm{src1}_{i,j} & \text{otherwise}
+\end{cases}
+$$
+
+## IR Syntax
+
+Synchronous form:
+
+```mlir
+%dst = pto.tile.sels %src0, %src1, %selectMode : tile<...>
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
-
-## C++ Intrinsic 接口
-```cpp
-template <typename TileData>
-PTO_INST void TSELS(TileData &dst, TileData &src0, TileData &src1, uint8_t selectMode);
+```mlir
+%dst, %e = pto.tile.sels %src0, %src1, %selectMode wait(%e0, %e1)
+    : tile<...>, !pto.event<producer = #pto.op<TSELS>>
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| dst | 输出 Tile（写入结果） |
-| src0 | 输入 Tile 0 |
-| src1 | 输入 Tile 1 |
-| selectMode | 选择模式（实现定义；部分实现仅支持 0/1） |
+## C++ Intrinsic
 
----
+Declared in `include/pto/common/pto_instr.hpp`:
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
-
----
-
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-- 支持数据类型（编译期检查）：half, float16_t, float, float32_t
-- 编译期约束：
-  - TSELS: Invalid data type
-  - TileType of src and dst tiles must be TileType::Vec.
-  - Number of valid columns must not be greater than number of tile columns.
-  - Number of valid rows must not be greater than number of tile rows.
-- 运行期约束：
-  - Number of columns of src0, src1 and dst must be the same.
-  - Number of rows of src0, src1 and dst must be the same.
-
-### 实现检查（A5）
-- 编译期约束：
-  - TSELS: Invalid data type.
-  - TileType of src and dst tiles must be TileType::Vec.
-  - Number of valid columns must not be greater than number of tile columns.
-  - Number of valid rows must not be greater than number of tile rows.
-- 运行期约束：
-  - Number of columns of src0, src1 and dst must be the same.
-  - Number of rows of src0, src1 and dst must be the same.
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+template <typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TSELS(TileData& dst, TileData& src0, TileData& src1, uint8_t selectMode, WaitEvents&... events);
+```
+
+## Constraints
+
+- **Implementation checks (A2A3)**:
+  - `TileData::DType` must be one of: `half`, `float16_t`, `float`, `float32_t`.
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`).
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+  - Runtime: the implementation expects `src0/src1/dst` to have matching valid rows/cols.
+- **Implementation checks (A5)**:
+  - `sizeof(TileData::DType)` must be `1`, `2`, or `4` bytes.
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`).
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+  - Runtime: the implementation expects `src0/src1/dst` to have matching valid rows/cols.
+  - Padding behavior depends on `TileData::PadVal` (`Null`/`Zero` vs `-INF/+INF` modes).
+- **Valid region**:
+  - The implementation uses `dst.GetValidRow()` / `dst.GetValidCol()` as the selection domain.
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-// 示例：Vec Tile 上的逐元素/一元操作
-template <typename T>
-void example(__gm__ T* out, __gm__ T* in0, __gm__ T* in1) {
-  using TileT = Tile<TileType::Vec, T, 16, 16, BLayout::RowMajor>;
-  using GShape = Shape<1, 1, 1, 16, 16>;
-  using GStride = BaseShape2D<T, 16, 16, Layout::ND>;
-  using GTensor = GlobalTensor<T, GShape, GStride, Layout::ND>;
 
-  GTensor g0(in0);
-  GTensor g1(in1);
-  GTensor gout(out);
-  TileT t0, t1, td;
-
-  TLOAD(t0, g0);
-  TLOAD(t1, g1);
-
-  // 在此处替换为目标指令，例如：
-  // TADD(td, t0, t1);
-
-  TSTORE(gout, td);
+void example_auto() {
+  using TileT = Tile<TileType::Vec, float, 16, 16>;
+  TileT src0, src1, dst;
+  TSELS(dst, src0, src1, /*selectMode=*/1);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using TileT = Tile<TileType::Vec, float, 16, 16>;
+  TileT src0, src1, dst;
+  TASSIGN(src0, 0x1000);
+  TASSIGN(src1, 0x2000);
+  TASSIGN(dst,  0x3000);
+  TSELS(dst, src0, src1, /*selectMode=*/1);
+}
+```

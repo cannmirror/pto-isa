@@ -1,84 +1,93 @@
 # TMATMUL_ACC
 
-## 说明
-**矩阵乘累加（MatMul Acc）**
+## Introduction
 
-- 功能：GEMM 累加
+Matrix multiply with accumulator input (fused accumulate).
 
-$$ \mathrm{C_{out}} = \mathrm{C_{in}} + \mathrm{A} \times \mathrm{B} $$
+## Math Interpretation
 
----
+For matrix shapes `A` (MxK), `B` (KxN), `C0` (MxN), `C1` (MxN):
 
-## 汇编语法
-```asm
-TMATMUL_ACC %Left, %Right, %Acc , -> %Acc
+$$ \mathrm{C1}_{i,j} = \mathrm{C0}_{i,j} + \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cdot \mathrm{B}_{k,j} $$
+
+## IR Syntax
+
+Synchronous form (from `docs/ir/PTO-IR.md`):
+
+```mlir
+%acc1 = pto.tile.matmul.acc %acc0, %a, %b
+    : tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
+      tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
+   -> tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
-
-## C++ Intrinsic 接口
-```cpp
-template <typename TileRes, typename TileLeft, typename TileRight>
-PTO_INST void TMATMUL_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix);
+```mlir
+%acc1, %e = pto.tile.matmul.acc %acc0, %a, %b wait(%e0, %e1)
+    : tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
+      tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
+   -> tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
+      !pto.event<producer = #pto.op<TMATMUL_ACC>>
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| cOutMatrix | 输出矩阵 Tile |
-| cInMatrix | 输入/累加矩阵 Tile |
-| aMatrix | 左矩阵 Tile |
-| bMatrix | 右矩阵 Tile |
+## C++ Intrinsic
 
----
+Declared in `include/pto/common/pto_instr.hpp`:
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
-
----
-
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-
-### 实现检查（A5）
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+template <typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
+PTO_INST RecordEvent TMATMUL_ACC(TileRes& cOutMatrix, TileRes& cInMatrix, TileLeft& aMatrix, TileRight& bMatrix,
+                                 WaitEvents&... events);
+```
+
+## Constraints
+
+- All constraints from `TMATMUL` apply to the `(cOutMatrix, aMatrix, bMatrix)` triple.
+- **Implementation notes (A2A3/A5)**:
+  - `TMATMUL_ACC_IMPL` uses `aMatrix.GetValidRow()`, `aMatrix.GetValidCol()`, and `bMatrix.GetValidCol()` for `m/k/n`.
+  - `cInMatrix` is not validated by explicit assertions in the current implementations (target-defined behavior).
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-template <typename T>
-void example() {
-  // 注意：实际 Matmul TileType/布局需与实现约束匹配
-  using Left = TileLeft<T, 16, 16>;
-  using Right = TileRight<T, 16, 16>;
-  using Acc = TileAcc<float, 16, 16>;  // Acc 常用更高精度，按实际实现选择
 
-  Left left;
-  Right right;
-  Acc acc;
-
-  // 典型流程：TLOAD/布局变换 -> TMATMUL -> TSTORE
-  // TMATMUL(acc, left, right);
+void example_auto() {
+  using A = TileLeft<half, 16, 16>;
+  using B = TileRight<half, 16, 16>;
+  using C = TileAcc<float, 16, 16>;
+  A a;
+  B b;
+  C c0, c1;
+  TMATMUL_ACC(c1, c0, a, b);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using A = TileLeft<half, 16, 16>;
+  using B = TileRight<half, 16, 16>;
+  using C = TileAcc<float, 16, 16>;
+  A a;
+  B b;
+  C c0, c1;
+  TASSIGN(a, 0x1000);
+  TASSIGN(b, 0x2000);
+  TASSIGN(c0, 0x3000);
+  TASSIGN(c1, 0x4000);
+  TMATMUL_ACC(c1, c0, a, b);
+}
+```

@@ -1,91 +1,91 @@
 # TSEL
 
-## 说明
-**掩码选择（Tile Select Mask）**
+## Introduction
 
-- 功能：掩码选择
+Select between two tiles using a mask tile (per-element selection).
 
-对每个元素按 `selMask` 选择：掩码为真取 `src0`，否则取 `src1`。
+## Math Interpretation
 
----
+For each element `(i, j)` in the valid region:
 
-## 汇编语法
-```asm
-TSEL %Mask, %Src0, %Src1 , -> %Dst
+$$
+\mathrm{dst}_{i,j} =
+\begin{cases}
+\mathrm{src0}_{i,j} & \text{if } \mathrm{mask}_{i,j}\ \text{is true} \\
+\mathrm{src1}_{i,j} & \text{otherwise}
+\end{cases}
+$$
+
+## IR Syntax
+
+Synchronous form:
+
+```mlir
+%dst = pto.tile.sel %mask, %src0, %src1 : tile<...>
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
-
-## C++ Intrinsic 接口
-```cpp
-template <typename TileData, typename MaskTile>
-PTO_INST void TSEL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1);
+```mlir
+%dst, %e = pto.tile.sel %mask, %src0, %src1 wait(%e0, %e1)
+    : tile<...>, !pto.event<producer = #pto.op<TSEL>>
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| dst | 输出 Tile（写入结果） |
-| selMask | 选择掩码 Tile（每元素选择 src0 或 src1） |
-| src0 | 输入 Tile 0 |
-| src1 | 输入 Tile 1 |
+## C++ Intrinsic
 
----
+Declared in `include/pto/common/pto_instr.hpp`:
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
-
----
-
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-
-### 实现检查（A5）
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+template <typename TileData, typename MaskTile, typename... WaitEvents>
+PTO_INST RecordEvent TSEL(TileData& dst, MaskTile& selMask, TileData& src0, TileData& src1, WaitEvents&... events);
+```
+
+## Constraints
+
+- **Implementation checks (A2A3)**:
+  - `sizeof(TileData::DType)` must be `2` or `4` bytes.
+  - No explicit assertions are enforced on the mask tile type/shape; mask encoding is target-defined.
+  - The implementation uses `dst.GetValidRow()` / `dst.GetValidCol()` for the selection domain.
+- **Implementation checks (A5)**:
+  - No explicit `static_assert`/`PTO_ASSERT` checks are enforced by `TSEL_IMPL`.
+  - The implementation uses `dst.GetValidRow()` and `TileData::Cols` (static columns) for the selection domain (i.e., it does not consult `dst.GetValidCol()`).
+- **Mask encoding**:
+  - The mask tile is interpreted as packed predicate bits in a target-defined layout.
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-// 示例：Vec Tile 上的逐元素/一元操作
-template <typename T>
-void example(__gm__ T* out, __gm__ T* in0, __gm__ T* in1) {
-  using TileT = Tile<TileType::Vec, T, 16, 16, BLayout::RowMajor>;
-  using GShape = Shape<1, 1, 1, 16, 16>;
-  using GStride = BaseShape2D<T, 16, 16, Layout::ND>;
-  using GTensor = GlobalTensor<T, GShape, GStride, Layout::ND>;
 
-  GTensor g0(in0);
-  GTensor g1(in1);
-  GTensor gout(out);
-  TileT t0, t1, td;
-
-  TLOAD(t0, g0);
-  TLOAD(t1, g1);
-
-  // 在此处替换为目标指令，例如：
-  // TADD(td, t0, t1);
-
-  TSTORE(gout, td);
+void example_auto() {
+  using TileT = Tile<TileType::Vec, float, 16, 16>;
+  using MaskT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  TileT src0, src1, dst;
+  MaskT mask;
+  TSEL(dst, mask, src0, src1);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using TileT = Tile<TileType::Vec, float, 16, 16>;
+  using MaskT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  TileT src0, src1, dst;
+  MaskT mask;
+  TASSIGN(src0, 0x1000);
+  TASSIGN(src1, 0x2000);
+  TASSIGN(dst,  0x3000);
+  TASSIGN(mask, 0x4000);
+  TSEL(dst, mask, src0, src1);
+}
+```

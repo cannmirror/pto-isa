@@ -1,79 +1,107 @@
 # TGATHER
 
-## 说明
-**聚集（Gather）**
+## Introduction
 
-- 功能：Tile 内聚集（索引/模式）
+Gather/select elements using either an index tile or a compile-time mask pattern.
 
-按索引 Tile 或按 `MaskPattern` 从 `src` 聚集元素到 `dst`。
+## Math Interpretation
 
----
+Index-based gather (conceptual):
 
-## 汇编语法
-```asm
-TGATHER %Src0, %Src1 , -> %Dst` 或 `TGATHER.maskPattern %Src , -> %Dst
+$$ \mathrm{dst}_{i,j} = \mathrm{src0}\!\left[\mathrm{indices}_{i,j}\right] $$
+
+Exact index interpretation and bounds behavior are implementation-defined.
+
+Mask-pattern gather is an implementation-defined selection/reduction controlled by `pto::MaskPattern`.
+
+## IR Syntax
+
+Index-based gather:
+
+```mlir
+%dst = pto.tile.gather %src0, %indices : tile<...> -> tile<...>
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Mask-pattern gather:
 
----
-
-## C++ Intrinsic 接口
-```cpp
-template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-PTO_INST void TGATHER(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1);
-
-template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
-PTO_INST void TGATHER(DstTileData &dst, SrcTileData &src);
+```mlir
+%dst = pto.tile.gather %src {maskPattern = #pto.mask_pattern<P0101>}
+    : tile<...> -> tile<...>
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| dst | 输出 Tile（写入结果） |
-| src0 | 输入 Tile 0 |
-| src1 | 输入 Tile 1 |
-| src | 输入 Tile |
+Asynchronous form:
 
----
+```mlir
+%dst, %e = pto.tile.gather %src0, %indices wait(%e0, %e1)
+    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TGATHER>>
+```
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
+## C++ Intrinsic
 
----
+Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/type.hpp`:
 
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-
-### 实现检查（A5）
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+template <typename TileDataD, typename TileDataS0, typename TileDataS1, typename... WaitEvents>
+PTO_INST RecordEvent TGATHER(TileDataD& dst, TileDataS0& src0, TileDataS1& src1, WaitEvents&... events);
+
+template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern, typename... WaitEvents>
+PTO_INST RecordEvent TGATHER(DstTileData& dst, SrcTileData& src, WaitEvents&... events);
+```
+
+## Constraints
+
+- **Index-based gather: implementation checks (A2A3)**:
+  - `sizeof(DstTileData::DType)` must be `2` or `4` bytes.
+  - `sizeof(Src1TileData::DType)` must be `4` bytes.
+  - `DstTileData::DType` must be the same type as `Src0TileData::DType`.
+- **Index-based gather: implementation checks (A5)**:
+  - `sizeof(DstTileData::DType)` must be `1`, `2`, or `4` bytes.
+  - `sizeof(Src1TileData::DType)` must be `2` or `4` bytes.
+  - `DstTileData::DType` must be the same type as `Src0TileData::DType`.
+- **Mask-pattern gather: implementation checks (A2A3)**:
+  - Source element size must be `2` or `4` bytes.
+  - `dst` and `src` must both be `TileType::Vec` and row-major.
+  - `sizeof(dst element) == sizeof(src element)` and `dst.GetValidCol() == DstTileData::Cols` (continuous dst storage).
+- **Mask-pattern gather: implementation checks (A5)**:
+  - `dst` and `src` must both be `TileType::Vec` and row-major.
+  - Supported dtypes are restricted to a target-defined set (checked via `static_assert` in the implementation), and `sizeof(dst element) == sizeof(src element)`.
+- **Bounds / validity**:
+  - Index bounds are not validated by explicit runtime assertions; out-of-range indices are target-defined.
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-template <typename T>
-void example() {
-  using Data = Tile<TileType::Vec, T, 16, 16, BLayout::RowMajor>;
-  Data src, dst;
-  // TGATHER(dst, src0, src1) / TGATHER<..., MaskPattern::P0101>(dst, src)
+
+void example_auto() {
+  using SrcT = Tile<TileType::Vec, float, 16, 16>;
+  using IdxT = Tile<TileType::Vec, int32_t, 16, 16>;
+  using DstT = Tile<TileType::Vec, float, 16, 16>;
+  SrcT src0;
+  IdxT idx;
+  DstT dst;
+  TGATHER(dst, src0, idx);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using SrcT = Tile<TileType::Vec, float, 16, 16>;
+  using DstT = Tile<TileType::Vec, float, 1, 16>;
+  SrcT src;
+  DstT dst;
+  TASSIGN(src, 0x1000);
+  TASSIGN(dst, 0x2000);
+  TGATHER<DstT, SrcT, MaskPattern::P0101>(dst, src);
+}
+```

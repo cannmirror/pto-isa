@@ -1,100 +1,98 @@
 # TTRANS
 
-## 说明
-**转置（Transpose）**
+## Introduction
 
-- 功能：转置
+Transpose with an implementation-defined temporary tile.
+
+## Math Interpretation
+
+For a 2D tile, conceptually:
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src}_{j,i} $$
 
----
+Exact shape/layout constraints depend on the target.
 
-## 汇编语法
-```asm
-TTRANS %Src , -> %Dst
+## IR Syntax
+
+Synchronous form:
+
+```mlir
+%dst = pto.tile.trans %src : tile<...> -> tile<...>
 ```
 
-### 汇编符号说明
-- `%SrcTile/%SrcTile0/%SrcTile1`：输入 Tile（数量与指令匹配）。
-- `%DstTile`：输出 Tile。
-- `%R`：标量立即数/寄存器（仅标量类指令使用）。
-- `cmpMode/rmode/selectMode`：模式修饰或参数（具体含义见 C++ 接口与实现约束）。
+Asynchronous form:
 
----
-
-## C++ Intrinsic 接口
-```cpp
-template <typename TileDataDst, typename TileDataSrc>
-PTO_INST void TTRANS(TileDataDst &dst, TileDataSrc &src);
+```mlir
+%dst, %e = pto.tile.trans %src wait(%e0)
+    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TTRANS>>
 ```
 
-### 参数说明
-| 参数 | 含义 |
-| ------ | ----------------------------------------- |
-| dst | 输出 Tile（写入结果） |
-| src | 输入 Tile |
+Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.
 
----
+## C++ Intrinsic
 
-## 语义说明
-- 仅对有效区域（由 `Tile::GetValidRow()` / `Tile::GetValidCol()` 决定）内的元素生效。
-- 超出有效区域（被 Mask 掉）的元素不参与计算，其结果由实现/先前数据决定。
-- 输入/输出 Tile 的形状、布局、数据类型需要满足实现约束。
+Declared in `include/pto/common/pto_instr.hpp`:
 
----
-
-## 指令约束
-### 通用约束
-1. **形状与有效范围**：`RowValid/ColValid` 不得超过静态 `Rows/Cols`。
-2. **对齐与布局**：Tile 模板定义中已包含对齐/布局静态检查（例如 32B 对齐与 Box 布局整除约束）。
-3. **实现差异**：不同 SOC/实现（A2A3/A5/CPU_SIM）可能有不同的数据类型与 TileType 限制。
-
-### 实现检查（A2A3）
-- 编译期约束：
-  - TTRANS: Inconsistent data types.
-  - TTRANS: Inconsistent source Layout type.
-  - TTRANS: Inconsistent destination Layout type.
-
-### 实现检查（A5）
-- 编译期约束：
-  - TTRANS: Inconsistent source and destination data types.
-  - TTRANS: Inconsistent Input Shape.
-  - TTRANS: Inconsistent Output Shape.
-  - TTRANS: Inconsistent Input Shape.
-  - TTRANS: Inconsistent Output Shape.
-  - TTRANS: Invalid data type.
-
----
-
-## 编程示例
-### PTO Auto 写法
 ```cpp
-#include "pto/common/pto_instr.hpp"
-#include "pto/common/pto_tile.hpp"
+template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp, typename... WaitEvents>
+PTO_INST RecordEvent TTRANS(TileDataDst& dst, TileDataSrc& src, TileDataTmp& tmp, WaitEvents&... events);
+```
+
+## Constraints
+
+- **Implementation checks (A2A3)**:
+  - `sizeof(TileDataSrc::DType) == sizeof(TileDataDst::DType)`.
+  - Source layout must be row-major (`TileDataSrc::isRowMajor`).
+  - Element size must be `1`, `2`, or `4` bytes.
+  - The transpose size is taken from `src.GetValidRow()` / `src.GetValidCol()`.
+- **Implementation checks (A5)**:
+  - `sizeof(TileDataSrc::DType) == sizeof(TileDataDst::DType)`.
+  - 32-byte alignment constraints are enforced on the major dimension of both input and output (row-major checks `Cols * sizeof(T) % 32 == 0`, col-major checks `Rows * sizeof(T) % 32 == 0`).
+  - Supported element types are restricted per element width:
+    - 4 bytes: `uint32_t`, `int32_t`, `float`
+    - 2 bytes: `uint16_t`, `int16_t`, `half`, `bfloat16_t`
+    - 1 byte: `uint8_t`, `int8_t`
+  - The implementation operates over the static tile shape (`TileDataSrc::Rows/Cols`) and does not consult `GetValidRow/GetValidCol`.
+- **Temporary tile**:
+  - The C++ API requires `tmp`, but some implementations may not use it.
+
+## Examples
+
+### Auto
+
+```cpp
+#include <pto/pto-inst.hpp>
 
 using namespace pto;
-// 示例：Vec Tile 上的逐元素/一元操作
-template <typename T>
-void example(__gm__ T* out, __gm__ T* in0, __gm__ T* in1) {
-  using TileT = Tile<TileType::Vec, T, 16, 16, BLayout::RowMajor>;
-  using GShape = Shape<1, 1, 1, 16, 16>;
-  using GStride = BaseShape2D<T, 16, 16, Layout::ND>;
-  using GTensor = GlobalTensor<T, GShape, GStride, Layout::ND>;
 
-  GTensor g0(in0);
-  GTensor g1(in1);
-  GTensor gout(out);
-  TileT t0, t1, td;
-
-  TLOAD(t0, g0);
-  TLOAD(t1, g1);
-
-  // 在此处替换为目标指令，例如：
-  // TADD(td, t0, t1);
-
-  TSTORE(gout, td);
+void example_auto() {
+  using SrcT = Tile<TileType::Vec, float, 16, 16>;
+  using DstT = Tile<TileType::Vec, float, 16, 16>;
+  using TmpT = Tile<TileType::Vec, float, 16, 16>;
+  SrcT src;
+  DstT dst;
+  TmpT tmp;
+  TTRANS(dst, src, tmp);
 }
 ```
 
-### PTO Manual 写法（可选）
-- 若启用手动模式并需要显式分配片上地址，可先使用 `TASSIGN` 绑定 Tile，再按与 Auto 相同的接口调用计算/访存指令。
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using SrcT = Tile<TileType::Vec, float, 16, 16>;
+  using DstT = Tile<TileType::Vec, float, 16, 16>;
+  using TmpT = Tile<TileType::Vec, float, 16, 16>;
+  SrcT src;
+  DstT dst;
+  TmpT tmp;
+  TASSIGN(src, 0x1000);
+  TASSIGN(dst, 0x2000);
+  TASSIGN(tmp, 0x3000);
+  TTRANS(dst, src, tmp);
+}
+```
