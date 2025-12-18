@@ -68,6 +68,10 @@ txors
 tlrelu
 taddsc
 tsubsc
+tadds
+tdivs
+tmuls
+tmins
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})
