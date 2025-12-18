@@ -17,14 +17,26 @@ namespace pto
 {
   template <typename T>
   struct TRowMaxOp : TRowReduceOp<T, TRowMaxOp<T>> {
-    PTO_INTERNAL static void BinInstrImpl(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t rptTimes,
-      uint16_t dstRptStride, uint16_t src0RptStride, uint16_t src1RptStride) {
-      vmax(dst, src0, src1, rptTimes, 1, 1, 1, dstRptStride, src0RptStride, src1RptStride);
+    PTO_INTERNAL static void
+    BinInstrImpl(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1,
+                 uint8_t rptTimes, uint16_t dstRptStride,
+                 uint16_t src0RptStride, uint16_t src1RptStride,
+                 uint8_t dstBlockStride = 1, uint8_t src0BlockStride = 1,
+                 uint8_t src1BlockStride = 1) {
+      vmax(dst, src0, src1, rptTimes, dstBlockStride, src0BlockStride,
+           src1BlockStride, dstRptStride, src0RptStride, src1RptStride);
     }
 
     PTO_INTERNAL static void ReduceInstrImpl(__ubuf__ T *dst, __ubuf__ T *src, uint8_t rptTimes,
       uint16_t dstRptStride, uint16_t srcBlkStride, uint16_t srcRptStride) {
       vcmax(dst, src, rptTimes, dstRptStride, srcBlkStride, srcRptStride, ONLY_VALUE);
+    }
+
+    PTO_INTERNAL static void
+    GroupReduceInstrImpl(__ubuf__ T *dst, __ubuf__ T *src, uint8_t rptTimes,
+                         uint16_t dstRptStride, uint16_t src0Stride,
+                         uint16_t src1Stride) {
+      vcgmax(dst, src, rptTimes, dstRptStride, src0Stride, src1Stride);
     }
   };
 

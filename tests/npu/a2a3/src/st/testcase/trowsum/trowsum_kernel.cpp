@@ -15,34 +15,55 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace pto;
 
-template <typename T, int row, int vaildRow, int srcCol, int srcVaildCol, int dstCol>
+template <typename T, int row, int validRow, int srcCol, int srcValidCol, int dstCol, bool isRowMajor = true>
 PTO_INTERNAL void runTRowSum(__gm__ T __out__ *out, __gm__ T __in__ *src) {
-    using DynDim2Shape  = Shape<1, 1, 1, vaildRow, -1>;
+    using DynDim2Shape  = Shape<1, 1, 1, validRow, -1>;
     using DynDim2Stride = pto::Stride<1, 1, row, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
-    GlobalData srcGlobal(src, DynDim2Shape(srcVaildCol), DynDim2Stride(srcCol));
+    GlobalData srcGlobal(src, DynDim2Shape(srcValidCol), DynDim2Stride(srcCol));
     GlobalData dstGlobal(out, DynDim2Shape(dstCol), DynDim2Stride(dstCol));
 
-    constexpr int dstTileMinCol = BLOCK_BYTE_SIZE / sizeof(T);
-    using srcTileData = Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
-    using dstTileData = Tile<TileType::Vec, T, row, dstTileMinCol, BLayout::RowMajor, -1, -1>;
-    srcTileData srcTile(vaildRow, srcVaildCol);
-    srcTileData tmpTile(vaildRow, srcVaildCol);
-    dstTileData dstTile(vaildRow, dstCol);
-    TASSIGN(srcTile, 0x0);
-    TASSIGN(tmpTile, row * srcCol * sizeof(T));
-    TASSIGN(dstTile, 2 * row * srcCol * sizeof(T));
+    if constexpr (isRowMajor) {
+        constexpr int dstTileMinCol = BLOCK_BYTE_SIZE / sizeof(T);
+        using srcTileData = Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, -1, -1>;
+        using dstTileData = Tile<TileType::Vec, T, row, dstTileMinCol, BLayout::RowMajor, -1, -1>;
+        srcTileData srcTile(validRow, srcValidCol);
+        srcTileData tmpTile(validRow, srcValidCol);
+        dstTileData dstTile(validRow, dstCol);
+        TASSIGN(srcTile, 0x0);
+        TASSIGN(tmpTile, row * srcCol * sizeof(T));
+        TASSIGN(dstTile, 2 * row * srcCol * sizeof(T));
 
-    // 搬运数据
-    TLOAD(srcTile, srcGlobal);
+        // 搬运数据
+        TLOAD(srcTile, srcGlobal);
+        set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+        wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+        TROWSUM(dstTile, srcTile, tmpTile);
+        set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+        wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+        TSTORE(dstGlobal, dstTile);
+    } else {
+        using srcTileData = Tile<TileType::Vec, T, row, srcCol, BLayout::RowMajor, row, srcCol>;
+        using dstTileDataDN = Tile<TileType::Vec, T, row, 1, BLayout::ColMajor, row, 1>;
+        srcTileData srcTile;
+        srcTileData tmpTile;
+        dstTileDataDN dstTile;
+        TASSIGN(srcTile, 0x0);
+        TASSIGN(tmpTile, row * srcCol * sizeof(T));
+        TASSIGN(dstTile, 2 * row * srcCol * sizeof(T));
 
-    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    TROWSUM(dstTile, srcTile, tmpTile);
-    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-    TSTORE(dstGlobal, dstTile);
-    out = dstGlobal.data();
+        // 搬运数据
+        TLOAD(srcTile, srcGlobal);
+        set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+        wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+        TROWSUM(dstTile, srcTile, tmpTile);
+        set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+        wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+        using dstTileDataND = Tile<TileType::Vec, T, 1, row, BLayout::RowMajor, 1, row>;
+        dstTileDataND dstTileND;
+        TRESHAPE(dstTileND, dstTile);
+        TSTORE(dstGlobal, dstTileND);
+    }
 }
 
 extern "C" __global__ AICORE void launchTROWSUMCase1(__gm__ float *out, __gm__ float *src)
@@ -69,6 +90,23 @@ extern "C" __global__ AICORE void launchTROWSUMCase6(__gm__ half *out, __gm__ ha
 {
     runTRowSum<half, 256, 256, 16, 15, 1>(out, src);
 }
+extern "C" __global__ AICORE void launchTROWSUMCase7(__gm__ float *out, __gm__ float *src)
+{
+    runTRowSum<float, 64, 64, 128, 128, 1, false>(out, src);
+}
+extern "C" __global__ AICORE void launchTROWSUMCase8(__gm__ float *out, __gm__ float *src)
+{
+    runTRowSum<float, 32, 32, 256, 256, 1, false>(out, src);
+}
+extern "C" __global__ AICORE void launchTROWSUMCase9(__gm__ float *out, __gm__ float *src)
+{
+    runTRowSum<float, 16, 16, 512, 512, 1, false>(out, src);
+}
+extern "C" __global__ AICORE void launchTROWSUMCase10(__gm__ float *out, __gm__ float *src)
+{
+    runTRowSum<float, 8, 8, 1024, 1024, 1, false>(out, src);
+}
+
 
 template <uint32_t caseId>
 void launchTROWSUMTestCase(void *out, void *src, aclrtStream stream) {
@@ -97,6 +135,22 @@ void launchTROWSUMTestCase(void *out, void *src, aclrtStream stream) {
             launchTROWSUMCase6<<<1, nullptr, stream>>>((half *)out, (half *)src);
             break;
         }
+        case 7: {
+            launchTROWSUMCase7<<<1, nullptr, stream>>>((float *)out, (float *)src);
+            break;
+        }
+        case 8: {
+            launchTROWSUMCase8<<<1, nullptr, stream>>>((float *)out, (float *)src);
+            break;
+        }
+        case 9: {
+            launchTROWSUMCase9<<<1, nullptr, stream>>>((float *)out, (float *)src);
+            break;
+        }
+        case 10: {
+            launchTROWSUMCase10<<<1, nullptr, stream>>>((float *)out, (float *)src);
+            break;
+        }
         default: {
         }
     }
@@ -108,3 +162,7 @@ template void launchTROWSUMTestCase<3>(void *out, void *src, aclrtStream stream)
 template void launchTROWSUMTestCase<4>(void *out, void *src, aclrtStream stream);
 template void launchTROWSUMTestCase<5>(void *out, void *src, aclrtStream stream);
 template void launchTROWSUMTestCase<6>(void *out, void *src, aclrtStream stream);
+template void launchTROWSUMTestCase<7>(void *out, void *src, aclrtStream stream);
+template void launchTROWSUMTestCase<8>(void *out, void *src, aclrtStream stream);
+template void launchTROWSUMTestCase<9>(void *out, void *src, aclrtStream stream);
+template void launchTROWSUMTestCase<10>(void *out, void *src, aclrtStream stream);

@@ -49,7 +49,11 @@ if __name__ == "__main__":
         TRowMinParams("TROWMINTest.case11", np.float32, 238, 238, 40, 40),
         TRowMinParams("TROWMINTest.case12", np.float32, 238, 238, 40, 16),
         TRowMinParams("TROWMINTest.case13", np.float32, 238, 121, 40, 40),
-        TRowMinParams("TROWMINTest.case14", np.float32, 238, 121, 40, 16)
+        TRowMinParams("TROWMINTest.case14", np.float32, 238, 121, 40, 16),
+        TRowMinParams("TROWMINTest.case15", np.float32, 64, 64, 128, 128),
+        TRowMinParams("TROWMINTest.case16", np.float32, 32, 32, 256, 256),
+        TRowMinParams("TROWMINTest.case17", np.float32, 16, 16, 512, 512),
+        TRowMinParams("TROWMINTest.case18", np.float32, 8, 8, 1024, 1024)
     ]
 
     for _, case in enumerate(case_params_list):

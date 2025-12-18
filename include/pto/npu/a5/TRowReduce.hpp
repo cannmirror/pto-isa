@@ -65,6 +65,16 @@ PTO_INTERNAL void TRowReduceCheck() {
                 "Only support half and float.");
   static_assert(is_same_v<T, typename TileDataOut::DType>,
                 "Output type must be same as input type.");
+  static_assert(TileDataOut::Loc == pto::TileType::Vec &&
+                    TileDataIn::Loc == pto::TileType::Vec,
+                "This instruction only support Vec Tile.");
+  static_assert(TileDataIn::isRowMajor && !TileDataIn::isBoxedLayout,
+                "This instruction only support ND layout for input tile.");
+  static_assert(
+      (!TileDataOut::isBoxedLayout &&
+       (TileDataOut::isRowMajor ||
+        (!TileDataOut::isRowMajor && TileDataOut::Cols == 1))),
+      "This instruction only support ND or DN with Col = 1 for output tile.");
   return;
 }
 
