@@ -171,6 +171,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmax -g TPARTMAXTest.case_fp32_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmin -g TPARTMINTest.case_fp32_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand -g TROWEXPANDTest.case5_float_16_8_16_127
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpanddiv -g TRowExpandDivTest.case_fp32_40_64_40_1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowmax -g TROWMAXTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowmin -g TROWMINTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowsum -g TROWSUMTest.test1
@@ -216,6 +217,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     # python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmax
     # python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmin
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpanddiv
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowmax
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowmin
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowsum

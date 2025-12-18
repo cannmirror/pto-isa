@@ -89,20 +89,20 @@ void test_trowexpanddiv() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TRowExpandDivTest, case_fp32_12_64_12_1)
+TEST_F(TRowExpandDivTest, case_fp32_40_64_40_1)
 {
-    test_trowexpanddiv<float, 12, 64, 12, 1>();
+    test_trowexpanddiv<float, 40, 64, 40, 1>();
 }
-TEST_F(TRowExpandDivTest, case_fp32_3_256_3_1)
+TEST_F(TRowExpandDivTest, case_fp32_16_256_16_1)
 {
-    test_trowexpanddiv<float, 3, 256, 3, 1>();
+    test_trowexpanddiv<float, 16, 256, 16, 1>();
 }
 TEST_F(TRowExpandDivTest, case_fp16_16_32_16_1)
 {
     test_trowexpanddiv<aclFloat16, 16, 32, 16, 1>();
 }
-TEST_F(TRowExpandDivTest, case_fp16_5_512_5_1)
+TEST_F(TRowExpandDivTest, case_fp16_32_512_32_1)
 {
-    test_trowexpanddiv<aclFloat16, 5, 512, 5, 1>();
+    test_trowexpanddiv<aclFloat16, 32, 512, 32, 1>();
 }
 }

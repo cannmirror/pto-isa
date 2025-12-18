@@ -62,10 +62,10 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TrowexpandParams(np.float32, 12, 64, 12, 64, 12, 1),
-        TrowexpandParams(np.float32, 3, 256, 3, 256, 3, 1),
+        TrowexpandParams(np.float32, 40, 64, 40, 64, 40, 1),
+        TrowexpandParams(np.float32, 16, 256, 16, 256, 16, 1),
         TrowexpandParams(np.float16, 16, 32, 16, 32, 16, 1),
-        TrowexpandParams(np.float16, 5, 512, 5, 512, 5, 1)
+        TrowexpandParams(np.float16, 32, 512, 32, 512, 32, 1)
     ]
 
     for _, param in enumerate(case_params_list):

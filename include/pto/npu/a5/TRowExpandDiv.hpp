@@ -31,34 +31,37 @@ namespace pto {
         }
     };
 
-    template <typename TileData, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __tf__ AICORE void TRowExpandDiv(typename TileData::TileDType __out__ dst, 
-                                typename TileData::TileDType __in__ src0,
-                                typename TileDataSrc::TileDType __in__ src1,
+    template <typename TileDataDst, typename TileDataSrc1, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
+    __tf__ AICORE void TRowExpandDiv(typename TileDataDst::TileDType __out__ dst, 
+                                typename TileDataDst::TileDType __in__ src0,
+                                typename TileDataSrc1::TileDType __in__ src1,
                                 unsigned validRow,
                                 unsigned validCol) {
-        using T = typename TileData::DType;
+        using T = typename TileDataDst::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
         __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
 
-        RowExpandBinaryInstr<RowExpandDivOp<T>, TileData, TileDataSrc, elementsPerRepeat, blockSizeElem, rowStride>(
+        RowExpandBinaryInstr<RowExpandDivOp<T>, TileDataDst, TileDataSrc1, elementsPerRepeat, blockSizeElem, rowStride>(
                                 dstPtr, src0Ptr, src1Ptr, validRow, validCol);
     }
 
-    template <typename TileData, typename TileDataSrc>
-    PTO_INTERNAL void TROWEXPANDDIV_IMPL(TileData &dst, TileData &src0, TileDataSrc &src1) {
-        static_assert(std::is_same<typename TileData::DType, float>::value ||
-                      std::is_same<typename TileData::DType, half>::value,
+    template <typename TileDataDst, typename TileDataSrc1>
+    PTO_INTERNAL void TROWEXPANDDIV_IMPL(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1) {
+        static_assert(std::is_same_v<typename TileDataDst::DType, typename TileDataSrc1::DType>,
+                  "TROWEXPANDDIV: src and dst data type is different!");
+        static_assert(std::is_same<typename TileDataDst::DType, float>::value ||
+                      std::is_same<typename TileDataDst::DType, half>::value,
                       "TROWEXPANDDIV: Invalid data type.");
-        static_assert(TileData::isRowMajor, "TROWEXPANDDIV: not supported Layout type");
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 
-        constexpr unsigned rowStride = TileData::RowStride;
+        static_assert(TileDataDst::isRowMajor && !TileDataSrc1::isRowMajor && TileDataSrc1::Cols == 1,
+                  "TROWEXPANDDIV: Invalid tile shape.");
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType); 
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType); 
+        constexpr unsigned rowStride = TileDataDst::RowStride;
         unsigned validRow = dst.GetValidRow();
         unsigned validCol = dst.GetValidCol();
 
-        TRowExpandDiv<TileData, TileDataSrc, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1.data(), validRow, validCol);
+        TRowExpandDiv<TileDataDst, TileDataSrc1, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1.data(), validRow, validCol);
     }
 }
 #endif

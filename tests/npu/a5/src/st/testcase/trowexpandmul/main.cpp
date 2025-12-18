@@ -89,20 +89,20 @@ void test_trowexpandmul() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TRowExpandMulTest, case_fp32_15_32_15_1)
+TEST_F(TRowExpandMulTest, case_fp32_16_32_16_1)
 {
-    test_trowexpandmul<float, 15, 32, 15, 1>();
+    test_trowexpandmul<float, 16, 32, 16, 1>();
 }
-TEST_F(TRowExpandMulTest, case_fp32_7_128_7_1)
+TEST_F(TRowExpandMulTest, case_fp32_56_128_56_1)
 {
-    test_trowexpandmul<float, 7, 128, 7, 1>();
+    test_trowexpandmul<float, 56, 128, 56, 1>();
 }
-TEST_F(TRowExpandMulTest, case_fp16_20_64_20_1)
+TEST_F(TRowExpandMulTest, case_fp16_48_64_48_1)
 {
-    test_trowexpandmul<aclFloat16, 20, 64, 20, 1>();
+    test_trowexpandmul<aclFloat16, 48, 64, 48, 1>();
 }
-TEST_F(TRowExpandMulTest, case_fp16_6_128_6_1)
+TEST_F(TRowExpandMulTest, case_fp16_16_128_16_1)
 {
-    test_trowexpandmul<aclFloat16, 6, 128, 6, 1>();
+    test_trowexpandmul<aclFloat16, 16, 128, 16, 1>();
 }
 }

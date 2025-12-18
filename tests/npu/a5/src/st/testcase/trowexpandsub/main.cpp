@@ -93,16 +93,16 @@ TEST_F(TRowExpandSubTest, case_fp32_8_128_8_1)
 {
     test_trowexpandsub<float, 8, 128, 8, 1>();
 }
-TEST_F(TRowExpandSubTest, case_fp32_18_32_18_1)
+TEST_F(TRowExpandSubTest, case_fp32_24_32_24_1)
 {
-    test_trowexpandsub<float, 18, 32, 18, 1>();
+    test_trowexpandsub<float, 24, 32, 24, 1>();
 }
-TEST_F(TRowExpandSubTest, case_fp16_10_256_10_1)
+TEST_F(TRowExpandSubTest, case_fp16_16_256_16_1)
 {
-    test_trowexpandsub<aclFloat16, 10, 256, 10, 1>();
+    test_trowexpandsub<aclFloat16, 16, 256, 16, 1>();
 }
-TEST_F(TRowExpandSubTest, case_fp16_12_64_12_1)
+TEST_F(TRowExpandSubTest, case_fp16_48_64_48_1)
 {
-    test_trowexpandsub<aclFloat16, 12, 64, 12, 1>();
+    test_trowexpandsub<aclFloat16, 48, 64, 48, 1>();
 }
 }

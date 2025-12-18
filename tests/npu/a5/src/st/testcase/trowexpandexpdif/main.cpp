@@ -89,9 +89,9 @@ void test_trowexpandexpdif() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TRowExpandExpdifTest, case_fp32_12_64_12_1)
+TEST_F(TRowExpandExpdifTest, case_fp32_32_64_32_1)
 {
-    test_trowexpandexpdif<float, 12, 64, 12, 1>();
+    test_trowexpandexpdif<float, 32, 64, 32, 1>();
 }
 TEST_F(TRowExpandExpdifTest, case_fp32_16_32_16_1)
 {
@@ -101,8 +101,8 @@ TEST_F(TRowExpandExpdifTest, case_fp16_16_32_16_1)
 {
     test_trowexpandexpdif<aclFloat16, 16, 32, 16, 1>();
 }
-TEST_F(TRowExpandExpdifTest, case_fp16_14_64_14_1)
+TEST_F(TRowExpandExpdifTest, case_fp16_48_64_48_1)
 {
-    test_trowexpandexpdif<aclFloat16, 14, 64, 14, 1>();
+    test_trowexpandexpdif<aclFloat16, 48, 64, 48, 1>();
 }
 }

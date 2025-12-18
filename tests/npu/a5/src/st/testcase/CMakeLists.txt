@@ -113,6 +113,9 @@ set(ALL_TESTCASES
     tcolmax
     tsort32
     trowexpand
+    trowexpanddiv
+    trowexpandmul
+    trowexpandsub
     tgather
     tcvt
     tsub
