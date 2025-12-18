@@ -115,7 +115,7 @@
 - 反向同步：MTE1->MTE2同步，mmad->MTE1同步  
 
 流水示意图如下：  
-![gemm流水示意图](../../../docs/figures/gemm_pipeline.png)
+![gemm流水示意图](../../docs/figures/gemm_pipeline.png)
 
 ## 编译运行
 
