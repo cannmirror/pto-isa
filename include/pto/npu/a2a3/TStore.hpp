@@ -368,13 +368,12 @@ PTO_INTERNAL void TStoreAccNz2nd(typename GlobalData::DType *dstAddr, __cc__ typ
     constexpr uint8_t nz2ndEn = 1;
 
     uint64_t xmReg = 0;
-    xmReg =
-        ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
-        (static_cast<uint64_t>(mSize & 0xffff) << 16) |   // Xm[31:16] the m-direction size of the matrix
-        (static_cast<uint64_t>(dstD & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
+    xmReg = ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
+            (static_cast<uint64_t>(mSize & 0xffff) << 16) |   // Xm[31:16] the m-direction size of the matrix
+            (static_cast<uint64_t>(dstD & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
     uint64_t xtReg = 0;
-    xtReg = srcStride | // Xt[15:0] the source stride between the start addr
-            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) |      // Xt[33:32] unit flag control bit
+    xtReg = srcStride |                                         // Xt[15:0] the source stride between the start addr
+            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | // Xt[33:32] unit flag control bit
             (static_cast<uint64_t>(quantizationMode & 0x1f) << 34) | // Xt[38:34] pre-stage quantization mode
             (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);            // Xt[43] nz2nd control bit
     uint64_t ndParaSPR = 0;
@@ -416,13 +415,13 @@ PTO_INTERNAL void TStoreAccNz2nz(typename GlobalData::DType *dstAddr, __cc__ typ
     }
 
     uint64_t xmReg = 0;
-    xmReg = (static_cast<uint64_t>(nSize & 0xfff) << 4) |   // Xm[15:4] nSize
-            (static_cast<uint64_t>(mSize & 0xffff) << 16) | // Xm[31:16] mSize
-            (static_cast<uint64_t>(dstStride & 0xffffffff)
-                << 32); // Xm[63:32] destination stride between the start addr
+    xmReg =
+        (static_cast<uint64_t>(nSize & 0xfff) << 4) |          // Xm[15:4] nSize
+        (static_cast<uint64_t>(mSize & 0xffff) << 16) |        // Xm[31:16] mSize
+        (static_cast<uint64_t>(dstStride & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
     uint64_t xtReg = 0;
-    xtReg = srcStride | // Xt[15:0] the source stride between the start addr
-            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) |      // Xt[33:32] unit flag control bit
+    xtReg = srcStride |                                         // Xt[15:0] the source stride between the start addr
+            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | // Xt[33:32] unit flag control bit
             (static_cast<uint64_t>(quantizationMode & 0x1f) << 34) | // Xt[38:34] pre-stage quantization mode
             (static_cast<uint64_t>(channelSplitEn & 0x1) << 42);     // Xt[42] channel split control bit
 
@@ -455,6 +454,7 @@ __tf__ AICORE void TStoreAccFp(typename GlobalData::DType __out__ *dst, typename
     __fbuf__ typename FpTileData::DType *fpDstAddr = (__fbuf__ typename FpTileData::DType *)__cce_get_tile_ptr(fp);
     uint64_t deqTensorAddr = ((uint64_t)fpDstAddr >> static_cast<uint64_t>(7)) << 8;
     set_fpc(deqTensorAddr);
+    pipe_barrier(PIPE_FIX);
     if constexpr (GlobalData::layout == pto::Layout::ND) {
         TStoreAccNz2nd<GlobalData, TileData, quantizationMode>(dst, src, gShape0, gShape1, gShape2, gShape3, gShape4,
             gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
