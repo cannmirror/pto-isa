@@ -172,7 +172,7 @@ PTO_INTERNAL void CheckOverMemory()
     constexpr int32_t src3Col = (listNum == LIST_NUM_4 ? Src3TileData::Cols : EMPTY_LIST_SIZE);
     constexpr size_t elemSize = sizeof(typename DstTileData::DType);
     constexpr int32_t totalSrcCols = Src0TileData::Cols + src1Col + src2Col + src3Col;
-    constexpr size_t tmpSize = (listNum == LIST_NUM_1) ? EMPTY_LIST_SIZE : TmpTileData::Cols * elemSize;
+    constexpr size_t tmpSize = (listNum == LIST_NUM_1) ? DstTileData::Cols * elemSize : TmpTileData::Cols * elemSize;
     constexpr size_t srcSize = totalSrcCols * elemSize;
     static_assert(srcSize + tmpSize <= UB_SIZE, "ERROR: Total memory usage exceeds UB limit!");
 }
@@ -261,7 +261,6 @@ PTO_INTERNAL void TMRGSORT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t blo
 {
     CheckStatic<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData>();
     CheckOverMemory<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData, LIST_NUM_1>();
-    uint32_t dstCol = dst.GetValidCol();
     uint32_t srcCol = src.GetValidCol();
     // 一个strcut是8字节
     uint32_t numStrcutures = blockLen * sizeof(typename SrcTileData::DType) >> STRUCT_SIZE_SHIFT;

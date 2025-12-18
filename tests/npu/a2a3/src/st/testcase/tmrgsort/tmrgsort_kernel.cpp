@@ -11,10 +11,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/pto-inst.hpp>
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
-#include <pto/npu/a2a3/TMrgSort.hpp>
-#include <pto/npu/a2a3/TLoad.hpp>
-#include <pto/npu/a2a3/TStore.hpp>
-#include <pto/npu/a2a3/TAssign.hpp>
 #include <iostream>
 
 using namespace std;
@@ -235,17 +231,15 @@ __global__ AICORE void RunTMrgsortTopk(__gm__ T *out, __gm__ T *src)
 
     // 每4个合并，计算整块
     TLOAD(srcTile, srcGlobal);
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     for (; blockLen * 4 <= kTCols_; blockLen *= 4) {
-        set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-        wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
         TMRGSORT<TmpTileData, TileData>(tmpTile, srcTile, blockLen);
         pipe_barrier(PIPE_V);
         uint16_t cols = kTCols_ / (blockLen * 4) * (blockLen * 4);
         copy_ubuf_to_ubuf(
             srcTile.data(), tmpTile.data(), 0, 1, (cols * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE, 0, 0);
         pipe_barrier(PIPE_V);
-        set_flag(PIPE_V, PIPE_MTE2, EVENT_ID0);
-        wait_flag(PIPE_V, PIPE_MTE2, EVENT_ID0);
     }
 
     // 合并尾块
