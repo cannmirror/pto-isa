@@ -420,7 +420,7 @@ namespace pto {
     template<typename DType>
     struct ElementOpCal<DType, ElementOp::OP_LRELU> {
         static void apply(DType &dst, DType &src, DType &scalar, size_t) {
-            dst = (src > 0) ? src : (src * scalar);
+            dst = (src > static_cast<DType>(0)) ? src : (src * scalar);
         }
     };
 

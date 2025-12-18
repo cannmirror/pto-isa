@@ -623,6 +623,22 @@ PTO_INST RecordEvent TLRELU(TileData &dst, TileData &src0, typename TileData::DT
   return {};
 }
 
+template <typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TADDSC(TileData &dst, TileData &src0, typename TileData::DType scalar, TileData &src1,
+                            WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TADDSC, dst, src0, scalar, src1);
+  return {};
+}
+
+template <typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TSUBSC(TileData &dst, TileData &src0, typename TileData::DType scalar, TileData &src1,
+                            WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TSUBSC, dst, src0, scalar, src1);
+  return {};
+}
+
 template <typename TileDataOut, typename TileDataIn, typename... WaitEvents>
 PTO_INST RecordEvent TCOLMIN(TileDataOut &dst, TileDataIn &src, WaitEvents&... events) {
   TSYNC(events...);
