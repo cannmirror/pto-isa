@@ -35,6 +35,7 @@ tstore
 textract
 texpands
 tmov
+tmrgsort
 trowsum
 tadd
 texp
