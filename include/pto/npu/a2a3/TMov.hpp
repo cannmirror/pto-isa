@@ -101,7 +101,7 @@ __tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typen
     constexpr uint16_t srcStride = SrcTileData::Rows;
 
     copy_matrix_cc_to_cbuf(
-        dstAddr, srcAddr, 0, nSize, mSize, dstStride_dst_D, srcStride, 0, QuantPre, 0, /*relu*/ false, false);
+        dstAddr, srcAddr, 0, nSize, mSize, dstStride_dst_D, srcStride, 0, QuantPre, reluMode, false, false);
 }
 template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isCastQuant>
 PTO_INTERNAL void CheckTMovCcToCb()
@@ -175,7 +175,7 @@ template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
 PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     static_assert((DstTileData::Loc == TileType::Mat && SrcTileData::Loc == TileType::Acc), "TMov: Invalid TileType.");
-    constexpr QuantMode_t quantPre = GetScalarPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
     TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data());
 }
 
@@ -198,6 +198,7 @@ __tf__ PTO_INTERNAL void SetFPC(typename FpTileData::TileDType __in__ fp)
                              << 8;  // fpc[15:8] means Quant_PRE_ADDR, uint of 128(2^7)bytes
     set_fpc(deqTensorAddr);
 }
+
 template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
 PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
 {

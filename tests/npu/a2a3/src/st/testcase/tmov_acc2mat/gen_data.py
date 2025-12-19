@@ -140,13 +140,9 @@ def gen_golden_data(case_name, param):
     c_type = param.ctype
     m, k, n = param.m, param.k, param.n
     is_v_quant, is_s_quant, dst_type, scalar = param.is_v_quant, param.is_s_quant, param.dst_type, param.scalar
-
-    if dst_type == np.int8:
-        x1_gm = np.random.randint(-1, 2, [m, k]).astype(a_type)
-        x2_gm = np.random.randint(-1, 2, [k, n]).astype(a_type)
-    else:
-        x1_gm = np.random.randint(1, 3, [m, k]).astype(a_type)
-        x2_gm = np.random.randint(1, 3, [k, n]).astype(b_type)
+    is_relu = param.is_relu
+    x1_gm = np.random.randint(-1, 3, [m, k]).astype(a_type)
+    x2_gm = np.random.randint(-1, 3, [k, n]).astype(a_type)
 
     x1_gm.tofile("./x1_gm.bin")
     x2_gm.tofile("./x2_gm.bin")
@@ -163,6 +159,8 @@ def gen_golden_data(case_name, param):
         scalar = int(scalar)
         golden = golden >> scalar
         golden = saturation(golden, -32768, 32767, np.int16)
+    if is_relu:
+        golden = np.maximum(golden, 0)
     block_cols = 16
     if (dst_type == np.int8 or dst_type == np.uint8):
         block_cols = 32
@@ -173,7 +171,7 @@ def gen_golden_data(case_name, param):
 
 class TmovParams:
     def __init__(self, atype, btype, dst_type, m, k, n,
-                 is_v_quant=False, is_s_quant=False,
+                 is_v_quant=False, is_s_quant=False, is_relu=False,
                  quant_type=None, scalar=1):
         self.atype = atype
         self.btype = btype
@@ -185,6 +183,7 @@ class TmovParams:
         self.n = n
         self.is_v_quant = is_v_quant
         self.is_s_quant = is_s_quant
+        self.is_relu = is_relu
         self.dst_type = dst_type
         if (quant_type):
             self.quant_type = quant_type
@@ -211,6 +210,26 @@ if __name__ == "__main__":
         ##int32->int16
         "TMOVTest.case_nz2nz_sc_quant_11",
         "TMOVTest.case_nz2nz_fb_quant_12",
+        ######relu
+        ##fp32->half
+        "TMOVTest.case_nz2nz_21",
+        ##fp32->bf16
+        "TMOVTest.case_nz2nz_22",
+        ##int32->half
+        "TMOVTest.case_nz2nz_sc_quant_23",
+        "TMOVTest.case_nz2nz_fb_quant_24",
+        ##float->int8
+        "TMOVTest.case_nz2nz_sc_quant_25",
+        "TMOVTest.case_nz2nz_fb_quant_26",
+        ##int32->int8
+        "TMOVTest.case_nz2nz_sc_quant_27",
+        "TMOVTest.case_nz2nz_fb_quant_28",
+        ##int32->uint8
+        "TMOVTest.case_nz2nz_sc_quant_29",
+        "TMOVTest.case_nz2nz_fb_quant_30",
+        ##int32->int16
+        "TMOVTest.case_nz2nz_sc_quant_31",
+        "TMOVTest.case_nz2nz_fb_quant_32",
     ]
 
     case_params_list = [
@@ -219,20 +238,40 @@ if __name__ == "__main__":
         ##fp32->bf16
         TmovParams(np.float16, np.float16, bfloat16, 48, 128, 64),
         ##int32->half
-        TmovParams(np.int8, np.int8, np.float16, 48, 64, 128, False, True, None, 2),
-        TmovParams(np.int8, np.int8, np.float16, 80, 128, 64, True, False, np.uint64),
+        TmovParams(np.int8, np.int8, np.float16, 48, 64, 128, False, True, False, None, 2),
+        TmovParams(np.int8, np.int8, np.float16, 80, 128, 64, True, False, False, np.uint64),
         ##float->int8
-        TmovParams(np.float16, np.float16, np.int8, 48, 64, 128, False, True, None, 2),
-        TmovParams(np.float16, np.float16, np.int8, 80, 128, 64, True, False, np.uint64),
+        TmovParams(np.float16, np.float16, np.int8, 48, 64, 128, False, True, False, None, 2),
+        TmovParams(np.float16, np.float16, np.int8, 80, 128, 64, True, False, False, np.uint64),
         ##int32->int8
-        TmovParams(np.int8, np.int8, np.int8, 48, 64, 128, False, True, None, 2),
-        TmovParams(np.int8, np.int8, np.int8, 80, 128, 64, True, False, np.uint64),
+        TmovParams(np.int8, np.int8, np.int8, 48, 64, 128, False, True, False, None, 2),
+        TmovParams(np.int8, np.int8, np.int8, 80, 128, 64, True, False, False, np.uint64),
         ##int32->uint8
-        TmovParams(np.int8, np.int8, np.uint8, 48, 64, 128, False, True, None, 1),
-        TmovParams(np.int8, np.int8, np.uint8, 80, 128, 64, True, False, np.uint64),
+        TmovParams(np.int8, np.int8, np.uint8, 48, 64, 128, False, True, False, None, 1),
+        TmovParams(np.int8, np.int8, np.uint8, 80, 128, 64, True, False, False, np.uint64),
         ##int32->int16
-        TmovParams(np.int8, np.int8, np.int16, 48, 64, 128, False, True, None, 2),
-        TmovParams(np.int8, np.int8, np.int16, 80, 128, 64, True, False, np.uint64),
+        TmovParams(np.int8, np.int8, np.int16, 48, 64, 128, False, True, False, None, 2),
+        TmovParams(np.int8, np.int8, np.int16, 80, 128, 64, True, False, False, np.uint64),
+        ######relu
+        ##fp32->half
+        TmovParams(np.float16, np.float16, np.float16, 16, 15, 16, False, False, True),
+        ##fp32->bf16
+        TmovParams(np.float16, np.float16, bfloat16, 16, 15, 16, False, False, True),
+        ##int32->half
+        TmovParams(np.int8, np.int8, np.float16, 16, 31, 32, False, True, True, None, 2),
+        TmovParams(np.int8, np.int8, np.float16, 16, 31, 32, True, False, True, np.uint64),
+        ##float->int8
+        TmovParams(np.float16, np.float16, np.int8, 16, 31, 32, False, True, True, None, 2),
+        TmovParams(np.float16, np.float16, np.int8, 16, 31, 32, True, False, True, np.uint64),
+        ##int32->int8
+        TmovParams(np.int8, np.int8, np.int8, 16, 31, 32, False, True, True, None, 2),
+        TmovParams(np.int8, np.int8, np.int8, 16, 31, 32, True, False, True, np.uint64),
+        ##int32->uint8
+        TmovParams(np.int8, np.int8, np.uint8, 16, 31, 32, False, True, True, None, 1),
+        TmovParams(np.int8, np.int8, np.uint8, 16, 31, 32, True, False, True, np.uint64),
+        ##int32->int16
+        TmovParams(np.int8, np.int8, np.int16, 16, 31, 32, False, True, True, None, 2),
+        TmovParams(np.int8, np.int8, np.int16, 16, 31, 32, True, False, True, np.uint64),
     ]
 
     for i, case_name in enumerate(case_name_list):
