@@ -16,8 +16,8 @@ using namespace pto;
 
 template <typename T, typename U, typename S, typename B, int M, int K, int N, int validM, int validK, int validN,
     bool isBias>
-AICORE inline void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2) {
-    // static shape
+AICORE inline void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2)
+{
     using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
@@ -86,20 +86,18 @@ AICORE inline void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __g
 
 template <typename T, typename U, typename S, typename B, int M, int K, int N, int validM, int validK, int validN,
     bool isBias>
-AICORE inline void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2) {
+AICORE inline void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2)
+{
     constexpr int BASEK = 32;
-    // static shape
     using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, BASEK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, BASEK, validN>,
         pto::Stride<1 * BASEK * validN, 1 * BASEK * validN, BASEK * validN, validN, 1>>;
+    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, N>, pto::Stride<N, N, N, N, 1>>;
     using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
         pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
-
-    GlobalDataOut dstGlobal(out);
-
-    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, N>, pto::Stride<N, N, N, N, 1>>;
     GlobalDataSrc2 src2Global(src2);
+    GlobalDataOut dstGlobal(out);
 
     using TileMatAData = Tile<TileType::Mat, U, M, BASEK, BLayout::ColMajor, M, BASEK, SLayout::RowMajor, 512>;
     using TileMatBData = Tile<TileType::Mat, S, BASEK, N, BLayout::ColMajor, BASEK, N, SLayout::RowMajor, 512>;
@@ -159,10 +157,10 @@ AICORE inline void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S *src
             if constexpr (isBias) {
                 evtMatMul_Load = TMATMUL_BIAS(cTile, aTile, bTile, biasTile, evtMov_MatMul);
             } else {
-                evtMatMul_Load = TMATMUL(cTile, aTile, bTile, evtMov_MatMul); // L0C清空
+                evtMatMul_Load = TMATMUL(cTile, aTile, bTile, evtMov_MatMul);
             }
         } else {
-            evtMatMul_Load = TMATMUL_ACC(cTile, cTile, aTile, bTile, evtMov_MatMul); // L0C不清空
+            evtMatMul_Load = TMATMUL_ACC(cTile, cTile, aTile, bTile, evtMov_MatMul);
         }
     }
 
@@ -172,7 +170,8 @@ AICORE inline void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S *src
     out = dstGlobal.data();
 }
 
-extern "C" __global__ AICORE void LaunchTMATMUL_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
+extern "C" __global__ AICORE void LaunchTMATMUL_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -181,7 +180,8 @@ extern "C" __global__ AICORE void LaunchTMATMUL_1(__gm__ uint8_t *out, __gm__ ui
         reinterpret_cast<__gm__ half *>(src0), reinterpret_cast<__gm__ half *>(src1), nullptr);
 }
 
-extern "C" __global__ AICORE void LaunchTMATMUL_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
+extern "C" __global__ AICORE void LaunchTMATMUL_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -190,7 +190,8 @@ extern "C" __global__ AICORE void LaunchTMATMUL_2(__gm__ uint8_t *out, __gm__ ui
         reinterpret_cast<__gm__ int8_t *>(src0), reinterpret_cast<__gm__ int8_t *>(src1), nullptr);
 }
 
-extern "C" __global__ AICORE void LaunchTMATMUL_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1) {
+extern "C" __global__ AICORE void LaunchTMATMUL_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -204,7 +205,8 @@ extern "C" __global__ AICORE void LaunchTMATMUL_3(__gm__ uint8_t *out, __gm__ ui
 }
 
 extern "C" __global__ AICORE void LaunchTMATMULBIAS_1(
-    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -215,7 +217,8 @@ extern "C" __global__ AICORE void LaunchTMATMULBIAS_1(
 }
 
 extern "C" __global__ AICORE void LaunchTMATMULBIAS_2(
-    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -227,7 +230,8 @@ extern "C" __global__ AICORE void LaunchTMATMULBIAS_2(
 }
 
 extern "C" __global__ AICORE void LaunchTMATMULBIAS_3(
-    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+{
     constexpr uint32_t M = 16;
     constexpr uint32_t N = 16;
     constexpr uint32_t K = 16;
@@ -240,7 +244,8 @@ extern "C" __global__ AICORE void LaunchTMATMULBIAS_3(
 }
 
 extern "C" __global__ AICORE void LaunchTMATMULBIAS_4(
-    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -254,7 +259,8 @@ extern "C" __global__ AICORE void LaunchTMATMULBIAS_4(
 }
 
 extern "C" __global__ AICORE void LaunchTMATMULBIAS_5(
-    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -265,7 +271,8 @@ extern "C" __global__ AICORE void LaunchTMATMULBIAS_5(
 }
 
 extern "C" __global__ AICORE void LaunchTMATMULBIAS_6(
-    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -276,7 +283,8 @@ extern "C" __global__ AICORE void LaunchTMATMULBIAS_6(
 }
 
 extern "C" __global__ AICORE void LaunchTMATMULBIAS_7(
-    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2) {
+    __gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1, __gm__ uint8_t *src2)
+{
     constexpr uint32_t M = 128;
     constexpr uint32_t N = 64;
     constexpr uint32_t K = 128;
@@ -287,7 +295,8 @@ extern "C" __global__ AICORE void LaunchTMATMULBIAS_7(
 }
 
 template <int32_t tilingKey>
-void LaunchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream) {
+void LaunchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
+{
     if constexpr (tilingKey == 1) {
         LaunchTMATMUL_1<<<1, nullptr, stream>>>(out, src0, src1);
     } else if constexpr (tilingKey == 2) {
@@ -298,7 +307,8 @@ void LaunchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream) {
 }
 
 template <int32_t tilingKey>
-void LaunchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream) {
+void LaunchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream)
+{
     if constexpr (tilingKey == 1) {
         LaunchTMATMULBIAS_1<<<1, nullptr, stream>>>(out, src0, src1, src2);
     } else if constexpr (tilingKey == 2) {
