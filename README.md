@@ -77,6 +77,7 @@ python3 tests/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
 ### Running Recommended Test Suites
 
 ```bash
+chmod +x run_st.sh
 ./run_st.sh a5 npu simple
 ./run_st.sh a3 sim all
 ```
@@ -84,6 +85,7 @@ python3 tests/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
 ### Running CPU Simulation Tests
 
 ```bash
+chmod +x run_cpu_tests.sh
 ./run_cpu_tests.sh
 
 python3 run_cpu.py --verbose
@@ -104,16 +106,19 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 * Run Full ST Tests:
 
   ```bash
+  chmod +x build.sh
   ./build.sh --run_all --a3 --sim
   ```
 * Run Simplified ST Tests:
 
   ```bash
+  chmod +x build.sh
   ./build.sh --run_simple --a5 --npu
   ```
 * Packaging:
 
   ```bash
+  chmod +x build.sh
   ./build.sh --pkg --cann_3rd_lib_path <PATH_TO_CANN_3RD_LIB>
   ```
 
