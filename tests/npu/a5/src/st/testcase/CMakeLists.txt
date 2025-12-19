@@ -99,6 +99,7 @@ endfunction()
 set(ALL_TESTCASES
     tci
     tmatmul
+    tmatmul_mx
     tload_mix
     tload_shape2d
     tload

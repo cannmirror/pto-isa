@@ -33,7 +33,8 @@ protected:
     void TearDown() override {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -42,7 +43,8 @@ std::string GetGoldenDir() {
 }
 
 template <typename T, typename U, typename S, int32_t key>
-void TmatmulTest(uint32_t M, uint32_t K, uint32_t N) {
+void TmatmulTest(uint32_t M, uint32_t K, uint32_t N)
+{
     size_t aFileSize = M * K * sizeof(uint16_t); // uint16_t represent half
     size_t bFileSize = K * N * sizeof(uint16_t); // uint16_t represent half
     size_t cFileSize = M * N * sizeof(float);
@@ -96,7 +98,8 @@ void TmatmulTest(uint32_t M, uint32_t K, uint32_t N) {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TMATMULTest, case1) {
+TEST_F(TMATMULTest, case1)
+{
     uint32_t M = 128;
     uint32_t N = 64;
     uint32_t K = 128;
@@ -104,7 +107,8 @@ TEST_F(TMATMULTest, case1) {
     TmatmulTest<float, uint16_t, uint16_t, 1>(M, K, N);
 }
 
-TEST_F(TMATMULTest, case2) {
+TEST_F(TMATMULTest, case2)
+{
     uint32_t M = 128;
     uint32_t N = 64;
     uint32_t K = 128;
@@ -112,7 +116,8 @@ TEST_F(TMATMULTest, case2) {
     TmatmulTest<int32_t, int8_t, int8_t, 2>(M, K, N);
 }
 
-TEST_F(TMATMULTest, case3) {
+TEST_F(TMATMULTest, case3)
+{
     uint32_t M = 127;
     uint32_t N = 63;
     uint32_t K = 63;
@@ -121,7 +126,8 @@ TEST_F(TMATMULTest, case3) {
 }
 
 template <typename T, typename U, typename S, typename biasType, int32_t key>
-void TmatmulBiasTest(uint32_t M, uint32_t K, uint32_t N) {
+void TmatmulBiasTest(uint32_t M, uint32_t K, uint32_t N)
+{
     size_t aFileSize = M * K * sizeof(U); // uint16_t represent half
     size_t bFileSize = K * N * sizeof(S); // uint16_t represent half
     size_t cFileSize = M * N * sizeof(T);
@@ -184,7 +190,8 @@ void TmatmulBiasTest(uint32_t M, uint32_t K, uint32_t N) {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TMATMULBIASTest, case1) {
+TEST_F(TMATMULBIASTest, case1)
+{
     uint32_t M = 128;
     uint32_t K = 128;
     uint32_t N = 64;
@@ -192,7 +199,8 @@ TEST_F(TMATMULBIASTest, case1) {
     TmatmulBiasTest<float, uint16_t, uint16_t, float, 1>(M, K, N);
 }
 
-TEST_F(TMATMULBIASTest, case2) {
+TEST_F(TMATMULBIASTest, case2)
+{
     uint32_t M = 128;
     uint32_t K = 128;
     uint32_t N = 63;
@@ -200,7 +208,8 @@ TEST_F(TMATMULBIASTest, case2) {
     TmatmulBiasTest<float, uint16_t, uint16_t, float, 2>(M, K, N);
 }
 
-TEST_F(TMATMULBIASTest, case3) {
+TEST_F(TMATMULBIASTest, case3)
+{
     uint32_t M = 15;
     uint32_t K = 16;
     uint32_t N = 15;
@@ -208,7 +217,8 @@ TEST_F(TMATMULBIASTest, case3) {
     TmatmulBiasTest<float, float, float, float, 3>(M, K, N);
 }
 
-TEST_F(TMATMULBIASTest, case4) {
+TEST_F(TMATMULBIASTest, case4)
+{
     uint32_t M = 127;
     uint32_t K = 127;
     uint32_t N = 63;
@@ -216,7 +226,8 @@ TEST_F(TMATMULBIASTest, case4) {
     TmatmulBiasTest<int32_t, int8_t, int8_t, int32_t, 4>(M, K, N);
 }
 
-TEST_F(TMATMULBIASTest, case5) {
+TEST_F(TMATMULBIASTest, case5)
+{
     uint32_t M = 128;
     uint32_t K = 128;
     uint32_t N = 64;
@@ -224,7 +235,8 @@ TEST_F(TMATMULBIASTest, case5) {
     TmatmulBiasTest<float, uint16_t, uint16_t, float, 5>(M, K, N);
 }
 
-TEST_F(TMATMULBIASTest, case6) {
+TEST_F(TMATMULBIASTest, case6)
+{
     uint32_t M = 128;
     uint32_t K = 128;
     uint32_t N = 64;
@@ -232,7 +244,8 @@ TEST_F(TMATMULBIASTest, case6) {
     TmatmulBiasTest<int32_t, int8_t, int8_t, int32_t, 6>(M, K, N);
 }
 
-TEST_F(TMATMULBIASTest, case7) {
+TEST_F(TMATMULBIASTest, case7)
+{
     uint32_t M = 128;
     uint32_t K = 128;
     uint32_t N = 64;

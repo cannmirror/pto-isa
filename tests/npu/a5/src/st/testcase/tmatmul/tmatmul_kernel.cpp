@@ -25,9 +25,9 @@ AICORE constexpr inline T CeilAlign(T num_1, T num_2)
     return (num_1 + num_2 - 1) / num_2 * num_2;
 }
 
-template <typename outType, typename AType, typename BType, typename BiasType, int validM, int validK, int validN,
+template <typename OutType, typename AType, typename BType, typename BiasType, int validM, int validK, int validN,
     bool isBias>
-__global__ AICORE void RunTMATMUL(__gm__ outType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ BiasType *src2)
+__global__ AICORE void RunTMATMUL(__gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ BiasType *src2)
 {
     constexpr int blockAlign = (sizeof(AType) == 1) ? 32 : 16;
     constexpr int M = CeilAlign<int>(validM, blockAlign);
@@ -40,7 +40,7 @@ __global__ AICORE void RunTMATMUL(__gm__ outType *out, __gm__ AType *src0, __gm_
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
     using GlobalDataSrc2 = GlobalTensor<BiasType, pto::Shape<1, 1, 1, 1, validN>,
         pto::Stride<1 * validN, 1 * validN, 1 * validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<outType, pto::Shape<1, 1, 1, validM, validN>,
+    using GlobalDataOut = GlobalTensor<OutType, pto::Shape<1, 1, 1, validM, validN>,
         pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
@@ -53,8 +53,8 @@ __global__ AICORE void RunTMATMUL(__gm__ outType *out, __gm__ AType *src0, __gm_
 
     using LeftTile = TileLeft<AType, M, K, validM, validK>;
     using RightTile = TileRight<BType, K, N, validK, validN>;
-    using AccTile = TileAcc<outType, M, N, validM, validN>;
-    using BiasTile = Tile<TileType::Bias, outType, 1, N, BLayout::RowMajor, 1, N>;
+    using AccTile = TileAcc<OutType, M, N, validM, validN>;
+    using BiasTile = Tile<TileType::Bias, OutType, 1, N, BLayout::RowMajor, 1, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -108,9 +108,9 @@ __global__ AICORE void RunTMATMUL(__gm__ outType *out, __gm__ AType *src0, __gm_
     out = dstGlobal.data();
 }
 
-template <typename outType, typename AType, typename BType, typename BiasType, int M, int K, int N, bool isBias>
+template <typename OutType, typename AType, typename BType, typename BiasType, int M, int K, int N, bool isBias>
 __global__ AICORE void RunTMATMUL_SPLIT_K(
-    __gm__ outType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ BiasType *src2)
+    __gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ BiasType *src2)
 {
     constexpr int BASEM = 128;
     constexpr int BASEK = 64;
@@ -121,7 +121,7 @@ __global__ AICORE void RunTMATMUL_SPLIT_K(
         GlobalTensor<BType, pto::Shape<1, 1, 1, BASEK, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>>;
     using GlobalDataSrc2 = GlobalTensor<BiasType, pto::Shape<1, 1, 1, 1, N>, pto::Stride<1 * N, 1 * N, 1 * N, N, 1>>;
     using GlobalDataOut =
-        GlobalTensor<outType, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
+        GlobalTensor<OutType, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
@@ -131,8 +131,8 @@ __global__ AICORE void RunTMATMUL_SPLIT_K(
 
     using LeftTile = TileLeft<AType, BASEM, BASEK, M, BASEK>;
     using RightTile = TileRight<BType, BASEK, BASEN, BASEK, N>;
-    using AccTile = TileAcc<outType, BASEM, BASEN, M, N>;
-    using BiasTile = Tile<TileType::Bias, outType, 1, BASEN, BLayout::RowMajor, 1, N>;
+    using AccTile = TileAcc<OutType, BASEM, BASEN, M, N>;
+    using BiasTile = Tile<TileType::Bias, OutType, 1, BASEN, BLayout::RowMajor, 1, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
