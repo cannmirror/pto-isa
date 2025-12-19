@@ -14,6 +14,9 @@ This guide walks you through installing prerequisites, setting up an Ascend CANN
 - CMake `>= 3.16`
 - A C++ compiler with C++23 support (recommended: `clang++` on macOS, `g++` on Linux)
 - (Optional) GoogleTest `v1.14.0` (only required to build/run unit tests)
+> **Note**
+> 
+> Python needs to download packages such as os, numpy, ctypes, struct, copy, math, enum, ml_dtypes, en_dtypes, etc.
 
 ### Ascend runtime (only required for NPU/simulator runs)
 
@@ -32,6 +35,9 @@ cmake .. -DCMAKE_CXX_FLAGS="-fPIC"
 cmake --build . -j
 sudo cmake --install .
 ```
+> **Note**
+> 
+> If you have already installed googletest by other means, you need to make the corresponding changes to the CMakeLists.txt. For examle, you used `cmake .. -DCMAKE_CXX_FLAGS="-fPIC -D_GLIBCXX_USE_CXX11_ABI=0"` when installing googletest, you need to add `add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)` in tests/npu/[a2a3 | a5]/src/st/CMakeLists.txt
 
 ## Install Ascend CANN Toolkit (optional)
 
