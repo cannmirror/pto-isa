@@ -26,31 +26,6 @@ AICORE constexpr inline T CeilDiv(T num_1, T num_2)
 template <typename T>
 using CType = typename std::conditional<std::is_same<T, int8_t>::value, int32_t, float>::type;
 
-template <typename GlobalData, typename TileData>
-AICORE inline void MatCopyOut(GlobalData &dst, TileData &src, int gShape0, int gShape1, int gShape2, int gShape3,
-    int gShape4, int gStride0, int gStride1)
-{
-    int ValidRow = src.GetValidRow();
-    int ValidCol = src.GetValidCol();
-
-    typename GlobalData::DType *dstAddr = dst.data();
-    __cbuf__ typename TileData::DType *srcAddr = src.data();
-    typename GlobalData::DType *dstAddrP = dstAddr;
-    __cbuf__ typename TileData::DType *srcAddrP = srcAddr;
-
-    uint16_t nBurst = gShape1;
-    uint16_t lenBurst = ValidRow;
-    uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType) / BLOCK_BYTE_SIZE;
-    uint32_t l1Gap = TileData::Rows - ValidRow;
-
-    uint64_t tileStride = TileData::Rows * gShape1 * gShape4;
-    for (uint32_t i = 0; i < gShape0; i++) {
-        srcAddrP = srcAddr + i * tileStride;
-        dstAddrP = dstAddr + i * gStride0;
-        copy_cbuf_to_gm(dstAddrP, srcAddrP, 0, nBurst, lenBurst, l1Gap, gmGap);
-    }
-}
-
 template <typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN>
 AICORE inline void runMATMUL(__gm__ aType *src0, __gm__ bType *src1)
 {
@@ -158,7 +133,7 @@ AICORE inline void runMATMULFB(__gm__ aType *src0, __gm__ bType *src1, __gm__ fb
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 }
 
-template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN>
+template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN, bool isRelu = false>
 __global__ AICORE void runTMOV_nz2nz(__gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1)
 {
     constexpr uint16_t sGRows_ = 16;
@@ -183,19 +158,21 @@ __global__ AICORE void runTMOV_nz2nz(__gm__ outType *out, __gm__ aType *src0, __
     using DstTileData = Tile<TileType::Mat, outType, M, N, BLayout::ColMajor, validM, validN, SLayout::RowMajor, 512>;
     DstTileData dstTileData;
     TASSIGN(dstTileData, 0x0);
-
-    TMOV(dstTileData, cTile);
+    if constexpr (isRelu) {
+        TMOV<DstTileData, AccTile, ReluPreMode::NormalRelu>(dstTileData, cTile);
+    } else {
+        TMOV(dstTileData, cTile);
+    }
 
     set_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
 
-    MatCopyOut<GlobalDataOut, DstTileData>(
-        dstGlobal, dstTileData, 1, kGCols_, kGRows_, sGRows_, sGCols_, gStride0, gStride1);
+    TSTORE(dstGlobal, dstTileData);
     out = dstGlobal.data();
 }
 
 template <typename outType, typename aType, typename bType, typename fbType, int M, int K, int N, int validM,
-    int validK, int validN>
+    int validK, int validN, bool isRelu = false>
 __global__ AICORE void runVectorQuantTMOV_nz2nz(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ fbType *src2)
 {
@@ -230,17 +207,18 @@ __global__ AICORE void runVectorQuantTMOV_nz2nz(
     TASSIGN(dstTileData, 0x0);
 
     TMOV(fbTile, fbMatTile);  // L1-> FB1
-    TMOV_FP<DstTileData, AccTile, FbTile>(dstTileData, cTile, fbTile);
-
+    if constexpr (isRelu) {
+        TMOV_FP<DstTileData, AccTile, FbTile, ReluPreMode::NormalRelu>(dstTileData, cTile, fbTile);
+    } else {
+        TMOV_FP<DstTileData, AccTile, FbTile>(dstTileData, cTile, fbTile);
+    }
     set_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
-
-    MatCopyOut<GlobalDataOut, DstTileData>(
-        dstGlobal, dstTileData, 1, kGCols_, kGRows_, sGRows_, sGCols_, gStride0, gStride1);
+    TSTORE(dstGlobal, dstTileData);
     out = dstGlobal.data();
 }
 
-template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN>
+template <typename outType, typename aType, typename bType, int M, int K, int N, int validM, int validK, int validN, bool isRelu = false>
 __global__ AICORE void runScalarQuantTMOV_nz2nz(
     __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, float scalar)
 {
@@ -279,13 +257,16 @@ __global__ AICORE void runScalarQuantTMOV_nz2nz(
             preQuantScalar = (preQuantScalar & ~(static_cast<uint64_t>(1) << 46)) | (static_cast<uint64_t>(sign) << 46);
         }
     }
-    TMOV<DstTileData, AccTile>(dstTileData, cTile, preQuantScalar);
+    if constexpr (isRelu) {
+        TMOV<DstTileData, AccTile, ReluPreMode::NormalRelu>(dstTileData, cTile, preQuantScalar);
+    } else {
+        TMOV<DstTileData, AccTile>(dstTileData, cTile, preQuantScalar);
+    }
 
     set_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_MTE3, EVENT_ID0);
 
-    MatCopyOut<GlobalDataOut, DstTileData>(
-        dstGlobal, dstTileData, 1, kGCols_, kGRows_, sGRows_, sGCols_, gStride0, gStride1);
+    TSTORE(dstGlobal, dstTileData);
     out = dstGlobal.data();
 }
 
@@ -298,10 +279,18 @@ void launchTMOVAcc2MatNZ2NZ(uint8_t *out, uint8_t *src0, uint8_t *src1, void *st
     } else if constexpr (tilingKey == 2) {
         runTMOV_nz2nz<bfloat16_t, half, half, 48, 128, 64, 48, 128, 64><<<1, nullptr, stream>>>(
             reinterpret_cast<bfloat16_t *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
+    } else if constexpr (tilingKey == 3) {
+        runTMOV_nz2nz<half, half, half, 16, 16, 16, 16, 15, 16, true><<<1, nullptr, stream>>>(
+            reinterpret_cast<half *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
+    } else if constexpr (tilingKey == 4) {
+        runTMOV_nz2nz<bfloat16_t, half, half, 16, 16, 16, 16, 15, 16, true><<<1, nullptr, stream>>>(
+            reinterpret_cast<bfloat16_t *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
     }
 }
 template void launchTMOVAcc2MatNZ2NZ<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void launchTMOVAcc2MatNZ2NZ<2>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVAcc2MatNZ2NZ<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVAcc2MatNZ2NZ<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
 void launchTMOVAcc2MatSCQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
@@ -321,6 +310,21 @@ void launchTMOVAcc2MatSCQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, void
     } else if constexpr (tilingKey == 5) {
         runScalarQuantTMOV_nz2nz<int16_t, int8_t, int8_t, 48, 64, 128, 48, 64, 128><<<1, nullptr, stream>>>(
             reinterpret_cast<int16_t *>(out), reinterpret_cast<int8_t *>(src0), reinterpret_cast<int8_t *>(src1), 2);
+    } else if constexpr (tilingKey == 6) {
+        runScalarQuantTMOV_nz2nz<half, int8_t, int8_t, 16, 32, 32, 16, 31, 32, true><<<1, nullptr, stream>>>(
+            reinterpret_cast<half *>(out), reinterpret_cast<int8_t *>(src0), reinterpret_cast<int8_t *>(src1), 2);
+    } else if constexpr (tilingKey == 7) {
+        runScalarQuantTMOV_nz2nz<int8_t, half, half, 16, 32, 32, 16, 31, 32, true><<<1, nullptr, stream>>>(
+            reinterpret_cast<int8_t *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1), 2);
+    } else if constexpr (tilingKey == 8) {
+        runScalarQuantTMOV_nz2nz<int8_t, int8_t, int8_t, 16, 32, 32, 16, 31, 32, true><<<1, nullptr, stream>>>(
+            reinterpret_cast<int8_t *>(out), reinterpret_cast<int8_t *>(src0), reinterpret_cast<int8_t *>(src1), 2);
+    } else if constexpr (tilingKey == 9) {
+        runScalarQuantTMOV_nz2nz<uint8_t, int8_t, int8_t, 16, 32, 32, 16, 31, 32, true><<<1, nullptr, stream>>>(
+            reinterpret_cast<uint8_t *>(out), reinterpret_cast<int8_t *>(src0), reinterpret_cast<int8_t *>(src1), 1);
+    } else if constexpr (tilingKey == 10) {
+        runScalarQuantTMOV_nz2nz<int16_t, int8_t, int8_t, 16, 32, 32, 16, 31, 32, true><<<1, nullptr, stream>>>(
+            reinterpret_cast<int16_t *>(out), reinterpret_cast<int8_t *>(src0), reinterpret_cast<int8_t *>(src1), 2);
     }
 }
 
@@ -329,6 +333,11 @@ template void launchTMOVAcc2MatSCQuantNz<2>(uint8_t *out, uint8_t *src0, uint8_t
 template void launchTMOVAcc2MatSCQuantNz<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void launchTMOVAcc2MatSCQuantNz<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void launchTMOVAcc2MatSCQuantNz<5>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVAcc2MatSCQuantNz<6>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVAcc2MatSCQuantNz<7>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVAcc2MatSCQuantNz<8>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVAcc2MatSCQuantNz<9>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTMOVAcc2MatSCQuantNz<10>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
 void launchTMOVAcc2MatFBQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream)
@@ -363,6 +372,36 @@ void launchTMOVAcc2MatFBQuantNz(uint8_t *out, uint8_t *src0, uint8_t *src1, uint
                 reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1),
                 reinterpret_cast<uint64_t *>(src2));
+    } else if constexpr (tilingKey == 6) {
+        runVectorQuantTMOV_nz2nz<half, int8_t, int8_t, uint64_t, 16, 32, 32, 16, 31, 32, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<half *>(out),
+                reinterpret_cast<int8_t *>(src0),
+                reinterpret_cast<int8_t *>(src1),
+                reinterpret_cast<uint64_t *>(src2));
+    } else if constexpr (tilingKey == 7) {
+        runVectorQuantTMOV_nz2nz<int8_t, half, half, uint64_t, 16, 32, 32, 16, 31, 32, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out),
+                reinterpret_cast<half *>(src0),
+                reinterpret_cast<half *>(src1),
+                reinterpret_cast<uint64_t *>(src2));
+    } else if constexpr (tilingKey == 8) {
+        runVectorQuantTMOV_nz2nz<int8_t, int8_t, int8_t, uint64_t, 16, 32, 32, 16, 31, 32, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out),
+                reinterpret_cast<int8_t *>(src0),
+                reinterpret_cast<int8_t *>(src1),
+                reinterpret_cast<uint64_t *>(src2));
+    } else if constexpr (tilingKey == 9) {
+        runVectorQuantTMOV_nz2nz<uint8_t, int8_t, int8_t, uint64_t, 16, 32, 32, 16, 31, 32, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out),
+                reinterpret_cast<int8_t *>(src0),
+                reinterpret_cast<int8_t *>(src1),
+                reinterpret_cast<uint64_t *>(src2));
+    } else if constexpr (tilingKey == 10) {
+        runVectorQuantTMOV_nz2nz<int16_t, int8_t, int8_t, uint64_t, 16, 32, 32, 16, 31, 32, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int16_t *>(out),
+                reinterpret_cast<int8_t *>(src0),
+                reinterpret_cast<int8_t *>(src1),
+                reinterpret_cast<uint64_t *>(src2));
     }
 }
 template void launchTMOVAcc2MatFBQuantNz<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
@@ -370,3 +409,8 @@ template void launchTMOVAcc2MatFBQuantNz<2>(uint8_t *out, uint8_t *src0, uint8_t
 template void launchTMOVAcc2MatFBQuantNz<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
 template void launchTMOVAcc2MatFBQuantNz<4>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
 template void launchTMOVAcc2MatFBQuantNz<5>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMOVAcc2MatFBQuantNz<6>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMOVAcc2MatFBQuantNz<7>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMOVAcc2MatFBQuantNz<8>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMOVAcc2MatFBQuantNz<9>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
+template void launchTMOVAcc2MatFBQuantNz<10>(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);

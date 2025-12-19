@@ -317,3 +317,108 @@ TEST_F(TMOVTest, case_nz2nz_fb_quant_12)
 
     tmov_acc2mat_nz2nz_fb_quant_test<int16_t, int8_t, int8_t, uint64_t, 5>(M, K, N);
 }
+TEST_F(TMOVTest, case_nz2nz_21)
+{
+    uint32_t M = 16;
+    uint32_t K = 15;
+    uint32_t N = 16;
+
+    tmov_acc2mat_nz2nz_test<uint16_t, uint16_t, uint16_t, 3>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_22)
+{
+    uint32_t M = 16;
+    uint32_t K = 15;
+    uint32_t N = 16;
+
+    tmov_acc2mat_nz2nz_test<uint16_t, uint16_t, uint16_t, 4>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_sc_quant_23)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_sc_quant_test<uint16_t, int8_t, int8_t, 6>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_fb_quant_24)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_fb_quant_test<uint16_t, int8_t, int8_t, uint64_t, 6>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_sc_quant_25)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_sc_quant_test<int8_t, uint16_t, uint16_t, 7>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_fb_quant_26)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_fb_quant_test<int8_t, uint16_t, uint16_t, uint64_t, 7>(M, K, N);
+}
+TEST_F(TMOVTest, case_nz2nz_sc_quant_27)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_sc_quant_test<int8_t, int8_t, int8_t, 8>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_fb_quant_28)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_fb_quant_test<int8_t, int8_t, int8_t, uint64_t, 8>(M, K, N);
+}
+TEST_F(TMOVTest, case_nz2nz_sc_quant_29)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_sc_quant_test<uint8_t, int8_t, int8_t, 9>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_fb_quant_30)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_fb_quant_test<uint8_t, int8_t, int8_t, uint64_t, 9>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_sc_quant_31)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_sc_quant_test<int16_t, int8_t, int8_t, 10>(M, K, N);
+}
+
+TEST_F(TMOVTest, case_nz2nz_fb_quant_32)
+{
+    uint32_t M = 16;
+    uint32_t K = 31;
+    uint32_t N = 32;
+
+    tmov_acc2mat_nz2nz_fb_quant_test<int16_t, int8_t, int8_t, uint64_t, 10>(M, K, N);
+}
