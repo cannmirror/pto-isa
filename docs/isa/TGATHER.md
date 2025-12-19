@@ -54,10 +54,12 @@ PTO_INST RecordEvent TGATHER(DstTileData& dst, SrcTileData& src, WaitEvents&... 
   - `sizeof(DstTileData::DType)` must be `2` or `4` bytes.
   - `sizeof(Src1TileData::DType)` must be `4` bytes.
   - `DstTileData::DType` must be the same type as `Src0TileData::DType`.
+  - `src1.GetValidCol() == Src1TileData::Cols` and `dst.GetValidCol() == DstTileData::Cols`.
 - **Index-based gather: implementation checks (A5)**:
-  - `sizeof(DstTileData::DType)` must be `1`, `2`, or `4` bytes.
+  - `sizeof(DstTileData::DType)` must be `2`, or `4` bytes.
   - `sizeof(Src1TileData::DType)` must be `2` or `4` bytes.
   - `DstTileData::DType` must be the same type as `Src0TileData::DType`.
+  - `src1.GetValidCol() == Src1TileData::Cols` and `dst.GetValidCol() == DstTileData::Cols`.
 - **Mask-pattern gather: implementation checks (A2A3)**:
   - Source element size must be `2` or `4` bytes.
   - `dst` and `src` must both be `TileType::Vec` and row-major.
