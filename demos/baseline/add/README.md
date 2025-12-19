@@ -87,9 +87,15 @@ This example requires PTO Tile Lib, PyTorch, `torch_npu`, and CANN. Follow the o
 
 https://gitcode.com/ascend/pytorch#%E5%AE%89%E8%A3%85
 
+or 
+
+```bash
+python3.9 -m pip install -r requirements.txt
+```
+
 ### 3.1 Set the target SoC
 
-Edit `demos/baseline/add/CMakeLists.txt` and set `SOC_VERSION` to your target (example: A2A3 uses `Ascend910B1`):
+Edit `demos/baseline/add/CMakeLists.txt` and set `SOC_VERSION` to your target (example: A2A3 uses `ascend910b1`):
 
 ```cmake
 set(SOC_VERSION "Ascendxxxyy" CACHE STRING "system on chip type")
@@ -102,15 +108,18 @@ You can query the chip name on the target machine via `npu-smi info` and use `As
 Set the PTO Tile Lib path and build a wheel:
 
 ```bash
+export ASCEND_HOME_PATH=/usr/local/Ascend/
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
 export PTO_LIB_PATH=[YOUR_PATH]/pto-tile-lib
 rm -rf build op_extension.egg-info
-python setup.py bdist_wheel
+python3.9 setup.py bdist_wheel
 ```
 
 ### 3.3 Install the wheel
 
 ```bash
 cd dist
+pip uninstall *.whl
 pip install *.whl
 ```
 
@@ -118,5 +127,5 @@ pip install *.whl
 
 ```bash
 cd test
-python test.py
+python3.9 test.py
 ```

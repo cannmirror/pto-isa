@@ -15,8 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #pragma once
 
 namespace pto {
-PTO_INTERNAL void SetContinuousMask(unsigned n)
-{
+PTO_INTERNAL void SetContinuousMask(unsigned n) {
     set_vector_mask(static_cast<uint64_t>(
                         (n > MASK_LEN) ? (((static_cast<uint64_t>(1)) << static_cast<uint32_t>(n - MASK_LEN)) - 1) : 0),
         static_cast<uint64_t>(
@@ -24,51 +23,36 @@ PTO_INTERNAL void SetContinuousMask(unsigned n)
 }
 
 template <int index>
-PTO_INTERNAL void movemask(uint64_t mask)
-{
-    if constexpr (index == 0){
-        asm volatile("MOVEMASK 	MASK[0],  %0\n":"+l"(mask));
-    }else if constexpr (index == 1) {
-        asm volatile("MOVEMASK 	MASK[1],  %0\n":"+l"(mask));
-    }else {
+PTO_INTERNAL void movemask(uint64_t mask) {
+    if constexpr (index == 0) {
+        asm volatile("MOVEMASK 	MASK[0],  %0\n" ::"l"(mask));
+    } else if constexpr (index == 1) {
+        asm volatile("MOVEMASK 	MASK[1],  %0\n" ::"l"(mask));
+    } else {
         static_assert((index <= 1), "movemask: error mask index.");
     }
 }
 
-PTO_INTERNAL void SetVectorCount(uint64_t n)
-{
-    movemask<0>(n);
+PTO_INTERNAL void SetVectorCount(uint64_t n) {
+    set_vector_mask(0, n);
 }
 
 template <typename T>
-PTO_INTERNAL void SetFullVecMaskByDType()
-{
-    if constexpr (sizeof(T) == 4){
-        movemask<0>(-1);
-    }else{
-        set_vector_mask(-1, -1);
-    }
+PTO_INTERNAL void SetFullVecMaskByDType() {
+    set_vector_mask(-1, -1);
 }
 
 template <typename T>
-PTO_INTERNAL void SetContMaskByDType(unsigned n)
-{
-    if constexpr (sizeof(T) == 4) {
-        uint64_t mask = static_cast<uint64_t>( (n >= MASK_LEN) ? 0xffffffffffffffff : (((static_cast<uint64_t>(1)) 
-            << static_cast<uint32_t>(n)) - 1));
-        movemask<0>(mask);
-    } else {
-        SetContinuousMask(n);
-    }
+PTO_INTERNAL void SetContMaskByDType(unsigned n) {
+    SetContinuousMask(n);
 }
 
-PTO_INTERNAL int32_t CeilDivision(int32_t num1, int32_t num2)
-{
+PTO_INTERNAL int32_t CeilDivision(int32_t num1, int32_t num2) {
     if (num2 == 0) {
         return 0;
     }
     return (num1 + num2 - 1) / num2;
 }
-}
+} // namespace pto
 
 #endif

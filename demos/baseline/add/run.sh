@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-# coding=utf-8
+#!/bin/bash
 # --------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
@@ -10,26 +9,16 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # --------------------------------------------------------------------------------
 
-import torch
-import torch.nn as nn
-import torch_npu
-from torch_npu.testing.testcase import TestCase, run_tests
-import op_extension
+#example script
 
+set -e 
+export ASCEND_HOME_PATH=/usr/local/Ascend/
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
+#export PTO_LIB_PATH=[YOUR_PATH]/pto-tile-lib
 
-class TestCustomAdd(TestCase):
-
-    def test_add_custom_ops(self):
-        length = [20, 2048]
-        x = torch.rand(length, device='cpu', dtype=torch.float16)
-        y = torch.rand(length, device='cpu', dtype=torch.float16)
-
-        x_npu = x.npu()
-        y_npu = y.npu()
-        output = torch.ops.npu.my_add(x_npu, y_npu)
-        cpuout = torch.add(x, y)
-
-        self.assertRtolEqual(output, cpuout)
-
-if __name__ == "__main__":
-    run_tests()
+rm -fr build op_extension.egg-info
+python3.9 setup.py bdist_wheel 
+cd dist &&
+python3.9 -m pip uninstall op_extension-0.0.0-cp39-cp39-linux_aarch64.whl &&
+python3.9 -m pip install op_extension-0.0.0-cp39-cp39-linux_aarch64.whl &&
+cd ../test && python3.9 test.py && cd ..

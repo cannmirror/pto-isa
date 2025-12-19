@@ -15,7 +15,7 @@ namespace ascendc_path {
 
 at::Tensor run_add_custom(const at::Tensor &x, const at::Tensor &y) {
     at::Tensor z = at::empty_like(x);
-    uint32_t blockDim = 21;
+    uint32_t blockDim = 20;
     uint32_t totalLength = 1;
     for (uint32_t size : x.sizes()) {
         totalLength *= size;
