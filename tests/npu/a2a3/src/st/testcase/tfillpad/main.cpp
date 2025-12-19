@@ -23,10 +23,8 @@ int get_input_golden(uint8_t *input, uint8_t *golden);
 
 class TFILLPADTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 std::string GetGoldenDir() {
@@ -42,22 +40,19 @@ std::string GetGoldenDir() {
 #define DEBUGLOG
 #define MAXBLOCK 64
 
-template <typename T> constexpr auto getGoldenZero()
-{
+template <typename T>
+constexpr auto getGoldenZero() {
     if constexpr (sizeof(T) == 4) {
         return (uint32_t)0;
-    }
-    else if constexpr (sizeof(T) == 2) {
+    } else if constexpr (sizeof(T) == 2) {
         return (uint16_t)0;
-    }
-    else if constexpr (sizeof(T) == 1) {
+    } else if constexpr (sizeof(T) == 1) {
         return (uint8_t)0;
     }
 }
 
 template <int32_t testKey, typename T, int32_t kBlock>
-void tfillpad_test()
-{
+void tfillpad_test() {
     uint32_t M = 1024;
     uint32_t N = 1024;
 
@@ -66,8 +61,8 @@ void tfillpad_test()
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    int in_byteSize = M*N * sizeof(float);
-    int out_byteSize = M*N * sizeof(float);
+    int in_byteSize = M * N * sizeof(float);
+    int out_byteSize = M * N * sizeof(float);
 
     void *dstHost, *srcHost, *goldHost;
     void *dstDevice, *srcDevice;
@@ -102,99 +97,96 @@ void tfillpad_test()
 #ifdef DEBUGLOG
     aclrtMemcpy(logHost, sizeof(logHost), logDevice, sizeof(logHost), ACL_MEMCPY_DEVICE_TO_HOST);
 #endif
-	
-	std::ofstream inFile(GetGoldenDir()+"/input.bin", std::ios::binary | std::ios::out);
-	std::ofstream outFile(GetGoldenDir()+"/output.bin", std::ios::binary | std::ios::out);
-	std::ofstream goldFile(GetGoldenDir()+"/golden.bin", std::ios::binary | std::ios::out);
-	inFile.write((const char*)srcHost, actual_out_byteSize); 	
-	outFile.write((const char*)dstHost, actual_out_byteSize); 
-	goldFile.write((const char*)goldHost, actual_out_byteSize); 
-	inFile.close();
-	outFile.close();
-	goldFile.close();
+
+    std::ofstream inFile(GetGoldenDir() + "/input.bin", std::ios::binary | std::ios::out);
+    std::ofstream outFile(GetGoldenDir() + "/output.bin", std::ios::binary | std::ios::out);
+    std::ofstream goldFile(GetGoldenDir() + "/golden.bin", std::ios::binary | std::ios::out);
+    inFile.write((const char *)srcHost, actual_out_byteSize);
+    outFile.write((const char *)dstHost, actual_out_byteSize);
+    goldFile.write((const char *)goldHost, actual_out_byteSize);
+    inFile.close();
+    outFile.close();
+    goldFile.close();
 
     aclrtFree(dstDevice);
     aclrtFree(srcDevice);
-#ifdef DEBUGLOG	
+#ifdef DEBUGLOG
     aclrtFree(logDevice);
-#endif	
+#endif
 
     aclrtFreeHost(dstHost);
     aclrtFreeHost(srcHost);
     aclrtFreeHost(goldHost);
-	
+
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
-	int elements = actual_out_byteSize/sizeof(T);
+    int elements = actual_out_byteSize / sizeof(T);
 
     auto zero = getGoldenZero<T>();
     using CT = typeof(zero);
     std::vector<CT> golden(elements);
     std::vector<CT> devFinal(elements);
-	size_t oFileSize = actual_out_byteSize;
-    ReadFile(GetGoldenDir()+"/golden.bin", oFileSize, golden.data(), oFileSize);
-    ReadFile(GetGoldenDir()+"/output.bin", oFileSize, devFinal.data(), oFileSize);
+    size_t oFileSize = actual_out_byteSize;
+    ReadFile(GetGoldenDir() + "/golden.bin", oFileSize, golden.data(), oFileSize);
+    ReadFile(GetGoldenDir() + "/output.bin", oFileSize, devFinal.data(), oFileSize);
 
     bool ret = ResultCmp(golden, devFinal, 0);
 
-#ifdef DEBUGLOG	
-	for( int b=0; b<kBlock; b++ )
-	{
-		cout << "Block: " << setw(2) << b << " ";
-		for( int l=0; l<sizeof(logHost[0])/sizeof(logHost[0][0]) && l<PRINTLOG; l++ )
-		{
-			cout << hex << setfill('0') << setw(16) << logHost[b][l] << " ";
-		}
-		cout << dec << endl;
-	}
+#ifdef DEBUGLOG
+    for (int b = 0; b < kBlock; b++) {
+        cout << "Block: " << setw(2) << b << " ";
+        for (int l = 0; l < sizeof(logHost[0]) / sizeof(logHost[0][0]) && l < PRINTLOG; l++) {
+            cout << hex << setfill('0') << setw(16) << logHost[b][l] << " ";
+        }
+        cout << dec << endl;
+    }
 #endif
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TFILLPADTest, case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX)
-{
-	tfillpad_test<1,float,1>();
+TEST_F(TFILLPADTest, case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX) {
+    tfillpad_test<1, float, 1>();
 }
 
-TEST_F(TFILLPADTest, case_float_GT_128_127_VT_128_160_BLK1_PADMAX_PADMAX)
-{
-	tfillpad_test<2,float,1>();
+TEST_F(TFILLPADTest, case_float_GT_128_127_VT_128_160_BLK1_PADMAX_PADMAX) {
+    tfillpad_test<2, float, 1>();
 }
 
-TEST_F(TFILLPADTest, case_float_GT_128_127_VT_128_160_BLK1_PADMIN_PADMAX)
-{
-	tfillpad_test<3,float,1>();
+TEST_F(TFILLPADTest, case_float_GT_128_127_VT_128_160_BLK1_PADMIN_PADMAX) {
+    tfillpad_test<3, float, 1>();
 }
 
-TEST_F(TFILLPADTest, case_float_GT_260_7_VT_260_16_BLK1_PADMIN_PADMAX)
-{
-	tfillpad_test<4,float,1>();
+TEST_F(TFILLPADTest, case_float_GT_260_7_VT_260_16_BLK1_PADMIN_PADMAX) {
+    tfillpad_test<4, float, 1>();
 }
 
-TEST_F(TFILLPADTest, case_float_GT_260_7_VT_260_16_BLK1_PADMIN_PADMAX_INPLACE)
-{
-	tfillpad_test<5,float,1>();
+TEST_F(TFILLPADTest, case_float_GT_260_7_VT_260_16_BLK1_PADMIN_PADMAX_INPLACE) {
+    tfillpad_test<5, float, 1>();
 }
 
-TEST_F(TFILLPADTest, case_u16_GT_260_7_VT_260_32_BLK1_PADMIN_PADMAX)
-{
-	tfillpad_test<6,uint16_t,1>();
+TEST_F(TFILLPADTest, case_u16_GT_260_7_VT_260_32_BLK1_PADMIN_PADMAX) {
+    tfillpad_test<6, uint16_t, 1>();
 }
 
-TEST_F(TFILLPADTest, case_s8_GT_260_7_VT_260_64_BLK1_PADMIN_PADMAX)
-{
-	tfillpad_test<7,int8_t,1>();
+TEST_F(TFILLPADTest, case_s8_GT_260_7_VT_260_64_BLK1_PADMIN_PADMAX) {
+    tfillpad_test<7, int8_t, 1>();
 }
 
-TEST_F(TFILLPADTest, case_u16_GT_259_7_VT_260_32_BLK1_PADMIN_PADMAX_EXPAND)
-{
-	tfillpad_test<8,uint16_t,1>();
+TEST_F(TFILLPADTest, case_u16_GT_259_7_VT_260_32_BLK1_PADMIN_PADMAX_EXPAND) {
+    tfillpad_test<8, uint16_t, 1>();
 }
 
-TEST_F(TFILLPADTest, case_s8_GT_259_7_VT_260_64_BLK1_PADMIN_PADMAX_EXPAND)
-{
-	tfillpad_test<9,int8_t,1>();
+TEST_F(TFILLPADTest, case_s8_GT_259_7_VT_260_64_BLK1_PADMIN_PADMAX_EXPAND) {
+    tfillpad_test<9, int8_t, 1>();
+}
+
+TEST_F(TFILLPADTest, case_s16_GT_260_7_VT_260_32_BLK1_PADMIN_PADMIN) {
+    tfillpad_test<10, int16_t, 1>();
+}
+
+TEST_F(TFILLPADTest, case_s32_GT_260_7_VT_260_32_BLK1_PADMIN_PADMIN) {
+    tfillpad_test<11, int32_t, 1>();
 }
