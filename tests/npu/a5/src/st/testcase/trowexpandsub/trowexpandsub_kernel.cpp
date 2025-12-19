@@ -68,5 +68,5 @@ void launchTRowExpandSub(T *out, T*src0, T*src1, void *stream) {
 template void launchTRowExpandSub<float, 8, 128, 8, 1>(float *out, float *src0, float *src1, void *stream);
 template void launchTRowExpandSub<float, 24, 32, 24, 1>(float *out, float *src0, float *src1, void *stream);
 template void launchTRowExpandSub<aclFloat16, 16, 256, 16, 1>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
-template void launchTRowExpandSub<aclFloat16, 48, 64, 48, 1>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void launchTRowExpandSub<aclFloat16, 32, 64, 32, 1>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
 }

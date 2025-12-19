@@ -101,8 +101,8 @@ TEST_F(TRowExpandSubTest, case_fp16_16_256_16_1)
 {
     test_trowexpandsub<aclFloat16, 16, 256, 16, 1>();
 }
-TEST_F(TRowExpandSubTest, case_fp16_48_64_48_1)
+TEST_F(TRowExpandSubTest, case_fp16_32_64_32_1)
 {
-    test_trowexpandsub<aclFloat16, 48, 64, 48, 1>();
+    test_trowexpandsub<aclFloat16, 32, 64, 32, 1>();
 }
 }
