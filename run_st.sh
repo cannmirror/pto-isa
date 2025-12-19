@@ -86,7 +86,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tdivs -g TDIVSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tdivs -g TDIVSTest.case5
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmuls -g TMULSTest.case1
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tadds -g TADDSTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tadds -g TADDSTest.case6
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t texpands -g TEXPANDSTest.case_float_64x64_64x64_64x64_PAD_VALUE_NULL
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmp -g TCMPTest.case_float_1x64_1x64_1x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tscatter -g TSCATTERTest.case1
