@@ -24,6 +24,10 @@
         make install                         # root用户安装googletest
         # sudo make install                  # 非root用户安装googletest
         ```
+    > 注意：
+    > 
+    > - 若已使用其他方式安装googletest，需对CMakeLists.txt，做出对应修改，如在cmake时添加了`-D_GLIBCXX_USE_CXX11_ABI=0`参数，可在tests/npu/[a2a3 | a5]/src/st/CMakeLists.txt中添加`add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)`
+    > - python需要用到os、numpy、ctypes、struct、copy、math、enum、ml_dtypes、en_dtypes等包
 
 2. **安装驱动与固件（运行态依赖）**
 
