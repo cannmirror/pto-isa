@@ -34,6 +34,7 @@ tload
 tstore
 textract
 texpands
+tgatherb
 tmov
 tmrgsort
 trowsum
