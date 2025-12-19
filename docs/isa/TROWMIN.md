@@ -10,19 +10,21 @@ $$
 \\mathrm{dst}_{i,0} = \\min_j \\mathrm{src}_{i,j}
 $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.rowmin %src : tile<...> -> tile<...>
+```text
+%dst = trowmin %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.rowmin %src wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TROWMIN>>
+```text
+%dst, %e = trowmin %src wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWMIN>>
 ```
 
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.

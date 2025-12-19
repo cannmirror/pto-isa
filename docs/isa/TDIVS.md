@@ -16,25 +16,27 @@ For each element `(i, j)` in the valid region:
 
   $$ \mathrm{dst}_{i,j} = \frac{\mathrm{scalar}}{\mathrm{src}_{i,j}} $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Tile/scalar form:
 
-```mlir
-%dst = pto.tile.divs %src, %scalar : tile<...>, f32
+```text
+%dst = tdivs %src, %scalar : !pto.tile<...>, f32
 ```
 
 Scalar/tile form:
 
-```mlir
-%dst = pto.tile.divs %scalar, %src : f32, tile<...>
+```text
+%dst = tdivs %scalar, %src : f32, !pto.tile<...>
 ```
 
 Asynchronous form (same shapes, optional `wait(...)` + event result):
 
-```mlir
-%dst, %e = pto.tile.divs %src, %scalar wait(%e0)
-    : tile<...>, f32, !pto.event<producer = #pto.op<TDIVS>>
+```text
+%dst, %e = tdivs %src, %scalar wait(%e0)
+    : !pto.tile<...>, f32, !pto.event<producer = #pto.op<TDIVS>>
 ```
 
 ## C++ Intrinsic

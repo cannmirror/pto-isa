@@ -12,19 +12,21 @@ $$ \mathrm{dst}_{i,k} = \mathrm{src}_{i,\pi_i(k)} $$
 
 where $\pi_i$ is a permutation of the indices in the row. Sort order and stability are target-defined.
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst, %idx = pto.tile.sort32 %src : tile<...> -> (tile<...>, tile<...>)
+```text
+%dst, %idx = tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %idx, %e = pto.tile.sort32 %src wait(%e0)
-    : tile<...> -> (tile<...>, tile<...>), !pto.event<producer = #pto.op<TSORT32>>
+```text
+%dst, %idx, %e = tsort32 %src wait(%e0)
+    : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>), !pto.event<producer = #pto.op<TSORT32>>
 ```
 
 ## C++ Intrinsic

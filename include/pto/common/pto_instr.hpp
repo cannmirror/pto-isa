@@ -361,9 +361,9 @@ PTO_INST RecordEvent TGATHER(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1,
 }
 
 template <typename TileData, typename T, int descending, typename... WaitEvents>
-PTO_INST RecordEvent TCI(TileData &dst, T S, WaitEvents&... events) {
+PTO_INST RecordEvent TCI(TileData &dst, T start, WaitEvents&... events) {
   TSYNC(events...);
-  TCI_IMPL<TileData, T, descending>(dst, S);
+  TCI_IMPL<TileData, T, descending>(dst, start);
   return {};
 }
 
@@ -687,6 +687,27 @@ template <typename TileData, typename TileInd, typename... WaitEvents>
 PTO_INST RecordEvent TSCATTER(TileData &dst, TileData &src, TileInd &indexes, WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TSCATTER, dst, src, indexes);
+  return {};
+}
+
+template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
+PTO_INST RecordEvent TCOLEXPAND(TileDataDst &dst, TileDataSrc &src, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TCOLEXPAND, dst, src);
+  return {};
+}
+
+template <typename TileDst, typename GlobalData, typename TileInd, typename... WaitEvents>
+PTO_INST RecordEvent MGATHER(TileDst &dst, GlobalData &src, TileInd &indexes, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(MGATHER, dst, src, indexes);
+  return {};
+}
+
+template <typename GlobalData, typename TileSrc, typename TileInd, typename... WaitEvents>
+PTO_INST RecordEvent MSCATTER(GlobalData &dst, TileSrc &src, TileInd &indexes, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(MSCATTER, dst, src, indexes);
   return {};
 }
 

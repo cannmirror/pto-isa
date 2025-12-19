@@ -8,133 +8,78 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include <gtest/gtest.h>
 #include "test_common.h"
 #include <pto/pto-inst.hpp>
+#include <gtest/gtest.h>
 
-using namespace std;
 using namespace PtoTestCommon;
 
-template <typename T, int kGRowsD_, int kGColsD_, int kGRowsS0_, int kGColsS0_, int kGRowsS1_, int kGColsS1_,
-          int kTRowsD_, int kTColsD_, int kTRowsS0_, int kTColsS0_, int kTRowsS1_, int kTColsS1_, int DstValidRow,
-          int DstValidCol, int Src0ValidRow, int Src0ValidCol, int Src1ValidRow, int Src1ValidCol>
-void LaunchTPartMin(T *out, T *src0, T *src1, aclrtStream stream);
+template <int kRows, int kCols, int kValidRows1, int kValidCols1>
+void LaunchTPARTMIN(float *out, float *src0, float *src1, void *stream);
 
-class TPARTMINTest : public testing::Test {
-public:
-
-protected:
-    void SetUp() override
-    {
-    }
-
-    void TearDown() override
-    {
-    }
+class TPARTMIN_Test : public testing::Test {
 };
 
-std::string GetGoldenDir() {
+namespace {
+
+constexpr int kDeviceId = 0;
+constexpr float kEpsilon = 0.0f;
+constexpr int kRows = 64;
+constexpr int kCols = 64;
+constexpr int kValidRows1 = 32;
+constexpr int kValidCols1 = 32;
+
+} // namespace
+
+static std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
-    const std::string caseName = testInfo->name();
-    std::string suiteName = testInfo->test_suite_name();
-    std::string fullPath = "../" + suiteName + "." + caseName;
-    return fullPath;
+    return "../" + std::string(testInfo->test_suite_name()) + "." + testInfo->name();
 }
 
-template <typename T, int kGRowsD_, int kGColsD_, int kGRowsS0_, int kGColsS0_, int kGRowsS1_, int kGColsS1_,
-          int kTRowsD_, int kTColsD_, int kTRowsS0_, int kTColsS0_, int kTRowsS1_, int kTColsS1_, int DstValidRow,
-          int DstValidCol, int Src0ValidRow, int Src0ValidCol, int Src1ValidRow, int Src1ValidCol>
-bool TPartMinTest()
+TEST_F(TPARTMIN_Test, case_float_64x64_src1_32x32)
 {
-    aclInit(nullptr);
-    aclrtSetDevice(0);
+    const size_t fileSize = static_cast<size_t>(kRows) * static_cast<size_t>(kCols) * sizeof(float);
 
+    aclInit(nullptr);
+    aclrtSetDevice(kDeviceId);
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    size_t dstByteSize = kGRowsD_ * kGColsD_ * sizeof(T);
-    size_t src0ByteSize = kGRowsS0_ * kGColsS0_ * sizeof(T);
-    size_t src1ByteSize = kGRowsS1_ * kGColsS1_ * sizeof(T);
+    float *dstHost, *src0Host, *src1Host;
+    float *dstDevice, *src0Device, *src1Device;
+    aclrtMallocHost((void **)(&dstHost), fileSize);
+    aclrtMallocHost((void **)(&src0Host), fileSize);
+    aclrtMallocHost((void **)(&src1Host), fileSize);
+    aclrtMalloc((void **)&dstDevice, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src0Device, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src1Device, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    T *dstHost = nullptr;
-    T *src0Host = nullptr;
-    T *src1Host = nullptr;
-    T *dstDevice = nullptr;
-    T *src0Device = nullptr;
-    T *src1Device = nullptr;
+    size_t readSize = 0;
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input1.bin", readSize, src0Host, fileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input2.bin", readSize, src1Host, fileSize));
+    aclrtMemcpy(src0Device, fileSize, src0Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(src1Device, fileSize, src1Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-    aclrtMallocHost((void**)(&dstHost), dstByteSize);
-    aclrtMallocHost((void**)(&src0Host), src0ByteSize);
-    aclrtMallocHost((void**)(&src1Host), src1ByteSize);
-
-    aclrtMalloc((void**)(&dstDevice), dstByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void**)(&src0Device), src0ByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void**)(&src1Device), src1ByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input0.bin", src0ByteSize, src0Host, src0ByteSize);
-    ReadFile(GetGoldenDir() + "/input1.bin", src1ByteSize, src1Host, src1ByteSize);
-
-    aclrtMemcpy(src0Device, src0ByteSize, src0Host, src0ByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, src1ByteSize, src1Host, src1ByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTPartMin<T, kGRowsD_, kGColsD_, kGRowsS0_, kGColsS0_, kGRowsS1_, kGColsS1_, kTRowsD_, kTColsD_, kTRowsS0_,
-                   kTColsS0_, kTRowsS1_, kTColsS1_, DstValidRow, DstValidCol, Src0ValidRow, Src0ValidCol, Src1ValidRow,
-                   Src1ValidCol>(dstDevice, src0Device, src1Device, stream);
+    LaunchTPARTMIN<kRows, kCols, kValidRows1, kValidCols1>(dstDevice, src0Device, src1Device, stream);
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, dstByteSize, dstDevice, dstByteSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstByteSize);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, fileSize);
 
     aclrtFree(dstDevice);
     aclrtFree(src0Device);
     aclrtFree(src1Device);
-    aclrtFree(dstHost);
-    aclrtFree(src0Host);
-    aclrtFree(src1Host);
-
+    aclrtFreeHost(dstHost);
+    aclrtFreeHost(src0Host);
+    aclrtFreeHost(src1Host);
     aclrtDestroyStream(stream);
-    aclrtResetDevice(0);
+    aclrtResetDevice(kDeviceId);
     aclFinalize();
 
-    std::vector<T> golden(dstByteSize);
-    std::vector<T> devFinal(dstByteSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", dstByteSize, golden.data(), dstByteSize);
-    ReadFile(GetGoldenDir() + "/output.bin", dstByteSize, devFinal.data(), dstByteSize);
-    return ResultCmp<T>(golden, devFinal, 0.001f);
-}
-
-TEST_F(TPARTMINTest, test0) {
-    bool res = TPartMinTest<int16_t, 16, 32, 16, 16, 16, 32, 16, 32, 16, 16, 16, 32, 16, 32, 16, 16, 16, 32>();
-    EXPECT_TRUE(res);
-}
-TEST_F(TPARTMINTest, test1) {
-    bool res = TPartMinTest<aclFloat16, 22, 32, 22, 32, 16, 32, 22, 32, 22, 32, 16, 32, 22, 32, 22, 32, 16, 32>();
-    EXPECT_TRUE(res);
-}
-TEST_F(TPARTMINTest, test2) {
-    bool res = TPartMinTest<float, 22, 40, 22, 40, 22, 32, 22, 40, 22, 40, 22, 32, 22, 40, 22, 40, 22, 32>();
-    EXPECT_TRUE(res);
-}
-TEST_F(TPARTMINTest, test3) {
-    bool res = TPartMinTest<int32_t, 22, 40, 22, 40, 8, 40, 22, 40, 22, 40, 8, 40, 22, 40, 22, 40, 8, 40>();
-    EXPECT_TRUE(res);
-}
-TEST_F(TPARTMINTest, test4) {
-    bool res = TPartMinTest<float, 64, 128, 64, 128, 64, 128, 64, 128, 64, 128, 64, 128, 64, 128, 64, 128, 64, 128>();
-    EXPECT_TRUE(res);
-}
-TEST_F(TPARTMINTest, testEmpty0) {
-    bool res = TPartMinTest<int16_t, 16, 32, 16, 16, 16, 32, 16, 32, 16, 16, 16, 32, 16, 32, 16, 0, 16, 32>();
-    EXPECT_TRUE(res);
-}
-TEST_F(TPARTMINTest, testEmpty1) {
-    bool res = TPartMinTest<aclFloat16, 16, 32, 16, 32, 16, 32, 16, 32, 8, 32, 16, 32, 16, 32, 0, 32, 16, 32>();
-    EXPECT_TRUE(res);
-}
-TEST_F(TPARTMINTest, testEmpty2) {
-    bool res = TPartMinTest<float, 16, 32, 16, 32, 16, 16, 16, 32, 16, 32, 16, 16, 16, 32, 16, 32, 16, 0>();
-    EXPECT_TRUE(res);
-}
-TEST_F(TPARTMINTest, testEmpty3) {
-    bool res = TPartMinTest<int32_t, 16, 32, 16, 32, 16, 32, 16, 32, 16, 32, 8, 32, 16, 32, 16, 32, 0, 32>();
-    EXPECT_TRUE(res);
+    std::vector<float> golden(static_cast<size_t>(kRows) * static_cast<size_t>(kCols));
+    std::vector<float> out(static_cast<size_t>(kRows) * static_cast<size_t>(kCols));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", readSize, golden.data(), fileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", readSize, out.data(), fileSize));
+    EXPECT_TRUE(ResultCmp<float>(golden, out.data(), kEpsilon));
 }

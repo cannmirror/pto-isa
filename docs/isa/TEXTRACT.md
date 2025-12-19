@@ -10,21 +10,23 @@ Conceptually copies a window starting at `(indexRow, indexCol)` from `src` into 
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src}_{\mathrm{indexRow}+i,\; \mathrm{indexCol}+j} $$
 
-## IR Syntax
+## Assembly Syntax
 
-Synchronous form (from `docs/ir/PTO-IR.md`):
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
-```mlir
-%dst = pto.tile.extract %src[%r0, %r1]
-    : tile<SrcShape x Ts, #pto.tile_info<loc=Mat, layout=Ls>>
-   -> tile<DstShape x Ts, #pto.tile_info<loc=Left|Right, layout=Ld>>
+Synchronous form:
+
+```text
+%dst = textract %src[%r0, %r1]
+    : !pto.tile<SrcShape x Ts, #pto.tile_info<loc=Mat, layout=Ls>>
+   -> !pto.tile<DstShape x Ts, #pto.tile_info<loc=Left|Right, layout=Ld>>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.extract %src[%r0, %r1] wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TEXTRACT>>
+```text
+%dst, %e = textract %src[%r0, %r1] wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TEXTRACT>>
 ```
 
 ## C++ Intrinsic

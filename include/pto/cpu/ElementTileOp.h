@@ -12,6 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define ELEMENT_TILE_OP_HPP
 
 #include "pto/cpu/ElementOp.h"
+#include "pto/cpu/parallel.hpp"
 
 namespace pto {
     template<typename tile_shape, ElementOp op>
@@ -20,10 +21,41 @@ namespace pto {
                               size_t extra = 0)
     {
         using DType = typename tile_shape::DType;
-        for(size_t c = 0; c < validCol; c++) {
-            for(size_t r=0; r < validRow; r++) {
-                size_t idx = GetTileElementOffset<tile_shape>(r, c);
-                ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], extra);
+        if constexpr (tile_shape::SFractal == SLayout::NoneBox) {
+            if constexpr (tile_shape::isRowMajor) {
+                cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                    const std::size_t base = r * tile_shape::Cols;
+                    PTO_CPU_VECTORIZE_LOOP
+                    for (std::size_t c = 0; c < validCol; ++c) {
+                        const std::size_t idx = base + c;
+                        ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], extra);
+                    }
+                });
+            } else {
+                cpu::parallel_for_rows(validCol, validRow, [&](std::size_t c) {
+                    const std::size_t base = c * tile_shape::Rows;
+                    PTO_CPU_VECTORIZE_LOOP
+                    for (std::size_t r = 0; r < validRow; ++r) {
+                        const std::size_t idx = base + r;
+                        ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], extra);
+                    }
+                });
+            }
+        } else {
+            if constexpr (tile_shape::isRowMajor) {
+                cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                    for (std::size_t c = 0; c < validCol; ++c) {
+                        const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                        ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], extra);
+                    }
+                });
+            } else {
+                cpu::parallel_for_rows(validCol, validRow, [&](std::size_t c) {
+                    for (std::size_t r = 0; r < validRow; ++r) {
+                        const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                        ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], extra);
+                    }
+                });
             }
         }
     }
@@ -33,10 +65,41 @@ namespace pto {
                              unsigned validRow, unsigned validCol)
     {
         using DType = typename tile_shape::DType;
-        for (int i = 0; i < validRow; ++i) {
-            for (int j = 0; j < validCol; ++j) {
-                size_t idx = GetTileElementOffset<tile_shape>(i,j);
-                ElementOpCal<DType, op>::apply(dst[idx], src[idx]);
+        if constexpr (tile_shape::SFractal == SLayout::NoneBox) {
+            if constexpr (tile_shape::isRowMajor) {
+                cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                    const std::size_t base = r * tile_shape::Cols;
+                    PTO_CPU_VECTORIZE_LOOP
+                    for (std::size_t c = 0; c < validCol; ++c) {
+                        const std::size_t idx = base + c;
+                        ElementOpCal<DType, op>::apply(dst[idx], src[idx]);
+                    }
+                });
+            } else {
+                cpu::parallel_for_rows(validCol, validRow, [&](std::size_t c) {
+                    const std::size_t base = c * tile_shape::Rows;
+                    PTO_CPU_VECTORIZE_LOOP
+                    for (std::size_t r = 0; r < validRow; ++r) {
+                        const std::size_t idx = base + r;
+                        ElementOpCal<DType, op>::apply(dst[idx], src[idx]);
+                    }
+                });
+            }
+        } else {
+            if constexpr (tile_shape::isRowMajor) {
+                cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                    for (std::size_t c = 0; c < validCol; ++c) {
+                        const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                        ElementOpCal<DType, op>::apply(dst[idx], src[idx]);
+                    }
+                });
+            } else {
+                cpu::parallel_for_rows(validCol, validRow, [&](std::size_t c) {
+                    for (std::size_t r = 0; r < validRow; ++r) {
+                        const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                        ElementOpCal<DType, op>::apply(dst[idx], src[idx]);
+                    }
+                });
             }
         }
     }
@@ -146,10 +209,41 @@ namespace pto {
                                   unsigned validRow, unsigned validCol)
     {
         using DType = typename tile_shape::DType;
-        for(size_t c = 0; c < validCol; c++) {
-            for(size_t r=0; r < validRow; r++) {
-                size_t idx = GetTileElementOffset<tile_shape>(r, c);
-                ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], src2[idx]);
+        if constexpr (tile_shape::SFractal == SLayout::NoneBox) {
+            if constexpr (tile_shape::isRowMajor) {
+                cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                    const std::size_t base = r * tile_shape::Cols;
+                    PTO_CPU_VECTORIZE_LOOP
+                    for (std::size_t c = 0; c < validCol; ++c) {
+                        const std::size_t idx = base + c;
+                        ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], src2[idx]);
+                    }
+                });
+            } else {
+                cpu::parallel_for_rows(validCol, validRow, [&](std::size_t c) {
+                    const std::size_t base = c * tile_shape::Rows;
+                    PTO_CPU_VECTORIZE_LOOP
+                    for (std::size_t r = 0; r < validRow; ++r) {
+                        const std::size_t idx = base + r;
+                        ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], src2[idx]);
+                    }
+                });
+            }
+        } else {
+            if constexpr (tile_shape::isRowMajor) {
+                cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                    for (std::size_t c = 0; c < validCol; ++c) {
+                        const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                        ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], src2[idx]);
+                    }
+                });
+            } else {
+                cpu::parallel_for_rows(validCol, validRow, [&](std::size_t c) {
+                    for (std::size_t r = 0; r < validRow; ++r) {
+                        const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                        ElementOpCal<DType, op>::apply(dst[idx], src0[idx], src1[idx], src2[idx]);
+                    }
+                });
             }
         }
     }

@@ -31,7 +31,7 @@ void CheckValid() {
 template <typename TileData, typename T, int descending = 0>
 __tf__
 AICORE
-void Tci(typename TileData::TileDType __out__ dst, T S, unsigned validCol)
+void Tci(typename TileData::TileDType __out__ dst, T start, unsigned validCol)
 {
     // 1.获取dst中的信息;
     using Tdst = typename TileData::DType;
@@ -40,24 +40,24 @@ void Tci(typename TileData::TileDType __out__ dst, T S, unsigned validCol)
     if(descending)
     {
         for(int32_t j = 0; j < validCol; j++) {
-            *(dstPtr + j) = S - j;
+            *(dstPtr + j) = start - j;
         }
     }
     else
     {
         for(int32_t j = 0; j < validCol; j++) {
-            *(dstPtr + j) = S + j;
+            *(dstPtr + j) = start + j;
         }
     }
 }
 
 template <typename TileData, typename T, int descending>
 AICORE
-void TCI_IMPL (TileData &dst, T S)
+void TCI_IMPL (TileData &dst, T start)
 {
     CheckValid<TileData, T>();
     unsigned validCol = dst.GetValidCol();
-    Tci<TileData, T, descending>(dst.data(), S, validCol);
+    Tci<TileData, T, descending>(dst.data(), start, validCol);
 }
 }
 #endif

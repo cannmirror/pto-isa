@@ -15,6 +15,20 @@ import os
 import numpy as np
 np.random.seed(19)
 
+def matmul_reference(a, b, out_dtype):
+    """
+    Reference matmul that avoids BLAS calls (some macOS Python distributions may
+    ship a broken/unsupported BLAS backend that returns incorrect results).
+
+    a: (m, k)
+    b: (k, n)
+    returns: (m, n)
+    """
+    a = a.astype(out_dtype, copy=False)
+    b = b.astype(out_dtype, copy=False)
+    # (m, k, 1) * (1, k, n) -> (m, k, n) -> sum over k
+    return (a[:, :, None] * b[None, :, :]).sum(axis=1, dtype=out_dtype)
+
 def gen_golden_data(case_name, param):
     src_type = param.atype
     dst_type = param.ctype
@@ -28,7 +42,7 @@ def gen_golden_data(case_name, param):
     golden=np.zeros([m,n], dst_type)
 
     for i in range(repeats):
-        golden = golden + np.matmul(x1_gm[i].astype(dst_type), x2_gm[i].astype(dst_type)).astype(dst_type)
+        golden = golden + matmul_reference(x1_gm[i], x2_gm[i], dst_type).astype(dst_type)
 
         if is_atrans:
             x1_gm[i] = x1_gm[i].transpose()

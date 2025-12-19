@@ -51,10 +51,18 @@ namespace pto {
 }
 
 #if defined(__CPU_SIM)
-    #include <stdfloat>
-    typedef std::float16_t half;
-    typedef std::float16_t bfloat16_t;
-    typedef std::float16_t aclFloat16;
+    #if defined(__has_include) && __has_include(<stdfloat>)
+        #include <stdfloat>
+        typedef std::float16_t half;
+        typedef std::float16_t bfloat16_t;
+        typedef std::float16_t aclFloat16;
+    #else
+        // macOS libc++ (and some other toolchains) may not ship <stdfloat> yet.
+        // For CPU simulation, a best-effort 16-bit float type is sufficient.
+        typedef _Float16 half;
+        typedef _Float16 bfloat16_t;
+        typedef _Float16 aclFloat16;
+    #endif
 #endif
 
 #endif

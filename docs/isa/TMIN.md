@@ -10,19 +10,21 @@ For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \min(\mathrm{src0}_{i,j}, \mathrm{src1}_{i,j}) $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.min %src0, %src1 : tile<...>
+```text
+%dst = tmin %src0, %src1 : !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.min %src0, %src1 wait(%e0, %e1)
-    : tile<...>, !pto.event<producer = #pto.op<TMIN>>
+```text
+%dst, %e = tmin %src0, %src1 wait(%e0, %e1)
+    : !pto.tile<...>, !pto.event<producer = #pto.op<TMIN>>
 ```
 
 ## C++ Intrinsic

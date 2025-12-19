@@ -10,20 +10,22 @@ Merges sorted input lists into `dst`. Ordering, element format (e.g., value/inde
 
 $$ \mathrm{dst} = \mathrm{merge}(\mathrm{src}_0, \mathrm{src}_1, \ldots) $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form (conceptual):
 
-```mlir
-%dst, %executed = pto.tile.mrgsort %src0, %src1 {exhausted = false}
-    : tile<...>, tile<...> -> (tile<...>, vector<4xi16>)
+```text
+%dst, %executed = tmrgsort %src0, %src1 {exhausted = false}
+    : !pto.tile<...>, !pto.tile<...> -> (!pto.tile<...>, vector<4xi16>)
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %executed, %e = pto.tile.mrgsort %src0, %src1 {exhausted = false} wait(%e0, %e1)
-    : tile<...>, tile<...> -> (tile<...>, vector<4xi16>), !pto.event<producer = #pto.op<TMRGSORT>>
+```text
+%dst, %executed, %e = tmrgsort %src0, %src1 {exhausted = false} wait(%e0, %e1)
+    : !pto.tile<...>, !pto.tile<...> -> (!pto.tile<...>, vector<4xi16>), !pto.event<producer = #pto.op<TMRGSORT>>
 ```
 
 ## C++ Intrinsic

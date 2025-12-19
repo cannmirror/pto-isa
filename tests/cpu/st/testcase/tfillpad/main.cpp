@@ -12,6 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/pto-inst.hpp>
 #include <gtest/gtest.h>
 #include <filesystem>
+#include <cstring>
 
 using namespace std;
 using namespace PtoTestCommon;
@@ -31,7 +32,7 @@ protected:
 void CreateDirectory(const std::string& path){
     try {
         std::filesystem::path dirPath(path);
-        std::filesystem::create_directory(dirPath);
+        std::filesystem::create_directories(dirPath);
     } catch (const std::filesystem::filesystem_error& e){
         std::cerr<< e.what() << std::endl;
     }
@@ -118,6 +119,14 @@ void tfillpad_test()
     inFile.close();
     outFile.close();
     goldFile.close();
+
+    int elements = actual_out_byteSize / sizeof(T);
+    std::vector<T> golden(elements);
+    std::vector<T> devFinal(elements);
+    std::memcpy(golden.data(), goldHost, actual_out_byteSize);
+    std::memcpy(devFinal.data(), dstHost, actual_out_byteSize);
+    bool ret = ResultCmp(golden, devFinal, 0);
+
     aclrtFree(dstDevice);
     aclrtFree(srcDevice);
 #ifdef DEBUGLOG
@@ -131,15 +140,6 @@ void tfillpad_test()
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
-
-    int elements = actual_out_byteSize / sizeof(T);
-
-    std::vector<T> golden(elements);
-    std::vector<T> devFinal(elements);
-    size_t oFileSize = actual_out_byteSize;
-    CHECK_RESULT_GTEST(ReadFile(goldenDir+"/golden.bin", oFileSize, golden.data(), oFileSize)); 
-    CHECK_RESULT_GTEST(ReadFile(goldenDir+"/output.bin", oFileSize, devFinal.data(), oFileSize));
-    bool ret = ResultCmp(golden, devFinal, 0);
 
 #ifdef DEBUGLOG
     for (int b = 0; b < kBlock; b++)

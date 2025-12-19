@@ -10,26 +10,28 @@ For matrix shapes `A` (MxK), `B` (KxN), `C0` (MxN), `C1` (MxN):
 
 $$ \mathrm{C1}_{i,j} = \mathrm{C0}_{i,j} + \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cdot \mathrm{B}_{k,j} $$
 
-## IR Syntax
+## Assembly Syntax
 
-Synchronous form (from `docs/ir/PTO-IR.md`):
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
-```mlir
-%acc1 = pto.tile.matmul.acc %acc0, %a, %b
-    : tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
-      tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
-   -> tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>
+Synchronous form:
+
+```text
+%acc1 = tmatmul.acc %acc0, %a, %b
+    : !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
+      !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
+   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>
 ```
 
 Asynchronous form:
 
-```mlir
-%acc1, %e = pto.tile.matmul.acc %acc0, %a, %b wait(%e0, %e1)
-    : tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
-      tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
-   -> tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
+```text
+%acc1, %e = tmatmul.acc %acc0, %a, %b wait(%e0, %e1)
+    : !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
+      !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
+   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
       !pto.event<producer = #pto.op<TMATMUL_ACC>>
 ```
 

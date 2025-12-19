@@ -12,6 +12,7 @@
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -176,10 +177,15 @@ def run_binary(binary: Path, build_type: str, cwd: Optional[Path] = None) -> Non
 
 
 def build_and_run_demo(repo_root: Path, build_type: str, cxx: Optional[str], cc: Optional[str], *,
-                       verbose: bool) -> None:
-    demo_src = repo_root / "demo"
+	                       verbose: bool) -> None:
+    demo_src = repo_root / "demos" / "cpu" / "gemm_demo"
+    legacy_demo_src = repo_root / "demo"
+    if not demo_src.exists() and legacy_demo_src.exists():
+        demo_src = legacy_demo_src
     if not demo_src.exists():
-        raise RuntimeError(f"demo dir not found: {demo_src}")
+        raise RuntimeError(
+            f"demo dir not found: {repo_root / 'demos' / 'cpu' / 'gemm_demo'} (legacy: {legacy_demo_src})"
+        )
 
     demo_build = demo_src / "build"
     if demo_build.exists():
@@ -187,7 +193,16 @@ def build_and_run_demo(repo_root: Path, build_type: str, cxx: Optional[str], cc:
     demo_build.mkdir(parents=True, exist_ok=True)
 
     run_command(
-        ["cmake", "-S", str(demo_src), "-B", str(demo_build), f"-DCMAKE_BUILD_TYPE={build_type}"],
+        [
+            "cmake",
+            "-S",
+            str(demo_src),
+            "-B",
+            str(demo_build),
+            f"-DCMAKE_BUILD_TYPE={build_type}",
+            *([f"-DCMAKE_C_COMPILER={cc}"] if cc else []),
+            *([f"-DCMAKE_CXX_COMPILER={cxx}"] if cxx else []),
+        ],
         title="[STEP] demo: cmake configure",
         verbose=verbose,
     )
@@ -244,7 +259,7 @@ def _parse_duration_seconds(s: str) -> float:
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Build & run CPU(x86) ST unit tests (tests/cpu/st)",
+        description="Build & run CPU simulator ST unit tests (tests/cpu/st)",
         epilog=("Examples:\n  python run_cpu.py --build-type Release\n"
             "  python run_cpu.py --testcase tadd --build-type Release\n"
             "  python run_cpu.py --no-build --gtest_filter TADDTest.*\n"
@@ -291,7 +306,7 @@ def log_build_info(args, cxx, cc) -> None:
 
 def run_demo_mode(args, repo_root, cxx, cc) -> int:
     if args.demo_only and not args.demo:
-        logging.info("error: --demo-only requires --demo", file=sys.stderr)
+        logging.error("error: --demo-only requires --demo")
         return 2
     demo_name = args.demo or "gemm"
     if not args.demo:
@@ -310,7 +325,7 @@ def run_demo_mode(args, repo_root, cxx, cc) -> int:
 def run_test_mode(args, repo_root, cxx, cc) -> int:
     source_dir = repo_root / "tests" / "cpu" / "st"
     if not source_dir.exists():
-        logging.info(f"error: not found CPU ST dir: {source_dir}", file=sys.stderr)
+        logging.error(f"error: not found CPU ST dir: {source_dir}")
         return 2
 
     build_dir = Path(args.build_dir) if args.build_dir else (source_dir / "build")
@@ -321,7 +336,7 @@ def run_test_mode(args, repo_root, cxx, cc) -> int:
         if build_dir.exists():
             shutil.rmtree(build_dir)
 
-    need_build = determine_need_build(args, build_dir)
+    need_build = determine_need_build(args, source_dir, build_dir)
     if need_build:
         if not perform_build(args, source_dir, build_dir, cxx, cc):
             return 2
@@ -331,13 +346,41 @@ def run_test_mode(args, repo_root, cxx, cc) -> int:
     return execute_tests(args, source_dir, build_dir)
 
 
-def determine_need_build(args, build_dir) -> bool:
+def parse_expected_testcases(source_dir: Path) -> Optional[set[str]]:
+    cmake_list = source_dir / "testcase" / "CMakeLists.txt"
+    if not cmake_list.exists():
+        return None
+
+    text = cmake_list.read_text(encoding="utf-8", errors="replace")
+    m = re.search(r"set\(ALL_TESTCASES\s*(.*?)\)", text, flags=re.DOTALL)
+    if not m:
+        return None
+
+    body = m.group(1)
+    cases: list[str] = []
+    for raw_line in body.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        cases.extend(line.split())
+    return set(cases)
+
+
+def determine_need_build(args, source_dir: Path, build_dir: Path) -> bool:
     binaries_before = find_binaries(build_dir, args.build_type) if build_dir.exists() else {}
     have_requested_binary = True
     if args.testcase:
         have_requested_binary = args.testcase in binaries_before
     else:
         have_requested_binary = bool(binaries_before)
+        expected = parse_expected_testcases(source_dir)
+        if expected:
+            missing = expected.difference(binaries_before.keys())
+            if missing:
+                have_requested_binary = False
 
     need_build = (
         (not args.no_build)
@@ -376,14 +419,14 @@ def perform_build(args, source_dir, build_dir, cxx, cc) -> bool:
 def execute_tests(args, source_dir, build_dir) -> int:
     binaries = find_binaries(build_dir, args.build_type)
     if not binaries:
-        logging.info(f"error: no binaries found under {build_dir / 'bin'} (did build succeed?)", file=sys.stderr)
+        logging.error(f"error: no binaries found under {build_dir / 'bin'} (did build succeed?)")
         return 2
 
     selected: list[tuple[str, Path]]
     if args.testcase:
         if args.testcase not in binaries:
             known = ", ".join(sorted(binaries.keys()))
-            logging.info(f"error: unknown testcase '{args.testcase}'. Built binaries: {known}", file=sys.stderr)
+            logging.error(f"error: unknown testcase '{args.testcase}'. Built binaries: {known}")
             return 2
         selected = [(args.testcase, binaries[args.testcase])]
     else:

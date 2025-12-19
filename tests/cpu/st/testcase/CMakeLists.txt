@@ -23,9 +23,19 @@ function(pto_cpu_sim_st NAME)
     )
 
     target_link_libraries(${NAME} PRIVATE
-        stdc++ m dl GTest::gtest GTest::gtest_main pthread
+        GTest::gtest
+        GTest::gtest_main
+        Threads::Threads
     )
+    if (UNIX)
+        target_link_libraries(${NAME} PRIVATE m)
+    endif()
+    if (UNIX AND NOT APPLE)
+        target_link_libraries(${NAME} PRIVATE dl)
+    endif()
 endfunction()
+
+find_package(Threads REQUIRED)
 
 set(ALL_TESTCASES
 tmatmul
@@ -46,6 +56,19 @@ tsqrt
 tfillpad
 ttrans
 tsels
+tcmps
+tcolsum
+tcolmax
+tcvt
+tci
+tgatherb
+tpartadd
+tpartmax
+tpartmin
+trowexpand
+trsqrt
+tsel
+tsort32
 trem
 tshl
 tshr
@@ -75,13 +98,16 @@ tadds
 tdivs
 tmuls
 tmins
-tpartmax
-tpartmin
-tpartadd
+trowmin
+tcolmin
+tcolexpand
+tscatter
+mgather
+mscatter
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})
-if((DEFINED TEST_CASE AND TEST_CASE STREQUAL TESTCASE) OR (NOT DEFINED TEST_CASE))
-    add_subdirectory(${TESTCASE})
-endif()
+    if(NOT DEFINED TEST_CASE OR TEST_CASE STREQUAL "${TESTCASE}")
+        add_subdirectory(${TESTCASE})
+    endif()
 endforeach()

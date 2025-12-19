@@ -12,19 +12,21 @@ $$ \mathrm{dst}_{i,j} = \mathrm{src}_{j,i} $$
 
 Exact shape/layout constraints depend on the target.
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.trans %src : tile<...> -> tile<...>
+```text
+%dst = ttrans %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.trans %src wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TTRANS>>
+```text
+%dst, %e = ttrans %src wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TTRANS>>
 ```
 
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.

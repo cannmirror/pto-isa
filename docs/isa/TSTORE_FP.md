@@ -12,20 +12,22 @@ Conceptually stores a quantized/dequantized value derived from `src` and `fp` in
 
 $$ \mathrm{dst}[\cdots] = \mathrm{Convert}\!\left(\mathrm{src};\ \mathrm{fp}\right) $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-pto.tile.store.fp %src, %fp, %sv_out[%c0, %c0]
-    : tile<...>, tile<...>, pto.memref<...>
+```text
+tstore.fp %src, %fp, %sv_out[%c0, %c0]
+    : !pto.tile<...>, !pto.tile<...>, !pto.memref<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%e = pto.tile.store.fp %src, %fp, %sv_out[%c0, %c0] wait(%e0)
-    : tile<...>, tile<...>, pto.memref<...>, !pto.event<producer = #pto.op<TSTORE_ACC>>
+```text
+%e = tstore.fp %src, %fp, %sv_out[%c0, %c0] wait(%e0)
+    : !pto.tile<...>, !pto.tile<...>, !pto.memref<...>, !pto.event<producer = #pto.op<TSTORE_ACC>>
 ```
 
 ## C++ Intrinsic

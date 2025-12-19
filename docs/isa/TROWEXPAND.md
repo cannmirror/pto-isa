@@ -10,19 +10,21 @@ $$
 \\mathrm{dst}_{i,j} = \\mathrm{src}_{i,0}
 $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.rowexpand %src : tile<...> -> tile<...>
+```text
+%dst = trowexpand %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.rowexpand %src wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TROWEXPAND>>
+```text
+%dst, %e = trowexpand %src wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWEXPAND>>
 ```
 
 ## C++ Intrinsic

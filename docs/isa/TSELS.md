@@ -18,19 +18,21 @@ $$
 \end{cases}
 $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.sels %src0, %src1, %selectMode : tile<...>
+```text
+%dst = tsels %src0, %src1, %selectMode : !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.sels %src0, %src1, %selectMode wait(%e0, %e1)
-    : tile<...>, !pto.event<producer = #pto.op<TSELS>>
+```text
+%dst, %e = tsels %src0, %src1, %selectMode wait(%e0, %e1)
+    : !pto.tile<...>, !pto.event<producer = #pto.op<TSELS>>
 ```
 
 ## C++ Intrinsic

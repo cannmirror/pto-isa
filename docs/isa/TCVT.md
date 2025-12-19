@@ -12,20 +12,22 @@ $$ \mathrm{dst}_{i,j} = \mathrm{cast}_{\mathrm{rmode}}\!\left(\mathrm{src}_{i,j}
 
 where `rmode` is a rounding policy (see `pto::RoundMode`).
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.cvt %src {rmode = #pto.round_mode<CAST_RINT>}
-    : tile<...> -> tile<...>
+```text
+%dst = tcvt %src {rmode = #pto.round_mode<CAST_RINT>}
+    : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.cvt %src {rmode = #pto.round_mode<CAST_RINT>} wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TCVT>>
+```text
+%dst, %e = tcvt %src {rmode = #pto.round_mode<CAST_RINT>} wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCVT>>
 ```
 
 ## C++ Intrinsic

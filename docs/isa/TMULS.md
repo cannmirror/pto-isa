@@ -10,19 +10,21 @@ For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \cdot \mathrm{scalar} $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.muls %src, %scalar : tile<...>, f32
+```text
+%dst = tmuls %src, %scalar : !pto.tile<...>, f32
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.muls %src, %scalar wait(%e0)
-    : tile<...>, f32, !pto.event<producer = #pto.op<TMULS>>
+```text
+%dst, %e = tmuls %src, %scalar wait(%e0)
+    : !pto.tile<...>, f32, !pto.event<producer = #pto.op<TMULS>>
 ```
 
 ## C++ Intrinsic

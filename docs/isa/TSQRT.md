@@ -10,19 +10,21 @@ For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \sqrt{\mathrm{src}_{i,j}} $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.sqrt %src : tile<...>
+```text
+%dst = tsqrt %src : !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.sqrt %src wait(%e0)
-    : tile<...>, !pto.event<producer = #pto.op<TSQRT>>
+```text
+%dst, %e = tsqrt %src wait(%e0)
+    : !pto.tile<...>, !pto.event<producer = #pto.op<TSQRT>>
 ```
 
 ## C++ Intrinsic

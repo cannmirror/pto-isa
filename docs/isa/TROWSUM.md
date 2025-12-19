@@ -10,19 +10,21 @@ $$
 \\mathrm{dst}_{i,0} = \\sum_j \\mathrm{src}_{i,j}
 $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.rowsum %src : tile<...> -> tile<...>
+```text
+%dst = trowsum %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.rowsum %src wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TROWSUM>>
+```text
+%dst, %e = trowsum %src wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWSUM>>
 ```
 
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.

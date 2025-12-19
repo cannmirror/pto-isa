@@ -12,19 +12,21 @@ $$ \mathrm{dst}_{i,j} = *\left(\mathrm{srcBase} + \mathrm{offset}_{i,j}\right) $
 
 Exact bounds behavior is implementation-defined.
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.gatherb %src, %offsets : tile<...> -> tile<...>
+```text
+%dst = tgatherb %src, %offsets : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.gatherb %src, %offsets wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TGATHERB>>
+```text
+%dst, %e = tgatherb %src, %offsets wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TGATHERB>>
 ```
 
 ## C++ Intrinsic
