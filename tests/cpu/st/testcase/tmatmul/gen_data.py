@@ -11,7 +11,8 @@
 # --------------------------------------------------------------------------------
 
 import os
-
+import struct
+import math
 import numpy as np
 np.random.seed(19)
 
@@ -33,12 +34,12 @@ def gen_golden_data(case_name, param):
     src_type = param.atype
     dst_type = param.ctype
 
-    m, k, n, is_bias, is_atrans, is_btrans = param.m, param.k, param.n, False, False, False
+    m, k, n, is_bias, is_atrans, is_btrans = param.m, param.k, param.n, param.is_bias, False, False
     repeats = param.repeats
 
     x1_gm = np.random.randint(1, 5, [repeats, m, k]).astype(src_type)
     x2_gm = np.random.randint(1, 5, [repeats, k, n]).astype(src_type)
-    bias_gm = np.random.randint(1, 10, [n, ]).astype(dst_type)
+    bias_gm = np.random.randint(1, 10, [n, ]).astype(param.bias_type)
     golden=np.zeros([m,n], dst_type)
 
     for i in range(repeats):
@@ -59,7 +60,7 @@ def gen_golden_data(case_name, param):
 
 
 class tmatmulParams:
-    def __init__(self, atype, btype, ctype, m, k, n, repeats):
+    def __init__(self, atype, btype, ctype, m, k, n, is_bias, bias_type = None, repeats=1):
         self.atype = atype
         self.btype = btype
         self.ctype = ctype
@@ -67,22 +68,35 @@ class tmatmulParams:
         self.k = k
         self.n = n 
         self.repeats = repeats
+        self.is_bias = is_bias
+        if (bias_type):
+            self.bias_type = bias_type
+        else:
+            self.bias_type = ctype
 
 
 if __name__ == "__main__":
     # 用例名称
     case_name_list = [
-        "TMATMULTest.case1", # 此名称要和TEST_F(TMATMULTest, case1)定义的名称一致
+        "TMATMULTest.case1",
         "TMATMULTest.case2",
         "TMATMULTest.case3",
         "TMATMULTest.case4",
+
+        "TMATMULTest.case_bias_1",
+        "TMATMULTest.case_bias_2",
+        "TMATMULTest.case_bias_5",
     ]
 
     case_params_list = [
-        tmatmulParams(np.float16, np.float16, np.float32, 128, 128, 64, 1),
-        tmatmulParams(np.int8, np.int8, np.int32, 128, 128, 64, 1),
-        tmatmulParams(np.float16, np.float16, np.float32, 128, 128, 64, 5),
-        tmatmulParams(np.float32, np.float32, np.float32, 32, 16, 32, 1),
+        tmatmulParams(np.float16, np.float16, np.float32, 40, 50, 60, False),
+        tmatmulParams(np.int8, np.int8, np.int32, 6, 7, 8, False),
+        tmatmulParams(np.float16, np.float16, np.float32, 128, 128, 64, False,repeats=5),
+        tmatmulParams(np.float32, np.float32, np.float32, 120, 110, 50, False),
+
+        tmatmulParams(np.int8, np.int8, np.int32, 8, 7, 6, True,np.int32),
+        tmatmulParams(np.float16, np.float16, np.float32, 16, 15, 16, True, np.float32),
+        tmatmulParams(np.float32, np.float32, np.float32, 127, 128, 63, True, np.float32),
     ]
 
     for i, case_name in enumerate(case_name_list):

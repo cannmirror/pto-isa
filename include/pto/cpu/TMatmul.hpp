@@ -109,7 +109,14 @@ namespace pto {
         uint16_t k = aMatrix.GetValidCol();
         uint16_t n = bMatrix.GetValidCol();
 
-        static_assert(false, "Not implemented yet");
+        TMatmulNzZn<TileAcc, TileLeft, TileRight>(cMatrix.data(), nullptr, aMatrix.data(), bMatrix.data(), m, n, k);
+        for(size_t c=0; c<n; c++) {
+            for(size_t r=0; r<m; r++) {
+                size_t out_idx = GetTileElementOffset<TileAcc>(r,c);
+                size_t bias_idx = GetTileElementOffset<TileBias>(0,c);
+                cMatrix.data()[out_idx] += biasMatrix.data()[bias_idx];
+            }
+        }
     }
 }
 #endif

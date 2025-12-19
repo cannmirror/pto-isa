@@ -22,22 +22,11 @@ namespace pto{
                             typename tile_shape::TileDType src,
                             unsigned validRow, unsigned validCol
                         ) {
-        if constexpr (tile_shape::SFractal == SLayout::NoneBox && tile_shape::isRowMajor) {
-            cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
-                const std::size_t base = r * tile_shape::Cols;
-                PTO_CPU_VECTORIZE_LOOP
-                for (std::size_t c = 0; c < validCol; ++c) {
-                    const std::size_t idx = base + c;
-                    dst[idx] = std::sqrt(static_cast<double>(src[idx]));
-                }
-            });
-        } else {
-            cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
-                for (std::size_t c = 0; c < validCol; ++c) {
-                    const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
-                    dst[idx] = std::sqrt(static_cast<double>(src[idx]));
-                }
-            });
+        for(size_t c=0; c<validCol; c++) {
+            for(size_t r=0; r<validRow; r++) {
+                size_t idx = GetTileElementOffset<tile_shape>(r,c);
+                dst[idx] = static_cast<typename tile_shape::DType>(std::sqrt(static_cast<double>(src[idx])));
+            }
         }
     }
 
