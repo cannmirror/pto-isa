@@ -10,19 +10,21 @@ $$
 \\mathrm{dst}_{0,j} = \\min_i \\mathrm{src}_{i,j}
 $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.colmin %src : tile<...> -> tile<...>
+```text
+%dst = tcolmin %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.colmin %src wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TCOLMIN>>
+```text
+%dst, %e = tcolmin %src wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCOLMIN>>
 ```
 
 ## C++ Intrinsic

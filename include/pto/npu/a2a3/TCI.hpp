@@ -23,28 +23,28 @@ PTO_INTERNAL void CheckValid() {
 }
 
 template <typename TileData, typename T, int descending>
-__tf__ AICORE void TCI(typename TileData::TileDType __out__ dst, T S, unsigned validCol) {
+__tf__ AICORE void TCI(typename TileData::TileDType __out__ dst, T start, unsigned validCol) {
     __ubuf__ typename TileData::DType *dstPtr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
 
     // scalar
     if constexpr (descending) {
         for (int32_t i = 0; i < validCol; i++) {
-            *(dstPtr + i) = S - i;
+            *(dstPtr + i) = start - i;
         }
     } else {
         for (int32_t i = 0; i < validCol; i++) {
-            *(dstPtr + i) = S + i;
+            *(dstPtr + i) = start + i;
         }
     }
 }
 
 template <typename TileData, typename T, int descending>
-AICORE void TCI_IMPL(TileData &dst, T S) {
+AICORE void TCI_IMPL(TileData &dst, T start) {
     CheckValid<TileData, T>();
 
     unsigned validCol = dst.GetValidCol();
 
-    TCI<TileData, T, descending>(dst.data(), S, validCol);
+    TCI<TileData, T, descending>(dst.data(), start, validCol);
 }
 } // namespace pto
 #endif

@@ -1,0 +1,5 @@
+; PTO-AS (PTO Assembly) BNF
+;
+; This file is kept for backward compatibility. The normative grammar lives in:
+;
+;   docs/grammar/as/PTO-AS.bnf

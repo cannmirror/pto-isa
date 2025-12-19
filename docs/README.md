@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="figures/pto_logo.svg" alt="PTO Tile Lib" width="200" />
+</p>
+
 # PTO ISA Guide
 
 This directory documents the PTO ISA (Instruction Set Architecture) used by PTO Tile Lib. It explains instruction naming, common notation, and how to navigate the per-instruction reference pages.
@@ -14,12 +18,12 @@ This directory documents the PTO ISA (Instruction Set Architecture) used by PTO 
 - ISA overview: `docs/PTOISA.md`
 - Instruction index: `docs/isa/README.md`
 - Common conventions: `docs/isa/conventions.md`
-- PTO IR syntax reference: `docs/ir/PTO-IR.md`
+- PTO assembly syntax reference (PTO-AS): `docs/grammar/PTO-AS.md`
 - Getting started (recommended: run on CPU first): `docs/getting-started.md`
 - Implementation and extension notes: `docs/coding/README.md`
 
 ## Documentation Layout
 
 - `docs/isa/`: Instruction reference (one file per instruction, plus category pages)
-- `docs/ir/`: PTO IR syntax and semantics reference used by instruction docs
+- `docs/grammar/`: PTO assembly grammar and specification (PTO-AS)
 - `docs/coding/`: Developer notes for extending PTO Tile Lib

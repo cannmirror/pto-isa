@@ -18,19 +18,21 @@ For a linearized index `k` over the valid elements:
 
 The linearization order depends on the tile layout (implementation-defined).
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.ci %S {descending = false} : tile<...>
+```text
+%dst = tci %S {descending = false} : !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.ci %S {descending = false} wait(%e0)
-    : tile<...>, !pto.event<producer = #pto.op<TCI>>
+```text
+%dst, %e = tci %S {descending = false} wait(%e0)
+    : !pto.tile<...>, !pto.event<producer = #pto.op<TCI>>
 ```
 
 ## C++ Intrinsic

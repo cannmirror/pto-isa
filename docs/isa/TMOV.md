@@ -18,24 +18,26 @@ For the pure copy case:
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,j} $$
 
-## IR Syntax
+## Assembly Syntax
 
-The PTO IR design recommends splitting `TMOV` into a family of ops (from `docs/ir/PTO-IR.md`):
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
-```mlir
-%left  = pto.tile.mov.m2l %mat  : tile<...> -> tile<...>
-%right = pto.tile.mov.m2r %mat  : tile<...> -> tile<...>
-%bias  = pto.tile.mov.m2b %mat  : tile<...> -> tile<...>
-%scale = pto.tile.mov.m2s %mat  : tile<...> -> tile<...>
-%vec   = pto.tile.mov.a2v %acc  : tile<...> -> tile<...>
-%v1    = pto.tile.mov.v2v %v0   : tile<...> -> tile<...>
+The PTO IR design recommends splitting `TMOV` into a family of ops:
+
+```text
+%left  = tmov.m2l %mat  : !pto.tile<...> -> !pto.tile<...>
+%right = tmov.m2r %mat  : !pto.tile<...> -> !pto.tile<...>
+%bias  = tmov.m2b %mat  : !pto.tile<...> -> !pto.tile<...>
+%scale = tmov.m2s %mat  : !pto.tile<...> -> !pto.tile<...>
+%vec   = tmov.a2v %acc  : !pto.tile<...> -> !pto.tile<...>
+%v1    = tmov.v2v %v0   : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form (optional `wait(...)` + event result) follows the same pattern:
 
-```mlir
-%v1, %e = pto.tile.mov.v2v %v0 wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TMOV_V2V>>
+```text
+%v1, %e = tmov.v2v %v0 wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TMOV_V2V>>
 ```
 
 ## C++ Intrinsic

@@ -13,18 +13,20 @@ Many intrinsics in `include/pto/common/pto_instr.hpp` call `TSYNC(events...)` in
 
 Not applicable.
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Event wait form:
 
-```mlir
-pto.sync wait(%e0, %e1) : !pto.event<...>, !pto.event<...>
+```text
+tsync wait(%e0, %e1) : !pto.event<...>, !pto.event<...>
 ```
 
 Single-op barrier form:
 
-```mlir
-pto.sync.op #pto.op<TADD>
+```text
+tsync.op #pto.op<TADD>
 ```
 
 ## C++ Intrinsic

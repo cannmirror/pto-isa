@@ -11,22 +11,31 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TROWSUM_HPP
 #define TROWSUM_HPP
 #include "pto/cpu/tile_offsets.hpp"
+#include "pto/cpu/parallel.hpp"
 
 namespace pto {
     template <typename TileDst, typename TileSrc>
     void TRowSum(typename TileDst::TileDType dst, typename TileSrc::TileDType src, uint16_t M, uint16_t N)
     {
-        static constexpr int srcRows = TileSrc::Rows;
-        static constexpr int dstRows = TileDst::Rows;
-
-        for (uint16_t i = 0; i < M; i++) {
+        cpu::parallel_for_1d(0, M, static_cast<std::size_t>(M) * N, [&](std::size_t i) {
             typename TileDst::DType sum = 0;
-
-            for (uint16_t j = 0; j < N; j++) {
-               sum += src[GetTileElementOffset<TileSrc>(i,j)];
+            if constexpr (TileSrc::SFractal == SLayout::NoneBox && TileSrc::isRowMajor) {
+                const std::size_t base = i * TileSrc::Cols;
+                PTO_CPU_VECTORIZE_LOOP
+                for (std::size_t j = 0; j < N; ++j) {
+                    sum += src[base + j];
+                }
+            } else {
+                for (std::size_t j = 0; j < N; ++j) {
+                    sum += src[GetTileElementOffset<TileSrc>(i, j)];
+                }
             }
-            dst[GetTileElementOffset<TileDst>(i,0)] = sum;
-        }
+            if constexpr (TileDst::SFractal == SLayout::NoneBox && TileDst::isRowMajor) {
+                dst[i * TileDst::Cols] = sum;
+            } else {
+                dst[GetTileElementOffset<TileDst>(i, 0)] = sum;
+            }
+        });
     }
 
     template <typename TileDst, typename TileSrc>

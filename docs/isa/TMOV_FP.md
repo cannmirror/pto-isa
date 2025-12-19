@@ -12,19 +12,21 @@ Conceptually converts each element using an implementation-defined quantization/
 
 $$ \mathrm{dst}_{i,j} = \mathrm{Convert}\!\left(\mathrm{src}_{i,j};\ \mathrm{fp}\right) $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.mov.fp %src, %fp : tile<...>, tile<...> -> tile<...>
+```text
+%dst = tmov.fp %src, %fp : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.mov.fp %src, %fp wait(%e0)
-    : tile<...>, tile<...> -> tile<...>, !pto.event<producer = #pto.op<TMOV_A2V>>
+```text
+%dst, %e = tmov.fp %src, %fp wait(%e0)
+    : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TMOV_A2V>>
 ```
 
 ## C++ Intrinsic

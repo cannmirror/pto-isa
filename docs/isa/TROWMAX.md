@@ -10,19 +10,21 @@ $$
 \\mathrm{dst}_{i,0} = \\max_j \\mathrm{src}_{i,j}
 $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.rowmax %src : tile<...> -> tile<...>
+```text
+%dst = trowmax %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.rowmax %src wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TROWMAX>>
+```text
+%dst, %e = trowmax %src wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWMAX>>
 ```
 
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.

@@ -12,6 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
+#include "pto/cpu/parallel.hpp"
 #include <cmath>
 
 namespace pto{
@@ -21,11 +22,22 @@ namespace pto{
                             typename tile_shape::TileDType src,
                             unsigned validRow, unsigned validCol
                         ) {
-        for(size_t c=0; c<validCol; c++) {
-            for(size_t r=0; r<validRow; r++) {
-                size_t idx = GetTileElementOffset<tile_shape>(r,c);
-                dst[idx] = std::sqrt(static_cast<double>(src[idx]));
-            }
+        if constexpr (tile_shape::SFractal == SLayout::NoneBox && tile_shape::isRowMajor) {
+            cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                const std::size_t base = r * tile_shape::Cols;
+                PTO_CPU_VECTORIZE_LOOP
+                for (std::size_t c = 0; c < validCol; ++c) {
+                    const std::size_t idx = base + c;
+                    dst[idx] = std::sqrt(static_cast<double>(src[idx]));
+                }
+            });
+        } else {
+            cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                for (std::size_t c = 0; c < validCol; ++c) {
+                    const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                    dst[idx] = std::sqrt(static_cast<double>(src[idx]));
+                }
+            });
         }
     }
 

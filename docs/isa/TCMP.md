@@ -12,20 +12,22 @@ $$ p_{i,j} = \left(\mathrm{src0}_{i,j}\ \mathrm{cmpMode}\ \mathrm{src1}_{i,j}\ri
 
 The predicate mask is stored in `dst` using an implementation-defined packed layout.
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.cmp %src0, %src1 {cmpMode = #pto.cmp<EQ>}
-    : tile<...> -> tile<...>
+```text
+%dst = tcmp %src0, %src1 {cmpMode = #pto.cmp<EQ>}
+    : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.cmp %src0, %src1 {cmpMode = #pto.cmp<EQ>} wait(%e0, %e1)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TCMP>>
+```text
+%dst, %e = tcmp %src0, %src1 {cmpMode = #pto.cmp<EQ>} wait(%e0, %e1)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCMP>>
 ```
 
 ## C++ Intrinsic

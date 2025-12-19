@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="103" height="114" viewBox="0 0 103 114" fill="none">
+  <!-- Background -->
+  <rect x="0" y="0" width="103" height="114" rx="18" fill="#2A2A2A"/>
+  <defs>
+    <linearGradient id="gRed" x1="10" y1="10" x2="93" y2="104" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F6B36B"/>
+      <stop offset="0.55" stop-color="#EB5C64"/>
+      <stop offset="1" stop-color="#E85060"/>
+    </linearGradient>
+    <linearGradient id="gOrange" x1="0" y1="114" x2="56.650000000000006" y2="22.8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F6B36B"/>
+      <stop offset="0.7" stop-color="#F2C08A"/>
+      <stop offset="1" stop-color="#EB6A65"/>
+    </linearGradient>
+    <linearGradient id="gBlue" x1="56.650000000000006" y1="62.7" x2="103" y2="28.5" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9BE3F2"/>
+      <stop offset="0.55" stop-color="#78C8D8"/>
+      <stop offset="1" stop-color="#4EA9C7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Top face (red) -->
+  <path d="M 0.00 112.50 L 42.50 112.00 L 8.00 92.50 L 4.50 88.00 L 7.00 84.50 L 27.00 72.50 L 31.50 74.00 L 31.50 98.00 L 35.00 98.50 L 42.00 93.50 L 47.00 92.50 L 48.50 94.00 L 48.50 109.00 L 45.50 112.00 L 52.00 112.50 L 50.50 110.00 L 50.50 63.00 L 57.00 55.50 L 67.00 49.50 L 92.00 35.50 L 97.50 36.00 L 98.50 82.00 L 96.50 87.00 L 92.00 91.50 L 55.50 112.00 L 102.00 112.50 L 0.00 112.50 Z M 67.50 88.00 L 83.50 78.00 L 83.50 60.00 L 82.00 58.50 L 65.50 69.00 L 65.50 88.00 L 67.50 88.00 Z" fill="url(#gRed)" fill-rule="evenodd"/>
+
+  <!-- Left face (orange) -->
+  <path d="M 0.00 38.50 L 1.50 32.00 L 7.00 26.50 L 42.00 6.50 L 46.00 6.50 L 48.50 9.00 L 47.50 40.00 L 15.50 59.00 L 14.50 77.00 L 11.00 80.50 L 6.00 83.50 L 0.50 82.00 L 0.00 38.50 Z M 17.50 46.00 L 33.50 36.00 L 33.50 25.00 L 32.00 23.50 L 15.50 33.00 L 14.50 45.00 L 17.50 46.00 Z" fill="url(#gOrange)" fill-rule="evenodd"/>
+
+  <!-- Right face (blue) -->
+  <path d="M 70.00 46.50 L 66.50 44.00 L 66.00 29.50 L 54.00 36.50 L 50.50 35.00 L 50.50 8.00 L 52.00 6.50 L 62.00 9.50 L 93.50 29.00 L 93.50 32.00 L 91.00 34.50 L 70.00 46.50 Z" fill="url(#gBlue)" fill-rule="evenodd"/>
+</svg>

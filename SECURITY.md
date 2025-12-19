@@ -1,53 +1,53 @@
-# 安全声明
+# Security Notice
 
-## 运行用户建议
+## Recommended User Account
 
-基于安全性角度考虑，不建议使用root等管理员类型账户执行任何命令，遵循权限最小化原则。
+For security reasons, avoid running commands as `root` (or other administrative accounts). Follow the principle of least privilege whenever possible.
 
-## 文件权限控制
+## File Permission Hardening
 
-- 建议用户在主机（包括宿主机）及容器中设置运行系统umask值为0027及以上，保障新增文件夹默认最高权限为750，新增文件默认最高权限为640。
-- 建议用户对个人隐私数据、商业资产、源文件和PTO指令实现开发过程中保存的各类文件等敏感内容做好权限控制等安全措施。例如涉及本项目安装目录权限管控、输入公共数据文件权限管控，设定的权限建议参考[A-文件（夹）各场景权限管控推荐最大值](#A-文件（夹）各场景权限管控推荐最大值)。
-- 用户安装和使用过程需要做好权限控制，建议参考[A-文件（夹）各场景权限管控推荐最大值](#A-文件（夹）各场景权限管控推荐最大值)文件权限参考进行设置。
+- On the host (including the container host) and inside containers, set `umask` to `0027` or stricter. This makes newly created directories default to at most `750`, and newly created files default to at most `640`.
+- Apply appropriate access control to sensitive assets such as personal data, proprietary data, source code, and intermediate artifacts generated during PTO instruction development. See “Appendix A” for recommended maximum permissions.
+- During installation and usage, make sure your installation directory and any input data files have appropriate permissions configured.
 
-## 构建安全声明
+## Build Security
 
-在源码编译安装本项目时，需要您自行编译，编译过程中会生成一些中间文件，建议您在编译完成后，对中间文件做好权限控制，以保证文件安全。
+When building this project from source, you compile it locally and intermediate build artifacts are generated. After the build completes, restrict permissions on those artifacts to protect sensitive data.
 
-## 运行安全声明
+## Runtime Security
 
-- PTO指令实现在运行异常时会退出进程并打印报错信息，建议根据报错提示定位具体错误原因，包括设定PTO指令实现同步执行、查看日志文件等方式。
+- If a PTO instruction implementation encounters a runtime error, it may terminate the process and print an error message. Use the error output to locate the root cause (for example, ensure required synchronization is present and inspect logs when available).
 
-## 公网地址声明
-本项目代码中包含的公网地址声明如下所示：
+## Public Network Addresses
 
-|      类型      |                                           开源代码地址                                           |                            文件名                             |             公网IP地址/公网URL地址/域名/邮箱地址/压缩文件地址             |                   用途说明                    |
-| :------------: |:------------------------------------------------------------------------------------------:|:----------------------------------------------------------| :---------------------------------------------------------- |:-----------------------------------------|
-|  依赖  | 不涉及  | cmake/third_party/makeself-fetch.cmake | https://gitcode.com/cann-src-third-party/makeself/releases/download/release-2.5.0-patch1.0/makeself-release-2.5.0-patch1.tar.gz | 从gitcode下载makeself源码，作用编译依赖 |
-|  依赖  | 不涉及  | cmake/third_party/json.cmake | https://gitcode.com/cann-src-third-party/json/releases/download/v3.11.3/include.zip | 从gitcode下载json源码，作用编译依赖 |
-|  依赖  | 不涉及  | cmake/third_party/gtest.cmake | https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/googletest-1.14.0.tar.gz | 从gitcode下载googletest源码，作用编译依赖 |
----
+This repository contains references to the following public URLs:
 
-## 附录
+| Type       | Open-source URL | File                              | Public URL                                                                                                                                    | Purpose                                      |
+| :--------: | :-------------: | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Dependency | N/A             | cmake/third_party/makeself-fetch.cmake | https://gitcode.com/cann-src-third-party/makeself/releases/download/release-2.5.0-patch1.0/makeself-release-2.5.0-patch1.tar.gz            | Downloads `makeself` source as a build dep   |
+| Dependency | N/A             | cmake/third_party/json.cmake      | https://gitcode.com/cann-src-third-party/json/releases/download/v3.11.3/include.zip                                                           | Downloads `json` headers as a build dep      |
+| Dependency | N/A             | cmake/third_party/gtest.cmake     | https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/googletest-1.14.0.tar.gz                                        | Downloads GoogleTest as a build/test dep     |
 
-### A-文件（夹）各场景权限管控推荐最大值
+## Appendix
 
-| 类型           | Linux权限参考最大值 |
-| -------------- | ---------------  |
-| 用户主目录                        |   750（rwxr-x---）            |
-| 程序文件(含脚本文件、库文件等)       |   550（r-xr-x---）             |
-| 程序文件目录                      |   550（r-xr-x---）            |
-| 配置文件                          |  640（rw-r-----）             |
-| 配置文件目录                      |   750（rwxr-x---）            |
-| 日志文件(记录完毕或者已经归档)        |  440（r--r-----）             |
-| 日志文件(正在记录)                |    640（rw-r-----）           |
-| 日志文件目录                      |   750（rwxr-x---）            |
-| Debug文件                         |  640（rw-r-----）         |
-| Debug文件目录                     |   750（rwxr-x---）  |
-| 临时文件目录                      |   750（rwxr-x---）   |
-| 维护升级文件目录                  |   770（rwxrwx---）    |
-| 业务数据文件                      |   640（rw-r-----）    |
-| 业务数据文件目录                  |   750（rwxr-x---）      |
-| 密钥组件、私钥、证书、密文文件目录    |  700（rwx—----）      |
-| 密钥组件、私钥、证书、加密密文        | 600（rw-------）      |
-| 加解密接口、加解密脚本            |   500（r-x------）        |
+### Appendix A: Recommended Maximum Permissions
+
+| Scenario                                          | Recommended maximum Linux permission |
+| ------------------------------------------------- | ----------------------------------- |
+| User home directory                                | 750 (`rwxr-x---`)                   |
+| Program files (scripts, libraries, etc.)           | 550 (`r-xr-x---`)                   |
+| Program directories                                | 550 (`r-xr-x---`)                   |
+| Configuration files                                | 640 (`rw-r-----`)                   |
+| Configuration directories                          | 750 (`rwxr-x---`)                   |
+| Log files (archived / complete)                    | 440 (`r--r-----`)                   |
+| Log files (actively written)                       | 640 (`rw-r-----`)                   |
+| Log directories                                    | 750 (`rwxr-x---`)                   |
+| Debug files                                        | 640 (`rw-r-----`)                   |
+| Debug directories                                  | 750 (`rwxr-x---`)                   |
+| Temporary directories                              | 750 (`rwxr-x---`)                   |
+| Maintenance / upgrade directories                  | 770 (`rwxrwx---`)                   |
+| Business data files                                | 640 (`rw-r-----`)                   |
+| Business data directories                          | 750 (`rwxr-x---`)                   |
+| Key material / private keys / certs / ciphertext dirs | 700 (`rwx------`)                   |
+| Key material / private keys / certs / ciphertext files | 600 (`rw-------`)                   |
+| Crypto interfaces and scripts                      | 500 (`r-x------`)                   |

@@ -114,10 +114,11 @@ namespace pto {
     struct ElementOpCal<DType, ElementOp::OP_REM> {
         static void apply(DType &dst, DType &src0, DType &src1, size_t) {
             if (src1 != static_cast<DType>(0)) {
-                if constexpr (std::is_floating_point_v<DType>) {
-                    dst = std::fmod(src0, src1);
-                } else {
+                if constexpr (std::is_integral_v<DType>) {
                     dst = src0 % src1;
+                } else {
+                    dst = static_cast<DType>(std::fmod(static_cast<double>(src0),
+                                                       static_cast<double>(src1)));
                 }
             } else {
                 PTO_ASSERT(false, "illegal src is zero");
@@ -213,21 +214,21 @@ namespace pto {
     template<typename DType>
     struct ElementOpCal<DType, ElementOp::OP_EXP> {
         static void apply(DType &dst, DType &src) {
-            dst = std::exp(src);
+            dst = static_cast<DType>(std::exp(static_cast<double>(src)));
         }
     };
 
     template<typename DType>
     struct ElementOpCal<DType, ElementOp::OP_ABS> {
         static void apply(DType &dst, DType &src) {
-            dst = std::abs(src);
+            dst = static_cast<DType>(std::abs(static_cast<double>(src)));
         }
     };
 
     template<typename DType>
     struct ElementOpCal<DType, ElementOp::OP_LOG> {
         static void apply(DType &dst, DType &src) {
-            dst = std::log(src);
+            dst = static_cast<DType>(std::log(static_cast<double>(src)));
         }
     };
 
@@ -248,7 +249,7 @@ namespace pto {
     template<typename DType>
     struct ElementOpCal<DType, ElementOp::OP_SQRT> {
         static void apply(DType &dst, DType &src) {
-            dst = std::sqrt(src);
+            dst = static_cast<DType>(std::sqrt(static_cast<double>(src)));
         }
     };
 
@@ -267,7 +268,7 @@ namespace pto {
     struct ElementOpCal<DType, ElementOp::OP_RSQRT> {
         static void apply(DType &dst, DType &src) {
             if (src != static_cast<DType>(0)) {
-                dst = 1 / std::sqrt(src);
+                dst = static_cast<DType>(1.0 / std::sqrt(static_cast<double>(src)));
             } else {
                 PTO_ASSERT(false, "illegal src is zero");
             }
@@ -349,10 +350,11 @@ namespace pto {
     struct ElementOpCal<DType, ElementOp::OP_REMS> {
         static void apply(DType &dst, DType &src, DType &scalar, size_t) {
             if (scalar != static_cast<DType>(0)) {
-                if constexpr (std::is_floating_point_v<DType>) {
-                    dst = std::fmod(src, scalar);
-                } else {
+                if constexpr (std::is_integral_v<DType>) {
                     dst = src % scalar;
+                } else {
+                    dst = static_cast<DType>(std::fmod(static_cast<double>(src),
+                                                       static_cast<double>(scalar)));
                 }
             } else {
                 PTO_ASSERT(false, "illegal src is zero");

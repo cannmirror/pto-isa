@@ -12,7 +12,10 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TEXP_HPP
 
 #include <pto/common/pto_tile.hpp>
+#include "pto/cpu/tile_offsets.hpp"
+#include "pto/cpu/parallel.hpp"
 #include <cmath>
+#include <type_traits>
 
 namespace pto{
 
@@ -21,15 +24,31 @@ namespace pto{
                             typename tile_shape::TileDType src,
                             unsigned validRow, unsigned validCol
                         ) {
-        for (int i = 0; i < validRow; ++i) {
-            for (int j = 0; j < validCol; ++j) {
-                size_t idx = GetTileElementOffset<tile_shape>(i,j);
-                if constexpr (std::is_same_v<typename tile_shape::TileDType, aclFloat16>) {
-                    dst[idx] = static_cast<aclFloat16>(std::expf(static_cast<float>(src[idx])));
-                } else {    
-                    dst[idx] = std::exp(src[idx]);
+        using ElemT = std::remove_reference_t<decltype(dst[0])>;
+        if constexpr (tile_shape::SFractal == SLayout::NoneBox && tile_shape::isRowMajor) {
+            cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                const std::size_t base = r * tile_shape::Cols;
+                PTO_CPU_VECTORIZE_LOOP
+                for (std::size_t c = 0; c < validCol; ++c) {
+                    const std::size_t idx = base + c;
+                    if constexpr (std::is_same_v<typename tile_shape::TileDType, aclFloat16>) {
+                        dst[idx] = static_cast<aclFloat16>(std::expf(static_cast<float>(src[idx])));
+                    } else {
+                        dst[idx] = static_cast<ElemT>(std::exp(static_cast<double>(src[idx])));
+                    }
                 }
-            }
+            });
+        } else {
+            cpu::parallel_for_rows(validRow, validCol, [&](std::size_t r) {
+                for (std::size_t c = 0; c < validCol; ++c) {
+                    const std::size_t idx = GetTileElementOffset<tile_shape>(r, c);
+                    if constexpr (std::is_same_v<typename tile_shape::TileDType, aclFloat16>) {
+                        dst[idx] = static_cast<aclFloat16>(std::expf(static_cast<float>(src[idx])));
+                    } else {
+                        dst[idx] = static_cast<ElemT>(std::exp(static_cast<double>(src[idx])));
+                    }
+                }
+            });
         }
     }
 

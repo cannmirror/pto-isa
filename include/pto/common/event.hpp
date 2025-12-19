@@ -101,9 +101,14 @@ namespace pto {
   // 单流水线之间等待
   template <Op OpCode>
   PTO_INTERNAL void TSYNC_IMPL() {
+#ifdef __CPU_SIM
+    (void)OpCode;
+    return;
+#else
     constexpr pipe_t pipe = GetPipeByOp<OpCode>();
     static_assert(pipe == PIPE_V, "Single Op TSYNC only supports Vector PTO Instruction.");
     pipe_barrier((pipe_t)pipe);
+#endif
   }
 
   template <typename... WaitEvents>

@@ -12,26 +12,28 @@ $$ \mathrm{C}_{i,j} = \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cdot \mathrm{B}_{k,j} +
 
 Bias broadcasting behavior is implementation-defined.
 
-## IR Syntax
+## Assembly Syntax
 
-Synchronous form (from `docs/ir/PTO-IR.md`):
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
-```mlir
-%acc = pto.tile.matmul.bias %a, %b, %bias
-    : tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>,
-      tile<1xNxTb2, #pto.tile_info<loc=Bias, layout=Lbias>>
-   -> tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>
+Synchronous form:
+
+```text
+%acc = tmatmul.bias %a, %b, %bias
+    : !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>,
+      !pto.tile<1xNxTb2, #pto.tile_info<loc=Bias, layout=Lbias>>
+   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>
 ```
 
 Asynchronous form:
 
-```mlir
-%acc, %e = pto.tile.matmul.bias %a, %b, %bias wait(%e0, %e1)
-    : tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>,
-      tile<1xNxTb2, #pto.tile_info<loc=Bias, layout=Lbias>>
-   -> tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
+```text
+%acc, %e = tmatmul.bias %a, %b, %bias wait(%e0, %e1)
+    : !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>,
+      !pto.tile<1xNxTb2, #pto.tile_info<loc=Bias, layout=Lbias>>
+   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
       !pto.event<producer = #pto.op<TMATMUL_BIAS>>
 ```
 

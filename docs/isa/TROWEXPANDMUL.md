@@ -10,19 +10,21 @@ For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} \cdot \mathrm{src1}_{0,i} $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.rowexpandmul %src0, %src1 : tile<...>, tile<...> -> tile<...>
+```text
+%dst = trowexpandmul %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.rowexpandmul %src0, %src1 wait(%e0, %e1)
-    : tile<...>, tile<...> -> tile<...>, !pto.event<producer = #pto.op<TROWEXPANDMUL>>
+```text
+%dst, %e = trowexpandmul %src0, %src1 wait(%e0, %e1)
+    : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWEXPANDMUL>>
 ```
 
 ## C++ Intrinsic

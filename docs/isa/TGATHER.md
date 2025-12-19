@@ -14,26 +14,28 @@ Exact index interpretation and bounds behavior are implementation-defined.
 
 Mask-pattern gather is an implementation-defined selection/reduction controlled by `pto::MaskPattern`.
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Index-based gather:
 
-```mlir
-%dst = pto.tile.gather %src0, %indices : tile<...> -> tile<...>
+```text
+%dst = tgather %src0, %indices : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Mask-pattern gather:
 
-```mlir
-%dst = pto.tile.gather %src {maskPattern = #pto.mask_pattern<P0101>}
-    : tile<...> -> tile<...>
+```text
+%dst = tgather %src {maskPattern = #pto.mask_pattern<P0101>}
+    : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.gather %src0, %indices wait(%e0, %e1)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TGATHER>>
+```text
+%dst, %e = tgather %src0, %indices wait(%e0, %e1)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TGATHER>>
 ```
 
 ## C++ Intrinsic

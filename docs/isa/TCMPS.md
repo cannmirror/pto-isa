@@ -12,20 +12,22 @@ $$ \mathrm{dst}_{i,j} = \left(\mathrm{src}_{i,j}\ \mathrm{cmpMode}\ \mathrm{scal
 
 The encoding/type of `dst` is implementation-defined (often a mask-like tile).
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.cmps %src, %scalar {cmpMode = #pto.cmp<EQ>}
-    : tile<...> -> tile<...>
+```text
+%dst = tcmps %src, %scalar {cmpMode = #pto.cmp<EQ>}
+    : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.cmps %src, %scalar {cmpMode = #pto.cmp<EQ>} wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TCMPS>>
+```text
+%dst, %e = tcmps %src, %scalar {cmpMode = #pto.cmp<EQ>} wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCMPS>>
 ```
 
 ## C++ Intrinsic

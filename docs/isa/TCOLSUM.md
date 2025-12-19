@@ -12,20 +12,22 @@ $$
 
 `isBinary` selects the implementation path (binary-tree accumulation vs. sequential accumulation).
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.colsum %src {isBinary = false}
-    : tile<...> -> tile<...>
+```text
+%dst = tcolsum %src {isBinary = false}
+    : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.colsum %src {isBinary = false} wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TCOLSUM>>
+```text
+%dst, %e = tcolsum %src {isBinary = false} wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCOLSUM>>
 ```
 
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.

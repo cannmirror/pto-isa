@@ -10,20 +10,22 @@ Notation depends on the `GlobalTensor` shape/stride and the `Tile` layout. Conce
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src}_{r_0 + i,\; c_0 + j} $$
 
-## IR Syntax
+## Assembly Syntax
 
-Synchronous form (from `docs/ir/PTO-IR.md`):
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
-```mlir
-%t0 = pto.tile.load %sv[%c0, %c0]
-    : pto.memref<32x32xf32, strided<[1024, 1], offset: ?>>, tile<32x32xf32>
+Synchronous form:
+
+```text
+%t0 = tload %sv[%c0, %c0]
+    : !pto.memref<32x32xf32, strided<[1024, 1], offset: ?>>, !pto.tile<32x32xf32>
 ```
 
 Asynchronous form:
 
-```mlir
-%t0, %e0 = pto.tile.load %sv[%c0, %c0] wait(%e_prev)
-    : pto.memref<32x32xf32, strided<[1024, 1], offset: ?>>, tile<32x32xf32>, !pto.event<producer = #pto.op<TLOAD>>
+```text
+%t0, %e0 = tload %sv[%c0, %c0] wait(%e_prev)
+    : !pto.memref<32x32xf32, strided<[1024, 1], offset: ?>>, !pto.tile<32x32xf32>, !pto.event<producer = #pto.op<TLOAD>>
 ```
 
 ## C++ Intrinsic

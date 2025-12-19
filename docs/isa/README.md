@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../figures/pto_logo.svg" alt="PTO Tile Lib" width="180" />
+</p>
+
 # PTO ISA Reference
 
 This directory contains the per-instruction reference for the PTO Tile Lib ISA.
@@ -21,23 +25,46 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TSUB`: `docs/isa/TSUB.md`
 - `TMUL`: `docs/isa/TMUL.md`
 - `TDIV`: `docs/isa/TDIV.md`
+- `TREM`: `docs/isa/TREM.md`
+- `TSHL`: `docs/isa/TSHL.md`
+- `TSHR`: `docs/isa/TSHR.md`
+- `TAND`: `docs/isa/TAND.md`
+- `TOR`: `docs/isa/TOR.md`
+- `TXOR`: `docs/isa/TXOR.md`
 - `TMIN`: `docs/isa/TMIN.md`
 - `TMAX`: `docs/isa/TMAX.md`
 - `TEXP`: `docs/isa/TEXP.md`
+- `TLOG`: `docs/isa/TLOG.md`
 - `TSQRT`: `docs/isa/TSQRT.md`
 - `TRSQRT`: `docs/isa/TRSQRT.md`
+- `TRECIP`: `docs/isa/TRECIP.md`
+- `TNEG`: `docs/isa/TNEG.md`
+- `TNOT`: `docs/isa/TNOT.md`
+- `TRELU`: `docs/isa/TRELU.md`
+- `TPRELU`: `docs/isa/TPRELU.md`
+- `TADDC`: `docs/isa/TADDC.md`
+- `TSUBC`: `docs/isa/TSUBC.md`
 - `TSEL`: `docs/isa/TSEL.md`
 - `TCMP`: `docs/isa/TCMP.md`
 - `TCVT`: `docs/isa/TCVT.md`
 
 ## Tile-Scalar / Tile-Immediate
 - `TADDS`: `docs/isa/TADDS.md`
+- `TSUBS`: `docs/isa/TSUBS.md`
 - `TDIVS`: `docs/isa/TDIVS.md`
 - `TMULS`: `docs/isa/TMULS.md`
+- `TREMS`: `docs/isa/TREMS.md`
+- `TMAXS`: `docs/isa/TMAXS.md`
 - `TMINS`: `docs/isa/TMINS.md`
+- `TANDS`: `docs/isa/TANDS.md`
+- `TORS`: `docs/isa/TORS.md`
+- `TXORS`: `docs/isa/TXORS.md`
 - `TCMPS`: `docs/isa/TCMPS.md`
 - `TEXPANDS`: `docs/isa/TEXPANDS.md`
 - `TSELS`: `docs/isa/TSELS.md`
+- `TLRELU`: `docs/isa/TLRELU.md`
+- `TADDSC`: `docs/isa/TADDSC.md`
+- `TSUBSC`: `docs/isa/TSUBSC.md`
 
 ## Axis Reduce / Expand
 - `TROWSUM`: `docs/isa/TROWSUM.md`
@@ -50,11 +77,14 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TCOLSUM`: `docs/isa/TCOLSUM.md`
 - `TCOLMAX`: `docs/isa/TCOLMAX.md`
 - `TCOLMIN`: `docs/isa/TCOLMIN.md`
+- `TCOLEXPAND`: `docs/isa/TCOLEXPAND.md`
 
 ## Memory (GM <-> Tile)
 - `TLOAD`: `docs/isa/TLOAD.md`
 - `TSTORE`: `docs/isa/TSTORE.md`
 - `TSTORE_FP`: `docs/isa/TSTORE_FP.md`
+- `MGATHER`: `docs/isa/MGATHER.md`
+- `MSCATTER`: `docs/isa/MSCATTER.md`
 
 ## Matrix Multiply
 - `TMATMUL`: `docs/isa/TMATMUL.md`
@@ -66,6 +96,7 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TMOV_FP`: `docs/isa/TMOV_FP.md`
 - `TTRANS`: `docs/isa/TTRANS.md`
 - `TEXTRACT`: `docs/isa/TEXTRACT.md`
+- `TRESHAPE`: `docs/isa/TRESHAPE.md`
 - `TASSIGN`: `docs/isa/TASSIGN.md`
 
 ## Complex

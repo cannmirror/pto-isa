@@ -226,7 +226,7 @@ int get_input_golden_case(uint8_t* input, uint8_t* golden)
 {
 	constexpr int shape4_aligned = align_to_32B(Shape4,T);
 	static_assert((Shape3 % (Shape0*Shape1*Shape2)) == 0);
-	int sh3 = Shape3/(Shape0*Shape1*Shape2);
+	constexpr int sh3 = Shape3/(Shape0*Shape1*Shape2);
     int in_byteSize = Shape0*Shape1*Shape2*sh3*Shape4*sizeof(T);
 	int out_byteSize = Shape0*Shape1*Shape2*sh3*shape4_aligned*sizeof(T);
 	
@@ -277,7 +277,7 @@ int get_input_golden_case_DN(uint8_t* input, uint8_t* golden)
 {
 	constexpr int shape3_aligned = align_to_32B(Shape3,T);
 	static_assert((Shape4 % (Shape0*Shape1*Shape2)) == 0);
-	int sh4 = Shape4/(Shape0*Shape1*Shape2);
+	constexpr int sh4 = Shape4/(Shape0*Shape1*Shape2);
     int in_byteSize = Shape0*Shape1*Shape2*Shape3*sh4*sizeof(T);
 	int out_byteSize = Shape0*Shape1*Shape2*shape3_aligned*sh4*sizeof(T);
 	

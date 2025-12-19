@@ -18,13 +18,28 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(ASCEND_DRIVER_PATH /usr/local/Ascend/driver)
-
-set(CMAKE_C_COMPILER ${CMAKE_COMPILER})
-set(CMAKE_CXX_COMPILER ${CMAKE_COMPILER})
-
 add_definitions(-D__CPU_SIM)
-find_package(GTest REQUIRED)
+
+# GTest is required for CPU STs. Prefer a system installation, but fall back to
+# fetching googletest to make macOS builds self-contained.
+find_package(GTest QUIET)
+if (NOT GTest_FOUND)
+    include(FetchContent)
+    message(STATUS "GTest not found; fetching googletest via FetchContent")
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    )
+    FetchContent_MakeAvailable(googletest)
+    if (NOT TARGET GTest::gtest)
+        add_library(GTest::gtest ALIAS gtest)
+    endif()
+    if (NOT TARGET GTest::gtest_main)
+        add_library(GTest::gtest_main ALIAS gtest_main)
+    endif()
+endif()
 
 add_compile_options(
     -D_FORTIFY_SOURCE=2
@@ -41,10 +56,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
 endif()
 
 # add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
-add_link_options(
-    -Wl,-z,relro
-    -Wl,-z,now
+if (UNIX AND NOT APPLE)
+    add_link_options(
+        -Wl,-z,relro
+        -Wl,-z,now
     )
+endif()
 
 
 set(CMAKE_CPP_COMPILE_OPTIONS

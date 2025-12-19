@@ -12,6 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TFILLPAD_HPP
 #include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
+#include "pto/cpu/parallel.hpp"
 
 using namespace std;
 
@@ -42,16 +43,17 @@ namespace pto{
                 padVal = std::numeric_limits<typename TileDataDst::DType>::min();
         }
 
-        for (unsigned int i = 0; i < TileDataDst::Rows; ++i){
-            for (unsigned int j = 0; j < TileDataDst::Cols; ++j){
-                unsigned int dstIndex;
-                if(i < validSrcRow && j < validSrcCol){
-                    dst[GetTileElementOffset<TileDataDst>(i,j)] = src[GetTileElementOffset<TileDataSrc>(i,j)];
-                } else {
-                    dst[GetTileElementOffset<TileDataDst>(i,j)] = padVal;
+        cpu::parallel_for_1d(0, TileDataDst::Rows, static_cast<std::size_t>(TileDataDst::Rows) * TileDataDst::Cols,
+            [&](std::size_t i) {
+                PTO_CPU_VECTORIZE_LOOP
+                for (std::size_t j = 0; j < TileDataDst::Cols; ++j) {
+                    if (i < validSrcRow && j < validSrcCol) {
+                        dst[GetTileElementOffset<TileDataDst>(i, j)] = src[GetTileElementOffset<TileDataSrc>(i, j)];
+                    } else {
+                        dst[GetTileElementOffset<TileDataDst>(i, j)] = padVal;
+                    }
                 }
-            }
-        }
+            });
     }
 
     template <typename TileDataDst, typename TileDataSrc, bool inplace>

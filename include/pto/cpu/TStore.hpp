@@ -13,6 +13,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/constants.hpp>
 #include <cassert>
+#include "pto/cpu/parallel.hpp"
 
 namespace pto {
 
@@ -20,25 +21,27 @@ namespace pto {
     __tf__ __aicore__ PTO_INLINE void StorePlainMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol, size_t idx3) {
         size_t offsetSrcBase =  idx3*gShape3*TileData::Cols;
-        for (uint32_t r = 0; r < gShape3; r++) {
-            for (uint32_t c = 0; c < gShape4; c++) {
-                size_t offsetSrc = offsetSrcBase + r*TileData::Cols + c;
-                size_t offsetDst = r*gStride3 + c*gStride4;
-                dst[offsetDst] = src[offsetSrc];
+        cpu::parallel_for_1d(0, static_cast<std::size_t>(gShape3), static_cast<std::size_t>(gShape3) * gShape4, [&](std::size_t r) {
+            const std::size_t srcBase = offsetSrcBase + r * TileData::Cols;
+            const std::size_t dstBase = r * static_cast<std::size_t>(gStride3);
+            PTO_CPU_VECTORIZE_LOOP
+            for (std::size_t c = 0; c < static_cast<std::size_t>(gShape4); c++) {
+                dst[dstBase + c * static_cast<std::size_t>(gStride4)] = src[srcBase + c];
             }
-        }
+        });
     }
     template <typename GlobalData, typename TileData, std::enable_if_t<!TileData::isRowMajor, int> = 0>
     __tf__ __aicore__ PTO_INLINE void StorePlainMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol, size_t idx3) {
         size_t offsetSrcBase =  idx3*gShape4*TileData::Rows;
-        for (uint32_t r = 0; r < gShape3; r++) {
-            for (uint32_t c = 0; c < gShape4; c++) {
-                size_t offsetSrc = offsetSrcBase + c*TileData::Rows + r;
-                size_t offsetDst = r*gStride3 + c*gStride4;
-                dst[offsetDst] = src[offsetSrc];
+        cpu::parallel_for_1d(0, static_cast<std::size_t>(gShape4), static_cast<std::size_t>(gShape3) * gShape4, [&](std::size_t c) {
+            const std::size_t srcBase = offsetSrcBase + c * TileData::Rows;
+            const std::size_t dstStride4 = static_cast<std::size_t>(gStride4);
+            PTO_CPU_VECTORIZE_LOOP
+            for (std::size_t r = 0; r < static_cast<std::size_t>(gShape3); r++) {
+                dst[r * static_cast<std::size_t>(gStride3) + c * dstStride4] = src[srcBase + r];
             }
-        }
+        });
     }
 
     template <typename GlobalData, typename TileData>
@@ -66,41 +69,40 @@ namespace pto {
     __tf__ __aicore__ PTO_INLINE void StoreSubfractalMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol) {
         // Zn layout
-        for(size_t c=0; c<gShape4; c++) {
+        cpu::parallel_for_1d(0, static_cast<std::size_t>(gShape4), static_cast<std::size_t>(gShape3) * gShape4, [&](std::size_t c) {
             size_t subTileC = c / TileData::InnerCols;
             size_t innerC = c % TileData::InnerCols;
-            for(size_t r=0; r < gShape3; r++) {
+            for (size_t r = 0; r < static_cast<std::size_t>(gShape3); r++) {
                 size_t subTileR = r / TileData::InnerRows;
                 size_t innerR = r % TileData::InnerRows;
 
-                size_t tile_idx = subTileR*TileData::Cols*TileData::InnerRows +
-                    subTileC*TileData::InnerNumel + innerC*TileData::InnerRows + innerR;
+                size_t tile_idx = subTileR * TileData::Cols * TileData::InnerRows +
+                    subTileC * TileData::InnerNumel + innerC * TileData::InnerRows + innerR;
 
-                size_t gd_idx = r*gStride3 + c*gStride4;
-
+                size_t gd_idx = r * static_cast<std::size_t>(gStride3) + c * static_cast<std::size_t>(gStride4);
                 dst[gd_idx] = src[tile_idx];
             }
-        }
+        });
     }
 
     template <typename GlobalData, typename TileData, std::enable_if_t<!TileData::isRowMajor, int> = 0>
     __tf__ __aicore__ PTO_INLINE void StoreSubfractalMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol) {
         // Nz layout
-        for(size_t c=0; c<gShape4; c++) {
+        cpu::parallel_for_1d(0, static_cast<std::size_t>(gShape4), static_cast<std::size_t>(gShape3) * gShape4, [&](std::size_t c) {
             size_t subTileC = c / TileData::InnerCols;
             size_t innerC = c % TileData::InnerCols;
-            for(size_t r=0; r < gShape3; r++) {
+            for (size_t r = 0; r < static_cast<std::size_t>(gShape3); r++) {
                 size_t subTileR = r / TileData::InnerRows;
                 size_t innerR = r % TileData::InnerRows;
 
-                size_t tile_idx = subTileC*TileData::Rows*TileData::InnerCols +
-                    subTileR*TileData::InnerNumel + innerR*TileData::InnerCols + innerC;
-                size_t gd_idx = r*gStride3 + c*gStride4;
+                size_t tile_idx = subTileC * TileData::Rows * TileData::InnerCols +
+                    subTileR * TileData::InnerNumel + innerR * TileData::InnerCols + innerC;
+                size_t gd_idx = r * static_cast<std::size_t>(gStride3) + c * static_cast<std::size_t>(gStride4);
 
                 dst[gd_idx] = src[tile_idx];
             }
-        }
+        });
     }
 
     template <typename GlobalData, typename TileData>
@@ -139,6 +141,20 @@ namespace pto {
             dst.GetStride(pto::GlobalTensorDim::DIM_4),
             src.GetValidRow(),
             src.GetValidCol());
+    }
+
+    template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
+    __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantScalar)
+    {
+        (void)preQuantScalar;
+        TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src);
+    }
+
+    template <typename TileData, typename GlobalData, typename FpTileData, AtomicType atomicType = AtomicType::AtomicNone>
+    __aicore__ void TSTORE_IMPL(GlobalData &dst, TileData &src, FpTileData &fp)
+    {
+        (void)fp;
+        TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src);
     }
 }
 #endif

@@ -10,19 +10,21 @@ For each element `(i, j)` in the valid region:
 
 $$ \mathrm{dst}_{i,j} = \left|\mathrm{src}_{i,j}\right| $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.abs %src : tile<...> -> tile<...>
+```text
+%dst = tabs %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.abs %src wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TABS>>
+```text
+%dst, %e = tabs %src wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TABS>>
 ```
 
 ## C++ Intrinsic

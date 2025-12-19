@@ -12,19 +12,21 @@ $$ \mathrm{dst}_{\mathrm{idx}_{i,j},\ j} = \mathrm{src}_{i,j} $$
 
 If multiple elements map to the same destination location, the final value is implementation-defined (last writer wins in the current implementation).
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.scatter %src, %idx : tile<...>, tile<...> -> tile<...>
+```text
+%dst = tscatter %src, %idx : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.scatter %src, %idx wait(%e0)
-    : tile<...>, tile<...> -> tile<...>, !pto.event<producer = #pto.op<TSCATTER>>
+```text
+%dst, %e = tscatter %src, %idx wait(%e0)
+    : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TSCATTER>>
 ```
 
 ## C++ Intrinsic

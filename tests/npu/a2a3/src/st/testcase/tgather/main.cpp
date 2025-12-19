@@ -10,7 +10,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include "test_common.h"
 #include "acl/acl.h"
-#include <bits/stdint-uintn.h>
 #include <cstdint>
 #include <gtest/gtest.h>
 #include "tgather_common.h"

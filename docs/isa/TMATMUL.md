@@ -12,24 +12,26 @@ $$ \mathrm{C}_{i,j} = \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cdot \mathrm{B}_{k,j} $
 
 Exact accumulator behavior and datatype promotion are target/implementation-defined.
 
-## IR Syntax
+## Assembly Syntax
 
-Synchronous form (from `docs/ir/PTO-IR.md`):
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
-```mlir
-%acc = pto.tile.matmul %a, %b
-    : tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
-   -> tile<MxNxTc, #pto.tile_info<loc=Acc,   layout=Lc>>
+Synchronous form:
+
+```text
+%acc = tmatmul %a, %b
+    : !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
+   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc,   layout=Lc>>
 ```
 
 Asynchronous form:
 
-```mlir
-%acc, %e = pto.tile.matmul %a, %b wait(%e0, %e1)
-    : tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
-   -> tile<MxNxTc, #pto.tile_info<loc=Acc,   layout=Lc>>,
+```text
+%acc, %e = tmatmul %a, %b wait(%e0, %e1)
+    : !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
+      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
+   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc,   layout=Lc>>,
       !pto.event<producer = #pto.op<TMATMUL>>
 ```
 

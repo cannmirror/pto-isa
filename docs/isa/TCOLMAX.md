@@ -10,19 +10,21 @@ $$
 \\mathrm{dst}_{0,j} = \\max_i \\mathrm{src}_{i,j}
 $$
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 Synchronous form:
 
-```mlir
-%dst = pto.tile.colmax %src : tile<...> -> tile<...>
+```text
+%dst = tcolmax %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
 Asynchronous form:
 
-```mlir
-%dst, %e = pto.tile.colmax %src wait(%e0)
-    : tile<...> -> tile<...>, !pto.event<producer = #pto.op<TCOLMAX>>
+```text
+%dst, %e = tcolmax %src wait(%e0)
+    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCOLMAX>>
 ```
 
 ## C++ Intrinsic

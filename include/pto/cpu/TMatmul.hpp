@@ -11,6 +11,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TMATMUL_HPP
 #define TMATMUL_HPP
 
+#include "pto/cpu/tile_offsets.hpp"
+#include "pto/cpu/parallel.hpp"
+
 namespace pto {
     template <typename TileAcc, typename TileLeft, typename TileRight>
     void TMatmulNzZn(typename TileAcc::TileDType dst,
@@ -19,43 +22,22 @@ namespace pto {
                        typename TileRight::TileDType src1,
                        uint16_t M, uint16_t N, uint16_t K)
     {
-        static constexpr int innRowsA = TileLeft::InnerRows;
-        static constexpr int innColsA = TileLeft::InnerCols;
-        static constexpr int rowsA = TileLeft::Rows;
-        static constexpr int innSizeA = TileLeft::InnerNumel;
-
-        static constexpr int innRowsB = TileRight::InnerRows;
-        static constexpr int innColsB = TileRight::InnerCols;
-        static constexpr int colsB = TileRight::Cols;
-        static constexpr int innSizeB = TileRight::InnerNumel;
-
-        static constexpr int innRowsC = TileAcc::InnerRows;
-        static constexpr int innColsC = TileAcc::InnerCols;
-        static constexpr int rowsC = TileAcc::Rows;
-        static constexpr int innSizeC = TileAcc::InnerNumel;
-
-        // What is the correct usage of 'innSizeX'???
-        for (uint16_t i = 0; i < M; i++) {
+        cpu::parallel_for_1d(0, M, static_cast<std::size_t>(M) * N * K, [&](std::size_t i) {
             for (uint16_t j = 0; j < N; j++) {
                 typename TileAcc::DType mul_acc = 0;
 
+                PTO_CPU_VECTORIZE_LOOP
                 for (uint16_t k = 0; k < K; k++) {
-                    uint16_t src0Idx =
-                        (i / innRowsA) * innSizeA + (i % innRowsA) * innColsA +
-                        (k / innColsA) * innColsA * rowsA + (k % innColsA);
-                    uint16_t src1Idx =
-                        (j / innColsB) * innSizeB + (j % innColsB) * innRowsB +
-                        (k / innRowsB) * innRowsB * colsB + (k % innRowsB);
-
-                    mul_acc += src0[src0Idx] * src1[src1Idx];
+                    size_t src0Idx = GetTileElementOffset<TileLeft>(i, k);
+                    size_t src1Idx = GetTileElementOffset<TileRight>(k, j);
+                    mul_acc += static_cast<typename TileAcc::DType>(src0[src0Idx]) *
+                               static_cast<typename TileAcc::DType>(src1[src1Idx]);
                 }
 
-                uint16_t dstIdx =
-                        (i / innRowsC) * innSizeC + (i % innRowsC) * innColsC +
-                        (j / innColsC) * innColsC * rowsC + (j % innColsC);
+                size_t dstIdx = GetTileElementOffset<TileAcc>(i, j);
                 dst[dstIdx] = acc ? acc[dstIdx] + mul_acc : mul_acc;
             }
-        }
+        });
     }
 
     template <typename TileAcc, typename TileLeft, typename TileRight>

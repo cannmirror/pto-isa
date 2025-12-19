@@ -8,14 +8,16 @@ Bind a Tile object to an implementation-defined on-chip address (manual placemen
 
 Not applicable.
 
-## IR Syntax
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
 `TASSIGN` is typically introduced by bufferization/lowering when mapping SSA tiles to physical storage.
 
 Synchronous form:
 
-```mlir
-pto.tile.assign %tile, %addr : tile<...>, index
+```text
+tassign %tile, %addr : !pto.tile<...>, index
 ```
 
 ## C++ Intrinsic

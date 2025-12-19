@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/figures/pto_logo.svg" alt="PTO Tile Lib" width="220" />
+</p>
+
 # PTO Tile Lib
 
 Parallel Tile Operation (PTO) is a virtual instruction set architecture designed by Ascend CANN, focusing on Tile-level operations. This repository offers high-performance, cross-platform Tile operations based on different Ascend platforms. By porting to PTO instruction sequences, users can migrate Ascend hardware easily.
@@ -17,7 +21,7 @@ Our goal is to offer users a simplified, yet powerful way to optimize performanc
 Currently, PTO instructions are integrated into the following frameworks:
 
 * [PyPTO](https://gitcode.com/cann/pypto/)
-* [TileLang Ascend] (https://github.com/tile-ai/tilelang-ascend/)
+* [TileLang Ascend](https://github.com/tile-ai/tilelang-ascend/)
 
 ## Target Users of this Repository
 
@@ -95,10 +99,10 @@ python3 run_cpu.py --verbose
 
 ### Configuring Environment Variables (Ascend CANN)
 
-For example, if using the CANN community package, installation path: `/usr/local/Ascend/ascend-toolkit/latest`
+For example, if using the CANN community package and installing to `/usr/local/Ascend/ascend-toolkit/latest`:
 
 ```bash
-source /usr/local/Ascend/ascend-toolkit/set_env.sh
+source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
 ```
 
 ### One-click Build and Run (Optional)
