@@ -33,24 +33,26 @@ def gen_golden_data(param):
         f.write(struct.pack('f', np.float32(divider[0, 0])))
     output_arr.tofile('golden.bin')
 
-class taddsParams:
+
+class TAddsParams:
     def __init__(self, name, data_type, row, col):
         self.name = name
         self.data_type = data_type
         self.row = row
         self.col = col
 
+
 if __name__ == "__main__":
     case_params_list = [
-        taddsParams("TADDSTest.case1", np.float32, 32, 64),
-        taddsParams("TADDSTest.case2", np.float16, 63, 64),
-        taddsParams("TADDSTest.case3", np.int32, 31, 128),
-        taddsParams("TADDSTest.case4", np.int16, 15, 64 * 3),
-        taddsParams("TADDSTest.case5", np.float32, 7, 64 * 7),
-        taddsParams("TADDSTest.case6", np.float32, 256, 16)
+        TAddsParams("TADDSTest.case1", np.float32, 32, 64),
+        TAddsParams("TADDSTest.case2", np.float16, 63, 64),
+        TAddsParams("TADDSTest.case3", np.int32, 31, 128),
+        TAddsParams("TADDSTest.case4", np.int16, 15, 64 * 3),
+        TAddsParams("TADDSTest.case5", np.float32, 7, 64 * 7),
+        TAddsParams("TADDSTest.case6", np.float32, 256, 16)
     ]
 
-    for i, case in enumerate(case_params_list):
+    for _, case in enumerate(case_params_list):
         if not os.path.exists(case.name):
             os.makedirs(case.name)
         original_dir = os.getcwd()

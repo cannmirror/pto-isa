@@ -40,6 +40,8 @@ find_package(Threads REQUIRED)
 set(ALL_TESTCASES
 tmatmul
 tabs
+tci
+tadds
 tload
 tstore
 textract
@@ -48,6 +50,7 @@ tgatherb
 tmov
 tmrgsort
 trowsum
+trowexpand
 tadd
 texp
 tgather
@@ -60,12 +63,9 @@ tcmps
 tcolsum
 tcolmax
 tcvt
-tci
-tgatherb
 tpartadd
 tpartmax
 tpartmin
-trowexpand
 trsqrt
 tsel
 tsort32
@@ -94,7 +94,6 @@ txors
 tlrelu
 taddsc
 tsubsc
-tadds
 tdivs
 tmuls
 tmins

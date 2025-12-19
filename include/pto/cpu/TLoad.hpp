@@ -40,7 +40,7 @@ namespace pto {
     }
 
     template <typename GlobalData, typename TileData, std::enable_if_t<TileData::isRowMajor, int> = 0>
-    __tf__ __aicore__ PTO_INLINE void LoadPlainMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+    __tf__  PTO_INLINE void LoadPlainMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol, size_t idx3) {
         size_t offsetDstBase =  idx3*gShape3*TileData::Cols;
         cpu::parallel_for_1d(0, static_cast<std::size_t>(gShape3), static_cast<std::size_t>(gShape3) * gShape4, [&](std::size_t r) {
@@ -53,7 +53,7 @@ namespace pto {
         });
     }
     template <typename GlobalData, typename TileData, std::enable_if_t<!TileData::isRowMajor, int> = 0>
-    __tf__ __aicore__ PTO_INLINE void LoadPlainMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+    __tf__  PTO_INLINE void LoadPlainMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol, size_t idx3) {
         size_t offsetDstBase =  idx3*gShape4*TileData::Rows;
         cpu::parallel_for_1d(0, static_cast<std::size_t>(gShape4), static_cast<std::size_t>(gShape3) * gShape4, [&](std::size_t c) {
@@ -66,7 +66,7 @@ namespace pto {
     }
 
     template <typename GlobalData, typename TileData>
-    __tf__ __aicore__ PTO_INLINE void LoadPlain(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+    __tf__  PTO_INLINE void LoadPlain(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
         int gStride3, int gStride4, int validRow, int validCol) {
         int64_t dstStride1 = gShape2;
@@ -87,7 +87,7 @@ namespace pto {
     }
 
     template <typename GlobalData, typename TileData, std::enable_if_t<TileData::isRowMajor, int> = 0>
-    __tf__ __aicore__ PTO_INLINE void LoadSubfractalMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+    __tf__  PTO_INLINE void LoadSubfractalMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol) {
         // Zn layout
         cpu::parallel_for_1d(0, static_cast<std::size_t>(gShape4), static_cast<std::size_t>(gShape3) * gShape4, [&](std::size_t c) {
@@ -107,7 +107,7 @@ namespace pto {
     }
 
     template <typename GlobalData, typename TileData, std::enable_if_t<!TileData::isRowMajor, int> = 0>
-    __tf__ __aicore__ PTO_INLINE void LoadSubfractalMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
+    __tf__  PTO_INLINE void LoadSubfractalMatrix(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
         int gShape3, int gShape4, int gStride3, int gStride4, int validRow, int validCol) {
         // Nz layout
         cpu::parallel_for_1d(0, static_cast<std::size_t>(gShape4), static_cast<std::size_t>(gShape3) * gShape4, [&](std::size_t c) {
