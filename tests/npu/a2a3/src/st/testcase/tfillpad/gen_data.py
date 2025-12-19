@@ -25,6 +25,8 @@ if __name__ == "__main__":
         "TFILLPADTest.case_s8_GT_260_7_VT_260_64_BLK1_PADMIN_PADMAX",
         "TFILLPADTest.case_u16_GT_259_7_VT_260_32_BLK1_PADMIN_PADMAX_EXPAND",
         "TFILLPADTest.case_s8_GT_259_7_VT_260_64_BLK1_PADMIN_PADMAX_EXPAND",
+        "TFILLPADTest.case_s16_GT_260_7_VT_260_32_BLK1_PADMIN_PADMIN",
+        "TFILLPADTest.case_s32_GT_260_7_VT_260_32_BLK1_PADMIN_PADMIN",               
     ]
 
     for i, case_name in enumerate(case_name_list):

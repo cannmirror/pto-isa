@@ -116,7 +116,7 @@ struct PadValueMap<int32_t, PadValue::Zero> {
 };
 template <>
 struct PadValueMap<int32_t, PadValue::Min> {
-    static constexpr auto value = uint32_t(0xffffffffUL);
+    static constexpr auto value = uint32_t(0x80000000UL);
 };
 template <>
 struct PadValueMap<int32_t, PadValue::Max> {
@@ -186,7 +186,7 @@ struct PadValueMap<int16_t, PadValue::Zero> {
 };
 template <>
 struct PadValueMap<int16_t, PadValue::Min> {
-    static constexpr auto value = uint16_t(0xffff);
+    static constexpr auto value = uint16_t(0x8000);
 };
 template <>
 struct PadValueMap<int16_t, PadValue::Max> {
