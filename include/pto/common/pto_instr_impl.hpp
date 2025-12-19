@@ -142,6 +142,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
     #include "pto/cpu/TFillPad.hpp"
     #include "pto/cpu/TTrans.hpp"
     #include "pto/cpu/TSelS.hpp"
+    #include "pto/cpu/TPartMax.hpp"
+    #include "pto/cpu/TPartMin.hpp"
+    #include "pto/cpu/TPartAdd.hpp"
 #endif
 
 #endif

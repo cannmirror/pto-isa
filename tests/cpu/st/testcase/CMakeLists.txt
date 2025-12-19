@@ -73,6 +73,9 @@ tadds
 tdivs
 tmuls
 tmins
+tpartmax
+tpartmin
+tpartadd
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})
