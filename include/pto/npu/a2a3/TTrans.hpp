@@ -216,22 +216,13 @@ template <typename Op, typename T, unsigned blockSizeElem, unsigned dstStride>
 PTO_INTERNAL void CopyB32Tail(__ubuf__ T *dstPtr, __ubuf__ T *tmpPtr, unsigned tmpStride, unsigned validRow,
     unsigned validCol, unsigned remain_y) {
     if (remain_y > 0) {
-        constexpr uint16_t yTileSizeElem = 16;
-        constexpr uint16_t yTileSizeBlock = 2;
-        uint16_t lenBurst = (remain_y > blockSizeElem) ? yTileSizeBlock : 1;
-        uint16_t srcGap = (remain_y > blockSizeElem) ? 0 : 1;
-        uint16_t dstGap = srcGap;
-        uint16_t numSubTileY = validRow / yTileSizeElem;
-        if (numSubTileY > 0) {
-            dstGap = (numSubTileY * yTileSizeElem) / blockSizeElem;
-            if ((dstStride - (numSubTileY * yTileSizeElem)) > blockSizeElem) {
-                dstGap += srcGap;
-            }
-        } else if (remain_y < blockSizeElem) {
-            dstGap = 0;
-        } else {
-            dstGap = srcGap;
-        }
+        // [16, 8] -> [8, 16] of vnchwconv
+        constexpr uint16_t yTileSizeBlock = 2; // 16/8=2
+        // remain_y large than blockSizeElem
+        bool yLTBlockSizeElem = remain_y > blockSizeElem;
+        uint16_t lenBurst = yLTBlockSizeElem ? yTileSizeBlock : 1;
+        uint16_t srcGap = yLTBlockSizeElem ? 0 : 1;
+        uint16_t dstGap = dstStride / blockSizeElem - lenBurst;
         pipe_barrier(PIPE_V);
         copy_ubuf_to_ubuf(dstPtr + (validRow - remain_y), tmpPtr, 0, validCol, lenBurst, srcGap, dstGap);
     }
@@ -250,11 +241,10 @@ __tf__ PTO_INTERNAL void TTrans(typename TileData::TileDType __out__ dst, typena
     int numSubTileY = validRow / yTileSizeElem;
     int remain_y = validRow % yTileSizeElem;
 
-    const unsigned tmpStride = (sizeof(T) == 1) ? (remain_y + 31) / 32 * 32 : (remain_y + 15) / 16 * 16;
-
     if constexpr (sizeof(T) == 4) { // b32
         TransB32FullSubTiles<TransOp<T>, T, blockSizeElem, dstStride, srcStride>(
             dstPtr, srcPtr, numSubTileX, numSubTileY);
+        const unsigned tmpStride = (remain_y + 15) / 16 * 16;
         TransB32YTailTiles<TransOp<T>, T, blockSizeElem, srcStride>(
             tmpPtr, srcPtr, tmpStride, numSubTileX, numSubTileY, remain_y);
         CopyB32Tail<TransOp<T>, T, blockSizeElem, dstStride>(dstPtr, tmpPtr, tmpStride, validRow, validCol, remain_y);

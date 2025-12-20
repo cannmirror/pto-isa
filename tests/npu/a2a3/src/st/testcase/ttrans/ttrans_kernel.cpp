@@ -14,7 +14,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 using namespace pto;
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int tRows, int tCols>
 __global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols) {
     using DynShapeSrc = pto::Shape<-1, -1, -1, -1, -1>;
     using DynStrideSrc = pto::Stride<-1, -1, -1, -1, -1>;
@@ -24,32 +24,30 @@ __global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, in
     using DynStrideDst = pto::Stride<-1, -1, -1, -1, -1>;
     using GlobalDataDst = GlobalTensor<T, DynShapeDst, DynStrideDst>;
 
-    constexpr int kTCols_aligned =
-        (kTCols_ * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
-    constexpr int kTRows_aligned =
-        (kTRows_ * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
-    using TileDataSrc = Tile<TileType::Vec, T, kTRows_, kTCols_aligned, BLayout::RowMajor, -1, -1>;
-    using TileDataDst = Tile<TileType::Vec, T, kTCols_, kTRows_aligned, BLayout::RowMajor, -1, -1>;
-    constexpr int tmpRows_aligned = kTCols_;
-    constexpr unsigned yTileSizeElem = (sizeof(T) == 1) ? 32 : 16;
-    constexpr int tmpCols_aligned = (kTRows_ + yTileSizeElem - 1) / yTileSizeElem * yTileSizeElem;
-    using TileDataTmp =
-        Tile<TileType::Vec, T, tmpRows_aligned, tmpCols_aligned, BLayout::RowMajor, tmpRows_aligned, tmpCols_aligned>;
+    constexpr int srcTileH = tRows;
+    constexpr int srcTileW = tCols;
+    constexpr int dstTileH = tCols;
+    constexpr int tmpTileH = dstTileH;
+    constexpr int dstTileW = (tRows * sizeof(T) + BLOCK_BYTE_SIZE - 1) / BLOCK_BYTE_SIZE * BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr unsigned tmpTileW = (sizeof(T) == 1) ? 32 : 16;
+    using TileDataSrc = Tile<TileType::Vec, T, srcTileH, srcTileW, BLayout::RowMajor, -1, -1>;
+    using TileDataDst = Tile<TileType::Vec, T, dstTileH, dstTileW, BLayout::RowMajor, -1, -1>;
+    using TileDataTmp = Tile<TileType::Vec, T, tmpTileH, tmpTileW, BLayout::RowMajor, tmpTileH, tmpTileW>;
 
     TileDataSrc srcTile(vRows, vCols);
     TileDataDst dstTile(vCols, vRows);
     TileDataTmp tmpTile;
 
-    constexpr uint32_t alignedSrcTileSize = (kTRows_ * kTCols_aligned * sizeof(T) + 0x1FF) / 0x200 * 0x200;
-    constexpr uint32_t alignedDstTileSize = (kTCols_ * kTRows_aligned * sizeof(T) + 0x1FF) / 0x200 * 0x200;
-    constexpr uint32_t alignedTmpTileSize = (tmpRows_aligned * tmpCols_aligned * sizeof(T) + 0x1FF) / 0x200 * 0x200;
+    constexpr uint32_t alignedSrcTileSize = (srcTileH * srcTileW * sizeof(T));
+    constexpr uint32_t alignedDstTileSize = (dstTileH * dstTileW * sizeof(T));
+    constexpr uint32_t alignedTmpTileSize = (tmpTileH * tmpTileW * sizeof(T));
     static_assert(alignedSrcTileSize + alignedDstTileSize + alignedTmpTileSize <= 192 * 1024);
     TASSIGN(srcTile, 0x0);
     TASSIGN(dstTile, alignedSrcTileSize);
     TASSIGN(tmpTile, alignedSrcTileSize + alignedDstTileSize);
 
-    GlobalDataSrc srcGlobal(src, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride(1, 1, 1, kGCols_, kGRows_));
-    GlobalDataDst dstGlobal(out, pto::Shape(1, 1, 1, vCols, vRows), pto::Stride(1, 1, 1, kGRows_, kGCols_));
+    GlobalDataSrc srcGlobal(src, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride(1, 1, 1, tCols, tRows));
+    GlobalDataDst dstGlobal(out, pto::Shape(1, 1, 1, vCols, vRows), pto::Stride(1, 1, 1, tRows, tCols));
 
     TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
@@ -63,9 +61,9 @@ __global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, in
 template <typename T, int tRows, int tCols, int vRows, int vCols>
 void LaunchTTRANS(T *out, T *src, void *stream) {
     if constexpr (std::is_same_v<T, aclFloat16>) {
-        runTTRANS<half, tRows, tCols, vRows, vCols><<<1, nullptr, stream>>>((half *)(out), (half *)(src), vRows, vCols);
+        runTTRANS<half, tRows, tCols><<<1, nullptr, stream>>>((half *)(out), (half *)(src), vRows, vCols);
     } else {
-        runTTRANS<T, tRows, tCols, vRows, vCols><<<1, nullptr, stream>>>(out, src, vRows, vCols);
+        runTTRANS<T, tRows, tCols><<<1, nullptr, stream>>>(out, src, vRows, vCols);
     }
 }
 
@@ -79,3 +77,6 @@ template void LaunchTTRANS<float, 2, 512, 2, 512>(float *out, float *src, void *
 template void LaunchTTRANS<float, 9, 512, 9, 512>(float *out, float *src, void *stream);
 template void LaunchTTRANS<float, 32, 16, 23, 15>(float *out, float *src, void *stream);
 template void LaunchTTRANS<float, 64, 128, 27, 77>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 512, 32, 512, 2>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 64, 64, 36, 64>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 2, 16, 2, 16>(float *out, float *src, void *stream);
