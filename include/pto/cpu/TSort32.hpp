@@ -7,8 +7,8 @@ THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, E
 INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 See LICENSE in the root of the software repository for the full text of the License.
 */
-#ifndef PTO_CPU_TSORT32_HPP
-#define PTO_CPU_TSORT32_HPP
+#ifndef TSORT32_HPP
+#define TSORT32_HPP
 
 #include <algorithm>
 #include <iostream>
@@ -92,8 +92,21 @@ template<typename TileDataDst, typename TileDataSrc, typename TileDataIdx>
 PTO_INTERNAL void TSORT32_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataIdx &idx)
 {
     using T = typename TileDataSrc::DType;
+    static_assert(std::is_same_v<T, int32_t> || std::is_same_v<T, int16_t> || std::is_same_v<T, half> ||
+                  std::is_same_v<T, float>, "TSORT32: Invalid data type.");
+    static_assert(std::is_same_v<typename TileDataDst::DType, T>,
+                  "The Src data type must be consistent with the dst data type");
+    static_assert(std::is_same_v<typename TileDataIdx::DType, uint32_t>, "The Idx data type must be uint32");
+    static_assert(std::is_same_v<TileDataSrc::RowStride, TileDataIdx::RowStride>, 
+                  "The Src stride must be consistent with the idx stride")
+    static_assert(std::is_same_v<src.GetValidRow(), idx.GetValidRow()> &&
+                  std::is_same_v<src.GetValidCol(), idx.GetValidCol()>, 
+                  "The Src validRow and validCol must be consistent with the idx")
     int validRow = src.GetValidRow();
     int validCol = src.GetValidCol();
+    if (validRow == 0 || validCol == 0) {
+        return;
+    }
     TSort32<T, TileDataDst, TileDataSrc, TileDataIdx>(dst.data(), src.data(), idx.data(), validRow, validCol);
 }
 }
