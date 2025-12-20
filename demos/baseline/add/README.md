@@ -101,7 +101,7 @@ Edit `demos/baseline/add/CMakeLists.txt` and set `SOC_VERSION` to your target (e
 set(SOC_VERSION "Ascendxxxyy" CACHE STRING "system on chip type")
 ```
 
-You can query the chip name on the target machine via `npu-smi info` and use `Ascend<Chip Name>` as the value.
+You can query the chip name on the target machine via `npu_smi info` and use `Ascend<Chip Name>` as the value.
 
 ### 3.2 Build the wheel
 
