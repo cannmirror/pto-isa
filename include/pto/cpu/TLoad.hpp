@@ -17,7 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
     template <typename TileData>
-    AICORE constexpr TileData::DType getPadValue()
+    AICORE constexpr typename TileData::DType getPadValue()
     {    
         switch (TileData::PadVal)
         {

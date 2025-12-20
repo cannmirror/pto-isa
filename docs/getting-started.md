@@ -135,6 +135,12 @@ Common options:
   python3 run_cpu.py --demo gemm --verbose
   ```
 
+- Build & run the Flash Attention demo:
+
+  ```bash
+  python3 run_cpu.py --demo flash_attn --verbose
+  ```
+
 ## (Optional) Ascend CANN Environment (Linux)
 
 If you plan to run NPU or simulator STs, install Ascend drivers + CANN toolkit (see Ascend docs for your distribution), then source `setenv.bash`:
