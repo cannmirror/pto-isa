@@ -188,7 +188,7 @@ PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileData::DType *dstPtr, __ubuf_
             Bin1LCountMode<Op, T>(dstPtr, src0Ptr, src1Ptr, validRow, validCol);
         } else {
             Bin1LNormMode<Op, T, elementsPerRepeat, blockSizeElem, rowStride, TileData::Cols>(
-                dstPtr, src0Ptr, src1Ptr, validRow, TileData::Cols);
+                dstPtr, src0Ptr, src1Ptr, validRow, validCol);
         }
     } else {
         // continuous check in runtime(merge axis)
