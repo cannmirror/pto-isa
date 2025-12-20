@@ -7,61 +7,94 @@ THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, E
 INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 See LICENSE in the root of the software repository for the full text of the License.
 */
-
 #ifndef PTO_CPU_TSORT32_HPP
 #define PTO_CPU_TSORT32_HPP
 
 #include <algorithm>
-#include <array>
-#include <cstdint>
-
+#include <iostream>
+#include <vector>
+#include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
 
 namespace pto {
+constexpr const int sortNum = 32;
+constexpr const int floatStride = 1;
+constexpr const int halfStride = 2;
+constexpr const int halfOffset = 16;
+constexpr const int totalByte = 8;
 
-template <typename DstTileData, typename SrcTileData, typename IdxTileData>
-PTO_INTERNAL void TSORT32_IMPL(DstTileData &dst, SrcTileData &src, IdxTileData &idx)
-{
-    constexpr std::size_t kBlock = 32;
-    const std::size_t rows = static_cast<std::size_t>(dst.GetValidRow());
-    const std::size_t cols = static_cast<std::size_t>(src.GetValidCol());
-    if (rows == 0 || cols < kBlock) {
-        return;
+template<typename T>
+struct ScoreIndexPair {
+    T score;
+    uint32_t index;
+    
+    // 用于降序排序的比较函数（稳定排序）
+    bool operator<(const ScoreIndexPair& other) const {
+        // 降序排序：分数大的在前
+        if (score != other.score) {
+            return score > other.score;  // 降序
+        }
+        // 分数相同时，按原始索引升序（i<j时优先存储i）
+        return index < other.index;
     }
+};
 
-    const std::size_t blocks = cols / kBlock;
-    for (std::size_t r = 0; r < rows; ++r) {
-        for (std::size_t b = 0; b < blocks; ++b) {
-            std::array<std::pair<typename SrcTileData::DType, uint32_t>, kBlock> items;
-            for (std::size_t k = 0; k < kBlock; ++k) {
-                const std::size_t c = b * kBlock + k;
-                items[k] = {src.data()[GetTileElementOffset<SrcTileData>(r, c)], static_cast<uint32_t>(c)};
+template<typename T, typename TileDataDst, typename TileDataSrc, typename TileDataIdx>
+PTO_INTERNAL void TSort32(typename TileDataDst::TileDType dst, typename TileDataSrc::TileDType src,
+                          typename TileDataIdx::TileDType idx, int validRow, int validCol)
+{
+    for (int i = 0; i < validRow; i++) {
+        for (int j = 0; j < validCol; j += sortNum) {
+            const size_t dstOffset = GetTileElementOffset<TileDataDst>(i, 2 * j);
+            const size_t srcOffset = GetTileElementOffset<TileDataSrc>(i, j);
+            const size_t idxOffset = GetTileElementOffset<TileDataIdx>(i, j);
+            int validNum = std::min(sortNum, validCol - j);
+            // 收集当前分段的分数-索引对
+            std::vector<ScoreIndexPair<T>> segment(validNum);
+            for (int k = 0; k < validNum; k++) {
+                segment[k].score = src[srcOffset + k];
+                segment[k].index = (uint32_t)(idx[idxOffset + k]);
             }
-            std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
-                if (a.first < b.first) {
-                    return true;
+
+            // 对当前分段进行稳定排序（降序）
+            // 使用稳定排序以保持相同分数的原始顺序
+            std::stable_sort(segment.begin(), segment.end(),
+                [](const ScoreIndexPair<T>& a, const ScoreIndexPair<T>& b) {
+                    // 主要按分数降序排序
+                    if (a.score != b.score) {
+                        return a.score > b.score;  // 降序
+                    }
+                    // 分数相同时，按原始索引升序（i<j时优先存储i）
+                    return a.index < b.index;
                 }
-                if (b.first < a.first) {
-                    return false;
+            );
+
+            int num = 0;
+            int t = 0;
+            while (num < validNum) {
+                if constexpr (sizeof(T) == sizeof(half)) {
+                    dst[dstOffset + t] = segment[num].score;
+                    dst[dstOffset + t + 1] = 0;
+                    dst[dstOffset + t + halfStride] = segment[num].index;
+                    dst[dstOffset + t + halfStride + 1] = segment[num].index >> halfOffset;
+                } else {
+                    dst[dstOffset + t] = segment[num].score;
+                    dst[dstOffset + t + 1] = segment[num].index;
                 }
-                return a.second < b.second;
-            });
-            for (std::size_t k = 0; k < kBlock; ++k) {
-                const std::size_t c = b * kBlock + k;
-                dst.data()[GetTileElementOffset<DstTileData>(r, c)] = static_cast<typename DstTileData::DType>(items[k].first);
-                idx.data()[GetTileElementOffset<IdxTileData>(r, c)] = items[k].second;
+                num++;
+                t += totalByte / sizeof(T);
             }
         }
     }
 }
 
-template <typename DstTileData, typename SrcTileData, typename IdxTileData, typename TmpTileData>
-PTO_INTERNAL void TSORT32_IMPL(DstTileData &dst, SrcTileData &src, IdxTileData &idx, TmpTileData &tmp)
+template<typename TileDataDst, typename TileDataSrc, typename TileDataIdx>
+PTO_INTERNAL void TSORT32_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataIdx &idx)
 {
-    (void)tmp;
-    TSORT32_IMPL(dst, src, idx);
+    using T = typename TileDataSrc::DType;
+    int validRow = src.GetValidRow();
+    int validCol = src.GetValidCol();
+    TSort32<T, TileDataDst, TileDataSrc, TileDataIdx>(dst.data(), src.data(), idx.data(), validRow, validCol);
 }
-
-} // namespace pto
-
+}
 #endif

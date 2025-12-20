@@ -12,74 +12,108 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/pto-inst.hpp>
 #include <gtest/gtest.h>
 
+using namespace std;
 using namespace PtoTestCommon;
 
-template <int kCols>
-void LaunchTSORT32(float *outVal, uint32_t *outIdx, float *src, void *stream);
+template <typename T0, typename T1, int kGRows, int kGCols, int kTRows, int kTCols, int validRow, int validCol>
+void launchTSort32(T0 *out, T0 *src, T1 *idx, aclrtStream stream);
 
-class TSORT32_Test : public testing::Test {
+class TSORT32Test : public testing::Test{
+protected:
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
-static std::string GetGoldenDir()
-{
+std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
-    return "../" + std::string(testInfo->test_suite_name()) + "." + testInfo->name();
+    const std::string caseName = testInfo->name();
+    std::string suiteName = testInfo->test_suite_name();
+    std::string fullPath = "../" + suiteName + "." + caseName;
+    return fullPath;
 }
 
-TEST_F(TSORT32_Test, case_float_1x32)
+template <typename T0, typename T1, int kGRows, int kGCols, int kTRows, int kTCols, int validRow, int validCol>
+bool TSort32Test()
 {
-    constexpr int kCols = 32;
-    const size_t srcSize = kCols * sizeof(float);
-    const size_t valSize = kCols * sizeof(float);
-    const size_t idxSize = kCols * sizeof(uint32_t);
-
     aclInit(nullptr);
     aclrtSetDevice(0);
+
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    float *srcHost, *valHost;
-    uint32_t *idxHost;
-    float *srcDevice, *valDevice;
-    uint32_t *idxDevice;
-    aclrtMallocHost((void **)(&srcHost), srcSize);
-    aclrtMallocHost((void **)(&valHost), valSize);
-    aclrtMallocHost((void **)(&idxHost), idxSize);
-    aclrtMalloc((void **)&srcDevice, srcSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&valDevice, valSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&idxDevice, idxSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    size_t dstByteSize = kGRows * kGCols * 8;
+    size_t srcByteSize = kGRows * kGCols * sizeof(T0);
+    size_t idxByteSize = kGRows * kGCols * sizeof(T1);
 
-    size_t readSize = 0;
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input.bin", readSize, srcHost, srcSize));
-    aclrtMemcpy(srcDevice, srcSize, srcHost, srcSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    T0 *dstHost = nullptr;
+    T0 *srcHost = nullptr;
+    T1 *idxHost = nullptr;
+    T0 *dstDevice = nullptr;
+    T0 *srcDevice = nullptr;
+    T1 *idxDevice = nullptr;
 
-    LaunchTSORT32<kCols>(valDevice, idxDevice, srcDevice, stream);
+    aclrtMallocHost((void**)(&dstHost), dstByteSize);
+    aclrtMallocHost((void**)(&srcHost), srcByteSize);
+    aclrtMallocHost((void**)(&idxHost), idxByteSize);
+
+    aclrtMalloc((void**)(&dstDevice), dstByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void**)(&srcDevice), srcByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void**)(&idxDevice), idxByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    ReadFile(GetGoldenDir() + "/input0.bin", srcByteSize, srcHost, srcByteSize);
+    ReadFile(GetGoldenDir() + "/input1.bin", idxByteSize, idxHost, idxByteSize);
+
+    aclrtMemcpy(srcDevice, srcByteSize, srcHost, srcByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(idxDevice, idxByteSize, idxHost, idxByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    PrintData(srcHost, kGRows * kGCols, INT16_T, kGCols);
+    PrintData(idxHost, kGRows * kGCols, UINT32_T, kGCols);
+    launchTSort32<T0, T1, kGRows, kGCols, kTRows, kTCols, validRow, validCol>(dstDevice, srcDevice, idxDevice, stream);
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(valHost, valSize, valDevice, valSize, ACL_MEMCPY_DEVICE_TO_HOST);
-    aclrtMemcpy(idxHost, idxSize, idxDevice, idxSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, dstByteSize, dstDevice, dstByteSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    PrintData(dstHost, kGRows * kGCols * 8 / sizeof(T0), INT16_T, kGCols * 8 / sizeof(T0));
 
-    WriteFile(GetGoldenDir() + "/output.bin", valHost, valSize);
-    WriteFile(GetGoldenDir() + "/output_idx.bin", idxHost, idxSize);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstByteSize);
 
-    aclrtFree(valDevice);
-    aclrtFree(idxDevice);
+    aclrtFree(dstDevice);
     aclrtFree(srcDevice);
-    aclrtFreeHost(valHost);
-    aclrtFreeHost(idxHost);
-    aclrtFreeHost(srcHost);
+    aclrtFree(idxDevice);
+    aclrtFree(dstHost);
+    aclrtFree(srcHost);
+    aclrtFree(idxHost);
+
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(kCols);
-    std::vector<float> outVal(kCols);
-    std::vector<uint32_t> goldenIdx(kCols);
-    std::vector<uint32_t> outIdx(kCols);
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", readSize, golden.data(), valSize));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden_idx.bin", readSize, goldenIdx.data(), idxSize));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", readSize, outVal.data(), valSize));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output_idx.bin", readSize, outIdx.data(), idxSize));
+    std::vector<T0> golden(dstByteSize);
+    std::vector<T0> devFinal(dstByteSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", dstByteSize, golden.data(), dstByteSize);
+    ReadFile(GetGoldenDir() + "/output.bin", dstByteSize, devFinal.data(), dstByteSize);
+    return ResultCmp<T0>(golden, devFinal, 0.001f);
+}
 
-    EXPECT_TRUE(ResultCmp<float>(golden, outVal.data(), 0.0f));
-    EXPECT_TRUE(ResultCmp<uint32_t>(goldenIdx, outIdx.data(), 0.0f));
+TEST_F(TSORT32Test, test0)
+{
+    bool res = TSort32Test<int16_t, uint32_t, 16, 16, 16, 16, 16, 16>();
+    EXPECT_TRUE(res);
+}
+
+TEST_F(TSORT32Test, test1)
+{
+    bool res = TSort32Test<float, uint32_t, 8, 32, 8, 32, 8, 32>();
+    EXPECT_TRUE(res);
+}
+
+TEST_F(TSORT32Test, test2)
+{
+    bool res = TSort32Test<int32_t, uint32_t, 7, 32, 7, 32, 7, 32>();
+    EXPECT_TRUE(res);
+}
+
+TEST_F(TSORT32Test, test3)
+{
+    bool res = TSort32Test<aclFloat16, uint32_t, 32, 16, 32, 16, 32, 16>();
+    EXPECT_TRUE(res);
 }

@@ -103,6 +103,7 @@ tcolexpand
 tscatter
 mgather
 mscatter
+tsort32
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})
