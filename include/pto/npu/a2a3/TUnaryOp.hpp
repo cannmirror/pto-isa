@@ -280,17 +280,11 @@ namespace pto {
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
         constexpr unsigned rowStride = TileData::RowStride;
 
-        if constexpr (std::is_same<typename TileData::DType, float32_t>::value ||
-                      std::is_same<typename TileData::DType, float>::value) {
 #ifdef ACCURATE_RSQRT
-            TRsqrtCustom<TileData>(dst.data(), src.data(), validRow, validCol);
+        TRsqrtCustom<TileData>(dst.data(), src.data(), validRow, validCol);
 #else
-            TUnaryOp<TileData, _vrsqrt, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
+        TUnaryOp<TileData, _vrsqrt, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
 #endif
-        } else if constexpr (std::is_same<typename TileData::DType, half>::value ||
-                             std::is_same<typename TileData::DType, float16_t>::value) {
-            TUnaryOp<TileData, _vrsqrt, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
-        }
     }
 
     /* SQRT */
