@@ -573,7 +573,6 @@ init_env() {
   UNINSTALL_SHELL_FILE="${TARGET_MOULDE_DIR}/script/pto_uninstall.sh"
   INSTALL_INFO_FILE="${TARGET_MOULDE_DIR}/${ASCEND_INSTALL_INFO}"
   is_multi_version_pkg "pkg_is_multi_version" "$VERSION_INFO_FILE"
-  get_version_dir "PKG_VERSION_DIR" "$VERSION_INFO_FILE"
   get_package_version "RUN_PKG_VERSION" "$VERSION_INFO_FILE"
 
   # creat log folder and log file
@@ -677,7 +676,7 @@ install_package() {
   fi
 
   bash "${INSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "${TARGET_USERNAME}" "${TARGET_USERGROUP}" "${IN_FEATURE}" \
-    "${IN_INSTALL_TYPE}" "${IS_FOR_ALL}" "${IS_SETENV}" "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}"
+    "${IN_INSTALL_TYPE}" "${IS_FOR_ALL}" "${IS_SETENV}" "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$pkg_version_dir"
   if [ "$?" != 0 ]; then
     comm_log_operation "Install" "${IN_INSTALL_TYPE}" "OpsMath" "$?" "${CMD_LIST}"
   fi
@@ -707,7 +706,7 @@ uninstall_package() {
     comm_log_operation "Uninstall" "${IN_INSTALL_TYPE}" "OpsMath" "$?" "${CMD_LIST}"
     exit 0
   fi
-  bash "${UNINSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "uninstall" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}"
+  bash "${UNINSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "uninstall" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$pkg_version_dir"
   # remove precheck info in ${TARGET_VERSION_DIR}/bin/prereq_check.bash
   logandprint "[INFO]: Remove precheck info."
 
