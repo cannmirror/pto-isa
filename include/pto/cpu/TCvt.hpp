@@ -23,6 +23,7 @@ namespace pto {
 namespace {
 PTO_INTERNAL double apply_round(double x, RoundMode mode)
 {
+    constexpr double NUM_HALF = 0.5;
     switch (mode) {
         case RoundMode::CAST_NONE:
             return x;
@@ -39,12 +40,12 @@ PTO_INTERNAL double apply_round(double x, RoundMode mode)
         case RoundMode::CAST_ODD: {
             const double f = std::floor(x);
             const double c = std::ceil(x);
-            if (x - f == 0.5) {
+            if (x - f == NUM_HALF) {
                 const long long fi = static_cast<long long>(f);
                 const long long ci = static_cast<long long>(c);
                 return (fi & 1LL) ? f : c;
             }
-            if (c - x == 0.5) {
+            if (c - x == NUM_HALF) {
                 const long long fi = static_cast<long long>(f);
                 const long long ci = static_cast<long long>(c);
                 return (ci & 1LL) ? c : f;
