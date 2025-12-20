@@ -213,17 +213,11 @@ PTO_INTERNAL void TPartMasterImpl(DstTileData &dst, Src0TileData& src0, Src1Tile
         return;
     }
 
-    bool condSrc0EqDst = (src0ValidRow == dstValidRow && src0ValidCol == dstValidCol);
-    bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
-
     // dst has to be larger than or equal to both sources
     bool condDstgeSrc = (src1ValidRow <= dstValidRow && src1ValidCol <= dstValidCol) &&
                         (src0ValidRow <= dstValidRow && src0ValidCol <= dstValidCol);
 
-    if (condSrc0EqDst && condSrc1EqDst) { // src0 == src1 == dst
-        BinaryInstr<Op, DstTileData, elementsPerRepeat, blockSizeElem, DstRowStride>
-            (dst.data(), src0.data(), src1.data(), dstValidRow, dstValidCol, version);
-    } else if (condDstgeSrc){             // src0 <= dst && src1 <= dst
+    if (condDstgeSrc){             // src0 <= dst && src1 <= dst
         TCopyPadOp<Op, DstTileData, elementsPerRepeat, Src0RowStride, Src1RowStride, DstRowStride>
             (dst.data(), src0.data(), src1.data(), src0ValidRow, src0ValidCol,
              src1ValidRow, src1ValidCol, dstValidRow, dstValidCol);
