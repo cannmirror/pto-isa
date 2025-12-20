@@ -43,7 +43,7 @@ void LaunchTCmps(uint8_t *out, T *src0, T *src1, void *stream);
 
 template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int cmpMode>
 void test_tcmps() {
-    size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
+    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
     size_t file_size_dst = kTRows_ * kTCols_ / 8;
     size_t scalarfileSize = sizeof(T);
 
@@ -88,23 +88,11 @@ void test_tcmps() {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<uint8_t> golden(kTRows_ * kTCols_);
-    std::vector<uint8_t> devFinal(kTRows_ * kTCols_);
+    std::vector<uint8_t> golden(kGRows_ * kGCols_);
+    std::vector<uint8_t> devFinal(kGRows_ * kGCols_);
     ReadFile(GetGoldenDir() + "/golden.bin", file_size_dst, golden.data(), file_size_dst);
     ReadFile(GetGoldenDir() + "/output.bin", file_size_dst, devFinal.data(), file_size_dst);
 
-    if (kGCols_ < kTCols_ || kGRows_ < kTRows_) {
-        for (size_t ind = 0; ind < kGRows_; ind++) {
-            for (size_t ind_col = 0; ind_col < (kTCols_ - kGCols_) / 8; ind_col++) {
-                devFinal[ind * kTCols_ / 8 + kGCols_ / 8 + ind_col] = 0;
-            }
-        }
-        for (size_t ind = kGRows_; ind < kTRows_ / 8; ind++) {
-            for (size_t ind_col = 0; ind_col < kTCols_ / 8; ind_col++) {
-                devFinal[ind * kTCols_ / 8 + ind_col] = 0;
-            }
-        }
-    }
     bool ret = ResultCmp<uint8_t>(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
@@ -122,17 +110,20 @@ TEST_F(TCMPSTest, case_float_8x64_8x64_8x64) {
 TEST_F(TCMPSTest, case_float_4x64_4x64_4x64) {
     test_tcmps<float, 4, 64, 4, 64, 1>();
 }
-TEST_F(TCMPSTest, case_float_128x128_128x128_64x64) {
-    test_tcmps<float, 64, 64, 128, 128, 2>();
+TEST_F(TCMPSTest, case_float_128x128_64x64_128x128) {
+    test_tcmps<float, 128, 128, 64, 64, 2>();
 }
-TEST_F(TCMPSTest, case_int32_64x64_64x64_32x32) {
-    test_tcmps<int32_t, 32, 32, 64, 64, 0>();
+TEST_F(TCMPSTest, case_int32_64x64_32x32_64x64) {
+    test_tcmps<int32_t, 64, 64, 32, 32, 0>();
 }
 TEST_F(TCMPSTest, case_int32_16x32_16x32_16x32) {
     test_tcmps<int32_t, 16, 32, 16, 32, 0>();
 }
 TEST_F(TCMPSTest, case_float_128x128_128x128_128x128) {
     test_tcmps<float, 128, 128, 128, 128, 3>();
+}
+TEST_F(TCMPSTest, case_int32_77x81_32x32_77x81) {
+    test_tcmps<int32_t, 77, 81, 32, 32, 0>();
 }
 TEST_F(TCMPSTest, case_int32_32x32_32x32_32x32) {
     test_tcmps<int32_t, 32, 32, 32, 32, 0>();
