@@ -20,10 +20,10 @@ __global__ AICORE void runTCmps( __gm__ uint8_t __out__ *out, __gm__ T __in__ *s
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData_src0 = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using GlobalData_dst = GlobalTensor<uint8_t, DynShapeDim5, DynStridDim5>;
-    using TileData_src0 = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, kGRows_, kGCols_>;
-    using TileData_dst = Tile<TileType::Vec, uint8_t, kTRows_, kTCols_, BLayout::RowMajor, kGRows_, kGCols_>;
-    TileData_src0 src0Tile;
-    TileData_dst dstTile;
+    using TileData_src0 = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData_dst = Tile<TileType::Vec, uint8_t, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    TileData_src0 src0Tile(kTRows_, kTCols_);
+    TileData_dst dstTile(kTRows_, kTCols_);
     TASSIGN(src0Tile, 0x0 + 0x400 * block_idx);
     TASSIGN(dstTile, 0x20000 + 0x400 * block_idx);
 
@@ -56,8 +56,9 @@ template void LaunchTCmps<aclFloat16, 32, 32, 32, 32, 5>(uint8_t *out, aclFloat1
 template void LaunchTCmps<float, 1, 64, 1, 64, 0>(uint8_t *out, float *src0, float *src1, void *stream);
 template void LaunchTCmps<float, 8, 64, 8, 64, 4>(uint8_t *out, float *src0, float *src1, void *stream);
 template void LaunchTCmps<float, 4, 64, 4, 64, 1>(uint8_t *out, float *src0, float *src1, void *stream);
-template void LaunchTCmps<float, 64, 64, 128, 128, 2>(uint8_t *out, float *src0, float *src1, void *stream);
-template void LaunchTCmps<int32_t, 32, 32, 64, 64, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTCmps<float, 128, 128, 64, 64, 2>(uint8_t *out, float *src0, float *src1, void *stream);
+template void LaunchTCmps<int32_t, 64, 64, 32, 32, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
 template void LaunchTCmps<int32_t, 16, 32, 16, 32, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
 template void LaunchTCmps<float, 128, 128, 128, 128, 3>(uint8_t *out, float *src0, float *src1, void *stream);
+template void LaunchTCmps<int32_t, 77, 81, 32, 32, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
 template void LaunchTCmps<int32_t, 32, 32, 32, 32, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
