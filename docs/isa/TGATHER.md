@@ -8,6 +8,8 @@ Gather/select elements using either an index tile or a compile-time mask pattern
 
 Index-based gather (conceptual):
 
+Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. For `0 <= i < R` and `0 <= j < C`:
+
 $$ \mathrm{dst}_{i,j} = \mathrm{src0}\!\left[\mathrm{indices}_{i,j}\right] $$
 
 Exact index interpretation and bounds behavior are implementation-defined.
@@ -27,17 +29,8 @@ Index-based gather:
 Mask-pattern gather:
 
 ```text
-%dst = tgather %src {maskPattern = #pto.mask_pattern<P0101>}
-    : !pto.tile<...> -> !pto.tile<...>
+%dst = tgather %src {maskPattern = #pto.mask_pattern<P0101>} : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tgather %src0, %indices wait(%e0, %e1)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TGATHER>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/type.hpp`:

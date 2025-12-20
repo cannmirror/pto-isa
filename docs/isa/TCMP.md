@@ -19,17 +19,8 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 Synchronous form:
 
 ```text
-%dst = tcmp %src0, %src1 {cmpMode = #pto.cmp<EQ>}
-    : !pto.tile<...> -> !pto.tile<...>
+%dst = tcmp %src0, %src1 {cmpMode = #pto.cmp<EQ>} : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tcmp %src0, %src1 {cmpMode = #pto.cmp<EQ>} wait(%e0, %e1)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCMP>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/type.hpp`:
@@ -49,7 +40,8 @@ PTO_INST RecordEvent TCMP(TileDataDst& dst, TileDataSrc& src0, TileDataSrc& src1
   - Note: `src1` shape/valid is not validated by explicit runtime assertions in this implementation.
   - For `TileDataSrc::DType == int32_t`, the implementation uses the `EQ` compare path regardless of `cmpMode`.
 - **Implementation checks (A5)**:
-  - No `TCMP_IMPL` implementation is currently included for this target in `include/pto/common/pto_instr_impl.hpp`.
+  - Implemented (see `include/pto/npu/a5/TCmp.hpp`).
+  - The A5 implementation uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain and writes a packed predicate mask into `dst` (target-defined packing).
 - **Mask encoding**:
   - The mask tile is interpreted as packed predicate bits in a target-defined layout.
 
@@ -89,4 +81,3 @@ void example_manual() {
   TCMP(mask, src0, src1, CmpMode::GT);
 }
 ```
-

@@ -6,9 +6,9 @@ Broadcast the first element of each source row across the destination row.
 
 ## Math Interpretation
 
-$$
-\\mathrm{dst}_{i,j} = \\mathrm{src}_{i,0}
-$$
+Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. For `0 <= i < R` and `0 <= j < C`:
+
+$$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,0} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = trowexpand %src : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = trowexpand %src wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWEXPAND>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

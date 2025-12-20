@@ -8,8 +8,8 @@ Elementwise remainder of two tiles.
 
 For each element `(i, j)` in the valid region:
 
-- Integer types: $$\\mathrm{dst}_{i,j} = \\mathrm{src0}_{i,j} \\bmod \\mathrm{src1}_{i,j}$$
-- Floating types: $$\\mathrm{dst}_{i,j} = \\mathrm{fmod}(\\mathrm{src0}_{i,j}, \\mathrm{src1}_{i,j})$$
+- Integer types: $$\mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} \bmod \mathrm{src1}_{i,j}$$
+- Floating types: $$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{src0}_{i,j}, \mathrm{src1}_{i,j})$$
 
 ## Assembly Syntax
 
@@ -20,14 +20,6 @@ Synchronous form:
 ```text
 %dst = trem %src0, %src1 : !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = trem %src0, %src1 wait(%e0, %e1)
-    : !pto.tile<...>, !pto.event<producer = #pto.op<TREM>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

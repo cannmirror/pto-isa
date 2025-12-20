@@ -20,14 +20,6 @@ Synchronous form (conceptual):
 %dst, %executed = tmrgsort %src0, %src1 {exhausted = false}
     : !pto.tile<...>, !pto.tile<...> -> (!pto.tile<...>, vector<4xi16>)
 ```
-
-Asynchronous form:
-
-```text
-%dst, %executed, %e = tmrgsort %src0, %src1 {exhausted = false} wait(%e0, %e1)
-    : !pto.tile<...>, !pto.tile<...> -> (!pto.tile<...>, vector<4xi16>), !pto.event<producer = #pto.op<TMRGSORT>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

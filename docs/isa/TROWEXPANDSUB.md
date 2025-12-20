@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = trowexpandsub %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = trowexpandsub %src0, %src1 wait(%e0, %e1)
-    : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWEXPANDSUB>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

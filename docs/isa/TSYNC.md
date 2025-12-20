@@ -17,10 +17,10 @@ Not applicable.
 
 PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
-Event wait form:
+Event operand form:
 
 ```text
-tsync wait(%e0, %e1) : !pto.event<...>, !pto.event<...>
+tsync %e0, %e1 : !pto.event<...>, !pto.event<...>
 ```
 
 Single-op barrier form:
@@ -87,4 +87,3 @@ void example_manual() {
   TSYNC(e);
 }
 ```
-

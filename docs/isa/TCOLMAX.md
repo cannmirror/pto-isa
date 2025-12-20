@@ -6,9 +6,9 @@ Reduce each column by taking the maximum across rows.
 
 ## Math Interpretation
 
-$$
-\\mathrm{dst}_{0,j} = \\max_i \\mathrm{src}_{i,j}
-$$
+Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
+
+$$ \mathrm{dst}_{0,j} = \max_{0 \le i < R} \mathrm{src}_{i,j} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tcolmax %src : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tcolmax %src wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCOLMAX>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

@@ -21,14 +21,6 @@ Synchronous form:
 ```text
 %dst = tmov.fp %src, %fp : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tmov.fp %src, %fp wait(%e0)
-    : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TMOV_A2V>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/constants.hpp`:
@@ -91,4 +83,3 @@ void example_manual() {
   TMOV_FP(dst, acc, fp);
 }
 ```
-

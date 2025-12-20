@@ -17,17 +17,8 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 Synchronous form:
 
 ```text
-%t0 = tload %sv[%c0, %c0]
-    : !pto.memref<32x32xf32, strided<[1024, 1], offset: ?>>, !pto.tile<32x32xf32>
+%t0 = tload %sv[%c0, %c0] : (!pto.memref<...>, index, index) -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%t0, %e0 = tload %sv[%c0, %c0] wait(%e_prev)
-    : !pto.memref<32x32xf32, strided<[1024, 1], offset: ?>>, !pto.tile<32x32xf32>, !pto.event<producer = #pto.op<TLOAD>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

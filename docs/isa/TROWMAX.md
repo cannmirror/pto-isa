@@ -6,9 +6,9 @@ Reduce each row by taking the maximum across columns.
 
 ## Math Interpretation
 
-$$
-\\mathrm{dst}_{i,0} = \\max_j \\mathrm{src}_{i,j}
-$$
+Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= i < R`:
+
+$$ \mathrm{dst}_{i,0} = \max_{0 \le j < C} \mathrm{src}_{i,j} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = trowmax %src : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = trowmax %src wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWMAX>>
-```
-
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.
 
 ## C++ Intrinsic

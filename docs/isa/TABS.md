@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tabs %src : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tabs %src wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TABS>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
@@ -42,7 +34,8 @@ PTO_INST RecordEvent TABS(TileData& dst, TileData& src, WaitEvents&... events);
   - `TileData::DType` must be one of: `int32_t`, `int`, `int16_t`, `half`, `float`.
   - The implementation iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
 - **NPU support**:
-  - No NPU implementation is currently included in `include/pto/common/pto_instr_impl.hpp` for `TABS`.
+  - Implemented on A2A3 (see `include/pto/npu/a2a3/TUnaryOp.hpp`).
+  - A5 support is target-defined (no `include/pto/npu/a5/*` implementation is currently included for `TABS`).
 
 ## Examples
 
@@ -75,4 +68,3 @@ void example_manual() {
   TABS(dst, src);
 }
 ```
-

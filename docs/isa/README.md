@@ -9,15 +9,6 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - Source of truth (C++ intrinsics): `include/pto/common/pto_instr.hpp`
 - Common conventions (operands, events, modifiers): `docs/isa/conventions.md`
 
-## Category Pages (Overview)
-- Elementwise: `docs/isa/Element.md`
-- Tile-Scalar / Tile-Immediate: `docs/isa/TileScalar.md`
-- Axis Reduce / Expand: `docs/isa/Axis.md`
-- Memory (GM <-> Tile): `docs/isa/Mem.md`
-- Matrix Multiply: `docs/isa/Matmul.md`
-- Data Movement / Layout: `docs/isa/FixPipe.md`
-- Complex: `docs/isa/Complex.md`
-- Manual / Resource Binding: `docs/isa/Manual.md`
 
 ## Elementwise (Tile-Tile)
 - `TADD`: `docs/isa/TADD.md`
@@ -88,6 +79,7 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 
 ## Matrix Multiply
 - `TMATMUL`: `docs/isa/TMATMUL.md`
+- `TMATMUL_MX`: `docs/isa/TMATMUL_MX.md`
 - `TMATMUL_ACC`: `docs/isa/TMATMUL_ACC.md`
 - `TMATMUL_BIAS`: `docs/isa/TMATMUL_BIAS.md`
 

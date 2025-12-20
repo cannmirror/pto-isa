@@ -21,14 +21,6 @@ Synchronous form:
 ```text
 %dst, %idx = tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
 ```
-
-Asynchronous form:
-
-```text
-%dst, %idx, %e = tsort32 %src wait(%e0)
-    : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>), !pto.event<producer = #pto.op<TSORT32>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

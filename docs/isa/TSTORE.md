@@ -18,17 +18,7 @@ Synchronous form:
 
 ```text
 tstore %t1, %sv_out[%c0, %c0]
-    : !pto.memref<32x32xf32, strided<[1024, 1], offset: ?>>, !pto.tile<32x32xf32>
 ```
-
-Asynchronous form:
-
-```text
-%e1 = tstore %t1, %sv_out[%c0, %c0] wait(%e0)
-    : !pto.memref<32x32xf32, strided<[1024, 1], offset: ?>>, !pto.tile<32x32xf32>,
-      !pto.event<producer = #pto.op<TSTORE_VEC>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/constants.hpp`:

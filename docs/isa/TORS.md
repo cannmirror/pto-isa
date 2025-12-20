@@ -8,7 +8,7 @@ Elementwise bitwise OR of a tile and a scalar.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\mathrm{src}_{i,j} \\;|\\; \\mathrm{scalar} $$
+$$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \;|\; \mathrm{scalar} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tors %src, %scalar : !pto.tile<...>, i32
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tors %src, %scalar wait(%e0)
-    : !pto.tile<...>, i32, !pto.event<producer = #pto.op<TORS>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

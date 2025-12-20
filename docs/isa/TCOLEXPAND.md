@@ -6,9 +6,9 @@ Broadcast the first element of each source column across the destination column.
 
 ## Math Interpretation
 
-$$
-\\mathrm{dst}_{i,j} = \\mathrm{src}_{0,j}
-$$
+Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. For `0 <= i < R` and `0 <= j < C`:
+
+$$ \mathrm{dst}_{i,j} = \mathrm{src}_{0,j} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tcolexpand %src : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tcolexpand %src wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCOLEXPAND>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
@@ -53,4 +45,3 @@ void example() {
   TCOLEXPAND(dst, src);
 }
 ```
-

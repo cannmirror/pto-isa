@@ -6,7 +6,13 @@ Matrix multiply with accumulator input (fused accumulate).
 
 ## Math Interpretation
 
-For matrix shapes `A` (MxK), `B` (KxN), `C0` (MxN), `C1` (MxN):
+Let:
+
+- `M = aMatrix.GetValidRow()`
+- `K = aMatrix.GetValidCol()`
+- `N = bMatrix.GetValidCol()`
+
+For `0 <= i < M` and `0 <= j < N`:
 
 $$ \mathrm{C1}_{i,j} = \mathrm{C0}_{i,j} + \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cdot \mathrm{B}_{k,j} $$
 
@@ -17,24 +23,8 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 Synchronous form:
 
 ```text
-%acc1 = tmatmul.acc %acc0, %a, %b
-    : !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
-      !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
-   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>
+%acc1 = tmatmul.acc %acc0, %a, %b : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%acc1, %e = tmatmul.acc %acc0, %a, %b wait(%e0, %e1)
-    : !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
-      !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>
-   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
-      !pto.event<producer = #pto.op<TMATMUL_ACC>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

@@ -31,14 +31,6 @@ Scalar/tile form:
 ```text
 %dst = tdivs %scalar, %src : f32, !pto.tile<...>
 ```
-
-Asynchronous form (same shapes, optional `wait(...)` + event result):
-
-```text
-%dst, %e = tdivs %src, %scalar wait(%e0)
-    : !pto.tile<...>, f32, !pto.event<producer = #pto.op<TDIVS>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

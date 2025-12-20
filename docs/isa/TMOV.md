@@ -32,14 +32,6 @@ The PTO IR design recommends splitting `TMOV` into a family of ops:
 %vec   = tmov.a2v %acc  : !pto.tile<...> -> !pto.tile<...>
 %v1    = tmov.v2v %v0   : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form (optional `wait(...)` + event result) follows the same pattern:
-
-```text
-%v1, %e = tmov.v2v %v0 wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TMOV_V2V>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/constants.hpp`:

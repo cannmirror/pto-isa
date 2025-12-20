@@ -8,7 +8,7 @@ Elementwise natural logarithm of a tile.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\log(\\mathrm{src}_{i,j}) $$
+$$ \mathrm{dst}_{i,j} = \log(\mathrm{src}_{i,j}) $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tlog %src : !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tlog %src wait(%e0)
-    : !pto.tile<...>, !pto.event<producer = #pto.op<TLOG>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
