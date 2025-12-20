@@ -8,7 +8,7 @@ Elementwise max of a tile and a scalar: `max(src, scalar)`.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\max(\\mathrm{src}_{i,j}, \\mathrm{scalar}) $$
+$$ \mathrm{dst}_{i,j} = \max(\mathrm{src}_{i,j}, \mathrm{scalar}) $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tmaxs %src, %scalar : !pto.tile<...>, f32
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tmaxs %src, %scalar wait(%e0)
-    : !pto.tile<...>, f32, !pto.event<producer = #pto.op<TMAXS>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

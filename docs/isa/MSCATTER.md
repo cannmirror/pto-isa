@@ -8,7 +8,7 @@ Scatter-store elements from a tile into global memory using per-element indices.
 
 For each element `(i, j)` in the source valid region:
 
-$$ \\mathrm{mem}[\\mathrm{idx}_{i,j}] = \\mathrm{src}_{i,j} $$
+$$ \mathrm{mem}[\mathrm{idx}_{i,j}] = \mathrm{src}_{i,j} $$
 
 If multiple elements map to the same destination location, the final value is implementation-defined (CPU simulator: last writer wins in row-major iteration order).
 
@@ -21,14 +21,6 @@ Synchronous form:
 ```text
 mscatter %src, %mem, %idx : !pto.memref<...>, !pto.tile<...>, !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%e = mscatter %src, %mem, %idx wait(%e0)
-    : !pto.memref<...>, !pto.tile<...>, !pto.tile<...>, !pto.event<producer = #pto.op<MSCATTER>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

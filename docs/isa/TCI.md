@@ -27,14 +27,6 @@ Synchronous form:
 ```text
 %dst = tci %S {descending = false} : !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tci %S {descending = false} wait(%e0)
-    : !pto.tile<...>, !pto.event<producer = #pto.op<TCI>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

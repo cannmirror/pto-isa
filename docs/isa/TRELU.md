@@ -8,7 +8,7 @@ Elementwise ReLU of a tile.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\max(\\mathrm{src}_{i,j}, 0) $$
+$$ \mathrm{dst}_{i,j} = \max(\mathrm{src}_{i,j}, 0) $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = trelu %src : !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = trelu %src wait(%e0)
-    : !pto.tile<...>, !pto.event<producer = #pto.op<TRELU>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

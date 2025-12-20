@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tsqrt %src : !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tsqrt %src wait(%e0)
-    : !pto.tile<...>, !pto.event<producer = #pto.op<TSQRT>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

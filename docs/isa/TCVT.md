@@ -19,17 +19,8 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 Synchronous form:
 
 ```text
-%dst = tcvt %src {rmode = #pto.round_mode<CAST_RINT>}
-    : !pto.tile<...> -> !pto.tile<...>
+%dst = tcvt %src {rmode = #pto.round_mode<CAST_RINT>} : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tcvt %src {rmode = #pto.round_mode<CAST_RINT>} wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCVT>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/constants.hpp`:

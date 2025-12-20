@@ -6,7 +6,13 @@ Matrix multiply with bias add.
 
 ## Math Interpretation
 
-For matrix shapes `A` (MxK), `B` (KxN), `Bias` (1xN), `C` (MxN):
+Let:
+
+- `M = aMatrix.GetValidRow()`
+- `K = aMatrix.GetValidCol()`
+- `N = bMatrix.GetValidCol()`
+
+For `0 <= i < M` and `0 <= j < N`:
 
 $$ \mathrm{C}_{i,j} = \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cdot \mathrm{B}_{k,j} + \mathrm{Bias}_{0,j} $$
 
@@ -19,24 +25,8 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 Synchronous form:
 
 ```text
-%acc = tmatmul.bias %a, %b, %bias
-    : !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>,
-      !pto.tile<1xNxTb2, #pto.tile_info<loc=Bias, layout=Lbias>>
-   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>
+%acc = tmatmul.bias %a, %b, %bias : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%acc, %e = tmatmul.bias %a, %b, %bias wait(%e0, %e1)
-    : !pto.tile<MxKxTa, #pto.tile_info<loc=Left,  layout=La>>,
-      !pto.tile<KxNxTb, #pto.tile_info<loc=Right, layout=Lb>>,
-      !pto.tile<1xNxTb2, #pto.tile_info<loc=Bias, layout=Lbias>>
-   -> !pto.tile<MxNxTc, #pto.tile_info<loc=Acc, layout=Lc>>,
-      !pto.event<producer = #pto.op<TMATMUL_BIAS>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

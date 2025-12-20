@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = texpands %scalar : f32, !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = texpands %scalar wait(%e0)
-    : f32, !pto.tile<...>, !pto.event<producer = #pto.op<TEXPANDS>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

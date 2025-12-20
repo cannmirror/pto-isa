@@ -6,9 +6,9 @@ Reduce each column by summing across rows.
 
 ## Math Interpretation
 
-$$
-\\mathrm{dst}_{0,j} = \\sum_i \\mathrm{src}_{i,j}
-$$
+Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
+
+$$ \mathrm{dst}_{0,j} = \sum_{i=0}^{R-1} \mathrm{src}_{i,j} $$
 
 `isBinary` selects the implementation path (binary-tree accumulation vs. sequential accumulation).
 
@@ -19,17 +19,8 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 Synchronous form:
 
 ```text
-%dst = tcolsum %src {isBinary = false}
-    : !pto.tile<...> -> !pto.tile<...>
+%dst = tcolsum %src {isBinary = false} : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tcolsum %src {isBinary = false} wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCOLSUM>>
-```
-
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.
 
 ## C++ Intrinsic

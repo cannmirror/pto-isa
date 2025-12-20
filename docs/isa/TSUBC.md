@@ -8,7 +8,7 @@ Elementwise ternary op: `src0 - src1 + src2`.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\mathrm{src0}_{i,j} - \\mathrm{src1}_{i,j} + \\mathrm{src2}_{i,j} $$
+$$ \mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} - \mathrm{src1}_{i,j} + \mathrm{src2}_{i,j} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tsubc %src0, %src1, %src2 : !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tsubc %src0, %src1, %src2 wait(%e0, %e1, %e2)
-    : !pto.tile<...>, !pto.event<producer = #pto.op<TSUBC>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

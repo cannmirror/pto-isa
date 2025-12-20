@@ -8,7 +8,7 @@ Elementwise bitwise NOT of a tile.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\sim\\mathrm{src}_{i,j} $$
+$$ \mathrm{dst}_{i,j} = \sim\mathrm{src}_{i,j} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tnot %src : !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tnot %src wait(%e0)
-    : !pto.tile<...>, !pto.event<producer = #pto.op<TNOT>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

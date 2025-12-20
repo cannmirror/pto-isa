@@ -21,14 +21,6 @@ Synchronous form:
 ```text
 %dst = tgatherb %src, %offsets : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tgatherb %src, %offsets wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TGATHERB>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

@@ -6,11 +6,11 @@ Transpose with an implementation-defined temporary tile.
 
 ## Math Interpretation
 
-For a 2D tile, conceptually:
+For a 2D tile, over the effective transpose domain:
 
 $$ \mathrm{dst}_{i,j} = \mathrm{src}_{j,i} $$
 
-Exact shape/layout constraints depend on the target.
+Exact shape/layout and the transpose domain depend on the target (see Constraints).
 
 ## Assembly Syntax
 
@@ -21,14 +21,6 @@ Synchronous form:
 ```text
 %dst = ttrans %src : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = ttrans %src wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TTRANS>>
-```
-
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.
 
 ## C++ Intrinsic

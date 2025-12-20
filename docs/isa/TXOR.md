@@ -8,7 +8,7 @@ Elementwise bitwise XOR of two tiles.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\mathrm{src0}_{i,j} \\oplus \\mathrm{src1}_{i,j} $$
+$$ \mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} \oplus \mathrm{src1}_{i,j} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = txor %src0, %src1 : !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = txor %src0, %src1 wait(%e0, %e1)
-    : !pto.tile<...>, !pto.event<producer = #pto.op<TXOR>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

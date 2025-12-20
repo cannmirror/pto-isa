@@ -65,6 +65,22 @@ PTO ISA defines over 90 standard operations. This repository currently covers an
 
 ## Quickstart Guide
 
+For detailed, OS-specific setup (Windows / Linux / macOS), see: [docs/getting-started.md](docs/getting-started.md).
+
+### Run CPU Simulator (recommended first step)
+
+CPU simulation is cross-platform and does not require Ascend drivers/CANN:
+
+```bash
+python3 run_cpu.py --clean --verbose
+```
+
+Build & run the GEMM demo (optional):
+
+```bash
+python3 run_cpu.py --demo gemm --verbose
+```
+
 ### Running a Single ST Test Case
 
 ```bash

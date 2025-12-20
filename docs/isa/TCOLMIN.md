@@ -6,9 +6,9 @@ Reduce each column by taking the minimum across rows.
 
 ## Math Interpretation
 
-$$
-\\mathrm{dst}_{0,j} = \\min_i \\mathrm{src}_{i,j}
-$$
+Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= j < C`:
+
+$$ \mathrm{dst}_{0,j} = \min_{0 \le i < R} \mathrm{src}_{i,j} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tcolmin %src : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tcolmin %src wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TCOLMIN>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

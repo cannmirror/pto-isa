@@ -8,7 +8,7 @@ Elementwise subtract a scalar from a tile.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\mathrm{src}_{i,j} - \\mathrm{scalar} $$
+$$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,j} - \mathrm{scalar} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tsubs %src, %scalar : !pto.tile<...>, f32
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tsubs %src, %scalar wait(%e0)
-    : !pto.tile<...>, f32, !pto.event<producer = #pto.op<TSUBS>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

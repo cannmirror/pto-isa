@@ -8,7 +8,7 @@ Gather-load elements from global memory into a tile using per-element indices.
 
 For each element `(i, j)` in the destination valid region:
 
-$$ \\mathrm{dst}_{i,j} = \\mathrm{mem}[\\mathrm{idx}_{i,j}] $$
+$$ \mathrm{dst}_{i,j} = \mathrm{mem}[\mathrm{idx}_{i,j}] $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = mgather %mem, %idx : !pto.memref<...>, !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = mgather %mem, %idx wait(%e0)
-    : !pto.memref<...>, !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<MGATHER>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

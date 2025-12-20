@@ -8,7 +8,7 @@ Leaky ReLU with a scalar slope.
 
 For each element `(i, j)` in the valid region:
 
-$$ \\mathrm{dst}_{i,j} = (\\mathrm{src}_{i,j} > 0) ? \\mathrm{src}_{i,j} : (\\mathrm{src}_{i,j} \\cdot \\mathrm{slope}) $$
+$$ \mathrm{dst}_{i,j} = (\mathrm{src}_{i,j} > 0) ? \mathrm{src}_{i,j} : (\mathrm{src}_{i,j} \cdot \mathrm{slope}) $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tlrelu %src, %slope : !pto.tile<...>, f32
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tlrelu %src, %slope wait(%e0)
-    : !pto.tile<...>, f32, !pto.event<producer = #pto.op<TLRELU>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

@@ -8,9 +8,9 @@ Store an accumulator tile into global memory using a scaling (`fp`) tile for vec
 
 ## Math Interpretation
 
-Conceptually stores a quantized/dequantized value derived from `src` and `fp` into the destination tensor:
+Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. Conceptually (2D view, with a base offset), for `0 <= i < R` and `0 <= j < C`:
 
-$$ \mathrm{dst}[\cdots] = \mathrm{Convert}\!\left(\mathrm{src};\ \mathrm{fp}\right) $$
+$$ \mathrm{dst}_{r_0 + i,\; c_0 + j} = \mathrm{Convert}\!\left(\mathrm{src}_{i,j};\ \mathrm{fp}\right) $$
 
 ## Assembly Syntax
 
@@ -20,16 +20,7 @@ Synchronous form:
 
 ```text
 tstore.fp %src, %fp, %sv_out[%c0, %c0]
-    : !pto.tile<...>, !pto.tile<...>, !pto.memref<...>
 ```
-
-Asynchronous form:
-
-```text
-%e = tstore.fp %src, %fp, %sv_out[%c0, %c0] wait(%e0)
-    : !pto.tile<...>, !pto.tile<...>, !pto.memref<...>, !pto.event<producer = #pto.op<TSTORE_ACC>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp` and `include/pto/common/constants.hpp`:
@@ -98,4 +89,3 @@ void example_manual(__gm__ int8_t* out) {
   TSTORE_FP(gout, acc, fp);
 }
 ```
-

@@ -21,14 +21,6 @@ Synchronous form:
 ```text
 %dst = tscatter %src, %idx : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tscatter %src, %idx wait(%e0)
-    : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TSCATTER>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

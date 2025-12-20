@@ -17,9 +17,9 @@ This page defines shared conventions used across the per-instruction ISA referen
 PTO supports modeling dependencies between operations via events:
 
 - **Producer**: an instruction may *record* an event when it completes.
-- **Consumer**: an instruction may *wait* on one or more events before executing.
+- **Consumer**: an instruction may depend on one or more previously recorded events.
 
-In the C++ intrinsics, this is represented by passing event objects as extra arguments. In PTO-AS, this is represented by `wait(%e0, %e1, ...)` and an optional event result.
+In the C++ intrinsics, this is represented by passing event objects as extra arguments.
 
 ## Assembly Syntax (PTO-AS)
 

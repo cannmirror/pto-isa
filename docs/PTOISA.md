@@ -95,6 +95,7 @@ This list covers all PTO instructions exposed by `include/pto/common/pto_instr.h
 ### Matrix Multiply
 
 - [`TMATMUL`](isa/TMATMUL.md)
+- [`TMATMUL_MX`](isa/TMATMUL_MX.md)
 - [`TMATMUL_ACC`](isa/TMATMUL_ACC.md)
 - [`TMATMUL_BIAS`](isa/TMATMUL_BIAS.md)
 

@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = tmuls %src, %scalar : !pto.tile<...>, f32
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = tmuls %src, %scalar wait(%e0)
-    : !pto.tile<...>, f32, !pto.event<producer = #pto.op<TMULS>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

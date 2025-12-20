@@ -4,94 +4,150 @@
 
 # Getting Started
 
-This guide walks you through installing prerequisites, setting up an Ascend CANN environment (optional), and building/running PTO Tile Lib. If you are new to the project, start with CPU simulation first.
+This guide covers prerequisites and setup on **macOS / Linux / Windows**, and shows how to build and run the **CPU simulator** first (recommended). Running on Ascend (NPU / simulator) requires Ascend CANN and is typically **Linux-only**.
 
 ## Prerequisites
 
-### Build tools
+### Required (CPU simulator)
 
-- Python `>= 3.8`
+- Git
+- Python `>= 3.8` (3.10+ recommended)
 - CMake `>= 3.16`
-- A C++ compiler with C++23 support (recommended: `clang++` on macOS, `g++` on Linux)
-- (Optional) GoogleTest `v1.14.0` (only required to build/run unit tests)
-> **Note**
-> 
-> Python needs to download packages such as os, numpy, ctypes, struct, copy, math, enum, ml_dtypes, en_dtypes, etc.
+- A C++ compiler with C++23 support:
+  - Linux: GCC 11+ or Clang 16+
+  - macOS: Xcode/AppleClang (or Homebrew LLVM)
+  - Windows: Visual Studio 2022 Build Tools (MSVC)
+- Python packages: `numpy` (the CPU test data generators use it)
 
-### Ascend runtime (only required for NPU/simulator runs)
+`run_cpu.py` can install `numpy` automatically (unless you pass `--no-install`).
 
-- Ascend NPU driver + firmware
-- Ascend CANN toolkit (Community Edition or commercial distribution)
+### Optional (faster builds)
 
-## Install GoogleTest (optional)
+- Ninja (CMake generator)
+- A working internet connection (CMake may fetch GoogleTest for CPU ST tests if not installed system-wide)
 
-If you need to run unit tests and GoogleTest is not available on your system, you can build and install it from source:
+## OS Setup
 
-```bash
-tar -xf googletest-1.14.0.tar.gz
-cd googletest-1.14.0
-mkdir -p build && cd build
-cmake .. -DCMAKE_CXX_FLAGS="-fPIC"
-cmake --build . -j
-sudo cmake --install .
-```
-> **Note**
-> 
-> If you have already installed googletest by other means, you need to make the corresponding changes to the CMakeLists.txt. For examle, you used `cmake .. -DCMAKE_CXX_FLAGS="-fPIC -D_GLIBCXX_USE_CXX11_ABI=0"` when installing googletest, you need to add `add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)` in tests/npu/[a2a3 | a5]/src/st/CMakeLists.txt
+### macOS
 
-## Install Ascend CANN Toolkit (optional)
+- Install Xcode Command Line Tools:
 
-If you plan to run on Ascend hardware (or use the simulator), install the CANN toolkit package for your platform:
+  ```bash
+  xcode-select --install
+  ```
 
-1. Download the package `Ascend-cann-toolkit_${cann_version}_linux-${arch}.run`.
-2. Install it (example uses an explicit install path):
+- Install dependencies (recommended via Homebrew):
 
-```bash
-chmod +x Ascend-cann-toolkit_${cann_version}_linux-${arch}.run
-./Ascend-cann-toolkit_${cann_version}_linux-${arch}.run --install --force --install-path=${install_path}
-```
+  ```bash
+  brew install cmake ninja python
+  ```
 
-Where:
+If you do not use Homebrew, make sure `python3`, `cmake`, and a modern `clang++` are on `PATH`.
 
-- `${cann_version}` is the CANN toolkit version.
-- `${arch}` is the CPU architecture (e.g., `aarch64`, `x86_64`).
-- `${install_path}` is the installation prefix you choose.
-
-If `--install-path` is omitted, the installer uses the default location.
-
-## Configure environment variables (Ascend CANN)
-
-After installing CANN, source `setenv.bash` (path depends on your install location):
+### Linux (Ubuntu/Debian)
 
 ```bash
-source /usr/local/Ascend/latest/bin/setenv.bash
+sudo apt-get update
+sudo apt-get install -y build-essential cmake ninja-build python3 python3-pip python3-venv git
 ```
 
-Or, if installed under your home directory:
+### Linux (RHEL/CentOS/Rocky)
 
 ```bash
-source "$HOME/Ascend/latest/bin/setenv.bash"
+sudo dnf groupinstall -y "Development Tools" || true
+sudo dnf install -y cmake ninja-build python3 python3-pip git
 ```
 
-Or, if you installed to a custom `${install_path}`:
+### Windows
 
-```bash
-source "${install_path}/latest/bin/setenv.bash"
+Install the following:
+
+- Git for Windows
+- Python 3 (and ensure it’s on `PATH`)
+- CMake
+- Visual Studio 2022 Build Tools (Desktop development with C++)
+
+Using `winget` (optional):
+
+```powershell
+winget install --id Git.Git -e
+winget install --id Python.Python.3.11 -e
+winget install --id Kitware.CMake -e
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e
 ```
 
-## Clone the repository
+After installation, open a **Developer Command Prompt for VS 2022** (or ensure `cl.exe` is on `PATH`).
+
+## Get The Code
 
 ```bash
-git clone https://gitcode.com/cann/pto-tile-lib
+git clone <YOUR_REPO_URL>
 cd pto-tile-lib
 ```
 
-## Run CPU simulation (recommended first step)
+## Python Environment (recommended)
 
-CPU simulation does not require Ascend drivers/CANN and is the fastest way to validate correctness locally:
+Create and activate a virtual environment:
+
+- macOS / Linux:
+
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  python -m pip install -U pip
+  python -m pip install numpy
+  ```
+
+- Windows (PowerShell):
+
+  ```powershell
+  py -3 -m venv .venv
+  .\.venv\Scripts\Activate.ps1
+  python -m pip install -U pip
+  python -m pip install numpy
+  ```
+
+## Run CPU Simulator (recommended first step)
+
+This builds and runs the CPU ST test binaries under `tests/cpu/st` and executes all testcases:
 
 ```bash
-python3 run_cpu.py --clean --no-install
+python3 run_cpu.py --clean --verbose
+```
+
+Common options:
+
+- Run a single testcase:
+
+  ```bash
+  python3 run_cpu.py --testcase tadd
+  ```
+
+- Run a single gtest case:
+
+  ```bash
+  python3 run_cpu.py --testcase tadd --gtest_filter 'TADDTest.*'
+  ```
+
+- Build & run the GEMM demo:
+
+  ```bash
+  python3 run_cpu.py --demo gemm --verbose
+  ```
+
+## (Optional) Ascend CANN Environment (Linux)
+
+If you plan to run NPU or simulator STs, install Ascend drivers + CANN toolkit (see Ascend docs for your distribution), then source `setenv.bash`:
+
+```bash
+source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
+```
+
+Then use the repo scripts, for example:
+
+```bash
+chmod +x run_st.sh
+./run_st.sh a5 npu simple
 ```
 
 ## Next steps

@@ -6,9 +6,9 @@ Reduce each row by summing across columns.
 
 ## Math Interpretation
 
-$$
-\\mathrm{dst}_{i,0} = \\sum_j \\mathrm{src}_{i,j}
-$$
+Let `R = src.GetValidRow()` and `C = src.GetValidCol()`. For `0 <= i < R`:
+
+$$ \mathrm{dst}_{i,0} = \sum_{j=0}^{C-1} \mathrm{src}_{i,j} $$
 
 ## Assembly Syntax
 
@@ -19,14 +19,6 @@ Synchronous form:
 ```text
 %dst = trowsum %src : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = trowsum %src wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TROWSUM>>
-```
-
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.
 
 ## C++ Intrinsic

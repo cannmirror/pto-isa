@@ -8,6 +8,8 @@ Extract a sub-tile from a source tile.
 
 Conceptually copies a window starting at `(indexRow, indexCol)` from `src` into `dst`. Exact mapping depends on layouts.
 
+Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. For `0 <= i < R` and `0 <= j < C`:
+
 $$ \mathrm{dst}_{i,j} = \mathrm{src}_{\mathrm{indexRow}+i,\; \mathrm{indexCol}+j} $$
 
 ## Assembly Syntax
@@ -17,18 +19,8 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 Synchronous form:
 
 ```text
-%dst = textract %src[%r0, %r1]
-    : !pto.tile<SrcShape x Ts, #pto.tile_info<loc=Mat, layout=Ls>>
-   -> !pto.tile<DstShape x Ts, #pto.tile_info<loc=Left|Right, layout=Ld>>
+%dst = textract %src[%r0, %r1] : !pto.tile<...> -> !pto.tile<...>
 ```
-
-Asynchronous form:
-
-```text
-%dst, %e = textract %src[%r0, %r1] wait(%e0)
-    : !pto.tile<...> -> !pto.tile<...>, !pto.event<producer = #pto.op<TEXTRACT>>
-```
-
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
