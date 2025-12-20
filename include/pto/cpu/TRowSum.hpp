@@ -41,8 +41,8 @@ namespace pto {
     template <typename TileDst, typename TileSrc>
     PTO_INTERNAL void CheckRSValid()
     {
-        using SrcType = TileSrc::DType;
-        using DstType = TileDst::DType;
+        using SrcType = typename TileSrc::DType;
+        using DstType = typename TileDst::DType;
         static_assert(
             (std::is_same_v<SrcType, half> && std::is_same_v<DstType, half>) ||  // f162f16
                 (std::is_same_v<SrcType, half> && std::is_same_v<DstType, float>) ||  // f162f32

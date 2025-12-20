@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(pto_test_cpu_sim)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -43,7 +43,6 @@ endif()
 
 add_compile_options(
     -D_FORTIFY_SOURCE=2
-    -std=c++23
     -Wno-macro-redefined -Wno-ignored-attributes
     -fstack-protector-strong
 )

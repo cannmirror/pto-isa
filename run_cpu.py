@@ -129,6 +129,23 @@ def generate_golden(build_dir: Path, gen_script: Path) -> None:
     run_command([sys.executable, str(dst.name)], cwd=build_dir)
 
 
+def read_cmake_cache_var(build_dir: Path, var_name: str) -> Optional[str]:
+    cache = build_dir / "CMakeCache.txt"
+    if not cache.exists():
+        return None
+    try:
+        for line in cache.read_text(encoding="utf-8", errors="replace").splitlines():
+            if not line or line.startswith(("//", "#")):
+                continue
+            # CMakeCache format: VAR:TYPE=VALUE
+            if line.startswith(f"{var_name}:"):
+                _, _, value = line.partition("=")
+                return value
+    except OSError:
+        return None
+    return None
+
+
 def find_binaries(build_dir: Path, build_type: str) -> Dict[str, Path]:
     bin_dir = build_dir / "bin"
     if os.name == "nt":
@@ -176,16 +193,23 @@ def run_binary(binary: Path, build_type: str, cwd: Optional[Path] = None) -> Non
     run_command([str(binary)], cwd=run_cwd)
 
 
-def build_and_run_demo(repo_root: Path, build_type: str, cxx: Optional[str], cc: Optional[str], *,
-	                       verbose: bool) -> None:
-    demo_src = repo_root / "demos" / "cpu" / "gemm_demo"
+def build_and_run_demo(demo_name: str, repo_root: Path, build_type: str, cxx: Optional[str], cc: Optional[str], *,
+	                   verbose: bool) -> None:
+    demos_root = repo_root / "demos" / "cpu"
+    demo_map: dict[str, tuple[Path, str]] = {
+        "gemm": (demos_root / "gemm_demo", "gemm_demo"),
+        "flash_attn": (demos_root / "flash_attention_demo", "flash_attention_demo"),
+    }
+    if demo_name not in demo_map:
+        raise RuntimeError(f"unknown demo: {demo_name}")
+
+    demo_src, exe_stem = demo_map[demo_name]
     legacy_demo_src = repo_root / "demo"
-    if not demo_src.exists() and legacy_demo_src.exists():
+    if demo_name == "gemm" and not demo_src.exists() and legacy_demo_src.exists():
         demo_src = legacy_demo_src
+        exe_stem = "gemm_demo"
     if not demo_src.exists():
-        raise RuntimeError(
-            f"demo dir not found: {repo_root / 'demos' / 'cpu' / 'gemm_demo'} (legacy: {legacy_demo_src})"
-        )
+        raise RuntimeError(f"demo dir not found: {demo_src}")
 
     demo_build = demo_src / "build"
     if demo_build.exists():
@@ -212,7 +236,7 @@ def build_and_run_demo(repo_root: Path, build_type: str, cxx: Optional[str], cc:
         verbose=verbose,
     )
 
-    exe_name = "gemm_demo.exe" if os.name == "nt" else "gemm_demo"
+    exe_name = f"{exe_stem}.exe" if os.name == "nt" else exe_stem
     exe = demo_build / exe_name
     if os.name == "nt":
         exe = demo_build / build_type / exe_name
@@ -224,7 +248,7 @@ def build_and_run_demo(repo_root: Path, build_type: str, cxx: Optional[str], cc:
                 cwd=(exe.parent.parent
                     if (os.name == "nt" and exe.parent.name.lower() == build_type.lower())
                     else exe.parent),
-                title="[STEP] demo: run gemm_demo", verbose=verbose)
+                title=f"[STEP] demo: run {exe_stem}", verbose=verbose)
 
 
 def _format_seconds(seconds: float) -> str:
@@ -264,6 +288,8 @@ def parse_arguments():
             "  python run_cpu.py --testcase tadd --build-type Release\n"
             "  python run_cpu.py --no-build --gtest_filter TADDTest.*\n"
             "  python run_cpu.py --demo gemm\n"
+            "  python run_cpu.py --demo flash_attn\n"
+            "  python run_cpu.py --demo all\n"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -283,7 +309,8 @@ def parse_arguments():
     parser.add_argument("--no-gen", action="store_true", help="Skip running testcase gen_data.py.")
     parser.add_argument("--xml-dir", default=None, help="If set, write gtest xml reports under this directory")
     parser.add_argument("--no-install", action="store_true", help="Do not auto-install missing tools/deps (numpy).")
-    parser.add_argument("--demo", choices=["gemm"], default=None, help="Build & run demo program (e.g. 'gemm'). \
+    parser.add_argument("--demo", choices=["gemm", "flash_attn", "all"], default=None, help="Build & run demo program \
+                        (e.g. 'gemm', 'flash_attn'). \
                         Note: demo runs alone (does not run CPU ST).")
     parser.add_argument("--demo-only", action="store_true", help="Same as --demo (demo runs without CPU ST).")
     args = parser.parse_args()
@@ -313,12 +340,15 @@ def run_demo_mode(args, repo_root, cxx, cc) -> int:
         # should not happen due to demo_name assignment, but keep the guard
         pass
 
-    if demo_name == "gemm":
-        logging.info("\n== DEMO ==")
-        t0 = time.perf_counter()
-        build_and_run_demo(repo_root=repo_root, build_type=args.build_type, cxx=cxx, cc=cc, verbose=args.verbose)
-        demo_time = time.perf_counter() - t0
-        logging.info(f"[PASS] demo: gemm_demo ({_format_seconds(demo_time)})")
+    logging.info("\n== DEMO ==")
+    demos = ["gemm", "flash_attn"] if demo_name == "all" else [demo_name]
+    t0 = time.perf_counter()
+    for name in demos:
+        build_and_run_demo(
+            demo_name=name, repo_root=repo_root, build_type=args.build_type, cxx=cxx, cc=cc, verbose=args.verbose
+        )
+    demo_time = time.perf_counter() - t0
+    logging.info(f"[PASS] demo: {demo_name} ({_format_seconds(demo_time)})")
     return 0
 
 
@@ -371,6 +401,17 @@ def parse_expected_testcases(source_dir: Path) -> Optional[set[str]]:
 
 def determine_need_build(args, source_dir: Path, build_dir: Path) -> bool:
     binaries_before = find_binaries(build_dir, args.build_type) if build_dir.exists() else {}
+    configured_testcase = read_cmake_cache_var(build_dir, "TEST_CASE") if build_dir.exists() else None
+    config_mismatch = False
+    if args.testcase:
+        if configured_testcase != args.testcase:
+            config_mismatch = True
+    else:
+        # If the existing build was configured to only build a single testcase,
+        # force a reconfigure so "run all" truly builds all.
+        if configured_testcase:
+            config_mismatch = True
+
     have_requested_binary = True
     if args.testcase:
         have_requested_binary = args.testcase in binaries_before
@@ -384,7 +425,13 @@ def determine_need_build(args, source_dir: Path, build_dir: Path) -> bool:
 
     need_build = (
         (not args.no_build)
-        and (args.rebuild or args.clean or not (build_dir / "CMakeCache.txt").exists() or not have_requested_binary)
+        and (
+            config_mismatch
+            or args.rebuild
+            or args.clean
+            or not (build_dir / "CMakeCache.txt").exists()
+            or not have_requested_binary
+        )
     )
     return need_build
 
@@ -395,6 +442,7 @@ def perform_build(args, source_dir, build_dir, cxx, cc) -> bool:
     cfg_time = run_command(
         [
             "cmake",
+            *([] if args.testcase else ["-UTEST_CASE"]),
             "-S",
             str(source_dir),
             "-B",

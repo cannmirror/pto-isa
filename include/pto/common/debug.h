@@ -32,7 +32,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #endif
 
 #ifdef __CPU_SIM
+  #include <algorithm>
+  #include <climits>
+  #include <iomanip>
   #include <iostream>
+  #include <string>
+  #include <type_traits>
   #include "pto/cpu/tile_offsets.hpp"
   #include "pto_tile.hpp"
 
@@ -41,19 +46,24 @@ See LICENSE in the root of the software repository for the full text of the Lice
       auto rows = tensor.GetShape(pto::GlobalTensorDim::DIM_3);
       auto cols = tensor.GetShape(pto::GlobalTensorDim::DIM_4);
       auto stride3 = std::max(tensor.GetStride(pto::GlobalTensorDim::DIM_3), tensor.GetStride(pto::GlobalTensorDim::DIM_4));
-      std::cout << std::format("{}: {} x {} x {} x {} x {}", name, tensor.GetShape(pto::GlobalTensorDim::DIM_0), tensor.GetShape(pto::GlobalTensorDim::DIM_1), tensor.GetShape(pto::GlobalTensorDim::DIM_2), tensor.GetShape(pto::GlobalTensorDim::DIM_3), tensor.GetShape(pto::GlobalTensorDim::DIM_4)) << std::endl;
+      std::cout << name << ": " << tensor.GetShape(pto::GlobalTensorDim::DIM_0) << " x "
+                << tensor.GetShape(pto::GlobalTensorDim::DIM_1) << " x "
+                << tensor.GetShape(pto::GlobalTensorDim::DIM_2) << " x "
+                << tensor.GetShape(pto::GlobalTensorDim::DIM_3) << " x "
+                << tensor.GetShape(pto::GlobalTensorDim::DIM_4) << std::endl;
       for(int i=0; i<tensor.GetShape(pto::GlobalTensorDim::DIM_0); i++) {
           for(int j=0; j<tensor.GetShape(pto::GlobalTensorDim::DIM_1); j++) {
               for(int k=0; k<tensor.GetShape(pto::GlobalTensorDim::DIM_2); k++) {
-                  std::cout << std::format("    {}, {}, {}, r, c:\n",i,j,k);
+                  std::cout << "    " << i << ", " << j << ", " << k << ", r, c:\n";
 
                   for(int y=0; y<rows && y<maxR; y++) {
                       for(int x=0; x<cols && x<maxC; x++) {
                           auto val = tensor.data()[i*tensor.GetStride(pto::GlobalTensorDim::DIM_0) + j*tensor.GetStride(pto::GlobalTensorDim::DIM_1)+k*tensor.GetStride(pto::GlobalTensorDim::DIM_2)+y*stride3+x];
                           if constexpr(std::is_integral_v<typename GT::DType>) {
-                              std::cout << std::format("{:{}} ", val,elementWidth);
+                              std::cout << std::setw(elementWidth) << val << " ";
                           } else {
-                              std::cout << std::format("{:{}.2f} ", (val < 1e-20 ? 0 : val), elementWidth);
+                              const auto v = (val < 1e-20 ? 0 : val);
+                              std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(2) << v << " ";
                           }
                       }
                       if(maxC < cols) {
@@ -71,13 +81,15 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
     template<typename TL>
     void printRawTile(TL& tile, const std::string name = "", int elementWidth=5, int maxR=INT32_MAX, int maxC=INT32_MAX) {
-        std::cout << std::format("{}: {} x {} (Full: {} x {}) (RxC)", name, tile.GetValidRow(), tile.GetValidCol(), tile.Rows, tile.Cols) << std::endl;
+        std::cout << name << ": " << tile.GetValidRow() << " x " << tile.GetValidCol()
+                  << " (Full: " << tile.Rows << " x " << tile.Cols << ") (RxC)" << std::endl;
         for(int y=0; y<tile.GetValidRow() && y<maxR; y++){
             for(int x=0; x<tile.GetValidCol() && x<maxC; x++) {
                 if constexpr(std::is_integral_v<typename TL::DType>) {
-                    std::cout << std::format("{:{}} ", tile.data()[y*tile.Cols+x],elementWidth);
+                    std::cout << std::setw(elementWidth) << tile.data()[y*tile.Cols+x] << " ";
                 } else {
-                    std::cout << std::format("{:{}.2f} ",tile.data()[y*tile.Cols+x] <1e-20 ? 0 : tile.data()[y*tile.Cols+x],elementWidth);
+                    const auto v = (tile.data()[y*tile.Cols+x] < 1e-20 ? 0 : tile.data()[y*tile.Cols+x]);
+                    std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(2) << v << " ";
                 }
             }
             if(maxC < tile.GetValidCol()) {
@@ -92,14 +104,16 @@ See LICENSE in the root of the software repository for the full text of the Lice
     
     template<typename TL>
     void printTile(TL& tile, const std::string name = "", int elementWidth=5, int maxR=INT32_MAX, int maxC=INT32_MAX) {
-        std::cout << std::format("{}: {} x {} (Full: {} x {}) (RxC)", name, tile.GetValidRow(), tile.GetValidCol(), tile.Rows, tile.Cols) << std::endl;
+        std::cout << name << ": " << tile.GetValidRow() << " x " << tile.GetValidCol()
+                  << " (Full: " << tile.Rows << " x " << tile.Cols << ") (RxC)" << std::endl;
         for(int y=0; y<tile.GetValidRow() && y<maxR; y++){
             for(int x=0; x<tile.GetValidCol() && x<maxC; x++) {
                 auto offset = pto::GetTileElementOffset<TL>(y,x);
                 if constexpr(std::is_integral_v<typename TL::DType>) {
-                    std::cout << std::format("{:{}} ", tile.data()[offset],elementWidth);
+                    std::cout << std::setw(elementWidth) << tile.data()[offset] << " ";
                 } else {
-                    std::cout << std::format("{:{}.2f} ",tile.data()[offset] <1e-20 ? 0 : tile.data()[offset],elementWidth);
+                    const auto v = (tile.data()[offset] < 1e-20 ? 0 : tile.data()[offset]);
+                    std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(2) << v << " ";
                 }
             }
             if(maxC < tile.GetValidCol()) {
@@ -114,15 +128,16 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
     template<typename T>
     void printRawMemory(T * buf, size_t sz, const std::string name = "", int elementWidth=10, int elementsPerRow=8) {
-        std::cout << std::format("{}: {}", name, (size_t)buf) << std::endl;
+        std::cout << name << ": " << static_cast<void*>(buf) << std::endl;
         for(int i=0; i<sz; i++){
             if(i % elementsPerRow == 0) {
-              std::cout << std::endl << std::format("{:6x}: ", i);
+              std::cout << std::endl << std::setw(6) << std::hex << i << ": " << std::dec;
             }
             if constexpr(std::is_integral_v<T>) {
-                std::cout << std::format("{:{}} ", buf[i], elementWidth);
+                std::cout << std::setw(elementWidth) << buf[i] << " ";
             } else {
-                std::cout << std::format("{:{}.2f} ", buf[i] <1e-20 ? 0 : buf[i], elementWidth);
+                const auto v = (buf[i] < 1e-20 ? 0 : buf[i]);
+                std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(2) << v << " ";
             }
         }
         std::cout << std::endl;

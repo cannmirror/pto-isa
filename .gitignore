@@ -3,6 +3,7 @@
 .vscode
 build
 build_tests
+demos/**/build/
 *.o
 output/
 __pycache__/

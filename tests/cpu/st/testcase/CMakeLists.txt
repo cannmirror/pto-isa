@@ -14,7 +14,7 @@ function(pto_cpu_sim_st NAME)
         list(APPEND FILES_LIST ${NAME}_kernel.cpp)
     endif()
     add_executable(${NAME} ${FILES_LIST})
-    target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS} -std=c++23)
+    target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE
         ${PROJECT_SOURCE_DIR}/../../../include/
         ${PROJECT_SOURCE_DIR}/../../../include/common
@@ -39,6 +39,7 @@ find_package(Threads REQUIRED)
 
 set(ALL_TESTCASES
 tmatmul
+tflashattn
 tabs
 tci
 tadds
@@ -103,7 +104,6 @@ tcolexpand
 tscatter
 mgather
 mscatter
-tsort32
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})

@@ -81,6 +81,12 @@ Build & run the GEMM demo (optional):
 python3 run_cpu.py --demo gemm --verbose
 ```
 
+Build & run the Flash Attention demo (optional):
+
+```bash
+python3 run_cpu.py --demo flash_attn --verbose
+```
+
 ### Running a Single ST Test Case
 
 ```bash

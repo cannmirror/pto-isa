@@ -11,7 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TSORT32_HPP
 
 #include <algorithm>
-#include <iostream>
+#include <type_traits>
 #include <vector>
 #include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
@@ -97,14 +97,20 @@ PTO_INTERNAL void TSORT32_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataIdx &
     static_assert(std::is_same_v<typename TileDataDst::DType, T>,
                   "The Src data type must be consistent with the dst data type");
     static_assert(std::is_same_v<typename TileDataIdx::DType, uint32_t>, "The Idx data type must be uint32");
-    static_assert(std::is_same_v<TileDataSrc::RowStride, TileDataIdx::RowStride>, 
-                  "The Src stride must be consistent with the idx stride")
-    static_assert(std::is_same_v<src.GetValidRow(), idx.GetValidRow()> &&
-                  std::is_same_v<src.GetValidCol(), idx.GetValidCol()>, 
-                  "The Src validRow and validCol must be consistent with the idx")
-    int validRow = src.GetValidRow();
-    int validCol = src.GetValidCol();
+    static_assert(TileDataSrc::RowStride == TileDataIdx::RowStride,
+                  "The Src stride must be consistent with the idx stride");
+    static_assert(TileDataSrc::isRowMajor && TileDataIdx::isRowMajor && TileDataDst::isRowMajor,
+                  "TSORT32: only RowMajor tiles are supported in CPU sim");
+    static_assert(TileDataSrc::SFractal == SLayout::NoneBox && TileDataIdx::SFractal == SLayout::NoneBox &&
+                      TileDataDst::SFractal == SLayout::NoneBox,
+                  "TSORT32: only NoneBox tiles are supported in CPU sim");
+
+    const int validRow = src.GetValidRow();
+    const int validCol = src.GetValidCol();
     if (validRow == 0 || validCol == 0) {
+        return;
+    }
+    if (validRow != idx.GetValidRow() || validCol != idx.GetValidCol()) {
         return;
     }
     TSort32<T, TileDataDst, TileDataSrc, TileDataIdx>(dst.data(), src.data(), idx.data(), validRow, validCol);
