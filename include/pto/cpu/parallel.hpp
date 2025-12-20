@@ -53,12 +53,13 @@ inline unsigned get_thread_count() noexcept
 template <typename Fn>
 inline void parallel_for_1d(std::size_t begin, std::size_t end, std::size_t total_work_elems, Fn fn)
 {
+    constexpr std::size_t SIZE_TWO = 2;
     const std::size_t count = (end > begin) ? (end - begin) : 0;
     if (count == 0) {
         return;
     }
 
-    if (total_work_elems < static_cast<std::size_t>(PTO_CPU_PARALLEL_THRESHOLD_ELEMS) || count < 2) {
+    if (total_work_elems < static_cast<std::size_t>(PTO_CPU_PARALLEL_THRESHOLD_ELEMS) || count < SIZE_TWO) {
         for (std::size_t i = begin; i < end; ++i) {
             fn(i);
         }
