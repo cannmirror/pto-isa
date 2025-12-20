@@ -8,8 +8,8 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#ifndef PTO_CPU_TPARTMAX_HPP
-#define PTO_CPU_TPARTMAX_HPP
+#ifndef TPARTMAX_HPP
+#define TPARTMAX_HPP
 
 #include "TPartOp.hpp"
 
