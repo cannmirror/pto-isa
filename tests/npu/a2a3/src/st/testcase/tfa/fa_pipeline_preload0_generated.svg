@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="440" viewBox="0 0 2480 440">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0 10 3.5 0 7" fill="#333" />
+    </marker>
+    <marker id="arrowhead-intra" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0 10 3.5 0 7" fill="#1b75d1" />
+    </marker>
+  </defs>
+  <text x="20" y="28" font-family="Arial" font-size="16" font-weight="bold" fill="#222">FA Pipeline Schedule (generated)</text>
+  <g stroke="#f2f2f2" stroke-width="1">
+    <line x1="120" y1="40" x2="120" y2="280" />
+    <line x1="200" y1="40" x2="200" y2="280" />
+    <line x1="280" y1="40" x2="280" y2="280" />
+    <line x1="360" y1="40" x2="360" y2="280" />
+    <line x1="440" y1="40" x2="440" y2="280" />
+    <line x1="520" y1="40" x2="520" y2="280" />
+    <line x1="600" y1="40" x2="600" y2="280" />
+    <line x1="680" y1="40" x2="680" y2="280" />
+    <line x1="760" y1="40" x2="760" y2="280" />
+    <line x1="840" y1="40" x2="840" y2="280" />
+    <line x1="920" y1="40" x2="920" y2="280" />
+    <line x1="1000" y1="40" x2="1000" y2="280" />
+    <line x1="1080" y1="40" x2="1080" y2="280" />
+    <line x1="1160" y1="40" x2="1160" y2="280" />
+    <line x1="1240" y1="40" x2="1240" y2="280" />
+    <line x1="1320" y1="40" x2="1320" y2="280" />
+    <line x1="1400" y1="40" x2="1400" y2="280" />
+    <line x1="1480" y1="40" x2="1480" y2="280" />
+    <line x1="1560" y1="40" x2="1560" y2="280" />
+    <line x1="1640" y1="40" x2="1640" y2="280" />
+    <line x1="1720" y1="40" x2="1720" y2="280" />
+    <line x1="1800" y1="40" x2="1800" y2="280" />
+    <line x1="1880" y1="40" x2="1880" y2="280" />
+    <line x1="1960" y1="40" x2="1960" y2="280" />
+    <line x1="2040" y1="40" x2="2040" y2="280" />
+    <line x1="2120" y1="40" x2="2120" y2="280" />
+    <line x1="2200" y1="40" x2="2200" y2="280" />
+    <line x1="2280" y1="40" x2="2280" y2="280" />
+    <line x1="2360" y1="40" x2="2360" y2="280" />
+    <line x1="2440" y1="40" x2="2440" y2="280" />
+  </g>
+  <text x="20" y="80" font-family="Arial" font-size="13" fill="#222">compute_qk (cube)</text>
+  <text x="20" y="140" font-family="Arial" font-size="13" fill="#222">compute_p (vector)</text>
+  <text x="20" y="200" font-family="Arial" font-size="13" fill="#222">compute_pv (cube)</text>
+  <text x="20" y="260" font-family="Arial" font-size="13" fill="#222">compute_gu (vector)</text>
+  <text x="20" y="340" font-family="Arial" font-size="13" fill="#222">cube timeline (qk+pv)</text>
+  <text x="20" y="400" font-family="Arial" font-size="13" fill="#222">vector timeline (p+gu)</text>
+  <rect x="120" y="60" width="32" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="124" y="69.0" font-family="Arial" font-size="10" fill="#fff">qk_load(0)</text>
+  <rect x="152" y="76" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="156" y="85.0" font-family="Arial" font-size="10" fill="#fff">qk_comp(0)</text>
+  <rect x="232" y="92" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="236" y="101.0" font-family="Arial" font-size="10" fill="#fff">qk_store(0)</text>
+  <rect x="312" y="120" width="32" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="316" y="129.0" font-family="Arial" font-size="10" fill="#fff">p_load(0)</text>
+  <rect x="344" y="136" width="128" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="348" y="145.0" font-family="Arial" font-size="10" fill="#fff">p_comp(0)</text>
+  <rect x="472" y="152" width="80" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="476" y="161.0" font-family="Arial" font-size="10" fill="#fff">p_store(0)</text>
+  <rect x="552" y="180" width="32" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="556" y="189.0" font-family="Arial" font-size="10" fill="#fff">pv_load(0)</text>
+  <rect x="584" y="196" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="588" y="205.0" font-family="Arial" font-size="10" fill="#fff">pv_comp(0)</text>
+  <rect x="664" y="212" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="668" y="221.0" font-family="Arial" font-size="10" fill="#fff">pv_store(0)</text>
+  <rect x="744" y="240" width="32" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="748" y="249.0" font-family="Arial" font-size="10" fill="#fff">gu_load(0)</text>
+  <rect x="776" y="256" width="48" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="780" y="265.0" font-family="Arial" font-size="10" fill="#fff">gu_comp(0)</text>
+  <rect x="824" y="272" width="80" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="828" y="281.0" font-family="Arial" font-size="10" fill="#fff">gu_store(0)</text>
+  <rect x="584" y="60" width="32" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="588" y="69.0" font-family="Arial" font-size="10" fill="#fff">qk_load(1)</text>
+  <rect x="664" y="76" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="668" y="85.0" font-family="Arial" font-size="10" fill="#fff">qk_comp(1)</text>
+  <rect x="744" y="92" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="748" y="101.0" font-family="Arial" font-size="10" fill="#fff">qk_store(1)</text>
+  <rect x="824" y="120" width="32" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="828" y="129.0" font-family="Arial" font-size="10" fill="#fff">p_load(1)</text>
+  <rect x="856" y="136" width="128" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="860" y="145.0" font-family="Arial" font-size="10" fill="#fff">p_comp(1)</text>
+  <rect x="984" y="152" width="80" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="988" y="161.0" font-family="Arial" font-size="10" fill="#fff">p_store(1)</text>
+  <rect x="1064" y="180" width="32" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1068" y="189.0" font-family="Arial" font-size="10" fill="#fff">pv_load(1)</text>
+  <rect x="1096" y="196" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1100" y="205.0" font-family="Arial" font-size="10" fill="#fff">pv_comp(1)</text>
+  <rect x="1176" y="212" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1180" y="221.0" font-family="Arial" font-size="10" fill="#fff">pv_store(1)</text>
+  <rect x="1256" y="240" width="32" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1260" y="249.0" font-family="Arial" font-size="10" fill="#fff">gu_load(1)</text>
+  <rect x="1288" y="256" width="48" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1292" y="265.0" font-family="Arial" font-size="10" fill="#fff">gu_comp(1)</text>
+  <rect x="1336" y="272" width="80" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1340" y="281.0" font-family="Arial" font-size="10" fill="#fff">gu_store(1)</text>
+  <rect x="1096" y="60" width="32" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1100" y="69.0" font-family="Arial" font-size="10" fill="#fff">qk_load(2)</text>
+  <rect x="1176" y="76" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1180" y="85.0" font-family="Arial" font-size="10" fill="#fff">qk_comp(2)</text>
+  <rect x="1256" y="92" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1260" y="101.0" font-family="Arial" font-size="10" fill="#fff">qk_store(2)</text>
+  <rect x="1336" y="120" width="32" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1340" y="129.0" font-family="Arial" font-size="10" fill="#fff">p_load(2)</text>
+  <rect x="1368" y="136" width="128" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1372" y="145.0" font-family="Arial" font-size="10" fill="#fff">p_comp(2)</text>
+  <rect x="1496" y="152" width="80" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1500" y="161.0" font-family="Arial" font-size="10" fill="#fff">p_store(2)</text>
+  <rect x="1576" y="180" width="32" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1580" y="189.0" font-family="Arial" font-size="10" fill="#fff">pv_load(2)</text>
+  <rect x="1608" y="196" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1612" y="205.0" font-family="Arial" font-size="10" fill="#fff">pv_comp(2)</text>
+  <rect x="1688" y="212" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1692" y="221.0" font-family="Arial" font-size="10" fill="#fff">pv_store(2)</text>
+  <rect x="1768" y="240" width="32" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1772" y="249.0" font-family="Arial" font-size="10" fill="#fff">gu_load(2)</text>
+  <rect x="1800" y="256" width="48" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1804" y="265.0" font-family="Arial" font-size="10" fill="#fff">gu_comp(2)</text>
+  <rect x="1848" y="272" width="80" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1852" y="281.0" font-family="Arial" font-size="10" fill="#fff">gu_store(2)</text>
+  <rect x="1608" y="60" width="32" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1612" y="69.0" font-family="Arial" font-size="10" fill="#fff">qk_load(3)</text>
+  <rect x="1688" y="76" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1692" y="85.0" font-family="Arial" font-size="10" fill="#fff">qk_comp(3)</text>
+  <rect x="1768" y="92" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1772" y="101.0" font-family="Arial" font-size="10" fill="#fff">qk_store(3)</text>
+  <rect x="1848" y="120" width="32" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1852" y="129.0" font-family="Arial" font-size="10" fill="#fff">p_load(3)</text>
+  <rect x="1880" y="136" width="128" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1884" y="145.0" font-family="Arial" font-size="10" fill="#fff">p_comp(3)</text>
+  <rect x="2008" y="152" width="80" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="2012" y="161.0" font-family="Arial" font-size="10" fill="#fff">p_store(3)</text>
+  <rect x="2088" y="180" width="32" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="2092" y="189.0" font-family="Arial" font-size="10" fill="#fff">pv_load(3)</text>
+  <rect x="2120" y="196" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="2124" y="205.0" font-family="Arial" font-size="10" fill="#fff">pv_comp(3)</text>
+  <rect x="2200" y="212" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="2204" y="221.0" font-family="Arial" font-size="10" fill="#fff">pv_store(3)</text>
+  <rect x="2280" y="240" width="32" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="2284" y="249.0" font-family="Arial" font-size="10" fill="#fff">gu_load(3)</text>
+  <rect x="2312" y="256" width="48" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="2316" y="265.0" font-family="Arial" font-size="10" fill="#fff">gu_comp(3)</text>
+  <rect x="2360" y="272" width="80" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="2364" y="281.0" font-family="Arial" font-size="10" fill="#fff">gu_store(3)</text>
+  <rect x="120" y="320" width="32" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="124" y="329.0" font-family="Arial" font-size="10" fill="#fff">qk_load(0)</text>
+  <rect x="152" y="336" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="156" y="345.0" font-family="Arial" font-size="10" fill="#fff">qk_comp(0)</text>
+  <rect x="232" y="352" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="236" y="361.0" font-family="Arial" font-size="10" fill="#fff">qk_store(0)</text>
+  <rect x="312" y="380" width="32" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="316" y="389.0" font-family="Arial" font-size="10" fill="#fff">p_load(0)</text>
+  <rect x="344" y="396" width="128" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="348" y="405.0" font-family="Arial" font-size="10" fill="#fff">p_comp(0)</text>
+  <rect x="472" y="412" width="80" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="476" y="421.0" font-family="Arial" font-size="10" fill="#fff">p_store(0)</text>
+  <rect x="552" y="320" width="32" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="556" y="329.0" font-family="Arial" font-size="10" fill="#fff">pv_load(0)</text>
+  <rect x="584" y="320" width="32" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="588" y="329.0" font-family="Arial" font-size="10" fill="#fff">qk_load(1)</text>
+  <rect x="584" y="336" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="588" y="345.0" font-family="Arial" font-size="10" fill="#fff">pv_comp(0)</text>
+  <rect x="664" y="352" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="668" y="361.0" font-family="Arial" font-size="10" fill="#fff">pv_store(0)</text>
+  <rect x="664" y="336" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="668" y="345.0" font-family="Arial" font-size="10" fill="#fff">qk_comp(1)</text>
+  <rect x="744" y="380" width="32" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="748" y="389.0" font-family="Arial" font-size="10" fill="#fff">gu_load(0)</text>
+  <rect x="744" y="352" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="748" y="361.0" font-family="Arial" font-size="10" fill="#fff">qk_store(1)</text>
+  <rect x="776" y="396" width="48" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="780" y="405.0" font-family="Arial" font-size="10" fill="#fff">gu_comp(0)</text>
+  <rect x="824" y="380" width="32" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="828" y="389.0" font-family="Arial" font-size="10" fill="#fff">p_load(1)</text>
+  <rect x="824" y="412" width="80" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="828" y="421.0" font-family="Arial" font-size="10" fill="#fff">gu_store(0)</text>
+  <rect x="856" y="396" width="128" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="860" y="405.0" font-family="Arial" font-size="10" fill="#fff">p_comp(1)</text>
+  <rect x="984" y="412" width="80" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="988" y="421.0" font-family="Arial" font-size="10" fill="#fff">p_store(1)</text>
+  <rect x="1064" y="320" width="32" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1068" y="329.0" font-family="Arial" font-size="10" fill="#fff">pv_load(1)</text>
+  <rect x="1096" y="320" width="32" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1100" y="329.0" font-family="Arial" font-size="10" fill="#fff">qk_load(2)</text>
+  <rect x="1096" y="336" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1100" y="345.0" font-family="Arial" font-size="10" fill="#fff">pv_comp(1)</text>
+  <rect x="1176" y="352" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1180" y="361.0" font-family="Arial" font-size="10" fill="#fff">pv_store(1)</text>
+  <rect x="1176" y="336" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1180" y="345.0" font-family="Arial" font-size="10" fill="#fff">qk_comp(2)</text>
+  <rect x="1256" y="380" width="32" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1260" y="389.0" font-family="Arial" font-size="10" fill="#fff">gu_load(1)</text>
+  <rect x="1256" y="352" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1260" y="361.0" font-family="Arial" font-size="10" fill="#fff">qk_store(2)</text>
+  <rect x="1288" y="396" width="48" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1292" y="405.0" font-family="Arial" font-size="10" fill="#fff">gu_comp(1)</text>
+  <rect x="1336" y="380" width="32" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1340" y="389.0" font-family="Arial" font-size="10" fill="#fff">p_load(2)</text>
+  <rect x="1336" y="412" width="80" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1340" y="421.0" font-family="Arial" font-size="10" fill="#fff">gu_store(1)</text>
+  <rect x="1368" y="396" width="128" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1372" y="405.0" font-family="Arial" font-size="10" fill="#fff">p_comp(2)</text>
+  <rect x="1496" y="412" width="80" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1500" y="421.0" font-family="Arial" font-size="10" fill="#fff">p_store(2)</text>
+  <rect x="1576" y="320" width="32" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1580" y="329.0" font-family="Arial" font-size="10" fill="#fff">pv_load(2)</text>
+  <rect x="1608" y="320" width="32" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1612" y="329.0" font-family="Arial" font-size="10" fill="#fff">qk_load(3)</text>
+  <rect x="1608" y="336" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1612" y="345.0" font-family="Arial" font-size="10" fill="#fff">pv_comp(2)</text>
+  <rect x="1688" y="352" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="1692" y="361.0" font-family="Arial" font-size="10" fill="#fff">pv_store(2)</text>
+  <rect x="1688" y="336" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1692" y="345.0" font-family="Arial" font-size="10" fill="#fff">qk_comp(3)</text>
+  <rect x="1768" y="380" width="32" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1772" y="389.0" font-family="Arial" font-size="10" fill="#fff">gu_load(2)</text>
+  <rect x="1768" y="352" width="80" height="12" fill="#1f77b4" rx="3" stroke="#1a4f7a" stroke-width="1" />
+  <text x="1772" y="361.0" font-family="Arial" font-size="10" fill="#fff">qk_store(3)</text>
+  <rect x="1800" y="396" width="48" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1804" y="405.0" font-family="Arial" font-size="10" fill="#fff">gu_comp(2)</text>
+  <rect x="1848" y="380" width="32" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1852" y="389.0" font-family="Arial" font-size="10" fill="#fff">p_load(3)</text>
+  <rect x="1848" y="412" width="80" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="1852" y="421.0" font-family="Arial" font-size="10" fill="#fff">gu_store(2)</text>
+  <rect x="1880" y="396" width="128" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="1884" y="405.0" font-family="Arial" font-size="10" fill="#fff">p_comp(3)</text>
+  <rect x="2008" y="412" width="80" height="12" fill="#ff9933" rx="3" stroke="#c66f0a" stroke-width="1" />
+  <text x="2012" y="421.0" font-family="Arial" font-size="10" fill="#fff">p_store(3)</text>
+  <rect x="2088" y="320" width="32" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="2092" y="329.0" font-family="Arial" font-size="10" fill="#fff">pv_load(3)</text>
+  <rect x="2120" y="336" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="2124" y="345.0" font-family="Arial" font-size="10" fill="#fff">pv_comp(3)</text>
+  <rect x="2200" y="352" width="80" height="12" fill="#2ca25f" rx="3" stroke="#1f7a47" stroke-width="1" />
+  <text x="2204" y="361.0" font-family="Arial" font-size="10" fill="#fff">pv_store(3)</text>
+  <rect x="2280" y="380" width="32" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="2284" y="389.0" font-family="Arial" font-size="10" fill="#fff">gu_load(3)</text>
+  <rect x="2312" y="396" width="48" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="2316" y="405.0" font-family="Arial" font-size="10" fill="#fff">gu_comp(3)</text>
+  <rect x="2360" y="412" width="80" height="12" fill="#9467bd" rx="3" stroke="#6c3f8b" stroke-width="1" />
+  <text x="2364" y="421.0" font-family="Arial" font-size="10" fill="#fff">gu_store(3)</text>
+  <path d="M272.0 98.0 L272.0 122.0 L312 122.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M512.0 158.0 L512.0 182.0 L552 182.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M704.0 218.0 L704.0 242.0 L744 242.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M152.0 66.0 L152 82.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M232.0 82.0 L232 98.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M344.0 126.0 L344 142.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M472.0 142.0 L472 158.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M584.0 186.0 L584 202.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M664.0 202.0 L664 218.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M776.0 246.0 L776 262.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M824.0 262.0 L824 278.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M784.0 101.0 L784.0 125.0 L824 125.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M1024.0 161.0 L1024.0 185.0 L1064 185.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M1216.0 221.0 L1216.0 245.0 L1256 245.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M616.0 69.0 L664 85.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M744.0 85.0 L744 101.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M856.0 129.0 L856 145.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M984.0 145.0 L984 161.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1096.0 189.0 L1096 205.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1176.0 205.0 L1176 221.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1288.0 249.0 L1288 265.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1336.0 265.0 L1336 281.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1296.0 104.0 L1296.0 128.0 L1336 128.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M1536.0 164.0 L1536.0 188.0 L1576 188.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M1728.0 224.0 L1728.0 248.0 L1768 248.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M1128.0 72.0 L1176 88.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1256.0 88.0 L1256 104.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1368.0 132.0 L1368 148.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1496.0 148.0 L1496 164.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1608.0 192.0 L1608 208.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1688.0 208.0 L1688 224.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1800.0 252.0 L1800 268.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1848.0 268.0 L1848 284.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1808.0 107.0 L1808.0 131.0 L1848 131.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M2048.0 167.0 L2048.0 191.0 L2088 191.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M2240.0 227.0 L2240.0 251.0 L2280 251.0" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)" />
+  <path d="M1640.0 75.0 L1688 91.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1768.0 91.0 L1768 107.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M1880.0 135.0 L1880 151.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M2008.0 151.0 L2008 167.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M2120.0 195.0 L2120 211.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M2200.0 211.0 L2200 227.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M2312.0 255.0 L2312 271.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+  <path d="M2360.0 271.0 L2360 287.0" stroke="#1b75d1" stroke-width="1.2" fill="none" marker-end="url(#arrowhead-intra)" />
+</svg>
