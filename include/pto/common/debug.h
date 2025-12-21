@@ -43,6 +43,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
   template<typename GT>
   void printRawGT(GT& tensor, const std::string name = "", int elementWidth=5, int maxR=INT32_MAX, int maxC=INT32_MAX) {
+      constexpr int PRECISION = 2;
       auto rows = tensor.GetShape(pto::GlobalTensorDim::DIM_3);
       auto cols = tensor.GetShape(pto::GlobalTensorDim::DIM_4);
       auto stride3 = std::max(tensor.GetStride(pto::GlobalTensorDim::DIM_3), tensor.GetStride(pto::GlobalTensorDim::DIM_4));
@@ -63,7 +64,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
                               std::cout << std::setw(elementWidth) << val << " ";
                           } else {
                               const auto v = (val < 1e-20 ? 0 : val);
-                              std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(2) << v << " ";
+                              std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(PRECISION) << v << " ";
                           }
                       }
                       if(maxC < cols) {
@@ -81,6 +82,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
     template<typename TL>
     void printRawTile(TL& tile, const std::string name = "", int elementWidth=5, int maxR=INT32_MAX, int maxC=INT32_MAX) {
+        constexpr int PRECISION = 2;
         std::cout << name << ": " << tile.GetValidRow() << " x " << tile.GetValidCol()
                   << " (Full: " << tile.Rows << " x " << tile.Cols << ") (RxC)" << std::endl;
         for(int y=0; y<tile.GetValidRow() && y<maxR; y++){
@@ -89,7 +91,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
                     std::cout << std::setw(elementWidth) << tile.data()[y*tile.Cols+x] << " ";
                 } else {
                     const auto v = (tile.data()[y*tile.Cols+x] < 1e-20 ? 0 : tile.data()[y*tile.Cols+x]);
-                    std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(2) << v << " ";
+                    std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(PRECISION) << v << " ";
                 }
             }
             if(maxC < tile.GetValidCol()) {
@@ -104,6 +106,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
     
     template<typename TL>
     void printTile(TL& tile, const std::string name = "", int elementWidth=5, int maxR=INT32_MAX, int maxC=INT32_MAX) {
+        constexpr int PRECISION = 2;
         std::cout << name << ": " << tile.GetValidRow() << " x " << tile.GetValidCol()
                   << " (Full: " << tile.Rows << " x " << tile.Cols << ") (RxC)" << std::endl;
         for(int y=0; y<tile.GetValidRow() && y<maxR; y++){
@@ -113,7 +116,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
                     std::cout << std::setw(elementWidth) << tile.data()[offset] << " ";
                 } else {
                     const auto v = (tile.data()[offset] < 1e-20 ? 0 : tile.data()[offset]);
-                    std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(2) << v << " ";
+                    std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(PRECISION) << v << " ";
                 }
             }
             if(maxC < tile.GetValidCol()) {
@@ -128,16 +131,18 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
     template<typename T>
     void printRawMemory(T * buf, size_t sz, const std::string name = "", int elementWidth=10, int elementsPerRow=8) {
+        constexpr int PRECISION = 2;
+        constexpr int DEFAULT_WIDTH = 6;
         std::cout << name << ": " << static_cast<void*>(buf) << std::endl;
         for(int i=0; i<sz; i++){
             if(i % elementsPerRow == 0) {
-              std::cout << std::endl << std::setw(6) << std::hex << i << ": " << std::dec;
+              std::cout << std::endl << std::setw(DEFAULT_WIDTH) << std::hex << i << ": " << std::dec;
             }
             if constexpr(std::is_integral_v<T>) {
                 std::cout << std::setw(elementWidth) << buf[i] << " ";
             } else {
                 const auto v = (buf[i] < 1e-20 ? 0 : buf[i]);
-                std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(2) << v << " ";
+                std::cout << std::setw(elementWidth) << std::fixed << std::setprecision(PRECISION) << v << " ";
             }
         }
         std::cout << std::endl;

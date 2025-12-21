@@ -93,7 +93,7 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tcmpsParams(np.float16, 32, 32, 32, 32, 32, 32, "CmpMode::EQ"),
+        tcmpsParams(np.float16, 32, 32, 32, 32, 32, 32, "CmpMode::GE"),
         tcmpsParams(np.float32, 1, 64, 1, 64, 1, 64, "CmpMode::EQ"),
         tcmpsParams(np.float32, 8, 64, 8, 64, 8, 64, "CmpMode::GT"),
         tcmpsParams(np.float32, 4, 64, 4, 64, 4, 64, "CmpMode::NE"),
