@@ -306,13 +306,7 @@ __global__ AICORE void TMOV2ScalingKernel(
 
     TMOV(fbTile, fbMatTile);
 
-    // For temporary use only, will be removed once the TSTORE interface is supported.
-    __fbuf__ uint64_t *fb = (__fbuf__ uint64_t *)(0);
-    uint64_t deqTensorAddr = ((uint64_t)fb >> static_cast<uint64_t>(7)) << 8;
-    set_fpc((uint64_t)deqTensorAddr);
-    pipe_barrier(PIPE_FIX);
-    __cc__ l0cType *c = (__cc__ l0cType *)(cTile.data());
-    L0CCopyOut<cType, l0cType, M, N, M, N>(out, c, M, N, 0, 0, 0, reluMode);
+    TSTORE_FP<AccTile, GlobalDataOut, FbTile>(dstGlobal, cTile, fbTile);
     out = dstGlobal.data();
 }
 
@@ -428,13 +422,7 @@ __global__ AICORE void TMOV2BiasAndScalingDyncmicKernel(__gm__ cType *out, __gm_
 
     TMOV(scalingTile, scalingMatTile);
 
-    // For temporary use only, will be removed once the TSTORE interface is supported.
-    __fbuf__ uint64_t *fb = (__fbuf__ uint64_t *)(0);
-    uint64_t deqTensorAddr = ((uint64_t)fb >> static_cast<uint64_t>(7)) << 8;
-    set_fpc((uint64_t)deqTensorAddr);
-    pipe_barrier(PIPE_FIX);
-    __cc__ l0cType *c = (__cc__ l0cType *)(cTile.data());
-    L0CCopyOut<cType, l0cType, alignM, alignN, alignM, alignN>(out, c, M, N, 0, 0, 0);
+    TSTORE_FP<AccTile, GlobalDataOut, ScalingTile>(dstGlobal, cTile, scalingTile);
     out = dstGlobal.data();
 }
 
