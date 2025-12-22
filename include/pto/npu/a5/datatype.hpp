@@ -13,6 +13,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto{
 template <typename T> struct TypeGet;
+#if defined(__DAV_VEC__)
+template <> struct TypeGet<bfloat16_t> {
+    using T = vector_bf16;
+};
+#endif
 template <> struct TypeGet<uint64_t> {
     using T = vector_u64;
 };
