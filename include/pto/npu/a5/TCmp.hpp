@@ -139,8 +139,8 @@ __tf__ AICORE void TCmp_32B(
 template <typename TileDataDst, typename TileDataSrc>
 AICORE void TCMP_IMPL(TileDataDst &dst, TileDataSrc &src0, TileDataSrc &src1, CmpMode cmpMode) {
 
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
+    unsigned validRow = src0.GetValidRow();
+    unsigned validCol = src0.GetValidCol();
     if constexpr (sizeof(typename TileDataSrc::DType) == 4) {
         if constexpr (std::is_same<typename TileDataSrc::DType, int32_t>::value) {
             TCmp_32B<TileDataDst, TileDataSrc, vector_s32>(dst.data(), src0.data(), src1.data(), cmpMode, validRow, validCol);

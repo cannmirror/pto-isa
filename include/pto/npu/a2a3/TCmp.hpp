@@ -117,10 +117,10 @@ constexpr const uint64_t BITS_IN_BYTE = 8;
         PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataSrc::DType);
-        unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat + 1;
-        unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
+        unsigned numRepeatPerLine = CeilDivision(src0.GetValidCol(), elementsPerRepeat);
+        unsigned numRemainPerLine = src0.GetValidCol() % elementsPerRepeat;
         constexpr unsigned SS = REPEAT_BYTE / sizeof(typename TileDataSrc::DType);
-        unsigned validRow = dst.GetValidRow();
+        unsigned validRow = src0.GetValidRow();
         using T = typename TileDataSrc::DType;
         constexpr uint64_t DS = BITS_IN_BYTE * (sizeof(float)/sizeof(T));
         TCmp<TileDataDst, TileDataSrc, T, SS, DS>(dst.data(), src0.data(), src1.data(), cmpMode, numRepeatPerLine, numRemainPerLine,
