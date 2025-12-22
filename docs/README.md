@@ -19,6 +19,9 @@ This directory documents the PTO ISA (Instruction Set Architecture) used by PTO 
 - Instruction index: `docs/isa/README.md`
 - Common conventions: `docs/isa/conventions.md`
 - PTO assembly syntax reference (PTO-AS): `docs/grammar/PTO-AS.md`
+- Programming model (Tiles/GlobalTensor/Events/Scalars): `docs/coding/ProgrammingModel.md`
+- PTO ISA programming tutorial (C++ intrinsics): `docs/coding/tutorial.md`
+- Abstract machine model (core/device/host): `docs/machine/abstract-machine.md`
 - Getting started (recommended: run on CPU first): `docs/getting-started.md`
 - Implementation and extension notes: `docs/coding/README.md`
 

@@ -4,6 +4,8 @@ PTO Tile Lib supports an explicit event model for expressing dependencies betwee
 
 This document describes the C++ event types used by `include/pto/common/pto_instr.hpp` and `include/pto/common/event.hpp`.
 
+> Note: the concrete `pto::Event<SrcOp, DstOp>` type is defined only for device builds (`__CCE_AICORE__`). The CPU simulator backend treats `TSYNC` as a no-op and relies on ordinary program order within a single thread.
+
 ## Key types
 
 ### `pto::Op`
@@ -33,6 +35,13 @@ struct Event {
 
 The template parameters encode the producer/consumer opcodes and are used to select the correct pipeline pair.
 
+### `TSYNC<OpCode>()` (single-pipeline barrier)
+
+`TSYNC<OpCode>()` is a single-op barrier implemented by `TSYNC_IMPL<OpCode>()`.
+
+- On device, the current implementation restricts the single-op form to vector pipeline ops (`PIPE_V`).
+- On the CPU simulator backend (`__CPU_SIM`), `TSYNC_IMPL` is a no-op.
+
 ## How `WaitEvents&...` works in intrinsics
 
 Most intrinsics in `include/pto/common/pto_instr.hpp` have a trailing `WaitEvents&... events` pack.
@@ -49,9 +58,14 @@ This enables a programming style where you:
 2. Pass them into the next op to enforce ordering.
 3. Record a new token by assigning the returned `RecordEvent`.
 
-## `TSYNC<Op>()` (pipeline barrier)
+## Ordering guidelines (abstract)
 
-`TSYNC<OpCode>()` is a single-op barrier implemented in `TSYNC_IMPL<OpCode>()`. The current implementation restricts the single-op form to vector pipeline ops.
+Events are primarily used to express ordering **between pipeline classes** (for example, “a memory load must complete before a vector op consumes the tile”).
+
+- Operations without explicit data or event dependencies may execute out of order on the device.
+- Operations linked by an event dependency must observe the `Wait()`/`Record()` order implied by the program.
+
+Instruction pages in `docs/isa/` indicate when ordering constraints matter for correctness.
 
 ## Minimal example
 
@@ -79,4 +93,3 @@ void pipeline(__gm__ float* in0, __gm__ float* in1, __gm__ float* out) {
   TSTORE(gout, c, e2);
 }
 ```
-

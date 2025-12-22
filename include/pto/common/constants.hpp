@@ -77,7 +77,7 @@ enum class PadValue {
 
 template <typename DType, PadValue PadVal>
 struct PadValueMap {
-    static_assert(sizeof(DType) < 0, "TLOAD: Unsupported DType for PadValue!");
+    PTO_STATIC_ASSERT(sizeof(DType) < 0, "TLOAD: Unsupported DType for PadValue!");
 };
 
 template <PadValue PadVal>

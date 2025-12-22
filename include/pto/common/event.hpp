@@ -106,7 +106,7 @@ namespace pto {
     return;
 #else
     constexpr pipe_t pipe = GetPipeByOp<OpCode>();
-    static_assert(pipe == PIPE_V, "Single Op TSYNC only supports Vector PTO Instruction.");
+    PTO_STATIC_ASSERT(pipe == PIPE_V, "Single Op TSYNC only supports Vector PTO Instruction.");
     pipe_barrier((pipe_t)pipe);
 #endif
   }
@@ -130,10 +130,10 @@ namespace pto {
 
     CceEventIdType token = {};
 
-    static_assert(srcPipe != PIPE_ALL, "SrcOp is invalid.");
-    static_assert(dstPipe != PIPE_ALL, "DstOp is invalid.");
-    static_assert(SrcOp != DstOp, "SrcOp is not allowed to be equal to DstOp.");
-    static_assert(dstPipe != srcPipe, "SrcPipe is not allowed to be equal to dstPipe.");
+    PTO_STATIC_ASSERT(srcPipe != PIPE_ALL, "SrcOp is invalid.");
+    PTO_STATIC_ASSERT(dstPipe != PIPE_ALL, "DstOp is invalid.");
+    PTO_STATIC_ASSERT(SrcOp != DstOp, "SrcOp is not allowed to be equal to DstOp.");
+    PTO_STATIC_ASSERT(dstPipe != srcPipe, "SrcPipe is not allowed to be equal to dstPipe.");
 
     PTO_INTERNAL void Wait() {
       if constexpr (setIntraBlock) {

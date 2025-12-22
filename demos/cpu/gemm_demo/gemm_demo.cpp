@@ -8,8 +8,11 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -60,6 +63,8 @@ int main()
     constexpr uintptr_t kAddrAMat = 0x0;
     constexpr uintptr_t kAddrBMat = 0x10000;
     constexpr int kTileAlignBytes = 512;
+    constexpr int kWarmupIters = 2;
+    constexpr int kIters = 50;
     constexpr int kExitSuccess = 0;
     constexpr int kExitFailure = 1;
 
@@ -105,13 +110,35 @@ int main()
     TLOAD(bMat, bGlobal);
     TMOV(aTile, aMat);
     TMOV(bTile, bMat);
-    TMATMUL(cTile, aTile, bTile);
+    for (int i = 0; i < kWarmupIters; ++i) {
+        TMATMUL(cTile, aTile, bTile);
+    }
+    const auto t0 = std::chrono::steady_clock::now();
+    for (int i = 0; i < kIters; ++i) {
+        TMATMUL(cTile, aTile, bTile);
+    }
+    const auto t1 = std::chrono::steady_clock::now();
     TSTORE(cGlobal, cTile);
+
+    const double elapsed_s =
+        std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0).count() / static_cast<double>(kIters);
+    const double matmul_flops =
+        2.0 * static_cast<double>(kM) * static_cast<double>(kK) * static_cast<double>(kN);
+    const double gflops = (elapsed_s > 0.0) ? (matmul_flops / elapsed_s / 1e9) : 0.0;
 
     gemm_naive(A.data(), B.data(), Ref.data(), kM, kK, kN);
     const float diff = max_abs_diff(C, Ref);
 
     std::cout << "gemm_demo: M=" << kM << " K=" << kK << " N=" << kN << "\n";
     std::cout << "max_abs_diff=" << diff << "\n";
+    std::cout << "perf: avg_ms=" << (elapsed_s * 1e3) << " matmul_flops=" << matmul_flops << " gflops=" << gflops;
+    if (const char *peak_env = std::getenv("PTO_CPU_PEAK_GFLOPS")) {
+        char *end = nullptr;
+        const double peak = std::strtod(peak_env, &end);
+        if (end != peak_env && peak > 0.0) {
+            std::cout << " peak_gflops=" << peak << " mfu=" << (gflops / peak);
+        }
+    }
+    std::cout << "\n";
     return (diff < kDiffThreshold) ? kExitSuccess : kExitFailure;
 }

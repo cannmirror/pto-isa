@@ -21,7 +21,21 @@ The per-instruction reference pages in `docs/isa/` are written against the C++ i
 | Developer notes | [`docs/coding/GlobalTensor.md`](coding/GlobalTensor.md) | GlobalTensor (GM) wrapper and layouts. |
 | Developer notes | [`docs/coding/Scalar.md`](coding/Scalar.md) | Scalar wrapper and immediates. |
 | Developer notes | [`docs/coding/Event.md`](coding/Event.md) | Event tokens and synchronization. |
+| Developer notes | [`docs/coding/ProgrammingModel.md`](coding/ProgrammingModel.md) | PTO-Auto vs PTO-Manual overview. |
+| Machine model | [`docs/machine/abstract-machine.md`](machine/abstract-machine.md) | Abstract execution machine model. |
 | Source of truth | [`include/pto/common/pto_instr.hpp`](../include/pto/common/pto_instr.hpp) | C++ intrinsic API (authoritative). |
+
+## Programming Model
+
+The ISA reference assumes the following programmer-visible models:
+
+- Tile and valid-region semantics: `docs/coding/Tile.md`
+- Global memory tensor model: `docs/coding/GlobalTensor.md`
+- Event and synchronization model: `docs/coding/Event.md`
+- Scalar values, type mnemonics, and enums: `docs/coding/Scalar.md`
+- PTO-Auto vs PTO-Manual overview: `docs/coding/ProgrammingModel.md`
+
+For the abstract execution model (how tile blocks are scheduled across cores/devices), see `docs/machine/abstract-machine.md`.
 
 ## Instruction Categories
 

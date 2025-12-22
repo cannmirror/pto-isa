@@ -8,6 +8,12 @@ This page defines shared conventions used by the per-instruction ISA reference p
 - **GM (global memory)**: Off-chip memory accessed via `pto::GlobalTensor<...>`.
 - **Scalar / immediate**: A host-side scalar value or an encoded immediate used by `*S` / `*C` variants.
 
+For the detailed C++ programming model behind these terms, see:
+
+- Tiles: `docs/coding/Tile.md`
+- GlobalTensor: `docs/coding/GlobalTensor.md`
+- Scalars and enums: `docs/coding/Scalar.md`
+
 ## Shapes and layouts
 
 - **Row-major vs. column-major**: Unless stated otherwise, CPU simulator kernels assume row-major tiles. Instructions that support multiple layouts will state supported layouts explicitly.
@@ -31,3 +37,5 @@ For multi-operand instructions (e.g., `src0`, `src1`), the docs assume the input
 
 - Instructions may require ordering between memory and vector pipelines. When examples show events (e.g., `set_flag(...)` / `wait_flag(...)`), they indicate the required ordering constraints on the target backend.
 - `TSYNC` is used for explicit synchronization when needed by a sequence of instructions.
+
+See `docs/coding/Event.md` for the event model used by PTO Tile Lib.

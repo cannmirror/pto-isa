@@ -155,6 +155,8 @@ source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
 * ISA Guide and Instruction Navigation: [docs/README.md](docs/README.md)
 * ISA Instruction Documentation Index: [docs/isa/README.md](docs/isa/README.md)
 * Developer Coding Documentation Index: [docs/coding/README.md](docs/coding/README.md)
+* PTO ISA Programming Tutorial (C++ tile intrinsics): [docs/coding/tutorial.md](docs/coding/tutorial.md)
+* Release notes: [ReleaseNote.md](ReleaseNote.md)
 * Getting Started Guide (recommended to run on CPU before moving to NPU): [docs/getting-started.md](docs/getting-started.md)
 * Security and Disclosure Process: [SECURITY.md](SECURITY.md)
 * Directory-level Reading (Code Organization):
