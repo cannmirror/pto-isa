@@ -6,8 +6,7 @@ This example demonstrates how to implement a basic GEMM operator using PTO, incl
 
 ## Supported AI Processors
 
-- Ascend 910C
-- Ascend 910B
+- A2/A3
 
 ## Directory Layout
 
@@ -42,7 +41,7 @@ Where:
 | Item        | Value |
 | ----------- | ----- |
 | OpType      | `gemm` |
-| Inputs      | `a`: `m×k`, `float16`, `ND`; `b`: `k×n`, `float16`, `ND` |
+| Inputs      | `a`: `m×k`, `float16`, `ND`; `b`: `k×n`, `float16`, `DN` |
 | Output      | `c`: `m×n`, `float`, `ND` |
 | Kernel name | `gemm_basic_kernel` |
 
@@ -99,7 +98,7 @@ This example overlaps data movement and compute using double buffering in L1 and
 
 Pipeline overview:
 
-![GEMM pipeline](../../docs/figures/gemm_pipeline.png)
+![GEMM pipeline](../../../docs/figures/gemm_pipeline.png)
 
 ## Build and Run
 
@@ -112,7 +111,7 @@ source ${ASCEND_INSTALL_PATH}/bin/setenv.bash
 2. Run the example:
 
 ```bash
-cd ${git_clone_path}/kernels/gemm_basic
+cd ${git_clone_path}/demos/baseline/gemm_basic
 bash run.sh -r npu -v Ascend910B1
 ```
 
