@@ -44,7 +44,7 @@ template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSiz
     unsigned Cols>
 PTO_INTERNAL void Bin1LNormMode(
     __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
-    if constexpr (Cols <= elementsPerRepeat) {
+    if constexpr (Cols < elementsPerRepeat) {
         SetContMaskByDType<T>(validCol);
         constexpr uint16_t repeatStride = rowStride / blockSizeElem;
         Op::BinInstr(dstPtr, src0Ptr, src1Ptr, validRow, repeatStride, repeatStride, repeatStride);
