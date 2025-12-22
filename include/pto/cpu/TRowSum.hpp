@@ -18,7 +18,7 @@ namespace pto {
     void TRowSum(typename TileDst::TileDType dst, typename TileSrc::TileDType src, uint16_t M, uint16_t N)
     {
         cpu::parallel_for_1d(0, M, static_cast<std::size_t>(M) * N, [&](std::size_t i) {
-            typename TileDst::DType sum = 0;
+            TypeSum<TileDst> sum = 0;
             if constexpr (TileSrc::SFractal == SLayout::NoneBox && TileSrc::isRowMajor) {
                 const std::size_t base = i * TileSrc::Cols;
                 PTO_CPU_VECTORIZE_LOOP
@@ -58,8 +58,8 @@ namespace pto {
     {
         CheckRSValid<TileDataOut, TileDataIn>();
 
-        uint16_t m = dstTile.GetValidRow();
-        uint16_t n = dstTile.GetValidCol();
+        uint16_t m = srcTile.GetValidRow();
+        uint16_t n = srcTile.GetValidCol();
 
         TRowSum<TileDataOut, TileDataIn>(dstTile.data(), srcTile.data(), m, n);
     }
