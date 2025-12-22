@@ -44,9 +44,10 @@ def generate_case_name(idx, param):
     dtype_str = {
         np.float32: 'float',
         np.float16: 'half',
-        np.int8: 'int8',
         np.int32: 'int32',
-        np.int16: 'int16'
+        np.int16: 'int16',
+        np.int8: 'int8',
+        np.uint8: 'uint8',
     }[param.dtype]
     return f"TTRANSTest.case{idx}_{dtype_str}_{param.tile_row}_{param.tile_col}_{param.valid_row}_{param.valid_col}"
 
@@ -62,17 +63,22 @@ if __name__ == "__main__":
     case_params_list = [
         TTRANSParams(np.float32, 16, 8, 16, 8),
         TTRANSParams(np.float16, 16, 16, 16, 16),
-        TTRANSParams(np.int8, 32, 32, 32, 32),
         TTRANSParams(np.float32, 32, 16, 31, 15),
         TTRANSParams(np.float16, 32, 32, 31, 31),
-        TTRANSParams(np.int8, 64, 64, 22, 63),
         TTRANSParams(np.float32, 2, 512, 2, 512),
         TTRANSParams(np.float32, 9, 512, 9, 512),
         TTRANSParams(np.float32, 32, 16, 23, 15),
         TTRANSParams(np.float32, 64, 128, 27, 77),
+        TTRANSParams(np.float16, 100, 64, 64, 64),
+        TTRANSParams(np.float16, 128, 64, 64, 64),
+        TTRANSParams(np.float16, 128, 64, 100, 64),
         TTRANSParams(np.float32, 512, 32, 512, 2),
+        TTRANSParams(np.float32, 64, 64, 64, 64),
+        TTRANSParams(np.float32, 64, 32, 64, 32),
         TTRANSParams(np.float32, 64, 64, 36, 64),
         TTRANSParams(np.float32, 2, 16, 2, 16),
+        TTRANSParams(np.int8, 32, 32, 32, 32),
+        TTRANSParams(np.int8, 64, 64, 22, 63),
     ]
 
     for i, param in enumerate(case_params_list):
