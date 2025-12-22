@@ -20,15 +20,20 @@ import op_extension
 class TestCustomAdd(TestCase):
 
     def test_add_custom_ops(self):
+        # Define the tensor size
         length = [20, 2048]
+        # Create random input tensors on CPU with float16 data type
         x = torch.rand(length, device='cpu', dtype=torch.float16)
         y = torch.rand(length, device='cpu', dtype=torch.float16)
 
         x_npu = x.npu()
         y_npu = y.npu()
+        # Call the custom my_add operator
         output = torch.ops.npu.my_add(x_npu, y_npu)
+        # Compute the expected result using standard addition
         cpuout = torch.add(x, y)
 
+        # Validate the results
         self.assertRtolEqual(output, cpuout)
 
 if __name__ == "__main__":

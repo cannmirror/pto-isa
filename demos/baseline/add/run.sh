@@ -14,11 +14,12 @@
 set -e 
 export ASCEND_HOME_PATH=/usr/local/Ascend/
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
+# specify your path to pto-tile-lib
 #export PTO_LIB_PATH=[YOUR_PATH]/pto-tile-lib
 
 rm -fr build op_extension.egg-info
-python3.9 setup.py bdist_wheel 
+python3 setup.py bdist_wheel 
 cd dist &&
-python3.9 -m pip uninstall op_extension-0.0.0-cp39-cp39-linux_aarch64.whl &&
-python3.9 -m pip install op_extension-0.0.0-cp39-cp39-linux_aarch64.whl &&
-cd ../test && python3.9 test.py && cd ..
+python3 -m pip uninstall op_extension-0.0.0-cp39-cp39-linux_aarch64.whl &&
+python3 -m pip install op_extension-0.0.0-cp39-cp39-linux_aarch64.whl &&
+cd ../test && python3 test.py && cd ..

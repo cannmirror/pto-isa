@@ -118,7 +118,7 @@ AICORE void runTAdd(__gm__ T *z, __gm__ T *x, __gm__ T *y, uint32_t totalLength)
 
 // kernel entry
 extern "C" __global__ AICORE void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z, uint32_t totalLength) {
-    // static row and col of tile
+    // Define the tile size
     constexpr unsigned tileRows = 20;
     constexpr unsigned tileCols = 2048;
     // main kernel, totalLength is dynamic input
