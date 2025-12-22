@@ -22,7 +22,7 @@ format deterministic and makes it easy to round-trip through MLIR bytecode.
 PTO-AS is a synchronous, line-ordered format: there is no `wait(...)` clause and no implicit event result. If a program
 needs to model an explicit dependency, it uses an explicit instruction (for example `tsync`) with event operands.
 
-Operands may also include PTX-like “indexed” forms (commonly used by memory ops):
+Operands may also include indexed forms (commonly used by memory ops):
 
 ```text
 %t0 = tload %sv[%c0, %c1] : (!pto.memref<...>, index, index) -> !pto.tile<...>;
@@ -51,7 +51,7 @@ dictionary:
 %mask = tcmp %a, %b {cmpMode = #pto.cmp<GT>} : !pto.tile<16x16xf32> -> !pto.tile<16x16xi1>;
 ```
 
-## 4. Directives (Optional)
+## 4. Directives
 
 PTO-AS supports a small set of non-instruction directives for declaring external inputs and constants.
 
@@ -73,7 +73,7 @@ Constant declaration (introduces an SSA value):
 .const %c0 = 0 : index;
 ```
 
-## 5. Grammar (BNF)
+## 5. Grammar
 
 The normative grammar is provided in:
 
