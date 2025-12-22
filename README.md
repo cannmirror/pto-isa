@@ -147,7 +147,7 @@ source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
 
   ```bash
   chmod +x build.sh
-  ./build.sh --pkg --cann_3rd_lib_path <PATH_TO_CANN_3RD_LIB>
+  ./build.sh --pkg
   ```
 
 ## Documentation
