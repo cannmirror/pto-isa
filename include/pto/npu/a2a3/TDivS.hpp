@@ -181,6 +181,34 @@ namespace pto
             }
         }
     };
+    template <typename T, unsigned Cols>
+    PTO_INTERNAL void TDivs_naive(__ubuf__ T *dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned validCol) {
+        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        for (int row = 0; row < validRow; row++) {
+            for (int col = 0; col < validCol; col++) {
+                int idx = row * Cols + col;
+                dst[idx] = src0[idx] / src1;
+            }
+        }
+        set_flag(PIPE_S, PIPE_V, EVENT_ID0);
+        wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
+    }
+
+    template <typename T, unsigned Cols>
+    PTO_INTERNAL void TSDiv_naive(__ubuf__ T *dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned validCol) {
+        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        for (int row = 0; row < validRow; row++) {
+            for (int col = 0; col < validCol; col++) {
+                int idx = row * Cols + col;
+                dst[idx] = src1 / src0[idx];
+            }
+        }
+        set_flag(PIPE_S, PIPE_V, EVENT_ID0);
+        wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
+    }
+
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
     __tf__ PTO_INTERNAL void TDivS(typename TileData::TileDType __out__ dst,
                                 typename TileData::TileDType __in__ src0,
@@ -191,8 +219,13 @@ namespace pto
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
 
-        TBinSInstr<DivSOp<typename TileData::DType>, TileData, elementsPerRepeat, blockSizeElem, stride>(
+        if constexpr(std::is_same<T, int16_t>::value) {
+            TDivs_naive<T, TileData::Cols>(dst, src0, src1, validRow, validCol);
+        }
+        else {
+            TBinSInstr<DivSOp<typename TileData::DType>, TileData, elementsPerRepeat, blockSizeElem, stride>(
                 dstPtr, src0Ptr, src1, validRow, validCol);
+        }
     }
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
     __tf__ PTO_INTERNAL void TSDiv(typename TileData::TileDType __out__ dst,
@@ -203,9 +236,13 @@ namespace pto
         using T = typename TileData::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-
-        TBinSInstr<SDivOp<typename TileData::DType>, TileData, elementsPerRepeat, blockSizeElem, stride>(
+        if constexpr(std::is_same<T, int16_t>::value) {
+            TSDiv_naive<T, TileData::Cols>(dst, src0, src1, validRow, validCol);
+        }
+        else {
+            TBinSInstr<SDivOp<typename TileData::DType>, TileData, elementsPerRepeat, blockSizeElem, stride>(
                 dstPtr, src0Ptr, src1, validRow, validCol);
+        }
     }
     template <typename TileData>
     AICORE void TDIVS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar) {

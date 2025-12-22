@@ -84,6 +84,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tlog -g TLOGTest.case_float_64x64_64x64_64x64_inPlace_False
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trecip -g TRECIPTest.case_float_64x64_64x64_64x64_inPlace_False
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tdivs -g TDIVSTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tdivs -g TDIVSTest.case4
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tdivs -g TDIVSTest.case5
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmuls -g TMULSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tadds -g TADDSTest.case6
@@ -144,7 +145,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolmax -g TCOLMAXTest.case01
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolsum -g TCOLSUMTest.case01
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcvt -g TCVTTest.case1
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tdivs -g TDIVSTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tdivs -g TDIVSTest.case4
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tdivs -g TDIVSTest.case5
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t texp -g TEXPTest.case_float_64x64_64x64_64x64_inPlace_False
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t texpands -g TEXPANDSTest.case_float_64x64_64x64_64x64_PAD_VALUE_NULL

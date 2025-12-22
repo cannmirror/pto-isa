@@ -84,7 +84,29 @@ namespace pto {
             }
         }
     };
+    template <typename T, unsigned Cols>
+    PTO_INTERNAL void TDivs_naive(__ubuf__ T *dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned validCol) {
+        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        for (int i = 0; i < validRow; i++) {
+            for (int j = 0; j < validCol; j++) {
+                int offset = i * Cols + j;
+                dst[offset] = src0[offset] / src1;
+            }
+        }
+    }
 
+    template <typename T, unsigned Cols>
+    PTO_INTERNAL void TSDiv_naive(__ubuf__ T *dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned validCol) {
+        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        for (int i = 0; i < validRow; i++) {
+            for (int j = 0; j < validCol; j++) {
+                int offset = i * Cols + j;
+                dst[offset] = src1 / src0[offset];
+            }
+        }
+    }
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
     __tf__ PTO_INTERNAL OP_NAME(TDIVS) OP_TYPE(element_wise)
     void TDivS(typename TileData::TileDType __out__ dst,
@@ -96,8 +118,12 @@ namespace pto {
         using T = typename TileData::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-        BinaryInstr<DivSOp<T>, TileData, T, elementsPerRepeat, blockSizeElem, rowStride>(
+        if constexpr(std::is_same<T, int16_t>::value) {
+            TDivs_naive<T, TileData::Cols>(dst, src0, src1, validRow, validCol);
+        } else {
+            BinaryInstr<DivSOp<T>, TileData, T, elementsPerRepeat, blockSizeElem, rowStride>(
                     dstPtr, src0Ptr, src1, validRow, validCol, version);
+        }  
     }
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
@@ -111,8 +137,12 @@ namespace pto {
         using T = typename TileData::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-        BinaryInstr<DivSOpS<T>, TileData, T, elementsPerRepeat, blockSizeElem, rowStride>(
+        if constexpr(std::is_same<T, int16_t>::value) {
+            TSDiv_naive<T, TileData::Cols>(dst, src0, src1, validRow, validCol);
+        } else {
+            BinaryInstr<DivSOpS<T>, TileData, T, elementsPerRepeat, blockSizeElem, rowStride>(
                     dstPtr, src0Ptr, src1, validRow, validCol, version);
+        }
     }
 
     template <typename TileData>
