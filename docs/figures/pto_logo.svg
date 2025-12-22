@@ -1,31 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="103" height="114" viewBox="0 0 103 114" fill="none">
-  <!-- Background -->
-  <rect x="0" y="0" width="103" height="114" rx="18" fill="#2A2A2A"/>
+<svg id="_图层_1" data-name="图层 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 428.69 428.69">
   <defs>
-    <linearGradient id="gRed" x1="10" y1="10" x2="93" y2="104" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#F6B36B"/>
-      <stop offset="0.55" stop-color="#EB5C64"/>
-      <stop offset="1" stop-color="#E85060"/>
+    <style>
+      .cls-1 {
+        fill: url(#_未命名的渐变_3);
+      }
+
+      .cls-1, .cls-2, .cls-3, .cls-4 {
+        stroke: #231815;
+        stroke-miterlimit: 10;
+        stroke-width: .5px;
+      }
+
+      .cls-2 {
+        fill: url(#_未命名的渐变_194);
+      }
+
+      .cls-5, .cls-4 {
+        fill: #231815;
+      }
+
+      .cls-3 {
+        fill: url(#_未命名的渐变_168);
+      }
+
+      .cls-6 {
+        fill: url(#_天空_1);
+      }
+    </style>
+    <linearGradient id="_未命名的渐变_194" data-name="未命名的渐变 194" x1="126.38" y1="295.14" x2="126.38" y2="22.95" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fad86d"/>
+      <stop offset=".22" stop-color="#f2ad51"/>
+      <stop offset=".36" stop-color="#ef9643"/>
+      <stop offset=".54" stop-color="#d27824"/>
+      <stop offset="1" stop-color="#964918"/>
     </linearGradient>
-    <linearGradient id="gOrange" x1="0" y1="114" x2="56.650000000000006" y2="22.8" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#F6B36B"/>
-      <stop offset="0.7" stop-color="#F2C08A"/>
-      <stop offset="1" stop-color="#EB6A65"/>
+    <linearGradient id="_未命名的渐变_168" data-name="未命名的渐变 168" x1="240.43" y1="200.26" x2="375.73" y2="335.56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#72090d"/>
+      <stop offset=".42" stop-color="#991216"/>
+      <stop offset=".79" stop-color="#b6191d"/>
+      <stop offset="1" stop-color="#c11c20"/>
     </linearGradient>
-    <linearGradient id="gBlue" x1="56.650000000000006" y1="62.7" x2="103" y2="28.5" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#9BE3F2"/>
-      <stop offset="0.55" stop-color="#78C8D8"/>
-      <stop offset="1" stop-color="#4EA9C7"/>
+    <linearGradient id="_天空_1" data-name="天空 1" x1="104.78" y1="380.9" x2="187.82" y2="297.86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#77b7e5"/>
+      <stop offset=".09" stop-color="#6db1e1"/>
+      <stop offset=".23" stop-color="#54a3d9"/>
+      <stop offset=".41" stop-color="#2b8dcc"/>
+      <stop offset=".57" stop-color="#0076bf"/>
+      <stop offset="1" stop-color="#004da1"/>
+    </linearGradient>
+    <linearGradient id="_未命名的渐变_3" data-name="未命名的渐变 3" x1="300.75" y1="70.37" x2="254.15" y2="151.09" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#77b7e5"/>
+      <stop offset=".09" stop-color="#6db1e1"/>
+      <stop offset=".23" stop-color="#54a3d9"/>
+      <stop offset=".41" stop-color="#2b8dcc"/>
+      <stop offset=".57" stop-color="#0076bf"/>
+      <stop offset="1" stop-color="#004da1"/>
     </linearGradient>
   </defs>
-
-  <!-- Top face (red) -->
-  <path d="M 0.00 112.50 L 42.50 112.00 L 8.00 92.50 L 4.50 88.00 L 7.00 84.50 L 27.00 72.50 L 31.50 74.00 L 31.50 98.00 L 35.00 98.50 L 42.00 93.50 L 47.00 92.50 L 48.50 94.00 L 48.50 109.00 L 45.50 112.00 L 52.00 112.50 L 50.50 110.00 L 50.50 63.00 L 57.00 55.50 L 67.00 49.50 L 92.00 35.50 L 97.50 36.00 L 98.50 82.00 L 96.50 87.00 L 92.00 91.50 L 55.50 112.00 L 102.00 112.50 L 0.00 112.50 Z M 67.50 88.00 L 83.50 78.00 L 83.50 60.00 L 82.00 58.50 L 65.50 69.00 L 65.50 88.00 L 67.50 88.00 Z" fill="url(#gRed)" fill-rule="evenodd"/>
-
-  <!-- Left face (orange) -->
-  <path d="M 0.00 38.50 L 1.50 32.00 L 7.00 26.50 L 42.00 6.50 L 46.00 6.50 L 48.50 9.00 L 47.50 40.00 L 15.50 59.00 L 14.50 77.00 L 11.00 80.50 L 6.00 83.50 L 0.50 82.00 L 0.00 38.50 Z M 17.50 46.00 L 33.50 36.00 L 33.50 25.00 L 32.00 23.50 L 15.50 33.00 L 14.50 45.00 L 17.50 46.00 Z" fill="url(#gOrange)" fill-rule="evenodd"/>
-
-  <!-- Right face (blue) -->
-  <path d="M 70.00 46.50 L 66.50 44.00 L 66.00 29.50 L 54.00 36.50 L 50.50 35.00 L 50.50 8.00 L 52.00 6.50 L 62.00 9.50 L 93.50 29.00 L 93.50 32.00 L 91.00 34.50 L 70.00 46.50 Z" fill="url(#gBlue)" fill-rule="evenodd"/>
+  <rect class="cls-4" x=".25" y=".25" width="428.19" height="428.19" rx="111.43" ry="111.43"/>
+  <path class="cls-2" d="M36.25,124.09v151.85c0,14.76,15.98,23.98,28.76,16.6l25.4-14.67c5.93-3.42,9.59-9.75,9.59-16.6v-33c0-6.88,3.68-13.23,9.65-16.64l97.21-55.61c5.97-3.41,9.65-9.76,9.65-16.64V42.15c0-14.76-15.98-23.98-28.76-16.6L45.84,107.49c-5.93,3.42-9.59,9.75-9.59,16.6Z"/>
+  <path class="cls-4" d="M100.68,123.43v26.81c0,11.01,11.92,17.89,21.46,12.39l45.93-26.52c4.43-2.56,7.15-7.28,7.15-12.39v-27.01c0-11.03-11.96-17.91-21.49-12.36l-45.93,26.71c-4.4,2.56-7.11,7.27-7.11,12.36Z"/>
+  <path class="cls-3" d="M216.51,241.91v137.55c0,20.42,22.1,33.19,39.79,23l118.96-68.55c13.53-7.8,21.88-22.23,21.88-37.85v-143.78c0-17.49-18.93-28.42-34.08-19.68l-125.14,72.25c-13.24,7.65-21.4,21.78-21.4,37.07Z"/>
+  <path class="cls-5" d="M277.58,259.63v42.15c0,10.04,10.86,16.31,19.55,11.31l36.7-21.12c4.05-2.33,6.54-6.64,6.54-11.31v-42.09c0-10.03-10.84-16.31-19.54-11.32l-36.7,21.06c-4.05,2.33-6.55,6.64-6.55,11.32Z"/>
+  <path class="cls-6" d="M59.14,334.5l123.77,71.49c10.18,5.88,22.9-1.47,22.9-13.22v-.2c0-11.77-12.76-19.11-22.94-13.2h0c-10.18,5.92-22.94-1.42-22.94-13.2v-89.87c0-11.75-12.72-19.1-22.9-13.22l-77.89,44.97c-10.18,5.87-10.18,20.56,0,26.44Z"/>
+  <path class="cls-1" d="M226.22,41.36v88.93c0,6.23,6.75,10.13,12.15,7.01l27.07-15.63c5.4-3.12,12.15.78,12.15,7.01v27.09c0,6.23,6.75,10.13,12.15,7.01l73.41-42.38c5.4-3.12,5.4-10.91,0-14.03l-124.77-72.04c-5.4-3.12-12.15.78-12.15,7.01Z"/>
 </svg>

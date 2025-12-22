@@ -28,8 +28,8 @@ pto::Tile<
 `TileType` encodes the logical/physical storage class of the tile (vector buffer vs matrix/cube buffers):
 
 - `TileType::Vec` (UB / vector pipeline)
-- `TileType::Mat` (matrix buffer)
-- `TileType::Left`, `TileType::Right` (matmul operands)
+- `TileType::Mat` (Matrix L1 buffer)
+- `TileType::Left`, `TileType::Right` (Matrix L0A/L0B buffer)
 - `TileType::Acc` (matmul accumulator)
 - `TileType::Bias`, `TileType::Scaling` (auxiliary tiles for some matmul/move paths)
 
