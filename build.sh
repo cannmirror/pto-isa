@@ -132,16 +132,16 @@ checkopts() {
 run_simple_st() {
   echo $dotted_line
   echo "Start to run simple st"
-  chmod +x run_st.sh
+  chmod +x ./tests/run_st.sh
   if [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "FALSE" ]; then
-    ./run_st.sh a3 $RUN_TYPE simple
+    ./tests/run_st.sh a3 $RUN_TYPE simple
   elif [ "$ENABLE_A3" = "FALSE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
-    ./run_st.sh a5 $RUN_TYPE simple
+    ./tests/run_st.sh a5 $RUN_TYPE simple
   elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
-    ./run_st.sh a3_a5 $RUN_TYPE simple
+    ./tests/run_st.sh a3_a5 $RUN_TYPE simple
   else
-    ./run_st.sh a5 npu simple build_only
-    ./run_st.sh a3 npu simple
+    ./tests/run_st.sh a5 npu simple build_only
+    ./tests/run_st.sh a3 npu simple
   fi
   echo "execute samples success"
 }
@@ -149,15 +149,15 @@ run_simple_st() {
 run_all_st() {
   echo $dotted_line
   echo "Start to run all st"
-  chmod +x run_st.sh
+  chmod +x ./tests/run_st.sh
   if [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "FALSE" ]; then
-    ./run_st.sh a3 $RUN_TYPE all
+    ./tests/run_st.sh a3 $RUN_TYPE all
   elif [ "$ENABLE_A3" = "FALSE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
-    ./run_st.sh a5 $RUN_TYPE all
+    ./tests/run_st.sh a5 $RUN_TYPE all
   elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
-    ./run_st.sh a3_a5 $RUN_TYPE all
+    ./tests/run_st.sh a3_a5 $RUN_TYPE all
   else
-    ./run_st.sh a3 sim all
+    ./tests/run_st.sh a3 sim all
   fi
   echo "execute samples success"
 }

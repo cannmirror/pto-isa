@@ -103,18 +103,20 @@ python3 tests/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
 ### Running Recommended Test Suites
 
 ```bash
-chmod +x run_st.sh
-./run_st.sh a5 npu simple
-./run_st.sh a3 sim all
+# Execute the following commands from the project root directory:
+chmod +x ./tests/run_st.sh
+./tests/run_st.sh a5 npu simple
+./tests/run_st.sh a3 sim all
 ```
 
 ### Running CPU Simulation Tests
 
 ```bash
-chmod +x run_cpu_tests.sh
-./run_cpu_tests.sh
+# Execute the following commands from the project root directory:
+chmod +x ./tests/run_cpu_tests.sh
+./tests/run_cpu_tests.sh
 
-python3 run_cpu.py --verbose
+python3 ./tests/run_cpu.py --verbose
 ```
 
 ## Build / Run Instructions (Reference Repository Scripts)
