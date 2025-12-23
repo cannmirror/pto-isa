@@ -117,6 +117,8 @@ PTO_INTERNAL void CheckStaticAcc()
         "When GlobalData is ND format, the range of Rows is [1, 8192]."
         "When GlobalData is NZ format, the range of Rows is [1, 65535] and Cols"
         "must be an integer multiple of 16.");
+    static_assert(!(std::is_same_v<typename GlobalData::DType, __gm__ float8_e4m3_t> || std::is_same_v<typename GlobalData::DType, __gm__ float8_e5m2_t>),
+        "The compiler does not support the vector quantization mode where the output data type is float8_e4m3_t.");
     if constexpr (!isQuant) {
         static_assert(std::is_same_v<typename GlobalData::DType, __gm__ int32_t> ||
                           std::is_same_v<typename GlobalData::DType, __gm__ float> ||
@@ -165,9 +167,8 @@ PTO_INTERNAL void CheckStaticVec()
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
-PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr,
-    __cc__ typename TileData::DType *srcTileAddr, int gShape3, int gShape4, int gStride2, int gStride3, int validRow,
-    int validCol)
+PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr, __cc__ typename TileData::DType *srcTileAddr,
+    int gShape3, int gShape4, int gStride2, int gStride3, int validRow, int validCol)
 {
     uint16_t mSize = validRow;
     uint16_t nSize = validCol;
@@ -182,13 +183,19 @@ PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr,
     constexpr uint8_t nz2ndEn = 1;
 
     uint64_t xmReg = 0;
-    xmReg = ((nSize & 0xfff) << 4) | (static_cast<uint64_t>(mSize & 0xffff) << 16) |
-            (static_cast<uint64_t>(dstD & 0xffffffff) << 32);
+    xmReg = ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
+            (static_cast<uint64_t>(mSize & 0xffff) << 16) |   // Xm[31:16] the m-direction size of the matrix
+            (static_cast<uint64_t>(dstD & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
     uint64_t xtReg = 0;
-    xtReg = srcStride | (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
-            (static_cast<uint64_t>(quantPre & 0x1f) << 34) | (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);
-    uint64_t config = ndNum | (static_cast<uint64_t>(srcNdStride & 0xffff) << 16) |
-                      (static_cast<uint64_t>(dstNdStride & 0xffff) << 32);
+    xtReg = srcStride |                                         // Xt[15:0] the source stride between the start addr
+            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | // Xt[33:32] unit flag control bit
+            (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
+            (static_cast<uint64_t>(quantPre & 0x1f) << 34) | // Xt[29], Xt[38:34] pre-stage quantization mode
+            (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);    //  Xt[43] nz2nd control bit
+    uint64_t config =
+        ndNum |                                               // ND_PARA[15:0] the number of source nd
+        (static_cast<uint64_t>(srcNdStride & 0xffff) << 16) | // ND_PARA[31:16] the stride of source nd
+        (static_cast<uint64_t>(dstNdStride & 0xffff) << 32);  // ND_PARA[47:32] the stride of destination nd
     set_loop3_para(config);
     copy_matrix_cc_to_gm(dstGlobalAddr, srcTileAddr, xmReg, xtReg);
 }
@@ -216,20 +223,22 @@ PTO_INTERNAL void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typena
         }
     }
     uint32_t dstStride = (gShape2 * gShape3 + cubeBlock - 1) / cubeBlock * cubeBlock * c0Size;
-
-    uint64_t xtReg = 0;
-    xtReg = srcStride | (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
-            (static_cast<uint64_t>(quantPre & 0x1f) << 34) | (static_cast<uint64_t>(channelSplitEn & 0x1) << 42);
-    uint64_t xmReg = 0;
-    xmReg = ((static_cast<uint64_t>(nSize & 0xfff) << 4) | (static_cast<uint64_t>(mSize & 0xffff) << 16) |
-             (static_cast<uint64_t>(dstStride & 0xffffffff) << 32));
-
-    int64_t tileStride = gShape1 * TileData::Rows * gShape4;
-    for (uint32_t i = 0; i < gShape0; ++i) {
-        dstGlobalAddr = dstAddr + i * gStride0;
-        srcTileAddr = srcAddr + i * tileStride;
-        copy_matrix_cc_to_gm(dstGlobalAddr, srcTileAddr, xmReg, xtReg);
+    if constexpr (sizeof(typename GlobalData::DType) == 1) {
+        dstStride <<= 1;
     }
+    uint64_t xtReg = 0;
+    xtReg = srcStride |                                         // Xt[15:0] the source stride between the start addr
+            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | // Xt[33:32] unit flag control bit
+            (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
+            (static_cast<uint64_t>(quantPre & 0x1f) << 34) |     // Xt[29], Xt[38:34] pre-stage quantization mode
+            (static_cast<uint64_t>(channelSplitEn & 0x1) << 42); // Xt[42] channel split control bit
+    uint64_t xmReg = 0;
+    xmReg = ((static_cast<uint64_t>(nSize & 0xfff) << 4) |   // Xm[15:4] the n-direction size of the matrix
+             (static_cast<uint64_t>(mSize & 0xffff) << 16) | // Xm[31:16] the m-direction size of the matrix
+             (static_cast<uint64_t>(dstStride & 0xffffffff)
+                 << 32)); // Xm[63:32] destination stride between the start addr
+
+    copy_matrix_cc_to_gm(dstAddr, srcAddr, xmReg, xtReg);
 }
 
 template <typename GlobalData, typename TileData, typename FpTileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
@@ -272,8 +281,8 @@ __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename T
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src,
-    uint16_t nBurst, uint32_t lenBurst, uint64_t burstDstStride, uint32_t burstSrcStride)
+PTO_INTERNAL void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src, uint16_t nBurst,
+    uint32_t lenBurst, uint64_t burstDstStride, uint32_t burstSrcStride)
 {
     copy_ubuf_to_gm_align_v2(dst, src, 0, nBurst, lenBurst, 0, burstDstStride, burstSrcStride);
 }
@@ -392,10 +401,9 @@ PTO_INTERNAL void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ubuf__ type
     }
 }
 template <typename GlobalData, typename TileData>
-__tf__ AICORE OP_NAME(TSTORE) OP_TYPE(memory)
-void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
-    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
-    int gStride3, int gStride4, int validRow, int validCol)
+__tf__ AICORE OP_NAME(TSTORE) OP_TYPE(memory) void TStore(typename GlobalData::DType __out__ *dst,
+    typename TileData::TileDType __in__ src, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
     __ubuf__ typename TileData::DType *srcAddr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src);
     typename GlobalData::DType *dstAddr = dst;
