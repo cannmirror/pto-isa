@@ -204,7 +204,7 @@ def run_binary(binary: Path, build_type: str, cwd: Optional[Path] = None) -> Non
 
 def build_and_run_demo(demo_name: str, repo_root: Path, build_type: str, cxx: Optional[str], cc: Optional[str], *,
 	                   verbose: bool) -> None:
-    demos_root = repo_root / "demos" / "cpu"
+    demos_root = repo_root / ".." / "demos" / "cpu"
     demo_map: dict[str, tuple[Path, str]] = {
         "gemm": (demos_root / "gemm_demo", "gemm_demo"),
         "flash_attn": (demos_root / "flash_attention_demo", "flash_attention_demo"),
@@ -366,7 +366,7 @@ def run_demo_mode(args, repo_root, cxx, cc) -> int:
 
 
 def run_test_mode(args, repo_root, cxx, cc) -> int:
-    source_dir = repo_root / "tests" / "cpu" / "st"
+    source_dir = repo_root / "cpu" / "st"
     if not source_dir.exists():
         logging.error(f"error: not found CPU ST dir: {source_dir}")
         return 2

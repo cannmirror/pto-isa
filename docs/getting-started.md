@@ -133,6 +133,23 @@ Common options:
   python3 run_cpu.py --demo flash_attn --verbose
   ```
 
+- Optinal:
+
+  ```bash
+  # specify the cxx path
+  python3 run_cpu.py --cxx=/path/to/compiler
+  ```
+
+  ```bash
+  # print detail logs
+  python3 run_cpu.py --verbose
+  ```
+
+  ```bash
+  # clean up the build directory
+  python3 run_cpu.py --clean
+  ```
+
 ## (Optional) Ascend CANN Environment (Linux)
 
 If you plan to run NPU or simulator STs, install Ascend drivers + CANN toolkit (see Ascend docs for your distribution), then source `setenv.bash`:
