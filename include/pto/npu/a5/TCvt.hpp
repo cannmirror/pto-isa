@@ -351,6 +351,12 @@ inline AICORE void castData(__ubuf__ int16_t *dst, __ubuf__ int8_t *src, int32_t
 
 //--- Src:: I16 ----------------------------------------------------------------------
 template <typename R>
+inline AICORE void castData(__ubuf__ uint8_t *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
+    // I16 to U8
+    cast16to8<R, vector_u8>(dst, src, dstOffset, srcOffset, len);
+}
+
+template <typename R>
 inline AICORE void castData(__ubuf__ half *dst, __ubuf__ int16_t *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     // I16 to FP16
     cast16to16<R,false, false>(dst, src, dstOffset, srcOffset, len);
