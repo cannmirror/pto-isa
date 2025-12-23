@@ -93,7 +93,7 @@ struct Padding<int8_t>{
     using Type = uint8_t;
     static constexpr Type Null = (Type)0;
     static constexpr Type Zero = (Type)0;
-    static constexpr Type Min  = (Type)0xffUL;
+    static constexpr Type Min  = (Type)0x80UL;
     static constexpr Type Max  = (Type)0x7fUL;
 };
 

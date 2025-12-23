@@ -70,7 +70,6 @@ class TPartMaxParams:
         self.src1_vr = src1_vr
         self.src1_vc = src1_vc
 
-
 def generate_case_name(param):
     dtype_str = {
         np.float32: 'fp32',
@@ -107,7 +106,8 @@ if __name__ == "__main__":
         TPartMaxParams(np.int32, 122, 123, 104, 123, 122, 110),
         TPartMaxParams(np.uint8, 122, 123, 104, 123, 122, 110),
         TPartMaxParams(np.uint16, 122, 123, 104, 123, 122, 110),
-        TPartMaxParams(np.uint32, 122, 123, 104, 123, 122, 110)
+        TPartMaxParams(np.uint32, 122, 123, 104, 123, 122, 110),
+        TPartMaxParams(np.float16, 5, 33, 5, 33, 5, 33),
     ]
 
     for param in case_params_list:
