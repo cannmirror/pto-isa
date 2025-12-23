@@ -38,6 +38,10 @@ PTO_INST RecordEvent TTRANS(TileDataDst& dst, TileDataSrc& src, TileDataTmp& tmp
   - `sizeof(TileDataSrc::DType) == sizeof(TileDataDst::DType)`.
   - Source layout must be row-major (`TileDataSrc::isRowMajor`).
   - Element size must be `1`, `2`, or `4` bytes.
+  - Supported element types are restricted per element width:
+    - 4 bytes: `uint32_t`, `int32_t`, `float`
+    - 2 bytes: `uint16_t`, `int16_t`, `half`, `bfloat16_t`
+    - 1 byte: `uint8_t`, `int8_t`
   - The transpose size is taken from `src.GetValidRow()` / `src.GetValidCol()`.
 - **Implementation checks (A5)**:
   - `sizeof(TileDataSrc::DType) == sizeof(TileDataDst::DType)`.

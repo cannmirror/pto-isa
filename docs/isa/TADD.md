@@ -31,7 +31,7 @@ PTO_INST RecordEvent TADD(TileData& dst, TileData& src0, TileData& src1, WaitEve
 ## Constraints
 
 - **Implementation checks (A2A3)**:
-  - `TileData::DType` must be one of: `int32_t`, `int`, `int16_t`, `half`, `float16_t`, `float`, `float32_t`.
+  - `TileData::DType` must be one of: `int32_t`, `int16_t`, `half`, `float`.
   - Tile layout must be row-major (`TileData::isRowMajor`).
 - **Implementation checks (A5)**:
   - `TileData::DType` must be one of: `int32_t`, `uint32_t`, `float`, `int16_t`, `uint16_t`, `half`, `bfloat16_t`, `uint8_t`, `int8_t`.

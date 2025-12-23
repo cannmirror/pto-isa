@@ -35,8 +35,10 @@ PTO_INST RecordEvent TGATHERB(TileDataDst& dst, TileDataSrc& src, TileDataOffset
 - **Implementation checks (A2A3)**:
   - Destination layout must be row-major (`TileDataDst::isRowMajor`).
   - Destination element size must be `1`, `2`, or `4` bytes (enforced via `static_assert` in the helper).
+  - `SrcTileData::DType`/`DstTileData::DType` must be `int8_t` or `uint8_t` or `int16_t` or `uint16_t` or `int32_t` or `uint32_t` or `half` or `bfloat16_t` or `float`.
 - **Implementation checks (A5)**:
   - Destination element size must be `1`, `2`, or `4` bytes.
+  - `SrcTileData::DType`/`DstTileData::DType` must be `int8_t` or `uint8_t` or `int16_t` or `uint16_t` or `int32_t` or `uint32_t` or `half` or `bfloat16_t` or `float`.
 - **Offset interpretation**:
   - Offsets are interpreted as `uint32_t` values (byte offsets) by the implementation.
   - Offset bounds are not validated by explicit runtime assertions; out-of-range offsets are target-defined.

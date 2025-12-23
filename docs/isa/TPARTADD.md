@@ -38,7 +38,7 @@ PTO_INST RecordEvent TPARTADD(TileDataDst& dst, TileDataSrc0& src0, TileDataSrc1
 ## Constraints
 
 - **Implementation checks (A2A3)**:
-  - `dst/src0/src1` element types must be identical, and must be one of: `int32_t`, `int`, `int16_t`, `half`, `float16_t`, `float`, `float32_t`.
+  - `dst/src0/src1` element types must be identical, and must be one of: `int32_t`, `int16_t`, `half`, `float`.
   - All three tiles must be row-major (`isRowMajor`).
   - Runtime: if `dst.GetValidRow() == 0` or `dst.GetValidCol() == 0`, the op returns early.
   - Runtime: the implementation requires at least one input's valid region to match `dst`'s valid region (otherwise it asserts).
