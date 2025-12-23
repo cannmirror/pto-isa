@@ -19,6 +19,7 @@ import sys
 import site
 import time
 import logging
+import platform
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -104,6 +105,20 @@ def ensure_cmake_tools() -> None:
         )
 
 
+def is_windows() -> bool:
+    if os.name == "nt" or platform.system().lower() == "windows":
+        return True
+    return False
+
+
+def cmake_friendly_path(p: Optional[str]) -> Optional[str]:
+    if not p:
+        return None
+    if is_windows():
+        p = p.replace("\\", "/")
+    return p
+
+
 def detect_compilers(cxx_arg: Optional[str], cc_arg: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
     cxx = cxx_arg or os.environ.get("CXX")
     cc = cc_arg or os.environ.get("CC")
@@ -120,6 +135,8 @@ def detect_compilers(cxx_arg: Optional[str], cc_arg: Optional[str]) -> Tuple[Opt
             cc = shutil.which("gcc")
     elif not Path(cc).is_absolute():
         cc = shutil.which(cc) or cc
+    cxx = cmake_friendly_path(cxx)
+    cc = cmake_friendly_path(cc)
 
     return cxx, cc
 
@@ -326,6 +343,8 @@ def parse_arguments():
                         (e.g. 'gemm', 'flash_attn'). \
                         Note: demo runs alone (does not run CPU ST).")
     parser.add_argument("--demo-only", action="store_true", help="Same as --demo (demo runs without CPU ST).")
+    parser.add_argument("--generator", default=None, help="CMake generator(Windows required: 'MinGW Makefiles' etc..)")
+    parser.add_argument("--cmake_prefix_path", default=None, help="-DCMAKE_PREFIX_PATH=<path> e.g. D:\\gtest")
     args = parser.parse_args()
     return args
 
@@ -452,6 +471,9 @@ def determine_need_build(args, source_dir: Path, build_dir: Path) -> bool:
 def perform_build(args, source_dir, build_dir, cxx, cc) -> bool:
     build_dir.mkdir(parents=True, exist_ok=True)
     logging.info("\n== BUILD ==")
+    if is_windows() and not args.generator:
+        logging.error("On Windows, must specify --generator (\"MinGW Makefiles\" or \"Ninja\", etc..)")
+        return False
     cfg_time = run_command(
         [
             "cmake",
@@ -464,6 +486,8 @@ def perform_build(args, source_dir, build_dir, cxx, cc) -> bool:
             *([f"-DTEST_CASE={args.testcase}"] if args.testcase else []),
             *([f"-DCMAKE_C_COMPILER={cc}"] if cc else []),
             *([f"-DCMAKE_CXX_COMPILER={cxx}", f"-DCMAKE_COMPILER={cxx}"] if cxx else []),
+            *(["-G", args.generator] if args.generator else []),
+            *([f"-DCMAKE_PREFIX_PATH={args.cmake_prefix_path}"] if args.cmake_prefix_path else []),
         ],
         title="[STEP] cmake configure",
         verbose=args.verbose,

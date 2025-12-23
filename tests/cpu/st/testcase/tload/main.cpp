@@ -87,7 +87,7 @@ void tload_test()
 #ifdef DEBUGLOG	
 	aclrtMemcpy(logHost, sizeof(logHost), logDevice, sizeof(logHost), ACL_MEMCPY_DEVICE_TO_HOST);
 #endif	
-    mkdir(GetGoldenDir().c_str(),777);
+
 	std::ofstream inFile(GetGoldenDir()+"/input.bin", std::ios::binary | std::ios::out);
 	std::ofstream outFile(GetGoldenDir()+"/output.bin", std::ios::binary | std::ios::out);
 	std::ofstream goldFile(GetGoldenDir()+"/golden.bin", std::ios::binary | std::ios::out);

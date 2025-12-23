@@ -102,7 +102,11 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
         return false;
     }
 
+#ifdef _WIN32
+    int fd = open(filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IRUSR | S_IWRITE);
+#else
     int fd = open(filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWRITE);
+#endif
     if (fd < 0) {
         ERROR_LOG("Open file failed. path = %s", filePath.c_str());
         return false;

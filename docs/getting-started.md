@@ -150,6 +150,11 @@ Common options:
   python3 tests/run_cpu.py --clean
   ```
 
+  ```bash
+  # on Windows, maybe need specify generator and cmake_perfix_path
+  python3 tests/run_cpu.py --clean --generator "MinGW Makefiles" --cmake_prefix_path D:\gtest\
+  ```
+
 # Environment Setup (Ascend 910B/910C, Linux)
 
 ## Prerequisites
