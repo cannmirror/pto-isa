@@ -44,20 +44,12 @@ This guide covers prerequisites and setup on **macOS / Linux / Windows**, and sh
 
 If you do not use Homebrew, make sure `python3`, `cmake`, and a modern `clang++` are on `PATH`.
 
-### Linux (Ubuntu/Debian)
+### Linux (Ubuntu 20.04)
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y build-essential cmake ninja-build python3 python3-pip python3-venv git
 ```
-
-### Linux (RHEL/CentOS/Rocky)
-
-```bash
-sudo dnf groupinstall -y "Development Tools" || true
-sudo dnf install -y cmake ninja-build python3 python3-pip git
-```
-
 ### Windows
 
 Install the following:
