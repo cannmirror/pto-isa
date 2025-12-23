@@ -104,7 +104,7 @@ Create and activate a virtual environment:
 This builds and runs the CPU ST test binaries under `tests/cpu/st` and executes all testcases:
 
 ```bash
-python3 run_cpu.py --clean --verbose
+python3 tests/run_cpu.py --clean --verbose
 ```
 
 Common options:
@@ -112,42 +112,42 @@ Common options:
 - Run a single testcase:
 
   ```bash
-  python3 run_cpu.py --testcase tadd
+  python3 tests/run_cpu.py --testcase tadd
   ```
 
 - Run a single gtest case:
 
   ```bash
-  python3 run_cpu.py --testcase tadd --gtest_filter 'TADDTest.*'
+  python3 tests/run_cpu.py --testcase tadd --gtest_filter 'TADDTest.*'
   ```
 
 - Build & run the GEMM demo:
 
   ```bash
-  python3 run_cpu.py --demo gemm --verbose
+  python3 tests/run_cpu.py --demo gemm --verbose
   ```
 
 - Build & run the Flash Attention demo:
 
   ```bash
-  python3 run_cpu.py --demo flash_attn --verbose
+  python3 tests/run_cpu.py --demo flash_attn --verbose
   ```
 
 - Optinal:
 
   ```bash
   # specify the cxx path
-  python3 run_cpu.py --cxx=/path/to/compiler
+  python3 tests/run_cpu.py --cxx=/path/to/compiler
   ```
 
   ```bash
   # print detail logs
-  python3 run_cpu.py --verbose
+  python3 tests/run_cpu.py --verbose
   ```
 
   ```bash
   # clean up the build directory
-  python3 run_cpu.py --clean
+  python3 tests/run_cpu.py --clean
   ```
 
 ## (Optional) Ascend CANN Environment (Linux)
