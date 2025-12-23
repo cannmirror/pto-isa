@@ -10,7 +10,7 @@ This example demonstrates how to implement a mixed FA operator using PTO, includ
 ## Directory Layout
 
 ```
-kernels/fa_performance/
+kernels/manual/fa/a2a3/
 ├── scripts/
 │   └── gen_data.py              # Generates input and golden output
 ├── CMakeLists.txt               # Build configuration
@@ -30,7 +30,7 @@ source ${ASCEND_INSTALL_PATH}/bin/setenv.bash
 2. Run the example:
 
 ```bash
-cd ${git_clone_path}/kernels/fa_performance
+cd ${git_clone_path}/kernels/manual/fa/a2a3
 bash run.sh -r npu -v Ascend910B1 -c case_float_H_128_S0_128_S1_1024
 ```
 
@@ -39,6 +39,70 @@ If the run succeeds, the output prints:
 ```text
 test success
 ```
+
+## Performance
+
+This section records reference performance numbers for the manual Flash Attention kernel in this directory.
+
+Definitions:
+- `S0`: query sequence length (rows of Q/O).
+- `S1`: key/value sequence length (rows of K/V).
+- `Total task time (us)`: end-to-end kernel time per task (microseconds).
+- `GOps`: total operations counted for the task.
+- `TFLOPS`: `GOps / time`.
+- `Normalized TFLOPS`: `TFLOPS × (24 / cores_used)` to estimate full-device throughput on a 24-core A3.
+
+### Summary
+
+- Larger `S1` improves utilization; normalized throughput increases substantially from `S1=1024` to `S1=4096`.
+- For `S1=8192`, the best normalized throughput is close across 1–2 cores (≈172.9 vs 171.4), suggesting the kernel is approaching a bandwidth/synchronization limit rather than scaling linearly with core count.
+- 4- and 8-core runs show lower normalized throughput, especially at smaller `S1`, which is typically dominated by fixed overheads (pipeline warm-up, synchronization, and memory traffic).
+- Simulation numbers can be significantly higher than onboard measurements because the simulator does not model all hardware contention/latency characteristics; use onboard numbers for performance decisions.
+
+### Tables (A2/A3)
+
+Normalized TFLOPS (higher is better):
+
+| Cores | S0 | S1=1024 | S1=2048 | S1=4096 | S1=8192 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 128 | 38.27 | 62.62 | 147.08 | 172.86 |
+| 2 | 256 | 48.51 | 73.04 | 148.03 | 171.43 |
+| 4 | 512 | 38.60 | 58.10 | 138.19 | 149.27 |
+| 8 | 1024 | 25.28 | 37.51 | 99.94 | 120.04 |
+
+Total task time (us, lower is better):
+
+| Cores | S0 | S1=1024 | S1=2048 | S1=4096 | S1=8192 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 128 | 42.08 | 51.44 | 43.80 | 74.54 |
+| 2 | 256 | 33.201 | 44.101 | 43.521 | 75.162 |
+| 4 | 512 | 41.721 | 55.441 | 46.621 | 86.322 |
+| 8 | 1024 | 63.72 | 85.882 | 64.461 | 107.342 |
+
+GOps:
+
+| Cores | S0 | S1=1024 | S1=2048 | S1=4096 | S1=8192 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 128 | 67.11 | 134.22 | 268.44 | 536.87 |
+| 2 | 256 | 134.22 | 268.44 | 536.87 | 1073.74 |
+| 4 | 512 | 268.44 | 536.87 | 1073.74 | 2147.48 |
+| 8 | 1024 | 536.87 | 1073.74 | 2147.48 | 4294.97 |
+
+TFLOPS (measured):
+
+| Cores | S0 | S1=1024 | S1=2048 | S1=4096 | S1=8192 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 128 | 1.59 | 2.61 | 6.13 | 7.20 |
+| 2 | 256 | 4.04 | 6.09 | 12.34 | 14.29 |
+| 4 | 512 | 6.43 | 9.68 | 23.03 | 24.88 |
+| 8 | 1024 | 8.43 | 12.50 | 33.31 | 40.01 |
+
+Sim vs NPU comparison (Seq = 2K):
+
+| Run | Total task time (us) | Normalized TFLOPS |
+| --- | --- | --- |
+| Onboard (NPU) | 147.92 | 21.78 |
+| Simulation | 28.59 | 112.66 |
 
 ## Operator Description
 
@@ -271,4 +335,3 @@ test success
 
   - **Load balancing guidance:**
     - Consider the compution sparity when casual attention mask (TODO) applied, mulit-core tiling also need to take core unbalanced loading along the S0 axis.  
-

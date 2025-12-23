@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Source: kernels/gemm_performance/README.md ("Measured Performance (Reference)")
+  Platform: Ascend A3 (24 cores), GEMM m=n=k=6144, fp16 inputs -> fp32 output
+  Metrics:
+    - Cube util:   86.1%
+    - Scalar util:  8.1%
+    - MTE1 util:   68.1%
+    - MTE2 util:   95.2%
+    - MTE3 util:    3.1%
+    - AIC cycles: 66725939
+    - Wall time: 1.506 ms
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420" viewBox="0 0 980 420" role="img" aria-label="GEMM performance reference chart">
+  <defs>
+    <style>
+      :root { color-scheme: light dark; }
+      .title { font: 600 22px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #111; }
+      .subtitle { font: 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #444; }
+      .label { font: 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #222; }
+      .tick { font: 13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #666; }
+      .grid { stroke: #e5e5e5; stroke-width: 1.2; }
+      .axis { stroke: #b5b5b5; stroke-width: 1.6; }
+      .bar { fill: #2f6fed; }
+      .bar2 { fill: #00a58a; }
+      .bar3 { fill: #f59f00; }
+      .bar4 { fill: #8e44ad; }
+      .bar5 { fill: #e74c3c; }
+      .value { font: 600 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #111; }
+      @media (prefers-color-scheme: dark) {
+        .title { fill: #f3f3f3; }
+        .subtitle { fill: #c7c7c7; }
+        .label { fill: #e6e6e6; }
+        .tick { fill: #bdbdbd; }
+        .grid { stroke: #2e2e2e; }
+        .axis { stroke: #4a4a4a; }
+        .value { fill: #f3f3f3; }
+      }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="420" fill="transparent" />
+
+  <text x="24" y="36" class="title">GEMM performance (reference)</text>
+  <text x="24" y="62" class="subtitle">Ascend A3 (24 cores), m=n=k=6144, fp16 inputs → fp32 output · Data: kernels/gemm_performance/README.md</text>
+
+  <!-- Chart area -->
+  <!-- Origin (left, bottom) = (90, 340). Height = 210 (0..100%). -->
+  <!-- Horizontal gridlines -->
+  <line x1="90" y1="340" x2="940" y2="340" class="axis" />
+  <line x1="90" y1="130" x2="940" y2="130" class="axis" />
+  <line x1="90" y1="288" x2="940" y2="288" class="grid" />
+  <line x1="90" y1="236" x2="940" y2="236" class="grid" />
+  <line x1="90" y1="184" x2="940" y2="184" class="grid" />
+
+  <!-- Y ticks: 0, 25, 50, 75, 100 -->
+  <text x="62" y="344" class="tick">0%</text>
+  <text x="56" y="292" class="tick">25%</text>
+  <text x="56" y="240" class="tick">50%</text>
+  <text x="56" y="188" class="tick">75%</text>
+  <text x="50" y="134" class="tick">100%</text>
+
+  <!-- Bars (scale: 100% -> 210px) -->
+  <!-- Cube 86.1% -->
+  <rect x="130" y="159.2" width="120" height="180.8" rx="6" class="bar" />
+  <text x="190" y="152" text-anchor="middle" class="value">86.1%</text>
+  <text x="190" y="368" text-anchor="middle" class="label">Cube</text>
+
+  <!-- MTE2 95.2% -->
+  <rect x="280" y="140.1" width="120" height="199.9" rx="6" class="bar2" />
+  <text x="340" y="133" text-anchor="middle" class="value">95.2%</text>
+  <text x="340" y="368" text-anchor="middle" class="label">MTE2</text>
+
+  <!-- MTE1 68.1% -->
+  <rect x="430" y="196.0" width="120" height="144.0" rx="6" class="bar3" />
+  <text x="490" y="189" text-anchor="middle" class="value">68.1%</text>
+  <text x="490" y="368" text-anchor="middle" class="label">MTE1</text>
+
+  <!-- Scalar 8.1% -->
+  <rect x="580" y="323.0" width="120" height="17.0" rx="6" class="bar4" />
+  <text x="640" y="316" text-anchor="middle" class="value">8.1%</text>
+  <text x="640" y="368" text-anchor="middle" class="label">Scalar</text>
+
+  <!-- MTE3 3.1% -->
+  <rect x="730" y="333.5" width="120" height="6.5" rx="6" class="bar5" />
+  <text x="790" y="326" text-anchor="middle" class="value">3.1%</text>
+  <text x="790" y="368" text-anchor="middle" class="label">MTE3</text>
+
+  <!-- Callouts -->
+  <text x="90" y="398" class="subtitle">AIC cycles: 66,725,939 · Wall time: 1.506 ms</text>
+</svg>

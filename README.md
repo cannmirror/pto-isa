@@ -4,7 +4,7 @@
 
 # PTO Tile Lib
 
-Parallel Tile Operation (PTO) is a virtual instruction set architecture designed by Ascend CANN, focusing on Tile-level operations. This repository offers high-performance, cross-platform Tile operations based on different Ascend platforms. By porting to PTO instruction sequences, users can migrate Ascend hardware easily.
+Parallel Tile Operation (PTO) is a virtual instruction set architecture designed by Ascend CANN, focusing on tile-level operations. This repository offers high-performance, cross-platform tile operations across Ascend platforms. By porting to PTO instruction sequences, users can migrate Ascend hardware more easily.
 
 ## News
 
@@ -12,7 +12,7 @@ Parallel Tile Operation (PTO) is a virtual instruction set architecture designed
 
 ## Overview
 
-The PTO ISA (Instruction Set Architecture) is built on Ascend’s underlying hardware and software abstraction, providing over 90 standard Tile-level operations. 
+The PTO ISA (Instruction Set Architecture) is built on Ascend’s underlying hardware and software abstractions, providing over 90 standard tile-level operations.
 
 Ascend hardware architectures have significantly evolved over generations, leading to major changes in the instruction sets. The PTO instruction set bridges these hardware differences by raising the abstraction level. We ensure that these PTO instructions work correctly across platforms while maintaining backward compatibility. However, this abstraction does not hide performance tuning opportunities. Users can still fine-tune performance by adjusting Tile sizes, Tile shapes, instruction order, Tile transformations, and other Tile operations. This provides sufficient control to fine-tune internal pipeline flows.
 
@@ -25,11 +25,38 @@ Currently, PTO instructions are integrated into the following frameworks:
 
 ## Target Users of this Repository
 
-PTO Tile Library is not aimed at beginner-level users. The intended audience includes:
+PTO Tile Lib is not aimed at beginner-level users. The intended audience includes:
 
 * Backend developers implementing frameworks that directly interface with Ascend hardware.
 * Cross-platform application developers (NPU & GPU).
 * High-performance operator developers (manual operator implementations).
+
+## Performance
+
+This repository includes performance-oriented kernels with reference measurements and reproducible setups.
+
+### GEMM (A2/A3 reference)
+
+- Kernel: `kernels/gemm_performance/`
+
+![GEMM performance reference (Ascend A3, 24 cores)](docs/figures/performance/gemm_performance_a3.svg)
+
+### Flash Attention (A2/A3 reference)
+
+- Kernel: `kernels/manual/fa/a2a3/`
+
+![Flash Attention normalized TFLOPS (A2/A3 reference)](docs/figures/performance/fa_normalized_tflops_a2a3.svg)
+
+## Coming Soon
+
+The following features will be released in the future:
+
+| Feature | Description | Scope |
+| --- | --- | --- |
+| PTO Auto Mode | BiSheng compiler support to automatically allocate tile buffers and insert synchronization. | Compiler / toolchain |
+| PTO-AS | Assembler and disassembler for PTO ISA. | Developer tooling |
+| Convolution extension | Tile library support for convolution kernels. | ISA Extension |
+| Collective communication extension | Tile library support for multi-card communication. | ISA Extension |
 
 ## Design Philosophy of PTO Instructions
 
@@ -42,7 +69,7 @@ PTO Tile Library is not aimed at beginner-level users. The intended audience inc
 PTO instructions support two modes: **Auto Mode** (where the user does not allocate buffers or manage pipelining) and **Manual Mode** (where the user must allocate buffer addresses and manage pipelining). We recommend the following steps for optimizing operators:
 
 1. Develop the operator based on Auto Mode, generating PTO instruction sequences according to the algorithm logic.
-2. Verify functionality and correctness in CPU simulations.
+2. Verify functionality and correctness in CPU simulation.
 3. Port the code to Ascend hardware to ensure correctness and collect performance data.
 4. Identify performance bottlenecks (CUBE Bound, MTE Bound, Vector Bound) and begin optimization and tuning.
 
@@ -56,12 +83,14 @@ In this repository, we demonstrate how standard Tile operations can be mapped to
 * Specialized Fixed Function (SFU)
 * Fixed Pipeline (FIXP)
 
-PTO ISA defines over 90 standard operations. This repository currently covers and implements 46 different instructions, with ongoing efforts to add more.
+PTO ISA defines over 90 standard operations. This repository implements a growing subset of them, with ongoing efforts to add more.
 
 ## Platform Support
 
-* Ascend (A3 / A5)
-* CPU (X86 / AArch64)
+* Ascend A2 (Ascend 910B)
+* Ascend A3 (Ascend 910C)
+* Ascend A5 (Ascend 950 )
+* CPU (x86_64 / AArch64)
 
 ## Quickstart Guide
 
@@ -72,26 +101,30 @@ For detailed, OS-specific setup (Windows / Linux / macOS), see: [docs/getting-st
 CPU simulation is cross-platform and does not require Ascend drivers/CANN:
 
 ```bash
-python3 run_cpu.py --clean --verbose
+python3 tests/run_cpu.py --clean --verbose
 ```
 
 Build & run the GEMM demo (optional):
 
 ```bash
-python3 run_cpu.py --demo gemm --verbose
+python3 tests/run_cpu.py --demo gemm --verbose
 ```
 
 Build & run the Flash Attention demo (optional):
 
 ```bash
-python3 run_cpu.py --demo flash_attn --verbose
+python3 tests/run_cpu.py --demo flash_attn --verbose
 ```
 
 ### Running a Single ST Test Case
 
+Running ST requires a working Ascend CANN environment and is typically Linux-only.
+
 ```bash
 python3 tests/script/run_st.py -r [sim|npu] -v [a3|a5] -t [TEST_CASE] -g [GTEST_FILTER_CASE]
 ```
+
+Note: the `a3` backend covers the A2/A3 family (`include/pto/npu/a2a3`).
 
 Example:
 
@@ -116,20 +149,26 @@ chmod +x ./tests/run_st.sh
 chmod +x ./tests/run_cpu_tests.sh
 ./tests/run_cpu_tests.sh
 
-python3 ./tests/run_cpu.py --verbose
+python3 tests/run_cpu.py --verbose
 ```
 
-## Build / Run Instructions (Reference Repository Scripts)
+## Build / Run Instructions
 
 ### Configuring Environment Variables (Ascend CANN)
 
-For example, if using the CANN community package and installing to `/usr/local/Ascend/ascend-toolkit/latest`:
+For example, if you use the CANN community package and install to the default path:
+
+```bash
+source /usr/local/Ascend/latest/bin/setenv.bash
+```
+
+If you install to `.../ascend-toolkit/latest`, use:
 
 ```bash
 source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
 ```
 
-### One-click Build and Run (Optional)
+### One-click Build and Run
 
 * Run Full ST Tests:
 
@@ -175,7 +214,7 @@ source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
 * `docs/`: ISA instructions, API guidelines, and examples (see [docs/README.md](docs/README.md))
 * `tests/`: ST/CPU test scripts and use cases (see [tests/README.md](tests/README.md))
 * `scripts/`: Packaging and release scripts (see [scripts/README.md](scripts/README.md))
-* `build.sh`, `run_st.sh`: Build, package, and example run entry points
+* `build.sh`, `tests/run_st.sh`: Build, package, and example run entry points
 
 ## License
 

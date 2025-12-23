@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Source: user-provided Flash Attention numbers for kernels/manual/fa/a2a3.
+  Metric plotted: Normalized TFLOPS (scaled to 24 cores).
+  Series:
+    - 1 core (S0=128):  [38.27, 62.62, 147.08, 172.86] at S1=[1024,2048,4096,8192]
+    - 2 cores (S0=256): [48.51, 73.04, 148.03, 171.43]
+    - 4 cores (S0=512): [38.60, 58.10, 138.19, 149.27]
+    - 8 cores (S0=1024):[25.28, 37.51, 99.94, 120.04]
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="460" viewBox="0 0 980 460" role="img" aria-label="Flash Attention normalized TFLOPS chart (A2/A3 reference)">
+  <defs>
+    <style>
+      :root { color-scheme: light dark; }
+      .title { font: 600 22px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #111; }
+      .subtitle { font: 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #444; }
+      .label { font: 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #222; }
+      .tick { font: 13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #666; }
+      .grid { stroke: #e5e5e5; stroke-width: 1.2; }
+      .axis { stroke: #b5b5b5; stroke-width: 1.6; }
+      .series1 { stroke: #2f6fed; fill: none; stroke-width: 3; }
+      .series2 { stroke: #00a58a; fill: none; stroke-width: 3; }
+      .series3 { stroke: #f59f00; fill: none; stroke-width: 3; }
+      .series4 { stroke: #8e44ad; fill: none; stroke-width: 3; }
+      .pt1 { fill: #2f6fed; }
+      .pt2 { fill: #00a58a; }
+      .pt3 { fill: #f59f00; }
+      .pt4 { fill: #8e44ad; }
+      .legend { font: 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #222; }
+      @media (prefers-color-scheme: dark) {
+        .title { fill: #f3f3f3; }
+        .subtitle { fill: #c7c7c7; }
+        .label { fill: #e6e6e6; }
+        .tick { fill: #bdbdbd; }
+        .grid { stroke: #2e2e2e; }
+        .axis { stroke: #4a4a4a; }
+        .legend { fill: #e6e6e6; }
+      }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="460" fill="transparent" />
+
+  <text x="24" y="36" class="title">Flash Attention normalized TFLOPS (reference)</text>
+  <text x="24" y="64" class="subtitle">A2/A3 manual kernel · Normalized TFLOPS = TFLOPS × (24 / cores_used) · S1 ∈ {1024, 2048, 4096, 8192}</text>
+
+  <!-- Chart area: x=[90,940], y=[90,340] -->
+  <!-- Y scale: 0..180 mapped to 250px (340..90) -->
+  <line x1="90" y1="340" x2="940" y2="340" class="axis"/>
+  <line x1="90" y1="90" x2="940" y2="90" class="axis"/>
+
+  <!-- Gridlines at 0, 30, 60, 90, 120, 150, 180 -->
+  <line x1="90" y1="340" x2="940" y2="340" class="grid"/>
+  <line x1="90" y1="298.3" x2="940" y2="298.3" class="grid"/>
+  <line x1="90" y1="256.7" x2="940" y2="256.7" class="grid"/>
+  <line x1="90" y1="215.0" x2="940" y2="215.0" class="grid"/>
+  <line x1="90" y1="173.3" x2="940" y2="173.3" class="grid"/>
+  <line x1="90" y1="131.7" x2="940" y2="131.7" class="grid"/>
+  <line x1="90" y1="90" x2="940" y2="90" class="grid"/>
+
+  <text x="56" y="344" class="tick">0</text>
+  <text x="50" y="302" class="tick">30</text>
+  <text x="50" y="260" class="tick">60</text>
+  <text x="50" y="218" class="tick">90</text>
+  <text x="44" y="176" class="tick">120</text>
+  <text x="44" y="135" class="tick">150</text>
+  <text x="44" y="94" class="tick">180</text>
+  <text x="28" y="215" class="label" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 28,215)">Normalized TFLOPS</text>
+
+  <!-- X ticks -->
+  <line x1="160" y1="340" x2="160" y2="346" class="axis"/>
+  <line x1="380" y1="340" x2="380" y2="346" class="axis"/>
+  <line x1="600" y1="340" x2="600" y2="346" class="axis"/>
+  <line x1="820" y1="340" x2="820" y2="346" class="axis"/>
+  <text x="160" y="394" text-anchor="middle" class="tick">S1=1024</text>
+  <text x="380" y="394" text-anchor="middle" class="tick">S1=2048</text>
+  <text x="600" y="394" text-anchor="middle" class="tick">S1=4096</text>
+  <text x="820" y="394" text-anchor="middle" class="tick">S1=8192</text>
+
+  <!-- Helper: y = 340 - (value/180)*250 -->
+  <!-- Series 1: 1 core -->
+  <path class="series1" d="M 160 286.85 L 380 253.03 L 600 135.72 L 820 99.92" />
+  <circle cx="160" cy="286.85" r="6" class="pt1" />
+  <circle cx="380" cy="253.03" r="6" class="pt1" />
+  <circle cx="600" cy="135.72" r="6" class="pt1" />
+  <circle cx="820" cy="99.92" r="6" class="pt1" />
+
+  <!-- Series 2: 2 cores -->
+  <path class="series2" d="M 160 272.62 L 380 238.56 L 600 134.40 L 820 101.90" />
+  <circle cx="160" cy="272.62" r="6" class="pt2" />
+  <circle cx="380" cy="238.56" r="6" class="pt2" />
+  <circle cx="600" cy="134.40" r="6" class="pt2" />
+  <circle cx="820" cy="101.90" r="6" class="pt2" />
+
+  <!-- Series 3: 4 cores -->
+  <path class="series3" d="M 160 286.39 L 380 259.31 L 600 148.07 L 820 132.68" />
+  <circle cx="160" cy="286.39" r="6" class="pt3" />
+  <circle cx="380" cy="259.31" r="6" class="pt3" />
+  <circle cx="600" cy="148.07" r="6" class="pt3" />
+  <circle cx="820" cy="132.68" r="6" class="pt3" />
+
+  <!-- Series 4: 8 cores -->
+  <path class="series4" d="M 160 304.89 L 380 287.90 L 600 201.19 L 820 173.28" />
+  <circle cx="160" cy="304.89" r="6" class="pt4" />
+  <circle cx="380" cy="287.90" r="6" class="pt4" />
+  <circle cx="600" cy="201.19" r="6" class="pt4" />
+  <circle cx="820" cy="173.28" r="6" class="pt4" />
+
+  <!-- Legend (spans across x-axis) -->
+  <circle cx="160" cy="428" r="6" class="pt1"/><text x="176" y="433" class="legend">1 core (S0=128)</text>
+  <circle cx="380" cy="428" r="6" class="pt2"/><text x="396" y="433" class="legend">2 cores (S0=256)</text>
+  <circle cx="600" cy="428" r="6" class="pt3"/><text x="616" y="433" class="legend">4 cores (S0=512)</text>
+  <circle cx="820" cy="428" r="6" class="pt4"/><text x="836" y="433" class="legend">8 cores (S0=1024)</text>
+</svg>

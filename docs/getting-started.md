@@ -77,7 +77,7 @@ git clone <YOUR_REPO_URL>
 cd pto-tile-lib
 ```
 
-## Python Environment (recommended)
+## Python Environment
 
 Create and activate a virtual environment:
 
@@ -99,7 +99,7 @@ Create and activate a virtual environment:
   python -m pip install numpy
   ```
 
-## Run CPU Simulator (recommended first step)
+## Run CPU Simulator
 
 This builds and runs the CPU ST test binaries under `tests/cpu/st` and executes all testcases:
 
@@ -133,7 +133,7 @@ Common options:
   python3 tests/run_cpu.py --demo flash_attn --verbose
   ```
 
-- Optinal:
+- Optional:
 
   ```bash
   # specify the cxx path
@@ -150,23 +150,85 @@ Common options:
   python3 tests/run_cpu.py --clean
   ```
 
-## (Optional) Ascend CANN Environment (Linux)
+# Environment Setup (Ascend 910B/910C, Linux)
 
-If you plan to run NPU or simulator STs, install Ascend drivers + CANN toolkit (see Ascend docs for your distribution), then source `setenv.bash`:
+## Prerequisites
 
+Before using this project, make sure the following basic dependencies and the NPU driver/firmware are installed.
+
+1. **Install build dependencies**
+
+   The project requires the following dependencies for building from source (please pay attention to the version requirements):
+
+   - Python >= 3.8.0
+   - GCC >= 7.3.0
+   - CMake >= 3.16.0
+   - GoogleTest (only required when running unit tests; recommended version:
+     [release-1.14.0](https://github.com/google/googletest/releases/tag/v1.14.0))
+
+        After downloading the
+        [GoogleTest source](https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/googletest-1.14.0.tar.gz),
+        install it with:
+
+        ```bash
+        tar -xf googletest-1.14.0.tar.gz
+        cd googletest-1.14.0
+        mkdir temp && cd temp                # create a temp build dir under the googletest source tree
+        cmake .. -DCMAKE_CXX_FLAGS="-fPIC"
+        make
+        make install                         # install as root
+        # sudo make install                  # install as a non-root user
+        ```
+
+2. **Install driver and firmware (runtime dependency)**
+
+   The driver and firmware are required to run operators. If you only need to build, you can skip this step.
+   For installation guidance, see:
+   [NPU Driver and Firmware Installation Guide](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_0005.html?Mode=VmIns&OS=Ubuntu&Software=cannToolKit).
+
+## Install Software Packages
+
+This project supports building from source. Before building, prepare the environment as follows.
+
+1. **Install the community edition CANN toolkit**
+
+    Download the appropriate `Ascend-cann-toolkit_${cann_version}_linux-${arch}.run` installer for your environment.
+    
+    ```bash
+    # Ensure the installer is executable
+    chmod +x Ascend-cann-toolkit_${cann_version}_linux-${arch}.run
+    # Install
+    ./Ascend-cann-toolkit_${cann_version}_linux-${arch}.run --install --force --install-path=${install_path}
+    ```
+    - `${cann_version}`: the CANN toolkit version.
+    - `${arch}`: the CPU architecture, such as `aarch64` or `x86_64`.
+    - `${install_path}`: the installation path.
+    - If `--install-path` is omitted, the default path is used. If installed as root, the software is placed under
+      `/usr/local/Ascend/latest`. If installed as a non-root user, it is placed under `$HOME/Ascend/latest`.
+
+
+## Environment Variables
+
+- Default path (installed as root)
+
+    ```bash
+    source /usr/local/Ascend/latest/bin/setenv.bash
+    ```
+
+- Default path (installed as a non-root user)
+    ```bash
+    source $HOME/Ascend/latest/bin/setenv.bash
+    ```
+
+- Custom installation path
+    ```bash
+    source ${install_path}/latest/bin/setenv.bash
+    ```
+
+## Source Code Download
+
+Download the source with:
 ```bash
-source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
+# Clone the repository (master branch as an example)
+git clone https://gitcode.com/cann/pto-tile-lib
 ```
-
-Then use the repo scripts, for example:
-
-```bash
-chmod +x run_st.sh
-./run_st.sh a5 npu simple
-```
-
-## Next steps
-
-- ISA overview: `docs/PTOISA.md`
-- Instruction reference: `docs/isa/README.md`
-- PTO assembly syntax (PTO-AS): `docs/grammar/PTO-AS.md`
