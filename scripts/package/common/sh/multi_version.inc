@@ -125,6 +125,10 @@ notify_latest_manager() {
         return 1
     fi
 
+    if [ "$USE_SHARE_INFO" = "y" ]; then
+        ext_params="$ext_params --use-share-info"
+    fi
+
     get_package_dir package_dir "$package"
     get_install_for_all_param "install_for_all_param" "$install_for_all"
     get_docker_root_param "docker_root_param" "$docker_root"

@@ -28,7 +28,7 @@ function(pack_built_in)
 
   set(script_prefix ${CMAKE_SOURCE_DIR}/scripts/package/pto_tile_lib/scripts)
   install(DIRECTORY ${script_prefix}/
-      DESTINATION pto_tile_lib/script
+      DESTINATION share/info/pto_tile_lib/script
       FILE_PERMISSIONS
       OWNER_READ OWNER_WRITE OWNER_EXECUTE  # 文件权限
       GROUP_READ GROUP_EXECUTE
@@ -50,7 +50,7 @@ function(pack_built_in)
   )
 
   install(FILES ${SCRIPTS_FILES}
-      DESTINATION pto_tile_lib/script
+      DESTINATION share/info/pto_tile_lib/script
   )
   set(COMMON_FILES
       ${CMAKE_SOURCE_DIR}/scripts/package/common/sh/install_common_parser.sh
@@ -74,13 +74,13 @@ function(pack_built_in)
       ${CMAKE_SOURCE_DIR}/scripts/package/common/cfg/path.cfg
   )
   install(FILES ${CMAKE_SOURCE_DIR}/version.info
-      DESTINATION .
+      DESTINATION share/info/pto_tile_lib
   )
   install(FILES ${CONF_FILES}
-      DESTINATION pto_tile_lib/conf
+      DESTINATION share/info/pto_tile_lib/conf
   )
   install(FILES ${PACKAGE_FILES}
-      DESTINATION pto_tile_lib/script
+      DESTINATION share/info/pto_tile_lib/script
   )
   install(FILES ${LATEST_MANGER_FILES}
       DESTINATION latest_manager
@@ -88,21 +88,10 @@ function(pack_built_in)
   install(DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/package/latest_manager/scripts/
       DESTINATION latest_manager
   )
-  set(BIN_FILES
-      ${CMAKE_SOURCE_DIR}/scripts/package/pto_tile_lib/scripts/prereq_check.bash
-      ${CMAKE_SOURCE_DIR}/scripts/package/pto_tile_lib/scripts/prereq_check.csh
-      ${CMAKE_SOURCE_DIR}/scripts/package/pto_tile_lib/scripts/prereq_check.fish
-      ${CMAKE_SOURCE_DIR}/scripts/package/pto_tile_lib/scripts/setenv.bash
-      ${CMAKE_SOURCE_DIR}/scripts/package/pto_tile_lib/scripts/setenv.csh
-      ${CMAKE_SOURCE_DIR}/scripts/package/pto_tile_lib/scripts/setenv.fish
-  )
-  install(FILES ${BIN_FILES}
-      DESTINATION pto_tile_lib/bin
-  )
 
   set(pto_source ${CMAKE_SOURCE_DIR}/include)
   install(DIRECTORY ${pto_source}/
-      DESTINATION pto_tile_lib/include/
+      DESTINATION share/info/pto_tile_lib/include/
       FILE_PERMISSIONS
       OWNER_READ OWNER_WRITE
       GROUP_READ GROUP_EXECUTE

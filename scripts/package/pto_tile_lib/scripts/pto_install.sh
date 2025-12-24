@@ -23,14 +23,14 @@ PERM_DENIED_DES="Permission denied."
 
 # run package's files info
 CURR_PATH=$(dirname $(readlink -f $0))
-VERSION_INFO_FILE="${CURR_PATH}/../../version.info"
+VERSION_INFO_FILE="${CURR_PATH}/../version.info"
 FILELIST_FILE="${CURR_PATH}/filelist.csv"
 COMMON_PARSER_FILE="${CURR_PATH}/install_common_parser.sh"
 SCENE_FILE="${CURR_PATH}/../scene.info"
 ASCEND_INSTALL_INFO="ascend_install.info"
 
 ARCH_INFO=$(uname -m)
-PTO_PLATFORM_DIR=pto_tile_lib
+PTO_PLATFORM_DIR=share/info/pto_tile_lib
 PTO_PLATFORM_UPPER=$(echo "${PTO_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 
 TARGET_INSTALL_PATH=""
@@ -66,6 +66,7 @@ get_opts() {
   IS_SETENV="$7"
   IS_DOCKER_INSTALL="$8"
   DOCKER_ROOT="$9"
+  PKG_VERSION_DIR="${10}"
 
   if [ "${TARGET_INSTALL_PATH}" = "" ] || [ "${TARGET_USERNAME}" = "" ] ||
     [ "${TARGET_USERGROUP}" = "" ] || [ "${INSTALL_TYPE}" = "" ]; then
@@ -80,7 +81,6 @@ get_opts() {
 }
 
 init_install_env() {
-  get_version_dir "PKG_VERSION_DIR" "$VERSION_INFO_FILE"
   get_package_version "RUN_PKG_VERSION" "$VERSION_INFO_FILE"
   if [ "${PKG_VERSION_DIR}" = "" ]; then
     TARGET_VERSION_DIR=${TARGET_INSTALL_PATH}
@@ -587,12 +587,6 @@ create_latest_softlink() {
   fi
   comm_create_dir "${dst_path}" "${CREATE_DIR_PERM}" "${TARGET_USERNAME}:${TARGET_USERGROUP}" "${IS_FOR_ALL}"
 
-  create_arch_lib_softlink
-
-  create_arch_include_softlink
-
-  create_latest_pto_softlink
-
   if [ -n "$dir_mode" ]; then
     chmod ${dir_mode} ${dst_path} 2>/dev/null
   fi
@@ -626,7 +620,7 @@ install_pto() {
 
   bash "${COMMON_PARSER_FILE}" --package="${PTO_PLATFORM_DIR}" --install --username="${TARGET_USERNAME}" \
     --usergroup="${TARGET_USERGROUP}" --set-cann-uninstall --version=$RUN_PKG_VERSION \
-    --version-dir=$PKG_VERSION_DIR $INSTALL_OPTION ${INSTALL_FOR_ALL} "--feature=all" "--chip=all" \
+    --version-dir=$PKG_VERSION_DIR --use-share-info $INSTALL_OPTION ${INSTALL_FOR_ALL} "--feature=all" "--chip=all" \
     "${INSTALL_TYPE}" "${TARGET_INSTALL_PATH}" "${FILELIST_FILE}"
   log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Install pto module files failed."
 

@@ -25,7 +25,6 @@ PTO_COMMON_FILE="${CURR_PATH}/pto_common.sh"
 
 ARCH_INFO=$(uname -m)
 PTO_PLATFORM_DIR=pto_tile_lib
-PTO_DIR=pto
 PTO_PLATFORM_UPPER=$(echo "${PTO_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 FILELIST_FILE="${CURR_PATH}/filelist.csv"
 COMMON_PARSER_FILE="${CURR_PATH}/install_common_parser.sh"
@@ -33,7 +32,6 @@ TARGET_INSTALL_PATH=""
 TARGET_VERSION_DIR="${CURR_PATH}/../.."
 TARGET_VERSION_DIR=$(readlink -f ${TARGET_VERSION_DIR})     # TARGET_INSTALL_PATH + PKG_VERSION_DIR
 TARGET_MOULDE_DIR=${TARGET_VERSION_DIR}/${PTO_PLATFORM_DIR} # TARGET_INSTALL_PATH + PKG_VERSION_DIR + PTO_PLATFORM_DIR
-TARGET_PTO_DIR=${TARGET_VERSION_DIR}/${PTO_DIR}
 ASCEND_INSTALL_INFO="ascend_install.info"
 # init log file path
 INSTALL_INFO_FILE="${TARGET_MOULDE_DIR}/${ASCEND_INSTALL_INFO}"
@@ -55,6 +53,7 @@ get_opts() {
   IN_FEATURE="$4"
   IS_DOCKER_INSTALL="$5"
   DOCKER_ROOT="$6"
+  PKG_VERSION_DIR="$7"
   local paramter_num="$#"
 
   if [ "${paramter_num}" != 0 ]; then
@@ -113,12 +112,6 @@ check_installed_files() {
 
   check_file_exist "${COMMON_PARSER_FILE}"
 
-  check_file_exist "${TARGET_MOULDE_DIR}/bin/setenv.bash"
-
-  check_file_exist "${TARGET_MOULDE_DIR}/bin/setenv.csh"
-
-  check_file_exist "${TARGET_MOULDE_DIR}/bin/setenv.fish"
-
   check_directory_exist "${TARGET_MOULDE_DIR}"
 }
 
@@ -156,7 +149,6 @@ get_installed_param() {
   TARGET_USERNAME=$(get_installed_info "${KEY_INSTALLED_UNAME}")
   TARGET_USERGROUP=$(get_installed_info "${KEY_INSTALLED_UGROUP}")
   get_package_version "RUN_PKG_VERSION" "$VERSION_INFO_FILE"
-  get_version_dir "PKG_VERSION_DIR" "$VERSION_INFO_FILE"
   if [ "${PKG_VERSION_DIR}" = "" ]; then
     TARGET_INSTALL_PATH=${TARGET_VERSION_DIR}
   else
@@ -177,7 +169,7 @@ remove_module() {
 
   bash "${COMMON_PARSER_FILE}" --package="${PTO_PLATFORM_DIR}" --uninstall --recreate-softlink \
     --username="${TARGET_USERNAME}" --usergroup="${TARGET_USERGROUP}" --version=$RUN_PKG_VERSION \
-    --version-dir=$PKG_VERSION_DIR ${UNINSTALL_OPTION} "${INSTALLED_TYPE}" "${TARGET_INSTALL_PATH}" \
+    --version-dir=$PKG_VERSION_DIR --use-share-info --remove-install-path ${UNINSTALL_OPTION} "${INSTALLED_TYPE}" "${TARGET_INSTALL_PATH}" \
     "${FILELIST_FILE}" "${IN_FEATURE}" --recreate-softlink
   log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${OPERATE_FAILED};ERR_DES:Uninstall pto module failed."
 
@@ -195,38 +187,12 @@ remove_module() {
   done
 }
 
-remove_pto_dir() {
-  local module_sub_dir_list="built-in script lib64 bin include"
-  for module_sub_dir in ${module_sub_dir_list}; do
-    if [ "$(id -u)" != 0 ] && [ ! -w "${TARGET_PTO_DIR}/${module_sub_dir}" ]; then
-      chmod u+w -R "${TARGET_PTO_DIR}/${module_sub_dir}" 2>/dev/null
-    fi
-  done
-
-  logandprint "[INFO]: Delete the installed pto source files in (${TARGET_VERSION_DIR})."
-
-  bash "${COMMON_PARSER_FILE}" --package="${PTO_DIR}" --uninstall --recreate-softlink \
-    --username="${TARGET_USERNAME}" --usergroup="${TARGET_USERGROUP}" --version=$RUN_PKG_VERSION \
-    --version-dir=$PKG_VERSION_DIR ${UNINSTALL_OPTION} "${INSTALLED_TYPE}" "${TARGET_INSTALL_PATH}" \
-    "${FILELIST_FILE}" "${IN_FEATURE}" --recreate-softlink
-  log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${OPERATE_FAILED};ERR_DES:Uninstall pto module failed."
-
-  # remove empty dir, even though has softlink
-  local remain_dir_list=$(find ${TARGET_PTO_DIR} -mindepth 1 -maxdepth 1 -type d)
-  for remain_dir in ${remain_dir_list}; do
-    if [ "$(find "${remain_dir}" -type f 2>&1)" = "" ]; then
-      rm -rf ${remain_dir}
-    fi
-  done
-}
-
 remove_pto() {
   local ori_mod=$(stat -c %a ${TARGET_MOULDE_DIR})
   if [ "$(id -u)" != 0 ] && [ ! -w "${TARGET_MOULDE_DIR}" ]; then
     chmod u+w "${TARGET_MOULDE_DIR}" 2>/dev/null
   fi
 
-  remove_pto_dir
   remove_module
 
   if [ "${UNINSTALL_MODE}" != "upgrade" ]; then
@@ -265,9 +231,7 @@ remote_all_soft_link() {
   [ -d ${arch_include_dir}/aclnn_kernels ] && rm -rf "${arch_include_dir}/aclnn_kernels"
   # remove all softlink
   find ${TARGET_INSTALL_PATH}/cann/ -type l -lname "*/${PTO_PLATFORM_DIR}/*" -delete
-  find ${TARGET_INSTALL_PATH}/cann/ -type l -lname "*/${PTO_DIR}/*" -delete
   rm -rf ${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR}
-  rm -rf ${TARGET_INSTALL_PATH}/cann/${PTO_DIR}
 }
 
 logandprint "[INFO]: Begin uninstall the pto module."

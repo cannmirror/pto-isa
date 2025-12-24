@@ -34,10 +34,9 @@ fi
 CURR_PATH=$(dirname $(readlink -f $0))
 INSTALL_SHELL_FILE="${CURR_PATH}/pto_install.sh"
 RUN_PKG_INFO_FILE="${CURR_PATH}/../scene.info"
-VERSION_INFO_FILE="${CURR_PATH}/../../version.info"
+VERSION_INFO_FILE="${CURR_PATH}/../version.info"
 COMMON_INC_FILE="${CURR_PATH}/common_func.inc"
 VERCHECK_FILE="${CURR_PATH}/ver_check.sh"
-PRE_CHECK_FILE="${CURR_PATH}/../bin/prereq_check.bash"
 VERSION_COMPAT_FUNC_PATH="${CURR_PATH}/version_compatiable.inc"
 COMMON_FUNC_V2_PATH="${CURR_PATH}/common_func_v2.inc"
 VERSION_CFG_PATH="${CURR_PATH}/version_cfg.inc"
@@ -151,7 +150,7 @@ clean_before_reinstall() {
  path or clean the previous version pto install info (${INSTALL_INFO_FILE}) and then reinstall it."
       return 1
     fi
-    bash "${UNINSTALL_SHELL_FILE}" "${TARGET_VERSION_DIR}" "upgrade" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}"
+    bash "${UNINSTALL_SHELL_FILE}" "${TARGET_VERSION_DIR}" "upgrade" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$pkg_version_dir"
     if [ "$?" != 0 ]; then
       logandprint "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Clean the installed directory failed."
       return 1
@@ -198,8 +197,8 @@ check_version_file() {
 }
 
 check_pto_version_file() {
-  if [ -f "${CURR_PATH}/../../version.info" ]; then
-    pto_ver_info="${CURR_PATH}/../../version.info"
+  if [ -f "${CURR_PATH}/../version.info" ]; then
+    pto_ver_info="${CURR_PATH}/../version.info"
   elif [ -f "${DEFAULT_INSTALL_PATH}/${PTO_PLATFORM_DIR}/version.info" ]; then
     pto_ver_info="${DEFAULT_INSTALL_PATH}/${PTO_PLATFORM_DIR}/version.info"
   else
@@ -557,8 +556,13 @@ check_opts() {
 
 # init target_dir and log for install
 init_env() {
-  get_install_package_dir "TARGET_MOULDE_DIR" "${VERSION_INFO_FILE}" "${TARGET_INSTALL_PATH}" "${PTO_PLATFORM_DIR}"
-  TARGET_VERSION_DIR=$(dirname ${TARGET_MOULDE_DIR})
+  if is_version_dirpath "$TARGET_INSTALL_PATH"; then
+    pkg_version_dir="$(basename "$TARGET_INSTALL_PATH")"
+    TARGET_INSTALL_PATH="$(dirname "$TARGET_INSTALL_PATH")"
+  else
+    pkg_version_dir="cann"
+  fi
+  TARGET_VERSION_DIR="$TARGET_INSTALL_PATH/$pkg_version_dir"
   # Splicing docker-root and install-path
   if [ "${IS_DOCKER_INSTALL}" = "y" ]; then
     # delete last "/"
@@ -570,8 +574,8 @@ init_env() {
     TARGET_VERSION_DIR=${temp_path_val}${TARGET_VERSION_DIR}
   fi
 
-  UNINSTALL_SHELL_FILE="${TARGET_MOULDE_DIR}/script/pto_uninstall.sh"
-  INSTALL_INFO_FILE="${TARGET_MOULDE_DIR}/${ASCEND_INSTALL_INFO}"
+  UNINSTALL_SHELL_FILE="${TARGET_VERSION_DIR}/share/info/pto_tile_lib/script/pto_uninstall.sh"
+  INSTALL_INFO_FILE="${TARGET_VERSION_DIR}/share/info/pto_tile_lib/${ASCEND_INSTALL_INFO}"
   is_multi_version_pkg "pkg_is_multi_version" "$VERSION_INFO_FILE"
   get_package_version "RUN_PKG_VERSION" "$VERSION_INFO_FILE"
 

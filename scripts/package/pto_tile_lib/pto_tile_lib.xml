@@ -2,44 +2,46 @@
 <config name="pto_tile_lib" copy_type="delivery" src_path="include/" dst_path="pto_tile_lib" install_type="all" install_mod="550" install_own="$username:$usergroup">
     <package_info>
         <product_name>cann</product_name>
-        <func_name>pto-inst</func_name>
+        <func_name>pto-tile-lib</func_name>
         <suffix>run</suffix>
-        <install_script>pto_tile_lib/scripts/install.sh</install_script>
-        <help>pto_tile_lib/scripts/help.info</help>
+        <install_script>share/info/pto_tile_lib/scripts/install.sh</install_script>
+        <help>share/info/pto_tile_lib/scripts/help.info</help>
         <version>package/pto_tile_lib/version.xml</version>
-        <cleanup>pto_tile_lib/script/cleanup.sh</cleanup>
+        <cleanup>share/info/pto_tile_lib/script/cleanup.sh</cleanup>
         <parallel>true</parallel>
         <check_features>true</check_features>
     </package_info>
-    <generate_info value="pto_tile_lib_version.h" dst_path="pto_tile_lib" install_path="$(TARGET_ENV)/include/version" install_mod="440" install_type="devel" generator="version_header">
+    <generate_info value="pto_tile_lib_version.h" dst_path="share/info/pto_tile_lib" install_path="$(TARGET_ENV)/include/version" install_mod="440" install_type="devel" generator="version_header">
        <pto_tile_lib_VERSION>$(ASCEND_VER)</pto_tile_lib_VERSION>
        <pto_tile_lib_TIMESTAMP>$(TIMESTAMP_NO)</pto_tile_lib_TIMESTAMP>
     </generate_info>
-    <generate_info value="scene.info" dst_path="pto_tile_lib" install_path="pto_tile_lib" install_mod="440">
+    <generate_info value="scene.info" dst_path="share/info/pto_tile_lib" install_path="share/info/pto_tile_lib" install_mod="440">
         <os>$(OS_NAME)</os>
         <os_version>$(OS_VER)</os_version>
         <arch>$(ARCH)</arch>
     </generate_info>
-    <file_info value="pto_tile_lib_script" copy_type="source" src_path="" dst_path="pto_tile_lib" install_path="pto_tile_lib">
+    <file_info value="pto_tile_lib_script" copy_type="source" src_path="" dst_path="share/info/pto_tile_lib" install_path="share/info/pto_tile_lib">
         <file value="script" entity="true"/>
-        <file value="bin" entity="true"/>
-        <file value="version.info" dst_path="."/>
+        <file value="version.info" dst_path="share/info/pto_tile_lib" install_path="share/info/pto_tile_lib"/>
     </file_info>
-    <file_info copy_type="source" src_path="" dst_path="pto_tile_lib/include/pto/" install_path="$(TARGET_ENV)/include/pto" install_type="all">
+    <file_info copy_type="source" src_path="" dst_path="share/info/pto_tile_lib/include/pto/" install_path="$(TARGET_ENV)/include/pto" install_type="all">
         <file value="common" install_mod="550" entity="true"/>
         <file value="npu" install_mod="550" entity="true"/>
         <file value="cpu" install_mod="550" entity="true"/>
         <file value="pto-inst.hpp" install_mod="550" entity="true"/>
     </file_info>
-    <file_info copy_type="source" src_path="" dst_path="pto_tile_lib/include/pto/npu" install_path="$(TARGET_ENV)/include/pto/npu" install_type="all">
+    <file_info copy_type="source" src_path="" dst_path="share/info/pto_tile_lib/include/pto/npu" install_path="$(TARGET_ENV)/include/pto/npu" install_type="all">
         <file value="a2a3" install_mod="550" entity="true"/>
         <file value="a5" install_mod="550" entity="true"/>
     </file_info>
-    <block_info dependtree="false" dst_path="pto_tile_lib" block_conf_path="ascend">
+    <block_info dependtree="false" dst_path="share/info/pto_tile_lib" block_conf_path="ascend">
         <block name="EngineeringCommon"/>
         <block name="EngineeringFiles"/>
     </block_info>
     <dir_info value="pto_tile_lib" install_path="" install_mod="550" install_type="all">
+        <path value="share" install_mod="550"/>
+        <path value="share/info" install_mod="750"/>
+        <path value="share/info/pto_tile_lib" install_mod="550"/>
         <path value="$(TARGET_ENV)/include"/>
         <path value="$(TARGET_ENV)/include/pto"/>
         <path value="$(TARGET_ENV)/include/pto/common"/>

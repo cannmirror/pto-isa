@@ -60,17 +60,17 @@ set(NN_VERSION_OUT_PUT
 
 configure_file(
         ${SCENE_OUT_PUT}
-        ${STAGING_DIR}/pto_tile_lib/
+        ${STAGING_DIR}/share/info/pto_tile_lib/
         COPYONLY
 )
 configure_file(
         ${CSV_OUTPUT}
-        ${STAGING_DIR}/pto_tile_lib/script/
+        ${STAGING_DIR}/share/info/pto_tile_lib/script/
         COPYONLY
 )
 configure_file(
         ${NN_VERSION_OUT_PUT}
-        ${STAGING_DIR}/pto_tile_lib/
+        ${STAGING_DIR}/share/info/pto_tile_lib/
         COPYONLY
 )
 # makeself打包
@@ -84,8 +84,8 @@ message(STATUS "package: ${package_name}")
 
 execute_process(COMMAND bash ${MAKESELF_EXE}
         --header ${MAKESELF_HEADER_EXE}
-        --help-header pto_tile_lib/script/help.info
-        ${makeself_param_string} pto_tile_lib/script/install.sh
+        --help-header share/info/pto_tile_lib/script/help.info
+        ${makeself_param_string} share/info/pto_tile_lib/script/install.sh
         WORKING_DIRECTORY ${STAGING_DIR}
         RESULT_VARIABLE EXEC_RESULT
         ERROR_VARIABLE  EXEC_ERROR

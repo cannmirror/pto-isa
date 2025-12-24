@@ -162,11 +162,6 @@ package_create_softlink() {
     ret="$?" && [ $ret -ne 0 ] && return $ret
     INSTALL_FOR_ALL="$install_for_all"
 
-    # 版本兼容性检查
-    check_compatiable_in_multi_version_install "$install_path" "$USERNAME" "" \
-        "$version" "$version_dir" "$package"
-    ret="$?" && [ $ret -ne 0 ] && return $ret
-
     do_create_package_softlink_to_latest "$install_path" "$package" "$version" "$version_dir" "$LATEST_DIR" \
         "$USERNAME" "$USERGROUP" "$install_for_all" "$docker_root"
     ret="$?" && [ $ret -ne 0 ] && return $ret

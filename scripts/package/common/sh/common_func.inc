@@ -1,5 +1,5 @@
 #!/bin/sh
-# --------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -7,7 +7,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-# --------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 ## module log
 
@@ -747,27 +747,16 @@ does_pkg_installed() {
     local install_path="$1"
     local pkgname="$2"
     local varname="$3"
-    local result="true"
-    local pkg_path="${install_path}/${pkgname}"
-    local script_path="${pkg_path}/script"
+    local result="false"
+    local pkg_path="${install_path}/share/info/${pkgname}"
 
-    if [ -L "${pkg_path}" ]; then
-        result="false"
+    if [ -d "${pkg_path}" ]; then
+        result="true"
     fi
 
-    if [ ! -d "${pkg_path}" ]; then
-        result="false"
-    fi
-
-    if [ -L "${script_path}" ]; then
-        result="false"
-    fi
-
-    if [ ! -d "${script_path}" ]; then
-        result="false"
-    fi
-
-    eval "${varname}=\"${result}\""
+    read -r "$varname" <<EOF
+$result
+EOF
 }
 
 
@@ -1007,11 +996,8 @@ preinstall_process() {
         real_install_path="${docker_root}/${install_path}"
     fi
 
-    version_info_path="$(pwd)/version.info"
-
-    _check_version_compatiable "${version_info_path}" "${real_install_path}" "${script_dir}"
-    ret=$?
-    if [ $ret -ne 0 ]; then
+    _check_version_compatiable "$package" "${real_install_path}" "${script_dir}"
+    if [ $? -ne 0 ]; then
         return 1
     fi
 
