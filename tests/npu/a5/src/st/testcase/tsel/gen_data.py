@@ -78,6 +78,7 @@ if __name__ == "__main__":
         TSelParams("TSELTest.case7", np.int8, 2, 128, 2, 128),
         TSelParams("TSELTest.case8", np.int8, 2, 32, 2, 32),
         TSelParams("TSELTest.case9", np.int8, 2, 160, 2, 160),
+        TSelParams("TSELTest.case10", np.float32, 2, 512, 2, 512),
     ]
 
     for param in case_params_list:

@@ -20,10 +20,8 @@ void LaunchTSel(T *out, uint8_t *mask, T *src0, T *src1, void *stream);
 
 class TSELTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 std::string GetGoldenDir() {
@@ -122,4 +120,7 @@ TEST_F(TSELTest, case8) {
 }
 TEST_F(TSELTest, case9) {
     test_tsel<int8_t, 2, 160, 2, 160>();
+}
+TEST_F(TSELTest, case10) {
+    test_tsel<float, 2, 512, 2, 512>();
 }
