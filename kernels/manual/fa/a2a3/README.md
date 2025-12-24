@@ -229,9 +229,9 @@ Sim vs NPU comparison (Seq = 2K):
       - Q tile load is optimized for leftTile stationary: when `tile_idx==0` Q is loaded once per cube invocation; subsequent tiles only load K tiles, reduce reloading from global memory.
       - Writes partial qk results either into a per-tile into a compact ping-pong global buffer.
       - make use of general matmul_macro_pto function to carry out computation from matTile to accTile, which determine the CubeK tiling for defining left and right tile, and keep a running state for left and right tile doing ping/pong. 
-     - Optimizations: 
-      - Use assign_running_acc_tile to allow output accTile doing double buffer between different compute_qk and compute_pv calls
-      - Choose `QK_GTN_BUFFERS` to permit double-buffering between qk production and p consumption stages.
+    - Optimizations: 
+     - Use assign_running_acc_tile to allow output accTile doing double buffer between different compute_qk and compute_pv calls
+     - `qkPreloadNum` (default 4) also sets `qkp_tile_fifo_size = 1 + qkPreloadNum` to double-buffer qk tiles between the cube producer and vector softmax consumer.
 
   - **compute_p (TSOFTMAXFA softmax on vector cores)**
     - Role: numerically-stable tiled softmax across S1 produced incrementally by tiles.
@@ -248,7 +248,7 @@ Sim vs NPU comparison (Seq = 2K):
 
     - Vector tile UB allocation and reuse (allocate_vec_tile_buffers)
       - Purpose: lay out UB offsets for all per-vector tiles used by the `compute_p`/`compute_gu` path so the vector cores can reuse a small set of UB addresses predictably.
-      - Template parameters: `SrcBuffers`, `XexpBuffers`, `OutBuffers` and `ExpMaxBuffers` (the latter controls how many `l1_exp_max` reduce tiles are reserved — typically matches the number of qk preload/global buffers).
+      - Template parameters: `SrcBuffers`, `XexpBuffers`, `pvVecBuffers` and `ExpMaxBuffers` (`ExpMaxBuffers` typically equals `qkp_tile_fifo_size` so each preload buffer has its own `l1_exp_max` tile).
       - Allocation order (reasoning): the helper assigns UB addresses in a fixed sequence so later code can TASSIGN/TSTORE/TLOAD with static offsets:
         - source `qk` vec tiles
         - `m1_local_max` (reduce tile)
@@ -266,7 +266,7 @@ Sim vs NPU comparison (Seq = 2K):
       - Loads a V tile and the P tile.
       - Writes `pv_tile_fifo` into a global float buffer, into per-tile ping-pong buffers.
     - Optimizations & tradeoffs:
-      - Choose `PV_GTN_BUFFERS` to permit double-buffering between p production and pv consumption.
+      - `pv_tile_fifo_size` (computed as `1 + qkPreloadNum`) controls PV ping/pong buffering between P production and GU consumption.
 
   - **compute_gu (reduction / GU stage)**
     - Role: reduce partial pv parts into the final O and perform the final normalization using `l1_exp_max` / `l2_global_sum` where required.
@@ -337,14 +337,15 @@ Sim vs NPU comparison (Seq = 2K):
 
   - **Overlap mechanisms & tuning knobs:**
     - `qkPreloadNum` lets cube pipeline run ahead producing QK tiles for future S1 tiles.
-    - `PV_GTN_BUFFERS` controls how many global buffers are used to store intermediate qk/pv outputs; increasing it enables more producer/consumer decoupling.
+    - `qkp_tile_fifo_size` sets the qk/p FIFO depth (derived as `1 + qkPreloadNum`) for producer/consumer overlap.
+    - `pv_tile_fifo_size` mirrors the qk FIFO depth for PV tiles so PV production can overlap with GU.
     - Synchronization uses lightweight device flags to minimize stalls; prefer more asynchronous overlap (larger preload, more buffers) when UB permits.
 
-  ### 4. Multicore task split, tiling and load balancing (TODO)
+  ### 4. Multicore task split, tiling and load balancing
 
   - **Multicore tiling and work distribution:**
-    - For BNSD (Batch, no-of-Head, Seqlen, HEAD_SIZE) QKV input, with intermediate QK(S0,S1) during computation, since S1 is the reduce axis, multi-core tiling should be split base on (B,N,S/Cube-S0), while in Flash-decoding case, since (B,N,S/Cube-S0) is small multi-core tiling could split in S1 axis and each core keeping partial O and have another kernel to do final GU.
+    - For BNSD (Batch, no-of-Head, Seqlen, HEAD_SIZE) QKV input, with intermediate QK(S0,S1) during computation, since S1 is the reduce axis, multi-core tiling should be split base on (B,N,S/Cube-S0), while in Flash-decoding case, since (B,N,S/Cube-S0) is small multi-core tiling could split in S1 axis (TODO) and each core keeping partial O and have another kernel to do final GU. The intermediate fifo buffers in case of a very large S0 > Max-no-of-physical-cores (which is 25 in A2/A3) introduce a wastage and uncessary of L2 cache write back it could be optimized base on core id (TODO)
 
   - **Load balancing guidance:**
-    - Consider the compution sparity when casual attention mask (TODO) applied, mulit-core tiling also need to take core unbalanced loading along the S0 axis.  
+    - Consider the compution sparity when casual attention mask applied (TODO), mulit-core tiling also need to take core unbalanced loading along the S0 axis, current appoarch is base on multi-block launchng with block num > physical no of core for large S0. More appoarches we could explorer later.
 

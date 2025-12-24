@@ -77,7 +77,7 @@ function(pto_example_mixed NAME)
     add_library(${NAME}_kernel SHARED ${NAME}_kernel.cpp)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c220 -DMEMORY_BASE -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE
-        ${PROJECT_SOURCE_DIR}/../../include/
+        ${PROJECT_SOURCE_DIR}/../../../../include/
         ${PROJECT_BINARY_DIR}
     )
     target_link_options(${NAME}_kernel PRIVATE --cce-fatobj-link)
@@ -85,8 +85,8 @@ function(pto_example_mixed NAME)
     add_executable(${NAME} main.cpp)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE
-        ${PROJECT_SOURCE_DIR}/../../include/
-        ${PROJECT_SOURCE_DIR}/../../tests/common
+        ${PROJECT_SOURCE_DIR}/../../../../include/
+        ${PROJECT_SOURCE_DIR}/../../../../tests/common
         ${PROJECT_BINARY_DIR}
     )
 
