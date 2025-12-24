@@ -103,6 +103,7 @@ tscatter
 mgather
 mscatter
 hashfind
+setgetval
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})

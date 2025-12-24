@@ -81,5 +81,6 @@ static inline void aclrtMallocHost(void**p, size_t sz){
 #define aclFinalize(x)
 #define set_flag(a,b,c)
 #define wait_flag(a,b,c)
+#define __cce_get_tile_ptr(x) x
 
 #endif

@@ -31,9 +31,9 @@ namespace pto {
                 }
             }
             if constexpr (TileDst::SFractal == SLayout::NoneBox && TileDst::isRowMajor) {
-                dst[i * TileDst::Cols] = sum;
+                dst[i * TileDst::Cols] = static_cast<typename TileDst::DType>(sum);
             } else {
-                dst[GetTileElementOffset<TileDst>(i, 0)] = sum;
+                dst[GetTileElementOffset<TileDst>(i, 0)] = static_cast<typename TileDst::DType>(sum);
             }
         });
     }
