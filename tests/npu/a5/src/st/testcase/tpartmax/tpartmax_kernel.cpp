@@ -37,7 +37,7 @@ __global__ AICORE void runTPartMax( __gm__ T __out__ *out, __gm__ T __in__ *src0
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
-    GlobalDataDst  dstGlobal(out);
+    GlobalDataDst dstGlobal(out);
 
     TLOAD(src0Tile, src0Global);
     TLOAD(src1Tile, src1Global);
@@ -54,16 +54,16 @@ __global__ AICORE void runTPartMax( __gm__ T __out__ *out, __gm__ T __in__ *src0
     out = dstGlobal.data();
 }
 
-template <typename T, int dstVR, int dstVC, int src0VR, int src0VC, int src1VR, int src1VC>
+template <typename T, int dstVR, int dstVC, int src0VR, int src0VC, int src1VR, int src1VC, bool isHalf = false>
 void LaunchTPartMax(T *out, T *src0, T *src1, void *stream)
 {
     constexpr int alignedSrc0VC = PTO_CEIL(src0VC, BLOCK_BYTE_SIZE/sizeof(T));
     constexpr int alignedSrc1VC = PTO_CEIL(src1VC, BLOCK_BYTE_SIZE/sizeof(T));
     constexpr int alignedDstVC  = PTO_CEIL(dstVC, BLOCK_BYTE_SIZE/sizeof(T));
-    if constexpr ( std::is_same_v<T, aclFloat16> && !std::is_same_v<T, uint16_t> ) {
+    if constexpr (std::is_same_v<T, aclFloat16> && isHalf == true) {
         runTPartMax<half, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC,
             dstVR, alignedDstVC, src0VR, alignedSrc0VC, src1VR, alignedSrc1VC><<<1, nullptr, stream>>>
-            ((half*)(out), (half*)(src0), (half*)(src1));
+            ((half *)out, (half *)src0, (half *)src1);
     } else {
         runTPartMax<T, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC,
             dstVR, alignedDstVC, src0VR, alignedSrc0VC, src1VR, alignedSrc1VC><<<1, nullptr, stream>>>
@@ -72,13 +72,13 @@ void LaunchTPartMax(T *out, T *src0, T *src1, void *stream)
 }
 
 template <typename T, int dstVR, int dstVC, int src0VR, int src0VC, int src1VR, int src1VC,
-    int dstTR, int dstTC, int src0TR, int src0TC, int src1TR, int src1TC>
+    int dstTR, int dstTC, int src0TR, int src0TC, int src1TR, int src1TC, bool isHalf = false>
 void LaunchTPartMax(T *out, T *src0, T *src1, void *stream)
 {
-    if constexpr ( std::is_same_v<T, aclFloat16> && !std::is_same_v<T, uint16_t> ) {
+    if constexpr (std::is_same_v<T, aclFloat16> && isHalf == true) {
         runTPartMax<half, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC,
             dstTR, dstTC, src0TR, src0TC, src1TR, src1TC><<<1, nullptr, stream>>>
-            ((half*)(out), (half*)(src0), (half*)(src1));
+            ((half *)out, (half *)src0, (half *)src1);
     } else {
         runTPartMax<T, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC,
             dstTR, dstTC, src0TR, src0TC, src1TR, src1TC><<<1, nullptr, stream>>>(out, src0, src1);
@@ -91,12 +91,13 @@ template void TPartMaxTest::LaunchTPartMax<float, 2, 24, 2, 24, 2, 8>(float *out
 template void TPartMaxTest::LaunchTPartMax<float, 128, 64, 128, 64, 96, 64>(float *out, float *src0, float *src1, void *stream);
 template void TPartMaxTest::LaunchTPartMax<float, 95, 95, 95, 95, 95, 95>(float *out, float *src0, float *src1, void *stream);
 template void TPartMaxTest::LaunchTPartMax<float, 122, 123, 104, 123, 122, 110>(float *out, float *src0, float *src1, void *stream);
-template void TPartMaxTest::LaunchTPartMax<half, 122, 123, 104, 123, 122, 110>(half *out, half *src0, half *src1, void *stream);
+template void TPartMaxTest::LaunchTPartMax<aclFloat16, 122, 123, 104, 123, 122, 110, true>
+    (aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
 template void TPartMaxTest::LaunchTPartMax<int16_t, 122, 123, 104, 123, 122, 110>(int16_t *out, int16_t *src0, int16_t *src1, void *stream);
 template void TPartMaxTest::LaunchTPartMax<int32_t, 122, 123, 104, 123, 122, 110>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
 template void TPartMaxTest::LaunchTPartMax<uint16_t, 122, 123, 104, 123, 122, 110>(uint16_t *out, uint16_t *src0, uint16_t *src1, void *stream);
 template void TPartMaxTest::LaunchTPartMax<uint32_t, 122, 123, 104, 123, 122, 110>(uint32_t *out, uint32_t *src0, uint32_t *src1, void *stream);
 template void TPartMaxTest::LaunchTPartMax<int8_t, 122, 123, 104, 123, 122, 110>(int8_t *out, int8_t *src0, int8_t *src1, void *stream);
 template void TPartMaxTest::LaunchTPartMax<uint8_t, 122, 123, 104, 123, 122, 110>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
-template void TPartMaxTest::LaunchTPartMax<aclFloat16, 5, 33, 5, 33, 5, 33, 6, 1520, 6, 1520, 6, 464>
+template void TPartMaxTest::LaunchTPartMax<aclFloat16, 5, 33, 5, 33, 5, 33, 6, 1520, 6, 1520, 6, 464, true>
     (aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);

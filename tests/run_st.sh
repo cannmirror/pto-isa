@@ -224,11 +224,11 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_acc2vec
     # python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmove_vect
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmrgsort
-    # python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmul
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmul
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmuls
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartadd
-    # python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmax
-    # python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmin
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmax
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmin
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpanddiv
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowmax

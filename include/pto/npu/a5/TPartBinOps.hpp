@@ -39,7 +39,7 @@ struct Padding<int32_t>{
     using Type = uint32_t;
     static constexpr Type Null = (Type)0;
     static constexpr Type Zero = (Type)0;
-    static constexpr Type Min  = (Type)0xffffffffUL;
+    static constexpr Type Min  = (Type)0x80000000UL;
     static constexpr Type Max  = (Type)0x7fffffffUL;
 };
 
