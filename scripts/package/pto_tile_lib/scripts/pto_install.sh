@@ -30,7 +30,7 @@ SCENE_FILE="${CURR_PATH}/../scene.info"
 ASCEND_INSTALL_INFO="ascend_install.info"
 
 ARCH_INFO=$(uname -m)
-PTO_PLATFORM_DIR=share/info/pto_tile_lib
+PTO_PLATFORM_DIR=pto_tile_lib
 PTO_PLATFORM_UPPER=$(echo "${PTO_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 
 TARGET_INSTALL_PATH=""
