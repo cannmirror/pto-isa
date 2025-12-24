@@ -186,7 +186,14 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case7
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttrans -g TTRANSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcmp -g TCMPTest.case_half_32x32_32x32_32x32
-
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd_tdiv -g TADD_TDIVTest.case_float_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmul_tadds -g TMUL_TADDSTest.case_float_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsub_texp -g TSUB_TEXPTest.case_float_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmuls_trowsum -g TMULS_TROWSUMTest.case_float_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand_tsqrt -g TROWEXPAND_TSQRTTest.case_float_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand_trowsum -g TROWEXPAND_TROWSUMTest.case_float_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowsum_trowexpand -g TROWSUM_TROWEXPANDTest.case_float_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand_tdiv -g TROWEXPAND_TDIVTest.case_float_64x64_64x64
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd
@@ -234,5 +241,13 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tstore_acc2gm
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttrans
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcmp
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd_tdiv
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmul_tadds
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsub_texp
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmuls_trowsum
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand_tsqrt
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand_trowsum
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowsum_trowexpand
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand_tdiv
   fi
 fi

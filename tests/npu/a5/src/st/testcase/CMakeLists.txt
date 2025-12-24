@@ -149,6 +149,14 @@ set(ALL_TESTCASES
     tassign
     tmov_ub2l1
     tcmp
+    tadd_tdiv
+    tmul_tadds
+    tsub_texp
+    tmuls_trowsum
+    trowexpand_tsqrt
+    trowexpand_trowsum
+    trowsum_trowexpand
+    trowexpand_tdiv
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
