@@ -70,6 +70,14 @@ winget install --id Microsoft.VisualStudio.2022.BuildTools -e
 
 After installation, open a **Developer Command Prompt for VS 2022** (or ensure `cl.exe` is on `PATH`).
 
+Manually download the compiler (optional):
+
+Possible options:
+- [WinLibs](https://winlibs.com),
+- [MSYS2](https://www.msys2.org)
+
+After installation, add `path_to_compiler/bin` directory to `PATH` (ensure that `gcc -v` is executable in the powershell).
+
 ## Get The Code
 
 ```bash
@@ -146,13 +154,18 @@ Common options:
   ```
 
   ```bash
-  # clean up the build directory
+  # Delete build dir and rebuild
   python3 tests/run_cpu.py --clean
   ```
 
   ```bash
   # on Windows, maybe need specify generator and cmake_perfix_path
   python3 tests/run_cpu.py --clean --generator "MinGW Makefiles" --cmake_prefix_path D:\gtest\
+  ```
+
+- set environment:
+  ```bash
+  export LD_LIBRARY_PATH=/path_to_compiler/lib64:$LD_LIBRARY_PATH
   ```
 
 # Environment Setup (Ascend 910B/910C, Linux)
