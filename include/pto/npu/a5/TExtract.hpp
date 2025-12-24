@@ -132,7 +132,7 @@ __tf__ AICORE void TExtractVecToMat(typename DstTileData::TileDType __out__ dst,
 {
     using T = typename SrcTileData::DType;
     constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(T);
-    uint32_t offset = srcValidRow * c0Size * (indexCol / c0Size) + (indexRow * c0Size + (indexCol % c0Size));
+    uint32_t offset = SrcTileData::Rows * c0Size * (indexCol / c0Size) + (indexRow * c0Size + (indexCol % c0Size));
     if constexpr (SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::NoneBox)) {
         offset = indexRow * srcValidCol + indexCol;
     }
@@ -141,13 +141,12 @@ __tf__ AICORE void TExtractVecToMat(typename DstTileData::TileDType __out__ dst,
     __cbuf__ T *dstPtr = (__cbuf__ T *)__cce_get_tile_ptr(dst);
     if constexpr (SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::NoneBox)) {
         uint16_t blockLen = dstValidRow * dstValidCol * sizeof(T) / BLOCK_BYTE_SIZE;
-        //dst, src, sid, nBurst, lenBurst, srcStride, dstStride
+        // dst, src, sid, nBurst, lenBurst, srcStride, dstStride
         copy_ubuf_to_cbuf(dstPtr, srcPtr, 0, 1, blockLen, 0, 0);
     } else if constexpr (!SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::RowMajor)) {
         uint16_t blockCout = CeilDivision(dstValidCol, c0Size);
         uint16_t blockLen = dstValidRow * c0Size * sizeof(T) / BLOCK_BYTE_SIZE;
-        constexpr uint16_t srcStride = (SrcTileData::Rows >= (DstTileData::Rows + 1)) ?
-            (SrcTileData::Rows - DstTileData::Rows) / BLOCK_BYTE_SIZE : 0;
+        constexpr uint16_t srcStride = SrcTileData::Rows - DstTileData::Rows;
         copy_ubuf_to_cbuf(dstPtr, srcPtr, 0, blockCout, blockLen, srcStride, 0);
     }
 }

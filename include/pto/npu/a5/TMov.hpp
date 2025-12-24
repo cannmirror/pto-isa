@@ -241,7 +241,10 @@ template <typename T, typename DstTileData, typename SrcTileData>
 AICORE void TMovToVecNd2Nz(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, uint32_t validRow, uint32_t validCol)
 {
     static_assert((std::is_same<T, half>::value) || (std::is_same<T, bfloat16_t>::value) ||
-        (std::is_same<T, float>::value), "Dst and src must be float, half or bfloat16_t.");
+        (std::is_same<T, float>::value) || (std::is_same<T, int32_t>::value) ||
+        (std::is_same<T, float8_e4m3_t>::value) || (std::is_same<T, float8_e5m2_t>::value) ||
+        (std::is_same<T, hifloat8_t>::value) || (std::is_same<T, int8_t>::value),
+        "Dst and src must be float/int32_t/half/bfloat16_t/int8_t/float8_e4m3_t/float8_e5m2_t/hifloat8_t.");
     constexpr int32_t srcRow = SrcTileData::Rows;
     constexpr int32_t srcCol = SrcTileData::Cols;
     constexpr int32_t srcByteSize = srcRow * srcCol * sizeof(T);
@@ -254,19 +257,24 @@ AICORE void TMovToVecNd2Nz(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, uint32_t vali
     constexpr bool isOptForConflict = (dstByteSize >= (srcRow + 1) * srcCol * sizeof(T)) ? true : false;
     uint32_t blockStride = isOptForConflict ? ((validRow + 1) * C0_SIZE_BYTE) / BLOCK_BYTE_SIZE :
         (validRow * C0_SIZE_BYTE) / BLOCK_BYTE_SIZE;
+    uint32_t virtualRow = isOptForConflict ? validRow + 1 : validRow;
     uint32_t repeatStride = 1;
+    uint16_t innerLoopNum = validRow - 1;
     __VEC_SCOPE__
     {
         RegTensor<T> vreg;
         MaskReg preg;
-        for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
-            for (uint16_t j = 0; j < repeatTimes; ++j) {
-                uint32_t count = ((j + 1) * elementsPerRepeat >= validCol ?
-                    (validCol - j * elementsPerRepeat) : elementsPerRepeat);
-                preg = CreatePredicate<T>(count);
-                vlds(vreg, srcPtr, i * SrcTileData::RowStride + j * count, NORM);
-                vsstb(vreg, dstPtr, (blockStride << 16u) | (repeatStride &0xFFFFU), preg, POST_UPDATE);
+        for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
+            uint32_t count = ((j + 1) * elementsPerRepeat >= validCol ?
+                (validCol - j * elementsPerRepeat) : elementsPerRepeat);
+            preg = CreatePredicate<T>(count);
+            for (uint16_t i = 0; i < (uint16_t)innerLoopNum; ++i) {
+                vlds(vreg, srcPtr, (i * SrcTileData::RowStride + j * elementsPerRepeat), NORM);
+                vsstb(vreg, dstPtr, (blockStride << 16u) | (1 & 0xFFFFU), preg, POST_UPDATE);
             }
+            vlds(vreg, srcPtr, (innerLoopNum * SrcTileData::RowStride + j * elementsPerRepeat), NORM);
+            repeatStride = (REPEAT_BYTE * virtualRow - innerLoopNum * BLOCK_BYTE_SIZE) / BLOCK_BYTE_SIZE;
+            vsstb(vreg, dstPtr, (blockStride << 16u) | (repeatStride & 0xFFFFU), preg, POST_UPDATE);
         }
     }
 }

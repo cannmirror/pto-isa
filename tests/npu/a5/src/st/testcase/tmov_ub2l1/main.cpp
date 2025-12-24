@@ -35,15 +35,15 @@ std::string GetGoldenDir() {
 }
 
 template <int32_t testKey, typename dType>
-void testTMovUb2L1(int32_t rows, int32_t cols)
+void testTMovUb2L1(int32_t srcRows, int32_t srcCols, int32_t dstRows, int32_t dstCols)
 {
     aclInit(nullptr);
     aclrtSetDevice(0);
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    size_t srcByteSize = rows * cols * sizeof(dType);
-    size_t dstByteSize = rows * cols * sizeof(dType);
+    size_t srcByteSize = srcRows * srcCols * sizeof(dType);
+    size_t dstByteSize = dstRows * dstCols * sizeof(dType);
     uint64_t *dstHost, *srcHost, *dstDevice, *srcDevice;
 
     aclrtMallocHost((void**)(&dstHost), dstByteSize);
@@ -78,5 +78,45 @@ void testTMovUb2L1(int32_t rows, int32_t cols)
 
 TEST_F(TMovUb2l1Test, case1)
 {
-    testTMovUb2L1<1, uint16_t>(16, 32);
+    testTMovUb2L1<1, uint16_t>(16, 32, 16, 32);
+}
+
+TEST_F(TMovUb2l1Test, case2)
+{
+    testTMovUb2L1<2, uint16_t>(64, 256, 64, 256);
+}
+
+TEST_F(TMovUb2l1Test, case3)
+{
+    testTMovUb2L1<3, float>(48, 72, 48, 72);
+}
+
+TEST_F(TMovUb2l1Test, case4)
+{
+    testTMovUb2L1<4, float>(96, 8, 96, 8);
+}
+
+TEST_F(TMovUb2l1Test, case5)
+{
+    testTMovUb2L1<5, int8_t>(32, 512, 32, 512);
+}
+
+TEST_F(TMovUb2l1Test, case6)
+{
+    testTMovUb2L1<6, int8_t>(64, 96, 64, 96);
+}
+
+TEST_F(TMovUb2l1Test, case7)
+{
+    testTMovUb2L1<7, uint16_t>(64, 64, 48, 48);
+}
+
+TEST_F(TMovUb2l1Test, case8)
+{
+    testTMovUb2L1<8, float>(128, 128, 64, 64);
+}
+
+TEST_F(TMovUb2l1Test, case9)
+{
+    testTMovUb2L1<9, int8_t>(256, 256, 32, 32);
 }
