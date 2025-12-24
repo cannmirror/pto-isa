@@ -322,5 +322,88 @@ AICORE void TRSQRT_IMPL(TileData &dst, TileData &src) {
     TRsqrtCustom<TileData>(dst.data(), src.data(), validRow, validCol);
 }
 
+/* TABS */
+template<typename T> AICORE void _vabs(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
+    vabs(reg_dst, reg_src, preg, MODE_ZEROING);
+}
+
+template <typename TileData>
+AICORE void TABS_IMPL(TileData &dst, TileData &src) {
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
+    constexpr unsigned rowStride = TileData::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    static_assert(TileData::isRowMajor, "TABS: not supported Layout type");
+    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TABS: not supported Layout type");
+
+    TUnaryOp<TileData, _vabs, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
+}
+
+/* TLOG */
+template<typename T> AICORE void _vlog(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
+    vln(reg_dst, reg_src, preg, MODE_ZEROING);
+}
+
+template <typename TileData>
+AICORE void TLOG_IMPL(TileData &dst, TileData &src) {
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
+    constexpr unsigned rowStride = TileData::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    static_assert(TileData::isRowMajor, "TLOG: not supported Layout type");
+    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TLOG: not supported Layout type");
+
+    TUnaryOp<TileData, _vlog, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
+}
+
+/* TRECIP */
+template <typename TileData>
+__tf__ AICORE void TRecipCustom(typename TileData::TileDType __out__ dst,
+                                    typename TileData::TileDType __in__ src,
+                                    unsigned validCol, unsigned validRow) {
+    using T = typename TileData::DType;
+    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
+    __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
+
+    __VEC_SCOPE__
+    {
+        RegTensor<T> vreg0;
+        RegTensor<T> vreg1;
+        RegTensor<T> vreg2;
+        uint16_t batch_size = 256 / static_cast<uint16_t>(sizeof(typename TileData::DType));
+        uint16_t loop_num = CEIL(validCol, batch_size);
+        uint32_t count = (batch_size >= validCol ? validCol : batch_size);
+        MaskReg preg = CreatePredicate<T>(count);
+        vdup(vreg1, (T)1.0, preg, MODE_MERGING);
+        for (uint16_t i = 0; i < (uint16_t) validRow; ++i) {
+            for(uint16_t j = 0; j < loop_num; ++j) {
+                vlds(vreg0, srcPtr, (i * TileData::Cols + j * batch_size), NORM);
+                count = ((j + 1) * batch_size >= validCol ? validCol - j * batch_size : batch_size);
+                preg = CreatePredicate<T>(count);
+                vdiv(vreg2, vreg1, vreg0, preg);
+                vsts(vreg2, dstPtr, (i * TileData::Cols + j * batch_size), NORM_B32, preg);
+            }
+        }
+    }
+}
+
+template <typename TileData>
+AICORE void TRECIP_IMPL(TileData &dst, TileData &src) {
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
+    constexpr unsigned rowStride = TileData::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    static_assert(TileData::isRowMajor, "TRECIP: not supported Layout type");
+    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TRECIP: not supported Layout type");
+
+    TRecipCustom<TileData>(dst.data(), src.data(), validRow, validCol);
+}
+
 }
 #endif

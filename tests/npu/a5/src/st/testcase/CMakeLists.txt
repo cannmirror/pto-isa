@@ -143,6 +143,9 @@ set(ALL_TESTCASES
     trsqrt
     tsqrt
     texp
+    tabs
+    tlog
+    trecip
     tstore_acc2gm
     tdivs
     tmuls
