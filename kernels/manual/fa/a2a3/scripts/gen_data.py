@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 """
-Generate Q/K input and golden output for TBMM_QK 128x128x128 (float32)
-Writes: q.bin, k.bin, qk.bin
+Generate Q/K input and golden output for TBMM_QK cases.
+Supports dynamic case configuration via CLI or generated_cases.json.
 """
+import argparse
+import json
 import os
 import shutil
+from pathlib import Path
+
 import numpy as np
-import argparse
 
 np.random.seed(7)
 
 S0_BASE = 64
 HEAD_SIZE = 128
 
-def gen_case(path, s0, s1, head_size=HEAD_SIZE):
+def gen_case(path, s0, s1, head_size=HEAD_SIZE, cube_s1=128):
     # generate inputs in FP16, compute golden in FP32
     q_fp32 = (np.random.randn(s0, head_size).astype(np.float16) * 1.5).astype(np.float32)
     k_fp32 = (np.random.randn(head_size, s1).astype(np.float16) * 1.5).astype(np.float32)
@@ -31,7 +34,7 @@ def gen_case(path, s0, s1, head_size=HEAD_SIZE):
     # compute softmax in tiled fashion by Cube_S1 tiles (tile size 128)
     arr_f32 = golden.astype(np.float32)
     scale = 1/np.sqrt(HEAD_SIZE)
-    Cube_S1 = 128
+    Cube_S1 = cube_s1
     num_tiles = s1 // Cube_S1
 
     # allocate full arrays to collect per-tile exponentials and per-tile global sums
@@ -88,12 +91,12 @@ def gen_case(path, s0, s1, head_size=HEAD_SIZE):
     # compute full pv by accumulating per-tile partials
     pv = np.zeros((s0, head_size), dtype=np.float32)
     # compute per-tile partials (Cube_S1=128)
-    num_tiles = s1 // 128
+    num_tiles = s1 // cube_s1
     pv_tile_fifo_parts = []
     for ti in range(num_tiles):
-        c0 = ti * 128
-        soft_tile = soft_f32[:, c0:c0+128]
-        v_tile = v[c0:c0+128, :].astype(np.float32)
+        c0 = ti * cube_s1
+        soft_tile = soft_f32[:, c0:c0+cube_s1]
+        v_tile = v[c0:c0+cube_s1, :].astype(np.float32)
         pv_tile_fifo = (soft_tile.dot(v_tile)).astype(np.float32)
         pv_tile_fifo_parts.append(pv_tile_fifo)
         pv += pv_tile_fifo
@@ -130,29 +133,64 @@ def gen_case(path, s0, s1, head_size=HEAD_SIZE):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate TFA golden data")
-    parser.add_argument("--case", dest="case_name", help="Generate only the specified gtest case (e.g. TFATest.case_float_H_128_S0_512_S1_2048 or its _precision_debug variant)")
+    parser.add_argument("--case", dest="case_name", help="Generate only the specified case name (e.g. case_float_H_128_S0_512_S1_2048)")
+    parser.add_argument("--cases", action="append", help="Explicit case entry HEAD_SIZE,S0,S1[,CUBE_S0,CUBE_S1] (repeatable)")
+    parser.add_argument("--cases-json", dest="cases_json", default=None, help="Path to generated_cases.json (defaults to ../generated_cases.json if present)")
+    parser.add_argument("--head-size", type=int, help="HEAD_SIZE for a single on-demand case")
+    parser.add_argument("--s0", type=int, help="S0 for a single on-demand case")
+    parser.add_argument("--s1", type=int, help="S1 for a single on-demand case")
     args = parser.parse_args()
 
-    script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)) + "/../build/")
-    cases = [
-        ('case_float_H_128_S0_128_S1_1024', (128, HEAD_SIZE, 1024)),
-        ('case_float_H_128_S0_128_S1_2048', (128, HEAD_SIZE, 2048)),
-        ('case_float_H_128_S0_128_S1_8192', (128, HEAD_SIZE, 8192)),
-        ('case_float_H_128_S0_512_S1_1024', (512, HEAD_SIZE, 1024)),
-        ('case_float_H_128_S0_512_S1_2048', (512, HEAD_SIZE, 2048)),
-        ('case_float_H_128_S0_512_S1_8192', (512, HEAD_SIZE, 8192)),
-    ]
+    script_root = Path(__file__).resolve().parents[1]
+    default_json = script_root / "generated_cases.json"
+
+    def parse_case_entry(entry: str):
+        parts = [p.strip() for p in entry.split(',') if p.strip()]
+        if len(parts) < 3:
+            raise ValueError("Case entry must be HEAD_SIZE,S0,S1 or HEAD_SIZE,S0,S1,CUBE_S0,CUBE_S1")
+        head, s0, s1 = map(int, parts[:3])
+        cube_s1 = int(parts[-1]) if len(parts) >= 4 else 128
+        return head, s0, s1, cube_s1
+
+    cases = []
+    if args.cases:
+        for entry in args.cases:
+            head, s0, s1, cube_s1 = parse_case_entry(entry)
+            cases.append((f"case_float_H_{head}_S0_{s0}_S1_{s1}", (s0, head, s1, cube_s1)))
+    elif args.head_size and args.s0 and args.s1:
+        cases.append((f"case_float_H_{args.head_size}_S0_{args.s0}_S1_{args.s1}", (args.s0, args.head_size, args.s1, 128)))
+    elif args.cases_json or default_json.exists():
+        json_path = Path(args.cases_json) if args.cases_json else default_json
+        payload = json.loads(json_path.read_text())
+        for entry in payload:
+            cases.append((entry["name"], (entry["s0"], entry["head_size"], entry["s1"], entry.get("cube_s1", 128))))
+    else:
+        cases = [
+            ('case_float_H_128_S0_128_S1_1024', (128, HEAD_SIZE, 1024, 128)),
+            ('case_float_H_128_S0_128_S1_2048', (128, HEAD_SIZE, 2048, 128)),
+            ('case_float_H_128_S0_128_S1_8192', (128, HEAD_SIZE, 8192, 128)),
+            ('case_float_H_128_S0_512_S1_1024', (512, HEAD_SIZE, 1024, 128)),
+            ('case_float_H_128_S0_512_S1_2048', (512, HEAD_SIZE, 2048, 128)),
+            ('case_float_H_128_S0_512_S1_8192', (512, HEAD_SIZE, 8192, 128)),
+        ]
 
     if args.case_name:
         target = args.case_name
         if target.endswith('_precision_debug'):
             target = target[:-len('_precision_debug')]
         filtered = [entry for entry in cases if entry[0] == target]
-        if not filtered:
-            raise ValueError(f"Requested case '{args.case_name}' not found in predefined cases")
-        cases = filtered
+        if filtered:
+            cases = filtered
+        else:
+            try:
+                head, s0, s1, cube_s1 = parse_case_entry(target)
+                synthetic_name = f"case_float_H_{head}_S0_{s0}_S1_{s1}"
+                cases = [(synthetic_name, (s0, head, s1, cube_s1))]
+            except Exception:
+                raise ValueError(f"Requested case '{args.case_name}' not found in configured cases")
 
-    for name, (s0, head_size, s1) in cases:
-        case_dir = os.path.join(script_dir, name)
+    build_dir = script_root / "build"
+    for name, (s0, head_size, s1, cube_s1) in cases:
+        case_dir = build_dir / name
         os.makedirs(case_dir, exist_ok=True)
-        gen_case(case_dir, s0, s1, head_size)
+        gen_case(str(case_dir), s0, s1, head_size, cube_s1)

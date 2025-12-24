@@ -30,8 +30,20 @@ source ${ASCEND_INSTALL_PATH}/bin/setenv.bash
 2. Run the example:
 
 ```bash
-cd ${git_clone_path}/kernels/manual/fa/a2a3
+cd ${git_clone_path}/kernels/manual/fa/a2a3/
+# Run default cases (same set baked into generated_cases.*)
+bash run.sh -r npu -v Ascend910B1
+
+# Run a single case from the generated set
 bash run.sh -r npu -v Ascend910B1 -c case_float_H_128_S0_128_S1_1024
+
+# Provide custom cases (semicolon separated: HEAD_SIZE,S0,S1,CUBE_S0,CUBE_S1)
+bash run.sh -r npu -v Ascend910B1 --cases "128,128,1024,128,128;128,512,2048,128,128"
+
+# Provide custom cases and run just one of them
+bash run.sh -r npu -v Ascend910B1 --cases "128,128,1024,128,128;128,512,2048,128,128" \
+  -c case_float_H_128_S0_128_S1_1024
+
 ```
 
 If the run succeeds, the output prints:
@@ -335,3 +347,4 @@ Sim vs NPU comparison (Seq = 2K):
 
   - **Load balancing guidance:**
     - Consider the compution sparity when casual attention mask (TODO) applied, mulit-core tiling also need to take core unbalanced loading along the S0 axis.  
+
