@@ -39,7 +39,7 @@ namespace pto{
     #define UNIT_FLAG_ENABLE(i, n) (LAST_LOOP(i, n) ? 3 : 2)
 
 
-    [aicore] inline uint64_t getPingPong(uint32_t flip){
+    AICORE inline uint64_t getPingPong(uint32_t flip){
         static uint64_t pingpong = 0;
         if(flip) {
             pingpong = 1- pingpong;
@@ -62,7 +62,7 @@ namespace pto{
     * @param Cube_N - The tile dimension N
     * @return - Largest Cube_K value (32, 64, 128, or 256) that fits in memory
     */
-    [aicore] inline constexpr uint32_t calculateFittingCubeK(uint32_t Cube_M, uint32_t Cube_N) {
+    AICORE inline constexpr uint32_t calculateFittingCubeK(uint32_t Cube_M, uint32_t Cube_N) {
         uint32_t bestCubeK = 32;  // Default to smallest value
         
         // Test candidates from largest to smallest to find the largest that fits
@@ -83,7 +83,7 @@ namespace pto{
 
     // Deduce layout_t from SLayouts
     template<typename TileDataA, typename TileDataB>
-    [aicore] inline constexpr layout_t deduce_layout() {
+    AICORE inline constexpr layout_t deduce_layout() {
         if constexpr (TileDataA::SFractal == SLayout::RowMajor && TileDataB::SFractal == SLayout::RowMajor) return layout_t::NN;
         if constexpr (TileDataA::SFractal == SLayout::RowMajor && TileDataB::SFractal == SLayout::ColMajor) return layout_t::NT;
         if constexpr (TileDataA::SFractal == SLayout::ColMajor && TileDataB::SFractal == SLayout::RowMajor) return layout_t::TN;
@@ -92,7 +92,7 @@ namespace pto{
     }
 
      template <unsigned Cube_M, unsigned Tile_K, unsigned Cube_N, layout_t LAYOUT = layout_t::NONE, typename TileDataA, typename TileDataB, typename TileDataC>
-    [aicore] inline void pto_macro_matmul(TileDataA &aMatTile, TileDataB &bMatTile, TileDataC &cAccTile){
+    AICORE inline void pto_macro_matmul(TileDataA &aMatTile, TileDataB &bMatTile, TileDataC &cAccTile){
 
 
         constexpr layout_t layout = deduce_layout<TileDataA, TileDataB>();

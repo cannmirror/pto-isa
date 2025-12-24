@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-constexpr PTO_INTERNAL float constexpr_sqrt(float x) {
+constexpr AICORE inline float constexpr_sqrt(float x) {
     if (x <= 0.0f)
         return 0.0f;
     float guess = x;
@@ -25,12 +25,12 @@ constexpr PTO_INTERNAL float constexpr_sqrt(float x) {
     return guess;
 }
 
-constexpr PTO_INTERNAL float constexpr_inv_sqrt(float x) {
+constexpr AICORE inline float constexpr_inv_sqrt(float x) {
     return 1.0f / constexpr_sqrt(x);
 }
 
 template <int HEAD_SIZE, typename ReduceTileD1, typename TileDataD2, typename TileDataS1>
-PTO_INTERNAL void softmax_opt_fa_init_impl(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
+AICORE inline void softmax_opt_fa_init_impl(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
     ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum, ReduceTileD1 __out__ new_global_max,
     ReduceTileD1 __out__ new_global_sum, ReduceTileD1 __out__ exp_max, TileDataS1 __out__ tmp_float,
     TileDataS1 __out__ p_tile_f32) {
@@ -59,7 +59,7 @@ PTO_INTERNAL void softmax_opt_fa_init_impl(TileDataD2 __out__ x_exp, TileDataS1 
 }
 
 template <int HEAD_SIZE, typename ReduceTileD1, typename TileDataD2, typename TileDataS1>
-PTO_INTERNAL void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
+AICORE inline void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
     ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum, ReduceTileD1 __out__ new_global_max,
     ReduceTileD1 __out__ new_global_sum, ReduceTileD1 __out__ exp_max, TileDataS1 __out__ tmp_float,
     TileDataS1 __out__ p_tile_f32) {
@@ -112,7 +112,7 @@ PTO_INTERNAL void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDat
 }
 
 template <bool init = false, int HEAD_SIZE, typename ReduceTileD1, typename TileDataD2, typename TileDataS1>
-PTO_INTERNAL void pto_macro_fa_softmax(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
+AICORE inline void pto_macro_fa_softmax(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
     ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum, ReduceTileD1 __in__ new_global_max,
         ReduceTileD1 __out__ new_global_sum, ReduceTileD1 __out__ exp_max, TileDataS1 __out__ input_reduce_tmp,
         TileDataS1 __out__ p_tile_fp32) {

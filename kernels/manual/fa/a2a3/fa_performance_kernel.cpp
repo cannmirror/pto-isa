@@ -40,11 +40,6 @@ enum CoreEvtID : uint32_t {
 
 #define VEC_CORES 2
 
-// Inline macro used for small, performance-sensitive functions
-#ifndef PTO_INLINE
-#define PTO_INLINE __attribute__((always_inline)) inline
-#endif
-
 // Detect build-time macros and expose as constexpr flags for clearer conditionals
 #ifdef __DAV_CUBE__
 constexpr bool DAV_CUBE = true;
@@ -61,6 +56,10 @@ constexpr bool DAV_VEC = false;
 constexpr std::size_t MAX_TILE_L1_BYTES = 512U * 1024U;
 constexpr std::size_t MAX_VEC_UB_BYTES = 192U * 1024U;
 
+AICORE inline uint16_t _getFFTSMsg(uint16_t mode, uint16_t flag_id, uint16_t base_const = 0x1) {
+    return ((base_const & 0xf) + ((mode & 0x3) << 4) + ((flag_id & 0xf) << 8));
+}
+
 template <typename TileType>
 constexpr AICORE std::size_t tile_storage_bytes() {
     using ElementType = typename TileType::DType;
@@ -73,7 +72,7 @@ constexpr AICORE std::size_t tile_buffer_total_bytes() {
 }
 
 template <typename TileType, std::size_t NumBuffers>
-PTO_INLINE AICORE uint32_t assign_tile_buffers(TileType (&tiles)[NumBuffers], uint32_t base_offset) {
+AICORE inline uint32_t assign_tile_buffers(TileType (&tiles)[NumBuffers], uint32_t base_offset) {
     if constexpr (NumBuffers == 0) {
         return base_offset;
     }
@@ -90,7 +89,7 @@ PTO_INLINE AICORE uint32_t assign_tile_buffers(TileType (&tiles)[NumBuffers], ui
 }
 
 template <typename TileA, std::size_t NumA, typename TileB, std::size_t NumB>
-PTO_INLINE AICORE uint32_t assign_tile_buffers_union(TileA (&tilesA)[NumA], TileB (&tilesB)[NumB], uint32_t base_offset) {
+AICORE inline uint32_t assign_tile_buffers_union(TileA (&tilesA)[NumA], TileB (&tilesB)[NumB], uint32_t base_offset) {
     static_assert(NumA == NumB, "Union assignment expects matching buffer counts");
     if constexpr (NumA == 0) {
         return base_offset;
@@ -112,7 +111,7 @@ PTO_INLINE AICORE uint32_t assign_tile_buffers_union(TileA (&tilesA)[NumA], Tile
 
 template <typename TileQType, std::size_t NumQ, typename TileKType, std::size_t NumK, typename TilePType,
     std::size_t NumP, typename TileVType, std::size_t NumV>
-PTO_INLINE AICORE void allocate_cube_tile_buffers(
+AICORE inline void allocate_cube_tile_buffers(
     TileQType (&qTiles)[NumQ], TileKType (&kTiles)[NumK], TilePType (&pTiles)[NumP], TileVType (&vTiles)[NumV]) {
     constexpr std::size_t total_bytes =
         tile_buffer_total_bytes<TileQType, NumQ>() + tile_buffer_total_bytes<TileKType, NumK>() +
@@ -129,7 +128,7 @@ PTO_INLINE AICORE void allocate_cube_tile_buffers(
 
 template <typename TileDataF_T, typename ReduceTileF_T, typename TileDataH_T, typename TileOutT, std::size_t SrcBuffers,
     std::size_t XexpBuffers, std::size_t pvVecBuffers, std::size_t ExpMaxBuffers>
-PTO_INLINE AICORE void allocate_vec_tile_buffers(TileDataF_T (&srcTiles)[SrcBuffers], ReduceTileF_T &m1_local_max,
+AICORE inline void allocate_vec_tile_buffers(TileDataF_T (&srcTiles)[SrcBuffers], ReduceTileF_T &m1_local_max,
     TileDataF_T &input_reduce_tmp, ReduceTileF_T &l1_local_sum, ReduceTileF_T &m2_global_max,
     ReduceTileF_T &l2_global_sum, ReduceTileF_T (&l1_exp_max)[ExpMaxBuffers], TileDataH_T (&x_expT)[XexpBuffers],
     TileOutT (&pvTile)[pvVecBuffers], TileOutT &runningOTile) {
@@ -178,7 +177,7 @@ PTO_INLINE AICORE void allocate_vec_tile_buffers(TileDataF_T (&srcTiles)[SrcBuff
 // Keeps a per-type static running index that toggles on every call. Caller may pass
 // `initial_id` (0 or 1) to set the starting buffer index on the first call for that tile type.
 template <typename AccTileT>
-PTO_INLINE AICORE int assign_running_acc_tile(AccTileT &accTile, int initial_id = -1) {
+AICORE inline int assign_running_acc_tile(AccTileT &accTile, int initial_id = -1) {
     static int running_tile_buffer_idx = 0; // per-instantiation running buffer index: 0 -> base0, 1 -> base1
     if (initial_id == 0 || initial_id == 1) {
         running_tile_buffer_idx = initial_id;
@@ -192,7 +191,7 @@ PTO_INLINE AICORE int assign_running_acc_tile(AccTileT &accTile, int initial_id 
 
 template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int QKP_CV_FIFO, bool INTERMEDIATE_CHECK,
     typename TileMatQData, typename TileMatKData, typename TileQKData>
-PTO_INLINE AICORE void compute_qk(int tile_idx, __gm__ half *q, __gm__ half *k, __gm__ float *qk_tile_fifo,
+AICORE inline void compute_qk(int tile_idx, __gm__ half *q, __gm__ half *k, __gm__ float *qk_tile_fifo,
     TileMatQData &qMatTile, TileMatKData &kMatTile, TileQKData &qkAccTile, uint64_t qkMatTileEventId, int accTileEvtID) {
     if constexpr (DAV_CUBE) {
         constexpr uint32_t Cube_S0 = CUBE_S0;
@@ -241,13 +240,13 @@ PTO_INLINE AICORE void compute_qk(int tile_idx, __gm__ half *q, __gm__ half *k, 
 
         set_flag(PIPE_FIX, PIPE_M, accTileEvtID);
 
-        ffts_cross_core_sync(PIPE_FIX, getFFTSMsg(0x2, BUF0_QK_READY)); // notify for QK produce data
+        ffts_cross_core_sync(PIPE_FIX, _getFFTSMsg(0x2, BUF0_QK_READY)); // notify for QK produce data
     }
 }
 
 template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int QKP_CV_FIFO, int PV_CV_FIFO, bool INTERMEDIATE_CHECK,
     typename TileMatPData, typename TileMatVData, typename TilePVData>
-PTO_INLINE AICORE void compute_pv(int tile_idx, __gm__ half *p_tile_fifo, __gm__ half *v, __gm__ float *pv_tile_fifo,
+AICORE inline void compute_pv(int tile_idx, __gm__ half *p_tile_fifo, __gm__ half *v, __gm__ float *pv_tile_fifo,
     TileMatPData &pMatTile, TileMatVData &vMatTile, TilePVData &pvAccTile, uint64_t svMatTileEventId, int accTileEvtID) {
     constexpr uint32_t Cube_S0 = CUBE_S0;
     constexpr uint32_t Cube_S1 = CUBE_S1;
@@ -274,7 +273,7 @@ PTO_INLINE AICORE void compute_pv(int tile_idx, __gm__ half *p_tile_fifo, __gm__
             static_cast<size_t>(buf_idx) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(Cube_S1);
         GlobalXexpTileT xexpLoad(p_tile_fifo + base_elems);
         TLOAD(pMatTile, xexpLoad);
-        ffts_cross_core_sync(PIPE_MTE2, getFFTSMsg(0x2, BUF1_SV_CONSUMED)); // notify SV consume data
+        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF1_SV_CONSUMED)); // notify SV consume data
 
         set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
         wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
@@ -299,13 +298,13 @@ PTO_INLINE AICORE void compute_pv(int tile_idx, __gm__ half *p_tile_fifo, __gm__
         TSTORE(pvGlobalTile, pvAccTile);
         set_flag(PIPE_FIX, PIPE_M, accTileEvtID);
 
-        ffts_cross_core_sync(PIPE_FIX, getFFTSMsg(0x2, UPDATE_READY)); // notify update produce data
+        ffts_cross_core_sync(PIPE_FIX, _getFFTSMsg(0x2, UPDATE_READY)); // notify update produce data
     }
 }
 
 template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int QKP_CV_FIFO, bool INTERMEDIATE_CHECK, typename TileDataF_T,
     typename TileDataH_T, typename ReduceTileF_T>
-PTO_INLINE AICORE void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_tile_fifo, __gm__ half *p_tile_fifo,
+AICORE inline void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_tile_fifo, __gm__ half *p_tile_fifo,
     __gm__ float *exp_max_ififo, __gm__ float *global_sum_out, __gm__ float *exp_max_out, TileDataF_T &qkVecTile,
     TileDataH_T &x_expT, TileDataF_T &input_reduce_tmp, ReduceTileF_T &m1_local_max,
     ReduceTileF_T &l1_local_sum, ReduceTileF_T &m2_global_max, ReduceTileF_T &l2_global_sum, ReduceTileF_T &l1_exp_max_ififo,
@@ -329,7 +328,7 @@ PTO_INLINE AICORE void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_t
         GlobalDataQK_VEC qkGlobalTile(qk_ptr);
         TLOAD(qkVecTile, qkGlobalTile);
 
-        ffts_cross_core_sync(PIPE_MTE2, getFFTSMsg(0x2, BUF0_SM_CONSUMED)); // notify for SM consume data
+        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF0_SM_CONSUMED)); // notify for SM consume data
 
         set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
         wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
@@ -372,7 +371,7 @@ PTO_INLINE AICORE void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_t
             }
         }
 
-        ffts_cross_core_sync(PIPE_MTE3, getFFTSMsg(0x2, BUF1_SM_READY)); // notify softmax produce data
+        ffts_cross_core_sync(PIPE_MTE3, _getFFTSMsg(0x2, BUF1_SM_READY)); // notify softmax produce data
 
         set_flag(PIPE_MTE3, PIPE_V, pTileEventId);
         //pipe_barrier(PIPE_ALL);
@@ -380,7 +379,7 @@ PTO_INLINE AICORE void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_t
 }
 
 template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int PV_CV_FIFO, bool INTERMEDIATE_CHECK, typename TileOutT, typename ReduceTileF_T>
-PTO_INLINE AICORE void compute_gu(int tile_idx, int num_tiles_s1, __gm__ float *pv_tile_fifo, __gm__ float *o_out,
+AICORE inline void compute_gu(int tile_idx, int num_tiles_s1, __gm__ float *pv_tile_fifo, __gm__ float *o_out,
     __gm__ float *o_parts_out, TileOutT &runningOTile, TileOutT &pvVecTile, ReduceTileF_T &l1_exp_max_ififo,
     ReduceTileF_T &l2_global_sum, uint64_t guEventId) {
     constexpr uint32_t Cube_S0 = CUBE_S0;
@@ -421,7 +420,7 @@ PTO_INLINE AICORE void compute_gu(int tile_idx, int num_tiles_s1, __gm__ float *
         }
 
         set_flag(PIPE_V, PIPE_MTE2, guEventId);
-        ffts_cross_core_sync(PIPE_MTE2, getFFTSMsg(0x2, UPDATE_CONSUMED)); // notify update consume data
+        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, UPDATE_CONSUMED)); // notify update consume data
 
         if (tile_idx == num_tiles_s1 - 1) {
             set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
@@ -538,7 +537,7 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
     int num_tiles_s1 = S1 / Cube_S1;
     if constexpr (DAV_CUBE) {
         for( int i = 0; i < qkp_tile_fifo_size; i++) {
-            ffts_cross_core_sync(PIPE_MTE2, getFFTSMsg(0x2, BUF1_SV_CONSUMED));
+            ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF1_SV_CONSUMED));
         }
         set_flag(PIPE_MTE1, PIPE_MTE2, EVENT_ID0);
         set_flag(PIPE_MTE1, PIPE_MTE2, EVENT_ID1);
@@ -549,10 +548,10 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
     }
     if constexpr (DAV_VEC) {
         for( int i = 0; i < qkp_tile_fifo_size; i++) {
-            ffts_cross_core_sync(PIPE_MTE2, getFFTSMsg(0x2, UPDATE_CONSUMED));
+            ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, UPDATE_CONSUMED));
         }
         for( int i = 0; i < qkp_tile_fifo_size; i++) {
-            ffts_cross_core_sync(PIPE_MTE2, getFFTSMsg(0x2, BUF0_SM_CONSUMED));
+            ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF0_SM_CONSUMED));
         }
         set_flag(PIPE_V, PIPE_MTE2, EVENT_ID0);
         set_flag(PIPE_V, PIPE_MTE2, EVENT_ID1);
