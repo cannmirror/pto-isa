@@ -40,6 +40,26 @@ enum CoreEvtID : uint32_t {
 
 #define VEC_CORES 2
 
+// -----------------------------------------------------------------------------
+// Performance tuning knobs (high-level)
+//
+// The kernel is a cross-core pipeline (Cube + Vec) with explicit FIFOs:
+//   QK (Cube):  compute_qk   -> qk_tile_fifo (fp32)
+//   P  (Vec):   compute_p    -> p_tile_fifo  (fp16 x_exp) + l1_exp_max_ififo
+//   PV (Cube):  compute_pv   -> pv_tile_fifo (fp32)
+//   GU (Vec):   compute_gu   -> o_out (fp32) with running rescale/update
+//
+// Key knobs that impact throughput (see runTFA<> below):
+// - CUBE_S0 / CUBE_S1: tile sizes for QK/PV cube matmuls (compute intensity vs. buffer pressure)
+// - qkPreloadNum: pipeline warmup depth (more overlap vs. more L1 FIFO footprint)
+// - *_TNBuffers: ping/pong depth for Mat tiles (overlap) and Vec tiles (latency hiding)
+// - QKV_CV_FIFO / PV_CV_FIFO: FIFO depth between stages (avoid backpressure)
+// -----------------------------------------------------------------------------
+
+// Inline macro used for small, performance-sensitive functions
+#ifndef PTO_INLINE
+#define PTO_INLINE __attribute__((always_inline)) inline
+#endif
 // Detect build-time macros and expose as constexpr flags for clearer conditionals
 #ifdef __DAV_CUBE__
 constexpr bool DAV_CUBE = true;
@@ -212,6 +232,8 @@ AICORE inline void compute_qk(int tile_idx, __gm__ half *q, __gm__ half *k, __gm
         wait_flag(PIPE_MTE1, PIPE_MTE2, qkMatTileEventId);
 
         if (tile_idx == 0) {
+            // Performance: keep Q stationary in L1 for the entire S1 loop.
+            // This saves one TLOAD per tile and increases effective bandwidth for large S1.
             TLOAD(qMatTile, qGlobal);
         }
 
@@ -222,13 +244,15 @@ AICORE inline void compute_qk(int tile_idx, __gm__ half *q, __gm__ half *k, __gm
 
         wait_flag(PIPE_FIX, PIPE_M, accTileEvtID);
 
+        // Cube compute: TMATMUL/ACC is wrapped by pto_macro_matmul() which handles K-splitting and L0 ping-pong.
         pto_macro_matmul<Cube_S0, Cube_HEAD, Cube_S1>(qMatTile, kMatTile, qkAccTile);
 
         set_flag(PIPE_MTE1, PIPE_MTE2, qkMatTileEventId);
         set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
         wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
-        wait_flag_dev(BUF0_SM_CONSUMED); // wait for SM consume data
+        // Backpressure: don't overwrite the QK FIFO slot until Vec softmax has consumed it.
+        wait_flag_dev(BUF0_SM_CONSUMED);
 
         using GlobalDataQK =
             GlobalTensor<float, pto::Shape<1, 1, 1, Cube_S0, Cube_S1>, pto::Stride<1, 1, 1, Cube_S1, 1>>;
@@ -240,7 +264,8 @@ AICORE inline void compute_qk(int tile_idx, __gm__ half *q, __gm__ half *k, __gm
 
         set_flag(PIPE_FIX, PIPE_M, accTileEvtID);
 
-        ffts_cross_core_sync(PIPE_FIX, _getFFTSMsg(0x2, BUF0_QK_READY)); // notify for QK produce data
+        // Handshake to Vec: signal that QK tile is ready for softmax.
+        ffts_cross_core_sync(PIPE_FIX, _getFFTSMsg(0x2, BUF0_QK_READY));
     }
 }
 
@@ -259,13 +284,16 @@ AICORE inline void compute_pv(int tile_idx, __gm__ half *p_tile_fifo, __gm__ hal
         using GlobalVT =
             GlobalTensor<half, pto::Shape<1, 1, 1, Cube_S1, HEAD_SIZE>, pto::Stride<1, 1, 1, HEAD_SIZE, 1>>;
 
+        // Prevent L1 tile reuse hazards for the PV stage.
         wait_flag(PIPE_MTE1, PIPE_MTE2, svMatTileEventId);
 
         GlobalVT vLoad((__gm__ half *)(v + s1_index * HEAD_SIZE));
         TLOAD(vMatTile, vLoad);
 
-        wait_flag_dev(BUF1_SM_READY); // wait for softmax produce data
+        // Wait for Vec to finish writing P (x_exp) into the FIFO.
+        wait_flag_dev(BUF1_SM_READY);
 
+        // Load P (x_exp) from the producer FIFO. Layout matches host allocation: (qkPreloadNum+1) slots per block.
         using GlobalXexpTileT =
             GlobalTensor<half, pto::Shape<1, 1, 1, Cube_S0, Cube_S1>, pto::Stride<1, 1, 1, Cube_S1, 1>>;
         const uint32_t buf_idx = static_cast<uint32_t>(tile_idx % QKP_CV_FIFO);
@@ -273,13 +301,15 @@ AICORE inline void compute_pv(int tile_idx, __gm__ half *p_tile_fifo, __gm__ hal
             static_cast<size_t>(buf_idx) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(Cube_S1);
         GlobalXexpTileT xexpLoad(p_tile_fifo + base_elems);
         TLOAD(pMatTile, xexpLoad);
-        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF1_SV_CONSUMED)); // notify SV consume data
+        // Handshake back to Vec: allow it to advance its FIFO after we have loaded P.
+        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF1_SV_CONSUMED));
 
         set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
         wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
         wait_flag(PIPE_FIX, PIPE_M, accTileEvtID);
 
+        // Cube compute: PV = P * V for this S1 tile.
         pto_macro_matmul<Cube_S0, Cube_S1, Cube_HEAD>(pMatTile, vMatTile, pvAccTile);
 
         set_flag(PIPE_MTE1, PIPE_MTE2, svMatTileEventId);
@@ -287,7 +317,8 @@ AICORE inline void compute_pv(int tile_idx, __gm__ half *p_tile_fifo, __gm__ hal
         wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
 
-        wait_flag_dev(UPDATE_CONSUMED); // wait for update consume data
+        // Backpressure: don't overwrite PV FIFO slot until Vec update has consumed it.
+        wait_flag_dev(UPDATE_CONSUMED);
 
         using GlobalDataPV =
             GlobalTensor<float, pto::Shape<1, 1, 1, Cube_S0, HEAD_SIZE>, pto::Stride<1, 1, 1, HEAD_SIZE, 1>>;
@@ -298,7 +329,8 @@ AICORE inline void compute_pv(int tile_idx, __gm__ half *p_tile_fifo, __gm__ hal
         TSTORE(pvGlobalTile, pvAccTile);
         set_flag(PIPE_FIX, PIPE_M, accTileEvtID);
 
-        ffts_cross_core_sync(PIPE_FIX, _getFFTSMsg(0x2, UPDATE_READY)); // notify update produce data
+        // Handshake to Vec: signal that PV tile is ready for the running update.
+        ffts_cross_core_sync(PIPE_FIX, _getFFTSMsg(0x2, UPDATE_READY));
     }
 }
 
@@ -317,7 +349,8 @@ AICORE inline void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_tile_
         const int s1_index = tile_idx * static_cast<int>(Cube_S1);
 
         wait_flag(PIPE_V, PIPE_MTE2, pTileEventId);
-        wait_flag_dev(BUF0_QK_READY); // wait for QK produce data
+        // Wait for Cube to produce QK into the FIFO.
+        wait_flag_dev(BUF0_QK_READY);
 
         const uint32_t buf_idx = static_cast<uint32_t>(tile_idx % QKP_CV_FIFO);
         const size_t base_elems =
@@ -328,16 +361,19 @@ AICORE inline void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_tile_
         GlobalDataQK_VEC qkGlobalTile(qk_ptr);
         TLOAD(qkVecTile, qkGlobalTile);
 
-        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF0_SM_CONSUMED)); // notify for SM consume data
+        // Handshake back to Cube: allow it to advance QK FIFO after we have loaded this tile.
+        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF0_SM_CONSUMED));
 
         set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
         wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
 
         wait_flag(PIPE_MTE3, PIPE_V, pTileEventId);
         if (initFlag) {
+                // First tile initializes (global_max, global_sum) for numerically-stable streaming softmax.
                 pto_macro_fa_softmax<true, HEAD_SIZE>(x_expT, qkVecTile, m1_local_max, l1_local_sum, m2_global_max,
                 l2_global_sum, l1_exp_max_ififo, input_reduce_tmp, qkVecTile);
         } else {
+                // Subsequent tiles update (global_max, global_sum) and compute exp(x - new_max).
                 pto_macro_fa_softmax<false, HEAD_SIZE>(x_expT, qkVecTile, m1_local_max, l1_local_sum, m2_global_max,
                 l2_global_sum, l1_exp_max_ififo, input_reduce_tmp, qkVecTile);
         }
@@ -346,8 +382,10 @@ AICORE inline void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_tile_
         set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
         wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
 
-        wait_flag_dev(BUF1_SV_CONSUMED); // wait for SV consume data
+        // Backpressure: don't overwrite P FIFO slot until Cube PV stage has consumed it.
+        wait_flag_dev(BUF1_SV_CONSUMED);
 
+        // Store softmax output (x_exp, fp16) into the P FIFO slot for the PV stage.
         __gm__ half *p_ptr = p_tile_fifo + Vec_S0 * Cube_S1 * get_subblockid();
         using GlobalPTileHalf =
             GlobalTensor<half, pto::Shape<1, 1, 1, Vec_S0, Cube_S1>, pto::Stride<1, 1, 1, Cube_S1, 1>>;
@@ -355,23 +393,34 @@ AICORE inline void compute_p(int tile_idx, bool initFlag, __gm__ float *qk_tile_
         GlobalPTileHalf pTileHalf((__gm__ half *)(p_ptr));
         TSTORE(pTileHalf, x_expT);
 
-        if constexpr (INTERMEDIATE_CHECK) {
-            if (tile_idx != 0) {
-                // Store per-row exp_max (Vec_S0 x 1) into a 1D FIFO sized Cube_S0 per preload buffer.
-                using GlobalPMaxFloat =
-                    GlobalTensor<float, pto::Shape<1, 1, 1, 1, Vec_S0>, pto::Stride<1, 1, 1, Cube_S0, 1>>;
-                using ExpMax1D = Tile<TileType::Vec, float, 1, Vec_S0, BLayout::RowMajor, 1, Vec_S0>;
-                const size_t base_elems_pmax = static_cast<size_t>(buf_idx) * static_cast<size_t>(Cube_S0) +
-                    static_cast<size_t>(Vec_S0) * get_subblockid();
-                __gm__ float *p_ptr_fp32 = exp_max_ififo + base_elems_pmax;
-                GlobalPMaxFloat pMaxGlobal(p_ptr_fp32);
-                ExpMax1D l1_exp_max_rowmajor;
-                TRESHAPE(l1_exp_max_rowmajor, l1_exp_max_ififo);
-                TSTORE(pMaxGlobal, l1_exp_max_rowmajor);
-            }
-        }
+        // Store exp_max (rescale factor) into the exp_max FIFO (one value per row).
+        using GlobalPMaxFloat = GlobalTensor<float, pto::Shape<1, 1, 1, 1, Vec_S0>, pto::Stride<1, 1, 1, Cube_S0, 1>>;
+        using Reduce1D = Tile<TileType::Vec, float, 1, Vec_S0, BLayout::RowMajor, 1, Vec_S0>;
 
-        ffts_cross_core_sync(PIPE_MTE3, _getFFTSMsg(0x2, BUF1_SM_READY)); // notify softmax produce data
+        const size_t base_elems_pmax = static_cast<size_t>(buf_idx) * static_cast<size_t>(Cube_S0) +
+            static_cast<size_t>(Vec_S0) * get_subblockid();
+        __gm__ float *p_ptr_fp32 = exp_max_ififo + base_elems_pmax;
+        GlobalPMaxFloat pMaxGlobal(p_ptr_fp32);
+        Reduce1D l1_exp_max_rowmajor;
+        TRESHAPE(l1_exp_max_rowmajor, l1_exp_max_ififo);
+        TSTORE(pMaxGlobal, l1_exp_max_rowmajor);
+
+        // Store per-tile running state (global_sum, global_max) for validation/debugging.
+        const size_t tile_row_offset = static_cast<size_t>(tile_idx) * static_cast<size_t>(S0) +
+            static_cast<size_t>(Vec_S0) * get_subblockid();
+        using GlobalReduce1D = GlobalTensor<float, pto::Shape<1, 1, 1, 1, Vec_S0>, pto::Stride<1, 1, 1, 1, 1>>;
+        GlobalReduce1D gsum((__gm__ float *)(global_sum_out + tile_row_offset));
+        GlobalReduce1D gmax((__gm__ float *)(exp_max_out + tile_row_offset));
+
+        Reduce1D l2_global_sum_rowmajor;
+        Reduce1D m2_global_max_rowmajor;
+        TRESHAPE(l2_global_sum_rowmajor, l2_global_sum);
+        TRESHAPE(m2_global_max_rowmajor, m2_global_max);
+        TSTORE(gsum, l2_global_sum_rowmajor);
+        TSTORE(gmax, m2_global_max_rowmajor);
+
+        // Handshake to Cube: signal that P (x_exp) tile is ready for PV.
+        ffts_cross_core_sync(PIPE_MTE3, _getFFTSMsg(0x2, BUF1_SM_READY));
 
         set_flag(PIPE_MTE3, PIPE_V, pTileEventId);
         //pipe_barrier(PIPE_ALL);
@@ -397,9 +446,12 @@ AICORE inline void compute_gu(int tile_idx, int num_tiles_s1, __gm__ float *pv_t
         __gm__ float *pv_out_ptr = pv_tile_fifo + base_elems + Vec_S0 * HEAD_SIZE * get_subblockid();
         GlobalDataPV_VEC pvGlobalVec(pv_out_ptr);
 
-        wait_flag_dev(UPDATE_READY); // wait for update consume data
+        // Wait for Cube to produce PV into the FIFO.
+        wait_flag_dev(UPDATE_READY);
 
-        //softamx output and gu input buffer reuse
+        // Running update:
+        // O_new = O_prev * exp_max + PV_tile  (and normalize on the last tile).
+        // Performance: keep the running O in UB and only write back once (last tile).
        
         wait_flag(PIPE_V, PIPE_MTE2, guEventId);
 
@@ -415,12 +467,14 @@ AICORE inline void compute_gu(int tile_idx, int num_tiles_s1, __gm__ float *pv_t
             if (tile_idx < num_tiles_s1 - 1) {
                 pto_macro_fa_gu<ReduceTileF_T, TileOutT>(runningOTile, pvVecTile, l1_exp_max_ififo);
             } else {
+                // Last tile: apply the final normalization by global_sum to output the true softmax result.
                 pto_macro_fa_gu_last<ReduceTileF_T, TileOutT>(runningOTile, pvVecTile, l1_exp_max_ififo, l2_global_sum);
             }
         }
 
         set_flag(PIPE_V, PIPE_MTE2, guEventId);
-        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, UPDATE_CONSUMED)); // notify update consume data
+        // Handshake back to Cube: allow it to advance PV FIFO after we have loaded/consumed this tile.
+        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, UPDATE_CONSUMED));
 
         if (tile_idx == num_tiles_s1 - 1) {
             set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
@@ -451,8 +505,18 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
     constexpr uint32_t Cube_S1 = CUBE_S1; // per-tile S1 chunk
     constexpr uint32_t Cube_HEAD = HEAD_SIZE;
     constexpr uint32_t Vec_S0 = Cube_S0 / VEC_CORES;
-    // Buffer counts for optional double-buffering (default 1)
+    // --------------------------
+    // Tuning knobs (pipeline)
+    //
+    // qkPreloadNum controls how many (QK -> P) tiles we warm up before entering the steady-state loop.
+    // - Larger preload improves overlap (Cube/VEC concurrency) for long S1.
+    // - Larger preload increases FIFO footprint (qkGlobalTensorNBuffers / pvGlobalTensorNBuffers / guGlobalTensorNBuffers).
     constexpr uint32_t qkPreloadNum = 4;
+
+    // Buffer counts for instruction-level overlap:
+    // - srcVecTNBuffers/xexpVecTNBuffers: Vec ping-pong for QK load and x_exp output
+    // - *MatTNBuffers: L1 ping-pong for Cube stage (K/P/V)
+    // Keep these small (1-2) unless you have measured stall bubbles that require deeper buffering.
     constexpr uint32_t srcVecTNBuffers = 2;
     constexpr uint32_t xexpVecTNBuffers = 2;
     constexpr uint32_t outOTileNBuffers = 2;
@@ -661,11 +725,11 @@ void LaunchTFA(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, aclF
 
 #define INSTANTIATE_TFA(S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1) \
 template void LaunchTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
-    aclFloat16 *p_out, float *p_out_fp32, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, \
-    float *qk_out, float *pv_out, void *stream); \
+    aclFloat16 *p_tile_fifo, float *exp_max_ififo, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, \
+    float *qk_tile_fifo, float *pv_tile_fifo, void *stream); \
 template void LaunchTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, true>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
-    aclFloat16 *p_out, float *p_out_fp32, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, \
-    float *qk_out, float *pv_out, void *stream);
+    aclFloat16 *p_tile_fifo, float *exp_max_ififo, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, \
+    float *qk_tile_fifo, float *pv_tile_fifo, void *stream);
 
 TFA_FOR_EACH_CASE(INSTANTIATE_TFA)
 

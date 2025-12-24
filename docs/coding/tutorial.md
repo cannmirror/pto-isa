@@ -113,7 +113,7 @@ Why this is “Auto style”:
 - No explicit flags/events in the source code.
 - The kernel is written as a direct dataflow.
 
-On CPU simulation (`python3 run_cpu.py`), this style is typically enough to validate correctness.
+On CPU simulation (`python3 tests/run_cpu.py`), this style is typically enough to validate correctness.
 
 ## 4. The same kernel: vector add (PTO-Manual style)
 
@@ -269,7 +269,7 @@ To build real GEMM/attention kernels you add:
 - Browse more examples (expanded walkthroughs):
   - `docs/coding/tutorials/README.md`
 - Run CPU simulation first:
-  - `python3 run_cpu.py --verbose`
+  - `python3 tests/run_cpu.py --verbose`
 - Use the instruction reference as needed:
   - `docs/isa/README.md`
 

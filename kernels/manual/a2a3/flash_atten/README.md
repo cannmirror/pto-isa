@@ -10,7 +10,7 @@ This example demonstrates how to implement a mixed FA operator using PTO, includ
 ## Directory Layout
 
 ```
-kernels/manual/fa/a2a3/
+kernels/manual/a2a3/flash_atten/
 ├── scripts/
 │   └── gen_data.py              # Generates input and golden output
 ├── CMakeLists.txt               # Build configuration
@@ -30,7 +30,8 @@ source ${ASCEND_INSTALL_PATH}/bin/setenv.bash
 2. Run the example:
 
 ```bash
-cd ${git_clone_path}/kernels/manual/fa/a2a3/
+cd ${git_clone_path}/kernels/manual/a2a3/flash_atten
+
 # Run default cases (same set baked into generated_cases.*)
 bash run.sh -r npu -v Ascend910B1
 
@@ -348,4 +349,3 @@ Sim vs NPU comparison (Seq = 2K):
 
   - **Load balancing guidance:**
     - Consider the compution sparity when casual attention mask applied (TODO), mulit-core tiling also need to take core unbalanced loading along the S0 axis, current appoarch is base on multi-block launchng with block num > physical no of core for large S0. More appoarches we could explorer later.
-

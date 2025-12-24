@@ -17,6 +17,19 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
+// -----------------------------------------------------------------------------
+// FlashAttention "GU" (running update) macro
+//
+// This implements the numerically-stable streaming update:
+//   O = O * exp(max_prev - max_new) + PV_tile
+// and on the last tile:
+//   O = O / global_sum
+//
+// Performance notes:
+// - Keep O resident in UB across tiles to avoid extra TLOAD/TSTORE.
+// - exp_max and global_sum are per-row reduced tiles (shape [S0, 1]) that get broadcast over columns.
+// -----------------------------------------------------------------------------
+
 template <typename reducedTileData, typename svTileData>
 AICORE inline void pto_macro_fa_gu(
     svTileData __out__ prev_sv_tile, svTileData __in__ est_sv_tile, reducedTileData __in__ exp_max) {

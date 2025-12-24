@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Source: user-provided Flash Attention numbers for kernels/manual/fa/a2a3.
+  Source: user-provided Flash Attention numbers for kernels/manual/a2a3/flash_atten.
   Metric plotted: Normalized TFLOPS (scaled to 24 cores).
   Series:
     - 1 core (S0=128):  [38.27, 62.62, 147.08, 172.86] at S1=[1024,2048,4096,8192]

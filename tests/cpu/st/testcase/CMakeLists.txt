@@ -23,7 +23,6 @@ function(pto_cpu_sim_st NAME)
     )
 
     target_link_libraries(${NAME} PRIVATE
-        GTest::gtest
         GTest::gtest_main
         Threads::Threads
     )
@@ -103,6 +102,7 @@ tcolexpand
 tscatter
 mgather
 mscatter
+hashfind
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})

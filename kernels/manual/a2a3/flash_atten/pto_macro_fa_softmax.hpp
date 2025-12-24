@@ -15,7 +15,20 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-constexpr AICORE inline float constexpr_sqrt(float x) {
+// -----------------------------------------------------------------------------
+// FlashAttention streaming softmax (tile-level)
+//
+// Given one QK tile X (fp32), compute x_exp = exp(scale * (X - new_global_max)).
+// This function maintains per-row running state (global_max, global_sum) so that we can
+// stream over S1 tiles without materializing the full attention matrix.
+//
+// Performance notes:
+// - Keep intermediate computations in fp32 for numerical stability.
+// - The `init` specialization initializes running state for the first S1 tile.
+// - The 2D->1D reshape for TCVT is used to avoid layout constraints and keep the cast fast.
+// -----------------------------------------------------------------------------
+
+constexpr PTO_INTERNAL float constexpr_sqrt(float x) {
     if (x <= 0.0f)
         return 0.0f;
     float guess = x;
@@ -78,7 +91,7 @@ AICORE inline void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDa
     Tile1D_fp32 p_tile_f32_1d;
     Tile1D_out x_exp_1d;
 
-    // FA2.0 not init mode
+    // FA2.0 streaming mode (not first tile): update (global_max, global_sum) and rescale old sums.
     TROWMAX(local_max, input_x, tmp_float);
     pipe_barrier(PIPE_V);
     TRESHAPE(tmp_shw_local_max, local_max);

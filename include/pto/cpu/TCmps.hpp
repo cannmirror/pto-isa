@@ -12,9 +12,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TCMPS_HPP
 #include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
+#include <cmath>
 #include <vector>
-
-using namespace std;
 
 namespace pto {
 
@@ -24,12 +23,13 @@ template <typename T>
 AICORE uint8_t CmpCall(T a, T b, CmpMode cmpMode)
 {
     uint8_t res = 0;
+    const double diff = static_cast<double>(a) - static_cast<double>(b);
     switch (static_cast<CmpMode>(cmpMode)) {
         case CmpMode::EQ:
-            res = (std::abs(a-b) < 1e-9);
+            res = (std::fabs(diff) < 1e-9);
             break;
         case CmpMode::NE:
-            res = (std::abs(a-b) > 1e-9);
+            res = (std::fabs(diff) > 1e-9);
             break;
         case CmpMode::LT:
             res = (a < b);
@@ -44,7 +44,7 @@ AICORE uint8_t CmpCall(T a, T b, CmpMode cmpMode)
             res = (a <= b);
             break;
         default:
-            res = (std::abs(a-b) < 1e-9);
+            res = (std::fabs(diff) < 1e-9);
             break;
     }
     return res;

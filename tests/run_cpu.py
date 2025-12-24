@@ -485,7 +485,7 @@ def perform_build(args, source_dir, build_dir, cxx, cc) -> bool:
             f"-DCMAKE_BUILD_TYPE={args.build_type}",
             *([f"-DTEST_CASE={args.testcase}"] if args.testcase else []),
             *([f"-DCMAKE_C_COMPILER={cc}"] if cc else []),
-            *([f"-DCMAKE_CXX_COMPILER={cxx}", f"-DCMAKE_COMPILER={cxx}"] if cxx else []),
+            *([f"-DCMAKE_CXX_COMPILER={cxx}"] if cxx else []),
             *(["-G", args.generator] if args.generator else []),
             *([f"-DCMAKE_PREFIX_PATH={args.cmake_prefix_path}"] if args.cmake_prefix_path else []),
         ],

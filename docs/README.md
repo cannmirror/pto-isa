@@ -24,6 +24,7 @@ This directory documents the PTO ISA (Instruction Set Architecture) used by PTO 
 - Abstract machine model (core/device/host): `docs/machine/abstract-machine.md`
 - Getting started (recommended: run on CPU first): `docs/getting-started.md`
 - Implementation and extension notes: `docs/coding/README.md`
+- Kernel examples (NPU-focused): `kernels/README.md`
 
 ## Documentation Layout
 

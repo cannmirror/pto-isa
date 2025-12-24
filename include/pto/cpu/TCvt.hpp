@@ -15,19 +15,19 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
 #include "pto/common/debug.h"
+#include <cmath>
 #include <type_traits>
-
-using namespace pto;
 
 namespace pto {
 constexpr double CAST_ODD_THRESHHOLD = 0.5;
-template <typename D, typename S>
-S applyRounding(S v, RoundMode mode)
-{
-    if constexpr (!std::is_floating_point_v<S> || std::is_floating_point_v<D>) {
-        return v;
-    }
 
+template <typename T>
+constexpr bool is_float_like_v =
+    std::is_floating_point_v<T> || std::is_same_v<T, half> || std::is_same_v<T, bfloat16_t> ||
+    std::is_same_v<T, aclFloat16>;
+
+inline double applyRoundingToIntegral(double v, RoundMode mode)
+{
     switch (mode) {
         case RoundMode::CAST_RINT:
             return std::rint(v);
@@ -45,14 +45,14 @@ S applyRounding(S v, RoundMode mode)
             return std::trunc(v);
 
         case RoundMode::CAST_ODD: {
-            S f = std::floor(v);
-            S frac = v - f;
+            const double f = std::floor(v);
+            const double frac = v - f;
 
-            if (frac > S(CAST_ODD_THRESHHOLD)) return f + 1;
-            if (frac < S(CAST_ODD_THRESHHOLD)) return f;
+            if (frac > CAST_ODD_THRESHHOLD) return f + 1;
+            if (frac < CAST_ODD_THRESHHOLD) return f;
 
             // tie (.5) → round to odd
-            auto i = static_cast<long long>(f);
+            const auto i = static_cast<long long>(f);
             return (i & 1) ? f : f + 1;
         }
 
@@ -69,8 +69,15 @@ PTO_INTERNAL void TCvt_Impl(typename TileDataD::TileDType dst,
             for (int j = 0; j < validCol; ++j) {
                 size_t dstIdx = GetTileElementOffset<TileDataD>(i,j);
                 size_t srcIdx = GetTileElementOffset<TileDataS>(i,j);  
-                auto roundedNumber = applyRounding<typename TileDataD::DType,typename TileDataS::DType>(src[srcIdx], mode);
-                dst[dstIdx] = static_cast<TileDataD::DType>(roundedNumber);
+                using D = typename TileDataD::DType;
+                using S = typename TileDataS::DType;
+
+                if constexpr (is_float_like_v<S> && std::is_integral_v<D>) {
+                    const double dv = static_cast<double>(src[srcIdx]);
+                    dst[dstIdx] = static_cast<D>(applyRoundingToIntegral(dv, mode));
+                } else {
+                    dst[dstIdx] = static_cast<D>(src[srcIdx]);
+                }
             }
         }
     }

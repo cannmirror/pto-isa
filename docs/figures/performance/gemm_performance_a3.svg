@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Source: kernels/gemm_performance/README.md ("Measured Performance (Reference)")
-  Platform: Ascend A3 (24 cores), GEMM m=n=k=6144, fp16 inputs -> fp32 output
-  Metrics:
-    - Cube util:   86.1%
-    - Scalar util:  8.1%
-    - MTE1 util:   68.1%
-    - MTE2 util:   95.2%
-    - MTE3 util:    3.1%
-    - AIC cycles: 66725939
-    - Wall time: 1.506 ms
+  Source: kernels/manual/a2a3/gemm_performance/README.md ("Measured Performance (Reference)")
+  Platform: Ascend A3 (24 cores), fp16 inputs -> fp32 output
+  Metric: TFLOPS derived from wall time (ms)
+
+  Formula:
+    FLOPs = 2 * m * k * n
+    TFLOPS = FLOPs / time_seconds / 1e12
+
+  Data points (m=k=n):
+    1536: 0.0388 ms -> 186.8 TFLOPS
+    3072: 0.2067 ms -> 280.5 TFLOPS
+    6144: 1.5060 ms -> 308.0 TFLOPS
+    7680: 3.1680 ms -> 286.0 TFLOPS
 -->
-<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420" viewBox="0 0 980 420" role="img" aria-label="GEMM performance reference chart">
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420" viewBox="0 0 980 420" role="img" aria-label="GEMM TFLOPS by shape (Ascend A3)">
   <defs>
     <style>
       :root { color-scheme: light dark; }
@@ -21,12 +24,9 @@
       .tick { font: 13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #666; }
       .grid { stroke: #e5e5e5; stroke-width: 1.2; }
       .axis { stroke: #b5b5b5; stroke-width: 1.6; }
-      .bar { fill: #2f6fed; }
-      .bar2 { fill: #00a58a; }
-      .bar3 { fill: #f59f00; }
-      .bar4 { fill: #8e44ad; }
-      .bar5 { fill: #e74c3c; }
-      .value { font: 600 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #111; }
+      .series { fill: none; stroke: #2f6fed; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+      .marker { fill: #2f6fed; stroke: #fff; stroke-width: 1.6; }
+      .value { font: 600 13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #111; }
       @media (prefers-color-scheme: dark) {
         .title { fill: #f3f3f3; }
         .subtitle { fill: #c7c7c7; }
@@ -35,57 +35,57 @@
         .grid { stroke: #2e2e2e; }
         .axis { stroke: #4a4a4a; }
         .value { fill: #f3f3f3; }
+        .series { stroke: #7aa2ff; }
+        .marker { fill: #7aa2ff; }
       }
     </style>
   </defs>
 
   <rect x="0" y="0" width="980" height="420" fill="transparent" />
 
-  <text x="24" y="36" class="title">GEMM performance (reference)</text>
-  <text x="24" y="62" class="subtitle">Ascend A3 (24 cores), m=n=k=6144, fp16 inputs → fp32 output · Data: kernels/gemm_performance/README.md</text>
+  <text x="24" y="36" class="title">GEMM throughput (reference)</text>
+  <text x="24" y="62" class="subtitle">Ascend A3 (24 cores), fp16 inputs → fp32 output · TFLOPS computed from wall time · Data: kernels/manual/a2a3/gemm_performance/README.md</text>
 
   <!-- Chart area -->
-  <!-- Origin (left, bottom) = (90, 340). Height = 210 (0..100%). -->
-  <!-- Horizontal gridlines -->
-  <line x1="90" y1="340" x2="940" y2="340" class="axis" />
-  <line x1="90" y1="130" x2="940" y2="130" class="axis" />
-  <line x1="90" y1="288" x2="940" y2="288" class="grid" />
-  <line x1="90" y1="236" x2="940" y2="236" class="grid" />
-  <line x1="90" y1="184" x2="940" y2="184" class="grid" />
+  <!-- Plot box: left=90, right=940, top=95, bottom=320 -->
+  <line x1="90" y1="320" x2="940" y2="320" class="axis" />
+  <line x1="90" y1="95" x2="940" y2="95" class="axis" />
+  <line x1="90" y1="320" x2="90" y2="95" class="axis" />
 
-  <!-- Y ticks: 0, 25, 50, 75, 100 -->
-  <text x="62" y="344" class="tick">0%</text>
-  <text x="56" y="292" class="tick">25%</text>
-  <text x="56" y="240" class="tick">50%</text>
-  <text x="56" y="188" class="tick">75%</text>
-  <text x="50" y="134" class="tick">100%</text>
+  <!-- Y grid (0..320 TFLOPS) -->
+  <line x1="90" y1="320" x2="940" y2="320" class="axis" />
+  <line x1="90" y1="263.75" x2="940" y2="263.75" class="grid" />
+  <line x1="90" y1="207.5" x2="940" y2="207.5" class="grid" />
+  <line x1="90" y1="151.25" x2="940" y2="151.25" class="grid" />
+  <line x1="90" y1="95" x2="940" y2="95" class="axis" />
 
-  <!-- Bars (scale: 100% -> 210px) -->
-  <!-- Cube 86.1% -->
-  <rect x="130" y="159.2" width="120" height="180.8" rx="6" class="bar" />
-  <text x="190" y="152" text-anchor="middle" class="value">86.1%</text>
-  <text x="190" y="368" text-anchor="middle" class="label">Cube</text>
+  <text x="52" y="324" class="tick">0</text>
+  <text x="46" y="268" class="tick">80</text>
+  <text x="40" y="212" class="tick">160</text>
+  <text x="40" y="156" class="tick">240</text>
+  <text x="40" y="99" class="tick">320</text>
+  <text x="22" y="208" class="label" transform="rotate(-90 22,208)">TFLOPS</text>
 
-  <!-- MTE2 95.2% -->
-  <rect x="280" y="140.1" width="120" height="199.9" rx="6" class="bar2" />
-  <text x="340" y="133" text-anchor="middle" class="value">95.2%</text>
-  <text x="340" y="368" text-anchor="middle" class="label">MTE2</text>
+  <!-- X axis -->
+  <text x="90" y="350" class="label">m=k=n</text>
+  <text x="200" y="350" class="tick" text-anchor="middle">1536</text>
+  <text x="410" y="350" class="tick" text-anchor="middle">3072</text>
+  <text x="620" y="350" class="tick" text-anchor="middle">6144</text>
+  <text x="830" y="350" class="tick" text-anchor="middle">7680</text>
 
-  <!-- MTE1 68.1% -->
-  <rect x="430" y="196.0" width="120" height="144.0" rx="6" class="bar3" />
-  <text x="490" y="189" text-anchor="middle" class="value">68.1%</text>
-  <text x="490" y="368" text-anchor="middle" class="label">MTE1</text>
+  <!-- Points mapped to y with max=320: y = 320 - (tflops/320)*225 -->
+  <!-- 186.8 -> y=188.7 ; 280.5 -> y=123.0 ; 308.0 -> y=103.7 ; 286.0 -> y=119.2 -->
+  <polyline class="series" points="200,188.7 410,123.0 620,103.7 830,119.2" />
 
-  <!-- Scalar 8.1% -->
-  <rect x="580" y="323.0" width="120" height="17.0" rx="6" class="bar4" />
-  <text x="640" y="316" text-anchor="middle" class="value">8.1%</text>
-  <text x="640" y="368" text-anchor="middle" class="label">Scalar</text>
+  <circle class="marker" cx="200" cy="188.7" r="5.5" />
+  <circle class="marker" cx="410" cy="123.0" r="5.5" />
+  <circle class="marker" cx="620" cy="103.7" r="5.5" />
+  <circle class="marker" cx="830" cy="119.2" r="5.5" />
 
-  <!-- MTE3 3.1% -->
-  <rect x="730" y="333.5" width="120" height="6.5" rx="6" class="bar5" />
-  <text x="790" y="326" text-anchor="middle" class="value">3.1%</text>
-  <text x="790" y="368" text-anchor="middle" class="label">MTE3</text>
+  <text x="200" y="174" class="value" text-anchor="middle">186.8</text>
+  <text x="410" y="108" class="value" text-anchor="middle">280.5</text>
+  <text x="620" y="89" class="value" text-anchor="middle">308.0</text>
+  <text x="830" y="104" class="value" text-anchor="middle">286.0</text>
 
-  <!-- Callouts -->
-  <text x="90" y="398" class="subtitle">AIC cycles: 66,725,939 · Wall time: 1.506 ms</text>
+  <text x="90" y="392" class="subtitle">TFLOPS = (2·m·k·n) / wall_time_seconds / 1e12</text>
 </svg>

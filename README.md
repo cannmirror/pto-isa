@@ -37,13 +37,24 @@ This repository includes performance-oriented kernels with reference measurement
 
 ### GEMM (A2/A3 reference)
 
-- Kernel: `kernels/gemm_performance/`
+- Kernel: `kernels/manual/a2a3/gemm_performance/`
+
+Measured on Ascend A3 (24 cores) with fp16 inputs → fp32 output:
+
+| Parameter | TMATMUL (Cube) Ratio | TEXTRACT Ratio | TLOAD Ratio | TSTORE Ratio | Execution time (ms) |
+| --- | --- | --- | --- | --- | --- |
+| `m=1536` `k=1536` `n=1536` | 54.5% | 42.2% | 72.2% | 7.7% | 0.0388 |
+| `m=3072` `k=3072` `n=3072` | 79.0% | 62.0% | 90.9% | 5.8% | 0.2067 |
+| `m=6144` `k=6144` `n=6144` | 86.7% | 68.1% | 95.2% | 3.1% | 1.5060 |
+| `m=7680` `k=7680` `n=7680` | 80.6% | 63.0% | 98.4% | 2.4% | 3.1680 |
+
+Detailed analysis and tuning notes: `kernels/manual/a2a3/gemm_performance/README.md`.
 
 ![GEMM performance reference (Ascend A3, 24 cores)](docs/figures/performance/gemm_performance_a3.svg)
 
 ### Flash Attention (A2/A3 reference)
 
-- Kernel: `kernels/manual/fa/a2a3/`
+- Kernel: `kernels/manual/a2a3/flash_atten/`
 
 ![Flash Attention normalized TFLOPS (A2/A3 reference)](docs/figures/performance/fa_normalized_tflops_a2a3.svg)
 

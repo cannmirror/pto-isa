@@ -47,11 +47,10 @@ namespace pto{
         return pingpong;
     }
 
-    // Memory constraints
-    constexpr uint32_t MEM_BUFFER_SIZE_BYTES = 64 * 1024/2;  // 64KB per buffer with pingpong (32KB)
-    constexpr uint32_t HALF_SIZE_BYTES = 2;                // sizeof(half) = 2 bytes
-    constexpr uint32_t CANDIDATE_CUBE_K[] = {32, 64, 128, 256};
-    constexpr uint32_t NUM_CANDIDATES = 4;
+    // Memory constraints (L0 ping-pong is 32 KiB per buffer in this implementation).
+    // Tuning knob: if you change L0 layout or buffer addresses, re-check these constraints.
+    constexpr uint32_t MEM_BUFFER_SIZE_BYTES = 64 * 1024 / 2; // 64KB per buffer with pingpong (32KB)
+    constexpr uint32_t HALF_SIZE_BYTES = 2;                   // sizeof(half) = 2 bytes
 
     /**
     * Calculate the largest Cube_K value that fits in the 64KB memory buffer.
@@ -62,10 +61,12 @@ namespace pto{
     * @param Cube_N - The tile dimension N
     * @return - Largest Cube_K value (32, 64, 128, or 256) that fits in memory
     */
-    AICORE inline constexpr uint32_t calculateFittingCubeK(uint32_t Cube_M, uint32_t Cube_N) {
-        uint32_t bestCubeK = 32;  // Default to smallest value
-        
-        // Test candidates from largest to smallest to find the largest that fits
+	    // Choose the largest Cube_K that fits both L0A (Cube_M x Cube_K) and L0B (Cube_K x Cube_N)
+	    // so TMATMUL stays compute-dense while respecting L0 ping-pong capacity.
+	    AICORE inline constexpr uint32_t calculateFittingCubeK(uint32_t Cube_M, uint32_t Cube_N) {
+	        uint32_t bestCubeK = 32;  // Default to smallest value
+	        
+	        // Test candidates from largest to smallest to find the largest that fits
         if (Cube_M * 256 * HALF_SIZE_BYTES <= MEM_BUFFER_SIZE_BYTES && 
             256 * Cube_N * HALF_SIZE_BYTES <= MEM_BUFFER_SIZE_BYTES) {
             bestCubeK = 256;
@@ -107,6 +108,7 @@ namespace pto{
 
 
 
+        // Ping-pong is used to overlap TEXTRACT (L1->L0) with TMATMUL on alternating buffers.
         uint64_t pingpong = getPingPong(0);
         const uint64_t Cube_K = calculateFittingCubeK(Cube_M, Cube_N);
         for (uint64_t k = 0 ; k < (uint64_t) (Tile_K / Cube_K); k++){
@@ -120,6 +122,7 @@ namespace pto{
             TASSIGN(bl0Tiles[0], (uint64_t) L0B_BUF0);
             TASSIGN(bl0Tiles[1], (uint64_t) L0B_BUF1);
 
+            // Wait until previous TMATMUL finishes using this L0 buffer before overwriting it via TEXTRACT.
             wait_flag(PIPE_M, PIPE_MTE1, pingpong);
 
             if (layout == layout_t::NT) {
@@ -127,12 +130,14 @@ namespace pto{
                 TASSIGN(bMatTile, (uint64_t) bMatTile.data() + k * Cube_K * Cube_N * sizeof(typename TileDataB::DType));
             } 
 
+            // TEXTRACT slices the current Cube_K panel into L0A/L0B.
             TEXTRACT(al0Tiles[pingpong], aMatTile, 0, 0);
             TEXTRACT(bl0Tiles[pingpong], bMatTile, 0, 0);
 
             set_flag(PIPE_MTE1, PIPE_M, pingpong);
             wait_flag(PIPE_MTE1, PIPE_M, pingpong);
 
+            // TMATMUL: first K-slice initializes, subsequent slices accumulate.
             if (k == 0){
                 TMATMUL(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
                 // TMATMUL_UF(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong], UNIT_FLAG_ENABLE(k, (K / Cube_K)));
