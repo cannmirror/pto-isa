@@ -646,7 +646,7 @@ get_package_feature_type() {
         return 1
     fi
 
-    if [ "${_package}" = "pto" ]; then
+    if [ "${_package}" = "pto_tile_lib" ]; then
         _feature_type_gpft="$(grep -i "^Pto_Install_Feature=" "${_install_info}" | cut -d"=" -f2-)"
     else
         _feature_type_gpft="$(grep -i "^\(${_package}_\)\?feature_type=" "${_install_info}" | cut -d"=" -f2-)"
@@ -674,7 +674,7 @@ get_package_chip_type() {
         return 1
     fi
 
-    if [ "${_package}" = "pto" ]; then
+    if [ "${_package}" = "pto_tile_lib" ]; then
         _cihp_gpct="$(grep -i "^Pto_Install_Chip=" "${_install_info}" | cut -d"=" -f2-)"
     else
         _cihp_gpct="$(grep -i "^\(${_package}_\)\?chip_type=" "${_install_info}" | cut -d"=" -f2-)"
@@ -1358,7 +1358,7 @@ get_aicpu_custom_create_softlink_path() {
     local _version_dir="$3"
     local _chip_name="$4"
 
-    eval "${_outvar}=\"${_install_path}/${_version_dir}/pto/${_chip_name}/aicpu/script/aicpu_custom_create_softlink.sh\""
+    eval "${_outvar}=\"${_install_path}/${_version_dir}/pto_tile_lib/${_chip_name}/aicpu/script/aicpu_custom_create_softlink.sh\""
 }
 
 # 重建软链时处理aicpu软链

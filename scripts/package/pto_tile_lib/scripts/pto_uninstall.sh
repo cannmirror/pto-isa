@@ -152,7 +152,7 @@ get_installed_param() {
   if [ "${PKG_VERSION_DIR}" = "" ]; then
     TARGET_INSTALL_PATH=${TARGET_VERSION_DIR}
   else
-    TARGET_INSTALL_PATH=$(readlink -f "${TARGET_VERSION_DIR}/../")
+    TARGET_INSTALL_PATH=$(readlink -f "${TARGET_VERSION_DIR}/../../../")
   fi
 }
 
@@ -169,7 +169,7 @@ remove_module() {
 
   bash "${COMMON_PARSER_FILE}" --package="${PTO_PLATFORM_DIR}" --uninstall --recreate-softlink \
     --username="${TARGET_USERNAME}" --usergroup="${TARGET_USERGROUP}" --version=$RUN_PKG_VERSION \
-    --version-dir=$PKG_VERSION_DIR --use-share-info --remove-install-path ${UNINSTALL_OPTION} "${INSTALLED_TYPE}" "${TARGET_INSTALL_PATH}" \
+    --version-dir=$PKG_VERSION_DIR --use-share-info ${UNINSTALL_OPTION} "${INSTALLED_TYPE}" "${TARGET_INSTALL_PATH}" \
     "${FILELIST_FILE}" "${IN_FEATURE}" --recreate-softlink
   log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${OPERATE_FAILED};ERR_DES:Uninstall pto module failed."
 
@@ -251,11 +251,14 @@ main() {
 
   remove_pto
 
-  remote_all_soft_link
+ # remote_all_soft_link
 
   if [ "${UNINSTALL_MODE}" != "upgrade" ]; then
-    remove_dir_if_empty ${TARGET_VERSION_DIR}
+    remove_dir_if_empty ${TARGET_VERSION_DIR}/${PTO_PLATFORM_DIR}
   fi
+  remove_dir_if_empty ${INSTALLED_PATH}/cann/share/info
+  remove_dir_if_empty ${INSTALLED_PATH}/cann/share
+  remove_dir_if_empty ${INSTALLED_PATH}/cann
   remove_dir_if_empty ${INSTALLED_PATH}
 
   logandprint "[INFO]: Pto package uninstalled successfully! Uninstallation takes effect immediately."

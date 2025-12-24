@@ -87,7 +87,7 @@ init_install_env() {
   else
     TARGET_VERSION_DIR=${TARGET_INSTALL_PATH}/${PKG_VERSION_DIR}
   fi
-  TARGET_MOULDE_DIR=${TARGET_VERSION_DIR}/${PTO_PLATFORM_DIR}
+  TARGET_MOULDE_DIR=${TARGET_VERSION_DIR}/share/info/${PTO_PLATFORM_DIR}
   INSTALL_INFO_FILE=${TARGET_MOULDE_DIR}/${ASCEND_INSTALL_INFO}
 
   if [ "$(id -u)" != "0" ]; then
@@ -379,7 +379,7 @@ create_tbe_kernel_softlink() {
     return 0
   fi
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in/op_impl/ai_core/tbe/kernel
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/built-in/op_impl/ai_core/tbe/kernel
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -436,7 +436,7 @@ create_tbe_kernel_softlink() {
 
 create_tbe_impl_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in/op_impl/ai_core/tbe/impl
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/built-in/op_impl/ai_core/tbe/impl
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -459,7 +459,7 @@ create_tbe_impl_softlink() {
 
 create_tbe_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in/op_impl/ai_core/tbe
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/built-in/op_impl/ai_core/tbe
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -477,10 +477,10 @@ create_tbe_softlink() {
   fi
 }
 
-#create softlink cann/pto/built-in
+#create softlink cann/pto_tile_lib/built-in
 create_latest_builtin_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/built-in
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/built-in
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -498,10 +498,10 @@ create_latest_builtin_softlink() {
   fi
 }
 
-#create softlink cann/pto/lib64
+#create softlink cann/pto_tile_lib/lib64
 create_latest_lib_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/lib64
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/lib64
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -515,10 +515,10 @@ create_latest_lib_softlink() {
   fi
 }
 
-#create softlink cann/pto/include
+#create softlink cann/pto_tile_lib/include
 create_latest_include_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/include
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/include
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -536,10 +536,10 @@ create_latest_include_softlink() {
   fi
 }
 
-#create softlink cann/pto
+#create softlink cann/pto_tile_lib
 create_latest_pto_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto/
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -625,10 +625,6 @@ install_pto() {
   log_with_errorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Install pto module files failed."
 
   logandprint "[INFO]: upgradePercentage:30%"
-
-  create_module_include_softlink
-
-  create_latest_softlink
 
   if [ -n "${module_mod}" ]; then
     chmod ${module_mod} "${TARGET_MOULDE_DIR}" 2>/dev/null

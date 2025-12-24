@@ -2166,7 +2166,7 @@ while true; do
         shift
         ;;
     --use-share-info)
-        REMOVE_INSTALL_INFO="y"
+        USE_SHARE_INFO="y"
         shift
         ;;
     --increment)
