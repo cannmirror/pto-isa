@@ -32,13 +32,9 @@ PTO_INST RecordEvent TROWEXPANDSUB(TileDataDst& dst, TileDataDst& src0, TileData
 
 - **Implementation checks (A2A3)**:
   - `TileDataDst::DType == TileDataSrc1::DType` (compile-time).
-  - `TileDataDst::DType` must be one of: `half`, `float16_t`, `float`, `float32_t`.
+  - `TileDataDst::DType` must be one of: `half`, `float`.
   - Tile shape/layout constraint (compile-time): `TileDataDst::isRowMajor` and `!TileDataSrc1::isRowMajor` and `TileDataSrc1::Cols == 1`.
   - Runtime: `src1.GetValidRow() == 1` and `src1.GetValidCol() == dst.GetValidRow()`.
-- **Implementation checks (A5)**:
-  - `TileData::DType` must be `float` or `half`.
-  - `TileData::isRowMajor` (dst/src0 tile layout) must be true.
-  - No explicit runtime checks are enforced on `src1` shape/valid.
 
 ## Examples
 

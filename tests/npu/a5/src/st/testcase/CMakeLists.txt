@@ -118,6 +118,7 @@ set(ALL_TESTCASES
     trowmin
     tcolsum
     tcolmax
+    tcolmin
     tsort32
     trowexpand
     trowexpanddiv

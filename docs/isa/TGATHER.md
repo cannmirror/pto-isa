@@ -46,13 +46,13 @@ PTO_INST RecordEvent TGATHER(DstTileData& dst, SrcTileData& src, WaitEvents&... 
 ## Constraints
 
 - **Index-based gather: implementation checks (A2A3)**:
-  - `sizeof(DstTileData::DType)` must be `2` or `4` bytes.
-  - `sizeof(Src1TileData::DType)` must be `4` bytes.
+  - `sizeof(DstTileData::DType)` must be must be `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `half`, `float`.
+  - `sizeof(Src1TileData::DType)` must be must be `int32_t`, `uint32_t`.
   - `DstTileData::DType` must be the same type as `Src0TileData::DType`.
   - `src1.GetValidCol() == Src1TileData::Cols` and `dst.GetValidCol() == DstTileData::Cols`.
 - **Index-based gather: implementation checks (A5)**:
-  - `sizeof(DstTileData::DType)` must be `2`, or `4` bytes.
-  - `sizeof(Src1TileData::DType)` must be `2` or `4` bytes.
+  - `sizeof(DstTileData::DType)` must be must be `int16_t`, `uint16_t`, `int32_t`, `uint32_t`, `half`, `float`.
+  - `sizeof(Src1TileData::DType)` must be must be `int16_t`, `uint16_t`, `int32_t`, `uint32_t`.
   - `DstTileData::DType` must be the same type as `Src0TileData::DType`.
   - `src1.GetValidCol() == Src1TileData::Cols` and `dst.GetValidCol() == DstTileData::Cols`.
 - **Mask-pattern gather: implementation checks (A2A3)**:

@@ -92,6 +92,8 @@ PTO ISA defines over 90 standard operations. This repository implements a growin
 * Ascend A5 (Ascend 950 )
 * CPU (x86_64 / AArch64)
 
+For more details please refer to [Released PTO ISA](include\README.md)
+
 ## Quickstart Guide
 
 For detailed, OS-specific setup (Windows / Linux / macOS), see: [docs/getting-started.md](docs/getting-started.md).

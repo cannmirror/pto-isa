@@ -184,6 +184,11 @@ Before using this project, make sure the following basic dependencies and the NP
         make install                         # install as root
         # sudo make install                  # install as a non-root user
         ```
+      > **Note**
+      > 
+      > Python needs to download packages such as os, numpy, ctypes, struct, copy, math, enum, ml_dtypes, en_dtypes, etc.
+      > 
+      > If you have already installed googletest by other means, you need to make the corresponding changes to the CMakeLists.txt. For examle, you used `cmake .. -DCMAKE_CXX_FLAGS="-fPIC -D_GLIBCXX_USE_CXX11_ABI=0"` when installing googletest, you need to add `add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)` in tests/npu/[a2a3 | a5]/src/st/CMakeLists.txt
 
 2. **Install driver and firmware (runtime dependency)**
 

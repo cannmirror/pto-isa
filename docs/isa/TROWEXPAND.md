@@ -32,11 +32,9 @@ PTO_INST RecordEvent TROWEXPAND(TileDataDst& dst, TileDataSrc& src, WaitEvents&.
 
 Implementation checks (NPU):
 
-- Tile location: `src` must be `TileType::Vec` and `dst` must be `TileType::Vec` (A5); A2A3 requires `src` to be Vec and requires ND layout for both.
+- Tile Type: `dst` and `src` must be `TileType::Vec`.
 - Tile layout: ND fractal (`isRowMajor` and `SLayout::NoneBox`) for both `src` and `dst`.
-- Data type:
-  - A2A3: element width must be 8/16/32-bit; `dst.DType == src.DType`.
-  - A5: element width must be 8/16/32-bit; `dst.DType == src.DType`.
+- Data type: A2A3/A5 element types must be one of: `int8_t` or `uint8_t` or `int16_t` or `uint16_t` or `int32_t` or `uint32_t` or `half` or `bfloat16_t` or `float`.
 - Runtime valid checks:
   - A2A3: returns early if any of `dstValidRow`, `dstValidCol`, `srcValidRow`, `srcValidCol` is zero.
   - A5: asserts `srcValidRow == dstValidRow` and asserts `srcValidRow != 0 && srcValidCol != 0`.

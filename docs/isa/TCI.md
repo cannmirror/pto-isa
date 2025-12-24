@@ -40,7 +40,7 @@ PTO_INST RecordEvent TCI(TileData& dst, T S, WaitEvents&... events);
 
 - **Implementation checks (A2A3/A5)**:
   - `TileData::DType` must be exactly the same type as the scalar template parameter `T`.
-  - `sizeof(TileData::DType)` must be `2` or `4` bytes.
+  - `dst/scalar` element types must be identical, and must be one of: `int32_t`, `uint32_t`, `int16_t`, `uint16_t`.
   - `TileData::Cols != 1` (this is the condition enforced by the implementation).
 - **Valid region**:
   - The implementation uses `dst.GetValidCol()` as the sequence length and does not consult `dst.GetValidRow()`.
