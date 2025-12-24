@@ -67,6 +67,7 @@ namespace pto {
     TLOAD,
     TSTORE_VEC,
     SCALAR,
+    TRESHAPE,
     OP_COUNT, // OpCode总数，新增OpCode请添加在OP_COUNT之前
   };
 
@@ -89,7 +90,7 @@ namespace pto {
     PIPE_FIX /* TMOV_A2V */, PIPE_FIX /* TSTORE_ACC */, PIPE_MTE3 /* TSTORE_MAT */, PIPE_M /* TMATMUL */, 
     PIPE_MTE1 /* TEXTRACT */,
 #endif
-    PIPE_MTE2 /* TLOAD */, PIPE_MTE3 /* TSTORE_VEC */, PIPE_S /* SCALAR */,
+    PIPE_MTE2 /* TLOAD */, PIPE_MTE3 /* TSTORE_VEC */, PIPE_S /* SCALAR */, PIPE_S /* TRESHAPE */
   };
 
   template <Op OpCode>

@@ -13,6 +13,9 @@ function(pto_vec_st NAME)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c220-vec -DMEMORY_BASE -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE
         ${PROJECT_SOURCE_DIR}/../../../../../include
+        ${ASCEND_HOME_PATH}/pkg_inc/
+        ${ASCEND_HOME_PATH}/pkg_inc/profiling/
+        ${ASCEND_HOME_PATH}/pkg_inc/runtime/runtime
     )
     target_link_options(${NAME}_kernel PRIVATE --cce-fatobj-link)
 
@@ -42,6 +45,9 @@ function(pto_cube_st NAME)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c220-cube -DMEMORY_BASE -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE
         ${PROJECT_SOURCE_DIR}/../../../../../include
+        ${ASCEND_HOME_PATH}/pkg_inc/
+        ${ASCEND_HOME_PATH}/pkg_inc/profiling/
+        ${ASCEND_HOME_PATH}/pkg_inc/runtime/runtime
     )
     target_link_options(${NAME}_kernel PRIVATE --cce-fatobj-link)
 

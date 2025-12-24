@@ -124,7 +124,7 @@ namespace pto {
   PTO_INTERNAL void TCOLSUM_IMPL(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, bool isBinary) {
     int validCol = src.GetValidCol();
     int validRow = src.GetValidRow();
-    TColReduceCheck<TileDataOut, TileDataIn>(validRow, validCol, dst.GetValidRow());
+    TColReduceCheck<TileDataOut, TileDataIn>(validRow, validCol, dst.GetValidCol());
     if (validCol == 0 || validRow == 0) {
       return;
     }

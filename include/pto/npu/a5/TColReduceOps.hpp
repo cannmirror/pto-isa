@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
   template <typename TileDataOut, typename TileDataIn>
-  PTO_INTERNAL void TColReduceCheck(int srcValidRow, int srcValidCol, int dstValidRow) {
+  PTO_INTERNAL void TColReduceCheck(int srcValidRow, int srcValidCol, int dstValidCol) {
     static_assert(TileDataOut::Loc == pto::TileType::Vec && TileDataIn::Loc == pto::TileType::Vec,
       "This instruction only support Vec Tile");
     static_assert(TileDataIn::isRowMajor && TileDataIn::SFractal == SLayout::NoneBox,

@@ -59,7 +59,8 @@ template <typename T> struct ROWMIN {
 };
 
 template <typename TileDataOut, typename TileDataIn>
-PTO_INTERNAL void TRowReduceCheck() {
+PTO_INTERNAL void TRowReduceCheck(uint32_t srcValidRows, uint32_t srcValidCols,
+                                  uint32_t dstValidRow) {
   using T = typename TileDataIn::DType;
   static_assert(is_same_v<T, half> || is_same_v<T, float>,
                 "Only support half and float.");
@@ -75,6 +76,11 @@ PTO_INTERNAL void TRowReduceCheck() {
        (TileDataOut::isRowMajor ||
         (!TileDataOut::isRowMajor && TileDataOut::Cols == 1))),
       "This instruction only support ND or DN with Col = 1 for output tile.");
+  PTO_ASSERT(srcValidRows != 0 && srcValidCols != 0,
+             "The input shape is invalid, validCol or validRow is 0.");
+  PTO_ASSERT(
+      srcValidRows == dstValidRow,
+      "The input valid row must be consistent with the output valid row.");
   return;
 }
 
@@ -124,11 +130,13 @@ PTO_INTERNAL void TRowReduceImpl(__ubuf__ typename TileDataOut::DType *dstPtr,
 }
 
 template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat>
-__tf__ PTO_INTERNAL OP_NAME(TROWMAX) OP_TYPE(reduce)
-void TRowMax(typename TileDataOut::TileDType __out__ dst,
-             typename TileDataIn::TileDType __in__ src,
-             uint32_t rows, uint32_t cols, unsigned version = VFImplKind::VFIMPL_DEFAULT) {
-  TRowReduceCheck<TileDataOut, TileDataIn>();
+__tf__ PTO_INTERNAL OP_NAME(TROWMAX) OP_TYPE(reduce) void TRowMax(
+    typename TileDataOut::TileDType __out__ dst,
+    typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
+    uint32_t srcValidCols, uint32_t dstValidRow,
+    unsigned version = VFImplKind::VFIMPL_DEFAULT) {
+  TRowReduceCheck<TileDataOut, TileDataIn>(srcValidRows, srcValidCols,
+                                           dstValidRow);
 
   using TIN = typename TileDataIn::DType;
   __ubuf__ TIN *dstPtr = (__ubuf__ TIN *)__cce_get_tile_ptr(dst);
@@ -136,15 +144,17 @@ void TRowMax(typename TileDataOut::TileDType __out__ dst,
 
   using rowReduceOp = ROWMAX<typename TileDataIn::DType>;
   TRowReduceImpl<rowReduceOp, TileDataOut, TileDataIn, elementsPerRepeat>(
-      dstPtr, srcPtr, rows, cols, version);
+      dstPtr, srcPtr, srcValidRows, srcValidCols, version);
 }
 
 template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat>
-__tf__ PTO_INTERNAL OP_NAME(TROWSUM) OP_TYPE(reduce)
-void TRowSum(typename TileDataOut::TileDType __out__ dst,
-             typename TileDataIn::TileDType __in__ src,
-             uint32_t rows, uint32_t cols, unsigned version = VFImplKind::VFIMPL_DEFAULT) {
-  TRowReduceCheck<TileDataOut, TileDataIn>();
+__tf__ PTO_INTERNAL OP_NAME(TROWSUM) OP_TYPE(reduce) void TRowSum(
+    typename TileDataOut::TileDType __out__ dst,
+    typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
+    uint32_t srcValidCols, uint32_t dstValidRow,
+    unsigned version = VFImplKind::VFIMPL_DEFAULT) {
+  TRowReduceCheck<TileDataOut, TileDataIn>(srcValidRows, srcValidCols,
+                                           dstValidRow);
 
   using TIN = typename TileDataIn::DType;
   __ubuf__ TIN *dstPtr = (__ubuf__ TIN *)__cce_get_tile_ptr(dst);
@@ -152,15 +162,17 @@ void TRowSum(typename TileDataOut::TileDType __out__ dst,
 
   using rowReduceOp = ROWSUM<typename TileDataIn::DType>;
   TRowReduceImpl<rowReduceOp, TileDataOut, TileDataIn, elementsPerRepeat>(
-      dstPtr, srcPtr, rows, cols, version);
+      dstPtr, srcPtr, srcValidRows, srcValidCols, version);
 }
 
 template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat>
-__tf__ PTO_INTERNAL OP_NAME(TROWMIN) OP_TYPE(reduce)
-void TRowMin(typename TileDataOut::TileDType __out__ dst,
-             typename TileDataIn::TileDType __in__ src,
-             uint32_t rows, uint32_t cols, unsigned version = VFImplKind::VFIMPL_DEFAULT) {
-  TRowReduceCheck<TileDataOut, TileDataIn>();
+__tf__ PTO_INTERNAL OP_NAME(TROWMIN) OP_TYPE(reduce) void TRowMin(
+    typename TileDataOut::TileDType __out__ dst,
+    typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
+    uint32_t srcValidCols, uint32_t dstValidRow,
+    unsigned version = VFImplKind::VFIMPL_DEFAULT) {
+  TRowReduceCheck<TileDataOut, TileDataIn>(srcValidRows, srcValidCols,
+                                           dstValidRow);
 
   using TIN = typename TileDataIn::DType;
   __ubuf__ TIN *dstPtr = (__ubuf__ TIN *)__cce_get_tile_ptr(dst);
@@ -168,7 +180,7 @@ void TRowMin(typename TileDataOut::TileDType __out__ dst,
 
   using rowReduceOp = ROWMIN<typename TileDataIn::DType>;
   TRowReduceImpl<rowReduceOp, TileDataOut, TileDataIn, elementsPerRepeat>(
-      dstPtr, srcPtr, rows, cols, version);
+      dstPtr, srcPtr, srcValidRows, srcValidCols, version);
 }
 
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
@@ -179,7 +191,8 @@ PTO_INTERNAL void TROWMAX_IMPL(TileDataOut &dst, TileDataIn &src,
   unsigned rows = src.GetValidRow();
   unsigned cols = src.GetValidCol();
 
-  TRowMax<TileDataOut, TileDataIn, elementsPerRepeat>(dst.data(), src.data(), rows, cols);
+  TRowMax<TileDataOut, TileDataIn, elementsPerRepeat>(
+      dst.data(), src.data(), rows, cols, dst.GetValidRow());
 }
 
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
@@ -190,7 +203,8 @@ PTO_INTERNAL void TROWSUM_IMPL(TileDataOut &dst, TileDataIn &src,
   unsigned rows = src.GetValidRow();
   unsigned cols = src.GetValidCol();
 
-  TRowSum<TileDataOut, TileDataIn, elementsPerRepeat>(dst.data(), src.data(), rows, cols);
+  TRowSum<TileDataOut, TileDataIn, elementsPerRepeat>(
+      dst.data(), src.data(), rows, cols, dst.GetValidRow());
 }
 
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp>
@@ -201,7 +215,8 @@ PTO_INTERNAL void TROWMIN_IMPL(TileDataOut &dst, TileDataIn &src,
   unsigned rows = src.GetValidRow();
   unsigned cols = src.GetValidCol();
 
-  TRowMin<TileDataOut, TileDataIn, elementsPerRepeat>(dst.data(), src.data(), rows, cols);
+  TRowMin<TileDataOut, TileDataIn, elementsPerRepeat>(
+      dst.data(), src.data(), rows, cols, dst.GetValidRow());
 }
 } // namespace pto
 
