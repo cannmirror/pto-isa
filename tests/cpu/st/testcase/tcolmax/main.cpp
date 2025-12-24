@@ -12,25 +12,44 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/pto-inst.hpp>
 #include <gtest/gtest.h>
 
+using namespace std;
 using namespace PtoTestCommon;
 
-template <typename T, int kRows, int kCols>
-void LaunchTCOLMAX(T *out, T *src, void *stream);
+template <int32_t tilingKey>
+void launchTCOLMAX_demo(uint8_t *out, uint8_t *src, void *stream);
 
-class TCOLMAX_Test : public testing::Test {
+class TCOLMAXTest : public testing::Test {
+protected:
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
-static std::string GetGoldenDir()
-{
+std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
-    return "../" + std::string(testInfo->test_suite_name()) + "." + testInfo->name();
+    const std::string caseName = testInfo->name();
+    std::string suiteName = testInfo->test_suite_name();
+    std::string fullPath = "../" + suiteName + "." + caseName;
+    return fullPath;
 }
 
-template <typename T, int kRows, int kCols>
-static void run_case()
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void LaunchTCOLMAX(T *out, T *src, void *stream);
+
+template <typename T, int kGSize_>
+inline void init_dst(T *dstHost)
 {
-    const size_t inSize = static_cast<size_t>(kRows) * static_cast<size_t>(kCols) * sizeof(T);
-    const size_t outSize = static_cast<size_t>(kCols) * sizeof(T);
+    for (size_t i = 0; i < kGSize_; i++) {
+        dstHost[i] =  0;
+    }
+}
+
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void test_tcolmax()
+{
+    size_t inputSize = kGRows_ * kGCols_ * sizeof(T);
+    size_t outputSize = kGCols_ * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -39,37 +58,46 @@ static void run_case()
 
     T *dstHost, *srcHost;
     T *dstDevice, *srcDevice;
-    aclrtMallocHost((void **)(&dstHost), outSize);
-    aclrtMallocHost((void **)(&srcHost), inSize);
-    aclrtMalloc((void **)&dstDevice, outSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&srcDevice, inSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    size_t readSize = 0;
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input.bin", readSize, srcHost, inSize));
-    aclrtMemcpy(srcDevice, inSize, srcHost, inSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMallocHost((void **)(&dstHost), outputSize);
+    aclrtMallocHost((void **)(&srcHost), inputSize);
 
-    LaunchTCOLMAX<T, kRows, kCols>(dstDevice, srcDevice, stream);
+    aclrtMalloc((void **)(&srcDevice), inputSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)(&dstDevice), outputSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input.bin", inputSize, srcHost, inputSize));
+    init_dst<T, kGCols_>(dstHost);
+
+    aclrtMemcpy(srcDevice, inputSize, srcHost, inputSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    LaunchTCOLMAX<T, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, srcDevice, stream);
+
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, outSize, dstDevice, outSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, outputSize, dstDevice, outputSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, outSize);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, outputSize);
 
     aclrtFree(dstDevice);
     aclrtFree(srcDevice);
+
     aclrtFreeHost(dstHost);
     aclrtFreeHost(srcHost);
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(static_cast<size_t>(kCols));
-    std::vector<T> out(static_cast<size_t>(kCols));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", readSize, golden.data(), outSize));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", readSize, out.data(), outSize));
-    EXPECT_TRUE(ResultCmp<T>(golden, out.data(), 0.001f));
+    std::vector<T> golden(outputSize);
+    std::vector<T> devFinal(outputSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", outputSize, golden.data(), outputSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", outputSize, devFinal.data(), outputSize));
+
+    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
+
+    EXPECT_TRUE(ret);
 }
 
-TEST_F(TCOLMAX_Test, case_float_64x64)
-{
-    run_case<float, 64, 64>();
+TEST_F(TCOLMAXTest, case_float_64x64_64x64_64x64) {
+    test_tcolmax<float, 64, 64, 64, 64>();
+}
+TEST_F(TCOLMAXTest, case_half_16x256_16x256_16x256) {
+    test_tcolmax<aclFloat16, 16, 256, 16, 256>();
 }

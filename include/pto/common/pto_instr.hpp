@@ -463,6 +463,13 @@ PTO_INST RecordEvent TROWSUM(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp
   return {};
 }
 
+template <typename TileDataOut, typename TileDataIn, typename... WaitEvents>
+PTO_INST RecordEvent TCOLSUM(TileDataOut &dst, TileDataIn &src, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TCOLSUM, dst, src);
+  return {};
+}
+
 template <typename TileDataOut, typename TileDataIn, typename TileDataTmp, typename... WaitEvents>
 PTO_INST RecordEvent TCOLSUM(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp, bool isBinary,
   WaitEvents&... events) {

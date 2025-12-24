@@ -9,39 +9,65 @@ See LICENSE in the root of the software repository for the full text of the Lice
 */
 
 #include <pto/pto-inst.hpp>
+#include <pto/common/pto_tile.hpp>
+#include <pto/common/constants.hpp>
 
+using namespace std;
 using namespace pto;
 
-template <typename SrcT, typename DstT, int kRows, int kCols>
-AICORE void runTCVT(__gm__ DstT __out__ *out, __gm__ SrcT __in__ *src, RoundMode mode)
-{
-    using DynShapeDim5 = Shape<1, 1, 1, kRows, kCols>;
-    using DynStridDim5Src = Stride<1, 1, 1, kCols, 1>;
-    using DynStridDim5Dst = Stride<1, 1, 1, kCols, 1>;
-    using GlobalSrc = GlobalTensor<SrcT, DynShapeDim5, DynStridDim5Src>;
-    using GlobalDst = GlobalTensor<DstT, DynShapeDim5, DynStridDim5Dst>;
+template <typename T, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+__global__ AICORE void runTCVT(__gm__ T *out, __gm__ S *src) {
 
-    using TileSrc = Tile<TileType::Vec, SrcT, kRows, kCols, BLayout::RowMajor, -1, -1>;
-    using TileDst = Tile<TileType::Vec, DstT, kRows, kCols, BLayout::RowMajor, -1, -1>;
+    using DynShapeDim4 = pto::Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynStridDim4 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using GlobalData_src = GlobalTensor<S, DynShapeDim4, DynStridDim4>;
+    using GlobalData_dst = GlobalTensor<T, DynShapeDim4, DynStridDim4>;
 
-    TileSrc srcTile(kRows, kCols);
-    TileDst dstTile(kRows, kCols);
+    using TileDataSrc = Tile<TileType::Vec, S, kTRows_, kTCols_, BLayout::RowMajor>;
+    using TileDataDst = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor>;
 
-    GlobalSrc srcGlobal(src);
-    GlobalDst dstGlobal(out);
+    TileDataSrc srcTile;
+    TileDataDst dstTile;
+
+    TASSIGN(srcTile, 0x0);
+    TASSIGN(dstTile, kTRows_ * kTCols_ * sizeof(S));
+
+    GlobalData_src srcGlobal(src);
+
+    GlobalData_dst dstGlobal(out);
 
     TLOAD(srcTile, srcGlobal);
-    TCVT(dstTile, srcTile, mode);
+
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+
+    TCVT(dstTile, srcTile, RoundMode::CAST_RINT);
+
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+
     TSTORE(dstGlobal, dstTile);
+    
     out = dstGlobal.data();
 }
 
-template <int kRows, int kCols>
-void LaunchTCVT(int32_t *out, float *src, RoundMode mode, void *stream)
-{
-    (void)stream;
-    runTCVT<float, int32_t, kRows, kCols>(out, src, mode);
-}
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void launchTCVT(D *dst, S *src, void *stream) {
+    if constexpr ( std::is_same_v<D, aclFloat16> ) {
+        runTCVT<half, S, kGRows_, kGCols_, kTRows_, kTCols_>((half*) dst, src);
+    } else if constexpr ( std::is_same_v<S, aclFloat16> ) {
+        runTCVT<D, half, kGRows_, kGCols_, kTRows_, kTCols_>(dst, (half*)src);
+    } else {
+         runTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_>(dst, src);
+    }
+} 
 
-template void LaunchTCVT<64, 64>(int32_t *out, float *src, RoundMode mode, void *stream);
-
+template void launchTCVT<int32_t, float, 128, 128, 128, 128>(int32_t *dst, float *src, void *stream);
+template void launchTCVT<float, int32_t, 256, 64, 256, 64>(float *dst, int32_t *src, void *stream);
+template void launchTCVT<int16_t, float, 16, 32, 16, 32>(int16_t *dst, float *src, void *stream);
+template void launchTCVT<int32_t, float, 32, 512, 32, 512>(int32_t *dst, float *src, void *stream);
+template void launchTCVT<int32_t, int16_t, 2, 512, 2, 512>(int32_t *dst, int16_t *src, void *stream);
+template void launchTCVT<int32_t, float, 4, 4096, 4, 4096>(int32_t *dst, float *src, void *stream);
+template void launchTCVT<float, int16_t, 64, 64, 64, 64>(float *dst, int16_t *src, void *stream);
+template void launchTCVT<aclFloat16, float, 64, 64, 64, 64>(aclFloat16 *dst, float *src, void *stream);
+template void launchTCVT<uint8_t, aclFloat16, 64, 64, 64, 64>(uint8_t *dst, aclFloat16 *src, void *stream);

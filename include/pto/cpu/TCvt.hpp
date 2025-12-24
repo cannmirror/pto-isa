@@ -8,85 +8,80 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#ifndef PTO_CPU_TCVT_HPP
-#define PTO_CPU_TCVT_HPP
-
-#include <cmath>
-#include <type_traits>
+#ifndef TCVT_HPP
+#define TCVT_HPP
 
 #include <pto/common/constants.hpp>
+#include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
-#include "pto/cpu/parallel.hpp"
+#include "pto/common/debug.h"
+#include <type_traits>
+
+using namespace pto;
 
 namespace pto {
-
-namespace {
-PTO_INTERNAL double apply_round(double x, RoundMode mode)
+constexpr double CAST_ODD_THRESHHOLD = 0.5;
+template <typename D, typename S>
+S applyRounding(S v, RoundMode mode)
 {
-    constexpr double NUM_HALF = 0.5;
+    if constexpr (!std::is_floating_point_v<S> || std::is_floating_point_v<D>) {
+        return v;
+    }
+
     switch (mode) {
-        case RoundMode::CAST_NONE:
-            return x;
         case RoundMode::CAST_RINT:
-            return std::nearbyint(x);
+            return std::rint(v);
+
         case RoundMode::CAST_ROUND:
-            return std::round(x);
+            return std::round(v);
+
         case RoundMode::CAST_FLOOR:
-            return std::floor(x);
+            return std::floor(v);
+
         case RoundMode::CAST_CEIL:
-            return std::ceil(x);
+            return std::ceil(v);
+
         case RoundMode::CAST_TRUNC:
-            return std::trunc(x);
+            return std::trunc(v);
+
         case RoundMode::CAST_ODD: {
-            const double f = std::floor(x);
-            const double c = std::ceil(x);
-            if (x - f == NUM_HALF) {
-                const long long fi = static_cast<long long>(f);
-                const long long ci = static_cast<long long>(c);
-                return (fi & 1LL) ? f : c;
-            }
-            if (c - x == NUM_HALF) {
-                const long long fi = static_cast<long long>(f);
-                const long long ci = static_cast<long long>(c);
-                return (ci & 1LL) ? c : f;
-            }
-            return std::nearbyint(x);
+            S f = std::floor(v);
+            S frac = v - f;
+
+            if (frac > S(CAST_ODD_THRESHHOLD)) return f + 1;
+            if (frac < S(CAST_ODD_THRESHHOLD)) return f;
+
+            // tie (.5) → round to odd
+            auto i = static_cast<long long>(f);
+            return (i & 1) ? f : f + 1;
         }
+
         default:
-            return x;
+            return v;
     }
 }
 
-template <typename DstT, typename SrcT>
-PTO_INTERNAL DstT convert(SrcT v, RoundMode mode)
-{
-    if constexpr (std::is_integral_v<DstT> && std::is_floating_point_v<SrcT>) {
-        return static_cast<DstT>(apply_round(static_cast<double>(v), mode));
-    } else {
-        (void)mode;
-        return static_cast<DstT>(v);
+template <typename TileDataD, typename TileDataS>
+PTO_INTERNAL void TCvt_Impl(typename TileDataD::TileDType dst,
+                            typename TileDataS::TileDType src, unsigned validRow, unsigned validCol, RoundMode mode
+                        ) {
+        for (int i = 0; i < validRow; ++i) {
+            for (int j = 0; j < validCol; ++j) {
+                size_t dstIdx = GetTileElementOffset<TileDataD>(i,j);
+                size_t srcIdx = GetTileElementOffset<TileDataS>(i,j);  
+                auto roundedNumber = applyRounding<typename TileDataD::DType,typename TileDataS::DType>(src[srcIdx], mode);
+                dst[dstIdx] = static_cast<TileDataD::DType>(roundedNumber);
+            }
+        }
     }
-}
-} // namespace
 
 template <typename TileDataD, typename TileDataS>
 PTO_INTERNAL void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
 {
-    const std::size_t rows = static_cast<std::size_t>(dst.GetValidRow());
-    const std::size_t cols = static_cast<std::size_t>(dst.GetValidCol());
-    if (rows == 0 || cols == 0) {
-        return;
-    }
-
-    cpu::parallel_for_rows(rows, cols, [&](std::size_t r) {
-        for (std::size_t c = 0; c < cols; ++c) {
-            const auto v = src.data()[GetTileElementOffset<TileDataS>(r, c)];
-            dst.data()[GetTileElementOffset<TileDataD>(r, c)] = convert<typename TileDataD::DType>(v, mode);
-        }
-    });
+    uint16_t rows = src.GetValidRow();
+    uint16_t cols = src.GetValidCol();
+    TCvt_Impl<TileDataD, TileDataS>(dst.data(), src.data(), rows, cols, mode);
 }
 
-} // namespace pto
-
+}  // namespace pto
 #endif
-

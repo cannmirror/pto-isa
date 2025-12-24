@@ -145,6 +145,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
     #include "pto/cpu/TFillPad.hpp"
     #include "pto/cpu/TTrans.hpp"
     #include "pto/cpu/TSelS.hpp"
+    #include "pto/cpu/TColSum.hpp"
+    #include "pto/cpu/TColMax.hpp"
     #include "pto/cpu/TSel.hpp"
     #include "pto/cpu/TCmps.hpp"
     #include "pto/cpu/TGatherB.hpp"
@@ -153,14 +155,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
     #include "pto/cpu/TPartMax.hpp"
     #include "pto/cpu/TPartMin.hpp"
     #include "pto/cpu/TRowExpand.hpp"
-    #include "pto/cpu/TColReduce.hpp"
     #include "pto/cpu/TRSqrt.hpp"
     #include "pto/cpu/TCvt.hpp"
     #include "pto/cpu/TColMin.hpp"
     #include "pto/cpu/TColExpand.hpp"
     #include "pto/cpu/TScatter.hpp"
-    #include "pto/cpu/MGatherScatter.hpp"
     #include "pto/cpu/TSort32.hpp"
+    #include "pto/cpu/MGatherScatter.hpp"
 #endif
 
 #endif

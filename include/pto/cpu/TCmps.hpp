@@ -8,57 +8,115 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#ifndef PTO_CPU_TCMPS_HPP
-#define PTO_CPU_TCMPS_HPP
-
-#include <pto/common/type.hpp>
+#ifndef TCMPS_HPP
+#define TCMPS_HPP
+#include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
-#include "pto/cpu/parallel.hpp"
+#include <vector>
+
+using namespace std;
 
 namespace pto {
 
-namespace {
+const int32_t CMP_BITS_PER_INDEX = 32;
+
 template <typename T>
-PTO_INTERNAL bool apply_cmp(T a, T b, CmpMode mode)
+AICORE uint8_t CmpCall(T a, T b, CmpMode cmpMode)
 {
-    switch (mode) {
+    uint8_t res = 0;
+    switch (static_cast<CmpMode>(cmpMode)) {
         case CmpMode::EQ:
-            return a == b;
+            res = (std::abs(a-b) < 1e-9);
+            break;
         case CmpMode::NE:
-            return a != b;
+            res = (std::abs(a-b) > 1e-9);
+            break;
         case CmpMode::LT:
-            return a < b;
+            res = (a < b);
+            break;
         case CmpMode::GT:
-            return a > b;
+            res = (a > b);
+            break;
         case CmpMode::GE:
-            return a >= b;
+            res = (a >= b);
+            break;
         case CmpMode::LE:
-            return a <= b;
+            res = (a <= b);
+            break;
         default:
-            return a == b;
+            res = (std::abs(a-b) < 1e-9);
+            break;
     }
+    return res;
 }
-} // namespace
 
-template <typename TileDataDst, typename TileDataSrc0, typename T>
-PTO_INTERNAL void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode)
+
+template <typename TileDataDst, typename TileDataSrc, typename T>
+AICORE void TCmps(
+    typename TileDataDst::TileDType __out__ dst,
+    typename TileDataSrc::TileDType __in__ src0, 
+    T src1, 
+    CmpMode mode, 
+    unsigned srcValidRow,  
+    unsigned srcValidCol,  
+    unsigned dstValidRow,  
+    unsigned dstValidCol,  
+    unsigned dstStride,  
+    unsigned srcStride
+) 
 {
-    const std::size_t rows = static_cast<std::size_t>(dst.GetValidRow());
-    const std::size_t cols = static_cast<std::size_t>(dst.GetValidCol());
-    if (rows == 0 || cols == 0) {
-        return;
+    size_t H = TileDataSrc::Rows;
+    size_t W = TileDataSrc::Cols;
+    std::vector<uint8_t> golden(H * W, 0);
+
+    for (size_t i = 0; i < srcValidRow; i++)
+    {
+        for (size_t j = 0; j < srcValidCol; j++)
+        {
+            T a = src0[i * srcStride + j];
+            golden[i * W + j] = CmpCall<T>(a, src1, mode);
+        }
     }
 
-    cpu::parallel_for_rows(rows, cols, [&](std::size_t r) {
-        for (std::size_t c = 0; c < cols; ++c) {
-            const auto s0 = static_cast<T>(src0.data()[GetTileElementOffset<TileDataSrc0>(r, c)]);
-            const bool pred = apply_cmp<T>(s0, static_cast<T>(src1), cmpMode);
-            dst.data()[GetTileElementOffset<TileDataDst>(r, c)] = static_cast<typename TileDataDst::DType>(pred);
+    std::vector<uint8_t> out_uint8;
+    size_t bits_per_row = W / 8;
+
+    for (size_t h = 0; h < H; ++h) {
+        for (size_t i = 0; i < bits_per_row; ++i) {
+            uint8_t packed_byte = 0;
+            for (size_t bit = 0; bit < 8; ++bit) {
+                // Get the bit from the golden array and shift it into position
+                uint8_t bit_val = golden[h * W + (i * 8 + bit)];
+                packed_byte |= (bit_val << bit);
+            }
+            out_uint8.push_back(packed_byte);
         }
-    });
+    }
+
+    int c = 0;
+    for (size_t i = 0; i < dstValidRow && c < out_uint8.size(); i++)
+    {
+        for (size_t j = 0; j < dstValidCol && c < out_uint8.size(); j++)
+        {
+            dst[i * W + j] = out_uint8[c++];
+            uint8_t b = dst[i * W + j];
+        }
+    }
 }
 
-} // namespace pto
+template <typename TileDataDst, typename TileDataSrc, typename T>
+AICORE void TCMPS_IMPL(TileDataDst &dst, TileDataSrc &src0, T src1, CmpMode cmpMode) {
 
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+
+    unsigned srcValidRow = src0.GetValidRow();
+    unsigned srcValidCol = src0.GetValidCol();
+
+    unsigned dstStride = TileDataDst::RowStride;
+    unsigned srcStride = TileDataSrc::RowStride;
+
+    TCmps<TileDataDst, TileDataSrc, T>(dst.data(), src0.data(), src1, cmpMode, srcValidRow, srcValidCol, dstValidRow, dstValidCol, dstStride, srcStride);
+}
+}
 #endif
-

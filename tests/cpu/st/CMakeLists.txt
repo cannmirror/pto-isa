@@ -43,6 +43,7 @@ endif()
 
 add_compile_options(
     -D_FORTIFY_SOURCE=2
+    -std=c++23
     -Wno-macro-redefined -Wno-ignored-attributes
     -fstack-protector-strong
 )

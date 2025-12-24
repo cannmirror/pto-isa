@@ -12,28 +12,104 @@
 
 import os
 import numpy as np
-
 np.random.seed(19)
 
+def gen_golden_data_tcmps(case_name, param):
+    dtype = param.dtype
 
-def gen_case(case_name: str):
-    H, W = 64, 64
-    scalar = np.float32(5.0)
-    x = np.random.uniform(-2.0, 8.0, size=(H, W)).astype(np.float32)
-    golden = (x > scalar).astype(np.float32)
-    x.tofile("input1.bin")
-    golden.tofile("golden.bin")
+    H, W = [param.tile_row, param.tile_col]
+    h_valid, w_valid = [param.valid_row, param.valid_col]
 
+    # Generate random input arrays
+    if (dtype == np.float16):
+        input1 = np.random.randint(-5, 5, size=[H, W]).astype(dtype)
+        input2 = np.zeros(1).astype(dtype)
+    else:
+        input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+        input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
+
+    if param.mode == "CmpMode::EQ":
+        golden = np.equal(input1, input2[0])
+    if param.mode == "CmpMode::NE":
+        golden = np.not_equal(input1, input2[0]) 
+    if param.mode == "CmpMode::LT":
+        golden = np.less(input1, input2[0]) 
+    if param.mode == "CmpMode::GT":
+        golden = np.greater(input1, input2[0]) 
+    if param.mode == "CmpMode::GE":
+        golden = np.greater_equal(input1, input2[0]) 
+    if param.mode == "CmpMode::LE":
+        golden = np.less_equal(input1, input2[0]) 
+
+    # Apply valid region constraints
+    output = np.zeros([H, W]).astype(dtype)
+    for h in range(H):
+        for w in range(W):
+            if h >= h_valid or w >= w_valid:
+                golden[h][w] = np.uint8(output[h][w])
+
+    func_binar = lambda bits: sum(np.uint8(bit * 2 **(i)) for i, bit in enumerate(np.uint8(bits)))
+    out_uint8 = []
+    golden = golden.astype(np.uint8)
+    bits_per_row = W // 8
+    for row in golden:
+        for i in range(bits_per_row):
+            out_uint8.append(func_binar(row[i*8:i*8+8]))
+
+    # Save the input and golden data to binary files
+    input1.tofile("input1.bin")
+    input2.tofile("input2.bin")
+    np.array(out_uint8).astype(np.uint8).tofile("golden.bin")
+
+    return output, input1, input2, golden
+
+class tcmpsParams:
+    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col, cmpMode):
+        self.dtype = dtype
+        self.global_row = global_row
+        self.global_col = global_col
+        self.tile_row = tile_row
+        self.tile_col = tile_col
+        self.valid_row = valid_row
+        self.valid_col = valid_col
+        self.mode = cmpMode
+
+def generate_case_name(param):
+    dtype_str = {
+        np.float32: 'float',
+        np.float16: 'half',
+        np.int32: 'int32',
+        np.int16: 'int16'
+    }[param.dtype]
+    return f"TCMPSTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
 
 if __name__ == "__main__":
+    # Get the absolute path of the script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     testcases_dir = os.path.join(script_dir, "testcases")
-    os.makedirs(testcases_dir, exist_ok=True)
 
-    case_name = "TCMPS_Test.case_float_64x64_scalar5_gt"
-    os.makedirs(case_name, exist_ok=True)
-    cwd = os.getcwd()
-    os.chdir(case_name)
-    gen_case(case_name)
-    os.chdir(cwd)
+    # Ensure the testcases directory exists
+    if not os.path.exists(testcases_dir):
+        os.makedirs(testcases_dir)
 
+    case_params_list = [
+        tcmpsParams(np.float16, 32, 32, 32, 32, 32, 32, "CmpMode::GE"),
+        tcmpsParams(np.float32, 1, 64, 1, 64, 1, 64, "CmpMode::EQ"),
+        tcmpsParams(np.float32, 8, 64, 8, 64, 8, 64, "CmpMode::GT"),
+        tcmpsParams(np.float32, 4, 64, 4, 64, 4, 64, "CmpMode::NE"),
+        tcmpsParams(np.float32, 128, 128, 64, 64, 128, 128, "CmpMode::LT"),
+        tcmpsParams(np.int32, 64, 64, 32, 32, 64, 64, "CmpMode::EQ"),
+        tcmpsParams(np.int32, 16, 32, 16, 32, 16, 32, "CmpMode::EQ"),
+        tcmpsParams(np.float32, 128, 128, 128, 128, 128, 128, "CmpMode::LE"),
+        tcmpsParams(np.int32, 77, 81, 32, 32, 77, 81, "CmpMode::EQ"),
+        tcmpsParams(np.int32, 32, 32, 32, 32, 32, 32, "CmpMode::EQ"),
+    ]
+
+    for i, param in enumerate(case_params_list):
+        case_name = generate_case_name(param)
+        if not os.path.exists(case_name):
+            os.makedirs(case_name)
+        original_dir = os.getcwd()
+        os.chdir(case_name)
+        gen_golden_data_tcmps(case_name, param)
+        os.chdir(original_dir)

@@ -12,25 +12,74 @@
 
 import os
 import numpy as np
-
 np.random.seed(19)
 
+def gen_golden_data_tcolsum(case_name, param):
+    dtype = param.dtype
 
-def gen_case():
-    H, W = 64, 64
-    x = np.random.uniform(-2.0, 2.0, size=(H, W)).astype(np.float32)
-    golden = np.sum(x, axis=0).astype(np.float32)
-    x.tofile("input.bin")
+    srcRow, srcCols = [param.tile_row, param.tile_col]
+    dstRow, dstCols = [1, param.tile_col]
+    row_valid, col_valid = [min(dstRow, param.valid_row), min(dstCols, param.valid_col)]
+
+    # Generate random input arrays
+    input1 = np.random.randint(low=-16, high=16, size=[srcRow, srcCols]).astype(dtype)
+
+    # Perform the addbtraction
+    golden = np.full((row_valid, col_valid), np.finfo(dtype).min, dtype=dtype)
+    golden[0, :] = np.sum(input1, axis=0)
+
+    golden = golden.astype(dtype)
+    # Save the input and golden data to binary files
+    input1.tofile("input.bin")
     golden.tofile("golden.bin")
 
+    return input1, golden
+
+class TColsumParams:
+    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
+        self.dtype = dtype
+        self.global_row = global_row
+        self.global_col = global_col
+        self.tile_row = tile_row
+        self.tile_col = tile_col
+        self.valid_row = valid_row
+        self.valid_col = valid_col
+
+def generate_case_name(param):
+    dtype_str = {
+        np.float32: 'float',
+        np.float16: 'half',
+        np.int8: 'int8',
+        np.int32: 'int32',
+        np.int16: 'int16'
+    }[param.dtype]
+
+    name = f"TCOLSUMTest.case_{dtype_str}"
+    name += f"_{param.global_row}x{param.global_col}"
+    name += f"_{param.tile_row}x{param.tile_col}"
+    name += f"_{param.valid_row}x{param.valid_col}"
+    
+    return name
 
 if __name__ == "__main__":
+    # Get the absolute path of the script
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.makedirs(os.path.join(script_dir, "testcases"), exist_ok=True)
+    testcases_dir = os.path.join(script_dir, "testcases")
 
-    case_name = "TCOLSUM_Test.case_float_64x64"
-    os.makedirs(case_name, exist_ok=True)
-    cwd = os.getcwd()
-    os.chdir(case_name)
-    gen_case()
-    os.chdir(cwd)
+    # Ensure the testcases directory exists
+    if not os.path.exists(testcases_dir):
+        os.makedirs(testcases_dir)
+
+    case_params_list = [
+        TColsumParams(np.float32, 64, 64, 64, 64, 64, 64),
+        TColsumParams(np.float16, 16, 256, 16, 256, 16, 256),
+    ]
+
+    for i, param in enumerate(case_params_list):
+        case_name = generate_case_name(param)
+        if not os.path.exists(case_name):
+            os.makedirs(case_name)
+        original_dir = os.getcwd()
+        os.chdir(case_name)
+        gen_golden_data_tcolsum(case_name, param)
+        os.chdir(original_dir)

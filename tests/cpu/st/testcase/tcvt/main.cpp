@@ -9,65 +9,126 @@ See LICENSE in the root of the software repository for the full text of the Lice
 */
 
 #include "test_common.h"
-#include <pto/pto-inst.hpp>
 #include <gtest/gtest.h>
+#include <pto/pto-inst.hpp>
 
+using namespace std;
 using namespace PtoTestCommon;
 
-template <int kRows, int kCols>
-void LaunchTCVT(int32_t *out, float *src, pto::RoundMode mode, void *stream);
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void launchTCVT(D *dst, S *src, void *stream);
 
-class TCVT_Test : public testing::Test {
+class TCVTTest : public testing::Test {
+protected:
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
-static std::string GetGoldenDir()
-{
+std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
-    return "../" + std::string(testInfo->test_suite_name()) + "." + testInfo->name();
+    const std::string caseName = testInfo->name();
+    std::string suiteName = testInfo->test_suite_name();
+    std::string fullPath = "../" + suiteName + "." + caseName;
+    return fullPath;
 }
 
-TEST_F(TCVT_Test, case_f32_to_i32_trunc_64x64)
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void test_tcvt()
 {
-    constexpr int kRows = 64;
-    constexpr int kCols = 64;
-    const size_t inSize = static_cast<size_t>(kRows) * static_cast<size_t>(kCols) * sizeof(float);
-    const size_t outSize = static_cast<size_t>(kRows) * static_cast<size_t>(kCols) * sizeof(int32_t);
+    uint32_t M = kGRows_;
+    uint32_t N = kGCols_;
+
+    size_t srcFileSize = M * N * sizeof(S);
+    size_t dstFileSize = M * N * sizeof(D);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    float *srcHost;
-    int32_t *dstHost;
-    float *srcDevice;
-    int32_t *dstDevice;
-    aclrtMallocHost((void **)(&srcHost), inSize);
-    aclrtMallocHost((void **)(&dstHost), outSize);
-    aclrtMalloc((void **)&srcDevice, inSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&dstDevice, outSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    D *dstHost, *dstDevice;
+    S *srcHost, *srcDevice;
 
-    size_t readSize = 0;
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input.bin", readSize, srcHost, inSize));
-    aclrtMemcpy(srcDevice, inSize, srcHost, inSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMallocHost((void **)(&dstHost), dstFileSize);
+    aclrtMallocHost((void **)(&srcHost), srcFileSize);
 
-    LaunchTCVT<kRows, kCols>(dstDevice, srcDevice, pto::RoundMode::CAST_TRUNC, stream);
+    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize));
+
+    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    launchTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, srcDevice, stream);
+
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, outSize, dstDevice, outSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, outSize);
+    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, dstFileSize);
 
     aclrtFree(dstDevice);
     aclrtFree(srcDevice);
+
     aclrtFreeHost(dstHost);
     aclrtFreeHost(srcHost);
+
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<int32_t> golden(static_cast<size_t>(kRows) * static_cast<size_t>(kCols));
-    std::vector<int32_t> out(static_cast<size_t>(kRows) * static_cast<size_t>(kCols));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", readSize, golden.data(), outSize));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", readSize, out.data(), outSize));
-    EXPECT_TRUE(ResultCmp<int32_t>(golden, out.data(), 0.0f));
+    std::vector<D> golden(dstFileSize);
+    std::vector<D> devFinal(dstFileSize);
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize));
+
+    bool ret = ResultCmp<D>(golden, devFinal, 0.001f);
+
+    EXPECT_TRUE(ret);
+}
+
+
+TEST_F(TCVTTest, case1)
+{
+    test_tcvt<int32_t, float, 128, 128, 128, 128>();
+}
+
+TEST_F(TCVTTest, case2)
+{
+    test_tcvt<float, int32_t, 256, 64, 256, 64>();
+}
+
+TEST_F(TCVTTest, case3)
+{
+    test_tcvt<int16_t, float, 16, 32, 16, 32>();
+}
+
+TEST_F(TCVTTest, case4)
+{
+    test_tcvt<int32_t, float, 32, 512, 32, 512>();
+}
+
+TEST_F(TCVTTest, case5)
+{
+    test_tcvt<int32_t, int16_t, 2, 512, 2, 512>();
+}
+
+TEST_F(TCVTTest, case6)
+{
+    test_tcvt<int32_t, float, 4, 4096, 4, 4096>();
+}
+
+TEST_F(TCVTTest, case7)
+{
+    test_tcvt<float, int16_t, 64, 64, 64, 64>();
+}
+
+TEST_F(TCVTTest, case8)
+{
+    test_tcvt<aclFloat16, float, 64, 64, 64, 64>();
+}
+
+TEST_F(TCVTTest, case9)
+{
+    test_tcvt<uint8_t, aclFloat16, 64, 64, 64, 64>();
 }

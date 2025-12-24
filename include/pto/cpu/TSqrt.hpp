@@ -12,30 +12,29 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/pto_tile.hpp>
 #include "pto/cpu/tile_offsets.hpp"
-#include "pto/cpu/parallel.hpp"
 #include <cmath>
 
 namespace pto{
 
-    template <typename tile_shape>
-    void TSqrt_Impl(typename tile_shape::TileDType dst,
-                            typename tile_shape::TileDType src,
-                            unsigned validRow, unsigned validCol
+    template <typename tile_type>
+    void TSqrt_Impl(typename tile_type::TileDType dst,
+                            typename tile_type::TileDType src,
+                            int validRow, int validCol
                         ) {
-        for(size_t c=0; c<validCol; c++) {
-            for(size_t r=0; r<validRow; r++) {
-                size_t idx = GetTileElementOffset<tile_shape>(r,c);
-                dst[idx] = static_cast<typename tile_shape::DType>(std::sqrt(static_cast<double>(src[idx])));
+        for(size_t c=0; c<(size_t)validCol; c++) {
+            for(size_t r=0; r<(size_t)validRow; r++) {
+                size_t idx = GetTileElementOffset<tile_type>(r,c);
+                dst[idx] = static_cast<typename tile_type::DType>(std::sqrt(static_cast<double>(src[idx])));
             }
         }
     }
 
-    template <typename tile_shape>
-    PTO_INTERNAL void TSQRT_IMPL(tile_shape &dst, tile_shape &src) {
-        static_assert(std::is_same<typename tile_shape::DType, half>::value ||
-                      std::is_same<typename tile_shape::DType, float>::value,
+    template <typename tile_type>
+    PTO_INTERNAL void TSQRT_IMPL(tile_type &dst, tile_type &src) {
+        static_assert(std::is_same<typename tile_type::DType, half>::value ||
+                      std::is_same<typename tile_type::DType, float>::value,
                       "TSQRT: Invalid data type");
-        TSqrt_Impl<tile_shape>(dst.data(), src.data(), dst.GetValidRow(), dst.GetValidCol());
+        TSqrt_Impl<tile_type>(dst.data(), src.data(), dst.GetValidRow(), dst.GetValidCol());
     }
 }
 #endif  // TSQRT_HPP

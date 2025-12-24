@@ -11,27 +11,71 @@
 # --------------------------------------------------------------------------------
 
 import os
-import numpy as np
 
+import numpy as np
 np.random.seed(19)
 
 
-def gen_case():
-    H, W = 64, 64
-    x = np.random.uniform(-10.0, 10.0, size=(H, W)).astype(np.float32)
-    golden = np.trunc(x).astype(np.int32)
-    x.tofile("input.bin")
-    golden.tofile("golden.bin")
+def gen_golden(param):
+    m, n = param.m, param.n
 
+    x1_gm = (np.random.random([m, n]) * 4.41).astype(param.srctype)
+    if param.mode == "RoundMode::CAST_RINT":
+        if param.srctype == np.float32:
+            if param.dsttype == np.float16:
+                golden = x1_gm.astype(param.dsttype)
+            else:
+                golden = np.rint(x1_gm).astype(param.dsttype)
+        elif param.srctype == np.float16:
+            if param.dsttype == np.float32:
+                golden = x1_gm.astype(param.dsttype)
+            else:
+                golden = np.rint(x1_gm).astype(param.dsttype)
+        else:
+            golden = x1_gm.astype(param.dsttype)
+    x1_gm.tofile("./x1_gm.bin")
+    golden.tofile("./golden.bin")
+
+
+class TCvtParams:
+    def __init__(self, srctype, dsttype, m, n, mode):
+        self.srctype = srctype
+        self.dsttype = dsttype
+        self.m = m
+        self.n = n
+        self.mode = mode
 
 if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.makedirs(os.path.join(script_dir, "testcases"), exist_ok=True)
+    case_name_list = [
+        "TCVTTest.case1",
+        "TCVTTest.case2",
+        "TCVTTest.case3",
+        "TCVTTest.case4",
+        "TCVTTest.case5",
+        "TCVTTest.case6",
+        "TCVTTest.case7",
+        "TCVTTest.case8",
+        "TCVTTest.case9"
+    ]
 
-    case_name = "TCVT_Test.case_f32_to_i32_trunc_64x64"
-    os.makedirs(case_name, exist_ok=True)
-    cwd = os.getcwd()
-    os.chdir(case_name)
-    gen_case()
-    os.chdir(cwd)
+    case_params_list = [
+        TCvtParams(np.float32, np.int32, 128, 128, "RoundMode::CAST_RINT"),
+        TCvtParams(np.int32, np.float32, 256, 64, "RoundMode::CAST_RINT"),
+        TCvtParams(np.float32, np.int16, 16, 32, "RoundMode::CAST_RINT"),
+        TCvtParams(np.float32, np.int32, 32, 512, "RoundMode::CAST_RINT"),
+        TCvtParams(np.int16, np.int32, 2, 512, "RoundMode::CAST_RINT"),
+        TCvtParams(np.float32, np.int32, 4, 4096, "RoundMode::CAST_RINT"),
+        TCvtParams(np.int16, np.float32, 64, 64, "RoundMode::CAST_RINT"),
+        TCvtParams(np.float32, np.float16, 64, 64, "RoundMode::CAST_RINT"),
+        TCvtParams(np.float16, np.uint8, 64, 64, "RoundMode::CAST_RINT")
+    ]
 
+    for i, case_name in enumerate(case_name_list):
+        if not os.path.exists(case_name):
+            os.makedirs(case_name)
+        original_dir = os.getcwd()
+        os.chdir(case_name)
+
+        gen_golden(case_params_list[i])
+
+        os.chdir(original_dir)

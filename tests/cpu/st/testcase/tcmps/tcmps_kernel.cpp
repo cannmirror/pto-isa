@@ -9,39 +9,51 @@ See LICENSE in the root of the software repository for the full text of the Lice
 */
 
 #include <pto/pto-inst.hpp>
+#include <pto/common/constants.hpp>
 
 using namespace pto;
 
-template <typename T, int kRows, int kCols>
-AICORE void runTCMPS(__gm__ T __out__ *out, __gm__ T __in__ *src0, T scalar, pto::CmpMode mode)
-{
-    using DynShapeDim5 = Shape<1, 1, 1, kRows, kCols>;
-    using DynStridDim5 = Stride<1, 1, 1, kCols, 1>;
-    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, CmpMode cmpMode>
+AICORE void runTCmps( __gm__ uint8_t __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1) {
+    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
+    using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
+    using GlobalData_src0 = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
+    using GlobalData_dst = GlobalTensor<uint8_t, DynShapeDim5, DynStridDim5>;
+    using TileData_src0 = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    using TileData_dst = Tile<TileType::Vec, uint8_t, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
+    TileData_src0 src0Tile(kTRows_, kTCols_);
+    TileData_dst dstTile(kTRows_, kTCols_);
+    TASSIGN(src0Tile, 0x0);
+    TASSIGN(dstTile, 0x20000);
 
-    using TileData = Tile<TileType::Vec, T, kRows, kCols, BLayout::RowMajor, -1, -1>;
-    TileData src0Tile(kRows, kCols);
-    TileData dstTile(kRows, kCols);
-
-    GlobalData src0Global(src0);
-    GlobalData dstGlobal(out);
+    GlobalData_src0 src0Global(src0);
+    GlobalData_dst dstGlobal(out);
 
     TLOAD(src0Tile, src0Global);
-    TCMPS(dstTile, src0Tile, scalar, mode);
+    TCMPS(dstTile, src0Tile, src1[0], cmpMode);
     TSTORE(dstGlobal, dstTile);
     out = dstGlobal.data();
 }
 
-template <typename T, int kRows, int kCols>
-void LaunchTCMPS(T *out, T *src0, T scalar, pto::CmpMode mode, void *stream)
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int cmpMode>
+void LaunchTCmps(uint8_t *out, T *src0, T *src1, void *stream)
 {
-    (void)stream;
-    if constexpr (std::is_same_v<T, aclFloat16>) {
-        runTCMPS<half, kRows, kCols>((half *)(out), (half *)(src0), static_cast<half>(scalar), mode);
-    } else {
-        runTCMPS<T, kRows, kCols>(out, src0, scalar, mode);
-    }
+    constexpr CmpMode modeValue = static_cast<CmpMode>(cmpMode);
+    if constexpr (std::is_same_v<T, aclFloat16> )
+        runTCmps<half, kGRows_, kGCols_, kTRows_, kTCols_, modeValue>((out),
+                                                                                  (half*)(src0),
+                                                                                  (half*)(src1));
+    else 
+        runTCmps<T, kGRows_, kGCols_, kTRows_, kTCols_, modeValue>(out, src0, src1);
 }
 
-template void LaunchTCMPS<float, 64, 64>(float *out, float *src0, float scalar, pto::CmpMode mode, void *stream);
-
+template void LaunchTCmps<aclFloat16, 32, 32, 32, 32, 5>(uint8_t *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTCmps<float, 1, 64, 1, 64, 0>(uint8_t *out, float *src0, float *src1, void *stream);
+template void LaunchTCmps<float, 8, 64, 8, 64, 4>(uint8_t *out, float *src0, float *src1, void *stream);
+template void LaunchTCmps<float, 4, 64, 4, 64, 1>(uint8_t *out, float *src0, float *src1, void *stream);
+template void LaunchTCmps<float, 28, 28, 64, 64, 2>(uint8_t *out, float *src0, float *src1, void *stream);
+template void LaunchTCmps<int32_t, 64, 64, 32, 32, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTCmps<int32_t, 16, 32, 16, 32, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTCmps<float, 128, 128, 128, 128, 3>(uint8_t *out, float *src0, float *src1, void *stream);
+template void LaunchTCmps<int32_t, 13, 14, 32, 32, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTCmps<int32_t, 32, 32, 32, 32, 0>(uint8_t *out, int32_t *src0, int32_t *src1, void *stream);
