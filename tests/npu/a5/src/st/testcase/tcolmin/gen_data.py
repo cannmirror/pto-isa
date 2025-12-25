@@ -32,7 +32,7 @@ def gen_golden_data(param):
     for i in range(valid_col):
         output_arr[i] = value_max
         for j in range(valid_row):
-            if output_arr[i] < input_arr[j, i]:
+            if output_arr[i] > input_arr[j, i]:
                 output_arr[i] = input_arr[j, i]
 
     # 先计算, 再强转类型, 保证结果精度不裂化
