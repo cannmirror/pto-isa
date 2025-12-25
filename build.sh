@@ -196,7 +196,7 @@ run_example() {
 
 main() {
   checkopts "$@"
-  if ["$RUN_TYPE" == "sim"]; then
+  if [ "$RUN_TYPE" == "sim" ]; then
       ulimit -n 65535
   fi
   if [ "$ENABLE_SIMPLE_ST" == "TRUE" ]; then
