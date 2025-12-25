@@ -12,7 +12,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TADDS_HPP
 
 #include <pto/common/constants.hpp>
-#include "TBinSOp.hpp"
+#include "pto/npu/a2a3/TBinSOp.hpp"
+#include "pto/npu/a2a3/TBinSPlusOp.hpp"
 
 namespace pto
 {
@@ -66,6 +67,47 @@ namespace pto
         unsigned validRow = dst.GetValidRow();
         unsigned validCol = dst.GetValidCol();
         TAddS<TileData, elementsPerRepeat, blockSizeElem, stride>(dst.data(), src0.data(), scalar, validRow, validCol);
+    }
+
+    template <typename T, typename TileDataDst, typename TileDataSrc>
+    __tf__ PTO_INTERNAL void TAddS(typename TileDataDst::TileDType __out__ dstData,
+        typename TileDataDst::TileDType __in__ srcData, T __in__ scalar, unsigned validRow, unsigned validCol) {
+        __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+        __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+        if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
+            constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
+            constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
+            constexpr unsigned stride = TileDataDst::RowStride;
+            TBinSInstr<AddSOp<T>, T, TileDataDst, elementsPerRepeat, blockSizeElem, stride>(dst, src, scalar, validRow, validCol);
+        } else {
+            TBinSPlusInstr<AddSOp<T>, T, TileDataDst, TileDataSrc>(dst, src, scalar, validRow, validCol);
+        }
+    }
+
+    template <typename TileDataDst, typename TileDataSrc>
+    PTO_INTERNAL void TADDS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar)
+    {
+        using T = typename TileDataSrc::DType;
+        static_assert(std::is_same_v<T, typename TileDataDst::DType>,
+            "TADDS: The data type of dst must be consistent with src.");
+        static_assert(std::is_same<T, int32_t>::value || std::is_same<T, int>::value ||
+                      std::is_same<T, int16_t>::value || std::is_same<T, half>::value ||
+                      std::is_same<T, float16_t>::value || std::is_same<T, float>::value ||
+                      std::is_same<T, float32_t>::value, "TADDS: Invalid data type");
+
+        static_assert(TileDataSrc::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+
+        PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "Number of cols of src and dst must be the same.");
+        PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
+
+        unsigned dstValidRow = dst.GetValidRow();
+        unsigned dstValidCol = dst.GetValidCol();
+        if ((dstValidRow != 0 && dstValidCol != 0) &&
+            (dstValidRow == src.GetValidRow() && dstValidCol == src.GetValidCol())) {
+            TAddS<T, TileDataDst, TileDataSrc>(dst.data(), src.data(), scalar, dstValidRow, dstValidCol);
+        } else {
+            PTO_ASSERT(false, "TADDS: dstTile validRow/validCol must be consistent with of src.");
+        }
     }
 }
 
