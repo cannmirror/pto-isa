@@ -1,9 +1,12 @@
 .git
 .idea
 .vscode
+.DS_Store
 build
 build_tests
 demos/**/build/
+site/
+.venv-mkdocs/
 *.o
 output/
 __pycache__/

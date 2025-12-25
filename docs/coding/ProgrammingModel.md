@@ -37,3 +37,50 @@ PTO-Manual targets developers who need full control for performance tuning:
 
 This mode enables expert tuning on critical kernels while still using the shared Tile/GlobalTensor abstractions.
 
+## Execution models: SPMD and MPMD
+
+PTO supports both **SPMD** and **MPMD** execution models.
+
+These execution models describe **how work is mapped onto cores**. They are orthogonal to the **Auto vs Manual**
+development styles (you can write SPMD-Auto, SPMD-Manual, MPMD-Auto, or MPMD-Manual code).
+
+### SPMD (Single Program, Multiple Data)
+
+In SPMD, all participating cores run the same entry function, and each core selects its own data region using its
+runtime identity (for example `block_idx`).
+
+When sub-block decomposition exists, a stable “virtual id” can be constructed:
+
+```cpp
+auto cid = get_block_idx();
+auto vid = get_block_idx() * get_subblockdim() + get_subblockid();
+```
+
+SPMD is a good fit for regular tensor tiling (GEMM, softmax-by-rows, elementwise ops).
+
+### MPMD (Multiple Program, Multiple Data)
+
+In MPMD, different cores (or groups of cores) may execute **different tile programs** as part of the same overall
+tile graph. Conceptually, the **Device Machine scheduler** chooses which “program” a core runs.
+
+One portable way to express this is to pass a scheduler-provided **task id** into the kernel entry function and
+dispatch based on it:
+
+```cpp
+__global__ __aicore__ void KernelMPMD(__gm__ float* out,
+                                     __gm__ const float* in,
+                                     uint32_t task_id) {
+  switch (task_id) {
+    case 0: return ProducerStage(out, in);
+    case 1: return ConsumerStage(out, in);
+    default: return;
+  }
+}
+```
+
+Notes:
+
+- The exact mechanism that delivers `task_id` is platform/runtime dependent; the abstract model only requires that
+  the Device Machine can schedule different tile blocks onto available cores.
+- If you prefer, MPMD can also be expressed as **multiple entry points** (multiple kernels) rather than a single
+  kernel with a `switch`.

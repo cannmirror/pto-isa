@@ -103,11 +103,37 @@ PTO ISA defines over 90 standard operations. This repository implements a growin
 * Ascend A5 (Ascend 950 )
 * CPU (x86_64 / AArch64)
 
-For more details please refer to [Released PTO ISA](include\README.md)
+For more details please refer to [Released PTO ISA](include/README.md)
 
 ## Quickstart Guide
 
 For detailed, OS-specific setup (Windows / Linux / macOS), see: [docs/getting-started.md](docs/getting-started.md).
+
+### Build Documentation (MkDocs)
+
+This repository includes an MkDocs (Read the Docs theme) site under `docs/mkdocs/`.
+
+Using a Python venv (recommended):
+
+```bash
+python3 -m venv .venv-mkdocs
+source .venv-mkdocs/bin/activate
+python -m pip install -r docs/mkdocs/requirements.txt
+python -m mkdocs serve -f docs/mkdocs/mkdocs.yml
+```
+
+Build a static site:
+
+```bash
+python -m mkdocs build -f docs/mkdocs/mkdocs.yml
+```
+
+Build via CMake:
+
+```bash
+cmake -S docs -B build/docs -DPython3_EXECUTABLE=$PWD/.venv-mkdocs/bin/python
+cmake --build build/docs --target pto_docs
+```
 
 ### Run CPU Simulator (recommended first step)
 

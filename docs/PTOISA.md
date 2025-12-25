@@ -23,7 +23,7 @@ The per-instruction reference pages in `docs/isa/` are written against the C++ i
 | Developer notes | [`docs/coding/Event.md`](coding/Event.md) | Event tokens and synchronization. |
 | Developer notes | [`docs/coding/ProgrammingModel.md`](coding/ProgrammingModel.md) | PTO-Auto vs PTO-Manual overview. |
 | Machine model | [`docs/machine/abstract-machine.md`](machine/abstract-machine.md) | Abstract execution machine model. |
-| Source of truth | [`include/pto/common/pto_instr.hpp`](../include/pto/common/pto_instr.hpp) | C++ intrinsic API (authoritative). |
+| Source of truth | [`include/pto/common/pto_instr.hpp`](reference/pto-intrinsics-header.md) | C++ intrinsic API (authoritative). |
 
 ## Programming Model
 

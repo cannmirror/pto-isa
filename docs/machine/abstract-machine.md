@@ -98,6 +98,21 @@ The abstract rules are:
 
 Device implementations may execute independent tile blocks out of order and in parallel.
 
+### MPMD scheduling (task id)
+
+While many kernels are written in an SPMD style (all cores run the same entry function), the Device Machine model also
+allows an MPMD style where different cores execute different tile programs.
+
+In the abstract model, this is represented as the scheduler selecting a tile block (program) and mapping it to a core.
+Implementations may expose this as:
+
+- multiple kernel entry points (one per program), and/or
+- a scheduler-provided **task id** passed into a single entry function, used to dispatch the program body
+
+See also:
+
+- `docs/coding/ProgrammingModel.md`
+
 ## PTO Host Machine
 
 The **Host Machine** is responsible for preparing and submitting work to the device. Common responsibilities include:
@@ -108,4 +123,3 @@ The **Host Machine** is responsible for preparing and submitting work to the dev
 - Submitting work to one or more Device Machines and coordinating completion.
 
 From the ISA perspective, host behavior is out of scope; it is described here only to clarify where compilation and scheduling decisions may live in an end-to-end system.
-
