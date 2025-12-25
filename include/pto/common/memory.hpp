@@ -23,6 +23,8 @@ enum class TileType {
   Acc,
   Bias,
   Scaling,
+  ScaleLeft,
+  ScaleRight,
 };
 
 enum class BLayout {

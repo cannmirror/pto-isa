@@ -143,11 +143,12 @@ PTO_INTERNAL void CheckStaticVec()
             std::is_same_v<typename TileData::DType, float8_e4m3_t> ||
             std::is_same_v<typename TileData::DType, float8_e5m2_t> ||
             std::is_same_v<typename TileData::DType, hifloat8_t> ||
+            std::is_same_v<typename TileData::DType, float8_e8m0_t> ||
             std::is_same_v<typename TileData::DType, float4_e1m2x2_t> ||
             std::is_same_v<typename TileData::DType, float4_e2m1x2_t>,
         "Data type must be "
         "int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/int64_t/uint64_t/half/bfloat16_t/float/float8_e4m3_t/"
-        "float8_e5m2_t/hifloat8_t/float4_e1m2x2_t/float4_e2m1x2_t!");
+        "float8_e5m2_t/hifloat8_t/float8_e8m0_t/float4_e1m2x2_t/float4_e2m1x2_t!");
     static_assert(((GlobalData::layout == pto::Layout::ND) &&
                       (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox))) ||
                       ((GlobalData::layout == pto::Layout::DN) &&

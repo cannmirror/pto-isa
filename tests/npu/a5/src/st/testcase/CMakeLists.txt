@@ -167,6 +167,7 @@ set(ALL_TESTCASES
     trowexpand_trowsum
     trowsum_trowexpand
     trowexpand_tdiv
+    tload_scale
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

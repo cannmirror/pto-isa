@@ -25,6 +25,12 @@ enum class Layout {
     DN, // DN ColMajor
     NZ, // NZ for cube
     SCALE,
+    MX_AND,
+    MX_ADN,
+    MX_AZZ,
+    MX_BND,
+    MX_BDN,
+    MX_BNN,
     MAX,
 };
 namespace GlobalTensorDim {
@@ -554,8 +560,11 @@ namespace TileConfig {
 static constexpr int alignedSize = 32;
 static constexpr int fixedRowSize = 16;
 static constexpr int fixedColSize = 16;
+static constexpr int fixedMxRowSize = 16;
+static constexpr int fixedMxColSize = 2;
 static constexpr int fractalABSize = 512;
 static constexpr int fractalCSize = 1024;
+static constexpr int fractalMxSize = 32;
 static constexpr int cElemSize = 4;
 } // namespace TileConfig
 
@@ -574,6 +583,8 @@ struct Tile {
         static_assert(sizeof(DType) == TileConfig::cElemSize,
                       "Size of datatype != 4");
         return TileConfig::fixedRowSize;
+      } else if constexpr (SFractalSize_ == TileConfig::fractalMxSize) {
+        return TileConfig::fixedMxRowSize;
       } else {
         return isBoxedLayout
                    ? (isInnerRowMajor ? TileConfig::fixedRowSize
@@ -587,6 +598,8 @@ struct Tile {
         static_assert(sizeof(DType) == TileConfig::cElemSize,
                       "Size of datatype != 4");
         return TileConfig::fixedColSize;
+      } else if constexpr (SFractalSize_ == TileConfig::fractalMxSize) {
+        return TileConfig::fixedMxColSize;
       } else {
         return isBoxedLayout
                    ? (isInnerRowMajor ? TileConfig::alignedSize / sizeof(DType)
@@ -661,7 +674,7 @@ struct Tile {
 
     static_assert(InnerRows != 0 && InnerCols != 0,
                   "rows or cols of fractal size is 0.");
-    static_assert((Loc == TileType::Vec) || (Rows % InnerRows == 0),
+    static_assert((Loc == TileType::Vec) || (SFractalSize_ == TileConfig::fractalMxSize) || (Rows % InnerRows == 0),
                   "Layout rows must be divisible by inner box rows");
     static_assert(Cols % InnerCols == 0,
                   "Layout cols must be divisible by inner box cols");
@@ -669,14 +682,16 @@ struct Tile {
     static_assert(
         (BFractal_ == BLayout::RowMajor && SFractal_ == SLayout::NoneBox && Cols * sizeof(DType) % TileConfig::alignedSize == 0) ||
         (BFractal_ == BLayout::ColMajor && SFractal_ == SLayout::NoneBox && Rows * sizeof(DType) % TileConfig::alignedSize == 0) ||
-        (SFractal_ != SLayout::NoneBox) && (((Loc == TileType::Vec) || (Rows % InnerRows == 0)) && Cols % InnerCols == 0),
+        (SFractal_ != SLayout::NoneBox) &&
+        (((Loc == TileType::Vec) || (SFractalSize_ == TileConfig::fractalMxSize) || (Rows % InnerRows == 0)) && Cols % InnerCols == 0),
         "BFractal_ is RowMajor and SFractal_ is NoneBox: Rows must be 32 bytes align, \
          BFractal_ is ColMajor and SFractal_ is NoneBox: Cols must be 32 bytes align, \
          SFractal_ in not NoneBox: Rows/Cols must be integer multiple of InnerRows/InnerCols."
          );
 
     static_assert(SFractalSize_ == TileConfig::fractalABSize ||
-                      SFractalSize_ == TileConfig::fractalCSize,
+                      SFractalSize_ == TileConfig::fractalCSize ||
+                      SFractalSize_ == TileConfig::fractalMxSize,
                   "SFractalSize_ illegal");
 
 #ifdef __CPU_SIM
