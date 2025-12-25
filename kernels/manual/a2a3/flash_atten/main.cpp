@@ -348,7 +348,7 @@ void run_tfa() {
                     const int c0 = ti * CUBE_S1;
                     const float *src = &golden_qk[static_cast<size_t>(global_r) * S1 + c0];
                     float *dst = &exp_qk[qk_off + static_cast<size_t>(r) * CUBE_S1];
-                    std::memcpy(dst, src, sizeof(float) * CUBE_S1);
+                    std::copy_n(src, CUBE_S1, dst);
                 }
 
                 // Copy p tile (converted to float)
@@ -357,7 +357,7 @@ void run_tfa() {
                     const int c0 = ti * CUBE_S1;
                     const float *src = &golden_p[static_cast<size_t>(global_r) * S1 + c0];
                     float *dst = &exp_p[p_off + static_cast<size_t>(r) * CUBE_S1];
-                    std::memcpy(dst, src, sizeof(float) * CUBE_S1);
+                    std::copy_n(src, CUBE_S1, dst);
                     exp_p_max[p_max_off + static_cast<size_t>(r)] = golden_exp_max_tiles[ti][global_r];
                 }
 
@@ -367,7 +367,7 @@ void run_tfa() {
                     const int global_r = b * CUBE_S0 + r;
                     const float *src = &pv_tile[static_cast<size_t>(global_r) * HEAD_SIZE];
                     float *dst = &exp_pv[pv_off + static_cast<size_t>(r) * HEAD_SIZE];
-                    std::memcpy(dst, src, sizeof(float) * HEAD_SIZE);
+                    std::copy_n(src, HEAD_SIZE, dst);
                 }
             }
 
