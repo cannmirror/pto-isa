@@ -51,8 +51,10 @@ PTO_INST RecordEvent TDIVS(TileData& dst, typename TileData::DType scalar, TileD
   - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
   - Runtime: `src0.GetValidRow() == dst.GetValidRow()` and `src0.GetValidCol() == dst.GetValidCol()`.
 - **Implementation checks (A5)** (both overloads):
-  - `TileData::DType` must be one of: `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `int32_t`, `half`, `float`, `bfloat16_t`.
-  - No additional tile-location/layout/valid assertions are enforced by `TDIVS_IMPL` on this target.
+  - `TileData::DType` must be one of: `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `int32_t`, `half`, `float`.
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`).
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+  - Runtime: `src0.GetValidRow() == dst.GetValidRow()` and `src0.GetValidCol() == dst.GetValidCol()`.
 - **Valid region**:
   - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain.
 - **Division-by-zero**:

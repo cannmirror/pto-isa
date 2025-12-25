@@ -328,6 +328,12 @@ namespace pto
                       std::is_same<T, float32_t>::value, "TDIVS: Invalid data type");
 
         static_assert(TileDataSrc::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileDataDst::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileDataSrc::ValidCol <= TileDataSrc::Cols, "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataSrc::ValidRow <= TileDataSrc::Rows, "Number of valid rows must not be greater than number of tile rows.");
+        static_assert(TileDataDst::ValidCol <= TileDataDst::Cols, "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataDst::ValidRow <= TileDataDst::Rows, "Number of valid rows must not be greater than number of tile rows.");
+
 
         PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "Number of cols of src and dst must be the same.");
         PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
@@ -366,6 +372,12 @@ namespace pto
             std::is_same<T, float>::value || std::is_same<T, float32_t>::value, "TDIVS: Invalid data type");
 
         static_assert(TileDataSrc::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileDataDst::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileDataSrc::ValidCol <= TileDataSrc::Cols, "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataSrc::ValidRow <= TileDataSrc::Rows, "Number of valid rows must not be greater than number of tile rows.");
+        static_assert(TileDataDst::ValidCol <= TileDataDst::Cols, "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataDst::ValidRow <= TileDataDst::Rows, "Number of valid rows must not be greater than number of tile rows.");
+
         PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
         PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
 
