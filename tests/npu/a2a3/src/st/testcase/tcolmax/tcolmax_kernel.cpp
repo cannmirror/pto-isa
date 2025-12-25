@@ -21,7 +21,7 @@ __global__ AICORE void runTCOLMAX(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     using DynDim2Shape  = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
-    GlobalData srcGlobal(src, DynDim2Shape(src_row, cols), DynDim2Stride(src_row, cols));
+    GlobalData srcGlobal(src, DynDim2Shape(src_validRow, cols), DynDim2Stride(src_row, cols));
     GlobalData dstGlobal(out, DynDim2Shape(1, cols), DynDim2Stride(1, cols));
 
     using srcTileData = Tile<TileType::Vec, T, src_row, cols, BLayout::RowMajor, -1, -1>;
