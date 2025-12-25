@@ -148,6 +148,21 @@ namespace pto {
     template <typename TileData>
     AICORE void TDIVS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar)
     {
+        static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
+                      std::is_same<typename TileData::DType, int>::value ||
+                      std::is_same<typename TileData::DType, int16_t>::value ||
+                      std::is_same<typename TileData::DType, half>::value ||
+                      std::is_same<typename TileData::DType, float16_t>::value ||
+                      std::is_same<typename TileData::DType, float>::value ||
+                      std::is_same<typename TileData::DType, float32_t>::value,
+                      "TDIVS: Invalid data type");
+        static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+        
+        PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
+        PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
+        
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
         constexpr unsigned rowStride = TileData::RowStride;
