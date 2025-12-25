@@ -88,7 +88,7 @@ PTO_INTERNAL void TSelsPadImpl(
 }
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem>
-__tf__ PTO_INTERNAL OP_NAME(TSELS) OP_TYPE(broadcast)
+__tf__ PTO_INTERNAL OP_NAME(TSELS) OP_TYPE(element_wise)
 void TSelsImpl(
     typename TileData::TileDType __out__ dst,
     typename TileData::TileDType __in__ src0,
