@@ -615,13 +615,13 @@ struct Tile {
     
     __tf__ AICORE void SetValue(const uint32_t offset, const DType val) {
         static_assert(Loc == TileType::Vec, "Location of tile must be Location::Vec.");
-        DType *ptr = __cce_get_tile_ptr(data_);
+        __ubuf__ DType *ptr = (__ubuf__ DType *)__cce_get_tile_ptr(data_);
         *(ptr + offset) = val;
     }
 
     __tf__ AICORE DType GetValue(const uint32_t offset) {
         static_assert(Loc == TileType::Vec, "Location of tile must be Location::Vec.");
-        DType *ptr = __cce_get_tile_ptr(data_);
+        __ubuf__ DType *ptr = (__ubuf__ DType *)__cce_get_tile_ptr(data_);
         return *(ptr + offset);
     }
     // constructor for static shape
