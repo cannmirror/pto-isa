@@ -171,14 +171,21 @@ python3 tests/run_cpu.py --verbose
 
 For example, if you use the CANN community package and install to the default path:
 
-```bash
-source /usr/local/Ascend/latest/bin/setenv.bash
-```
+- Default path (installed as root)
 
-If you install to `.../ascend-toolkit/latest`, use:
+    ```bash
+    source /usr/local/Ascend/cann/bin/setenv.bash
+    ```
+
+- Default path (installed as a non-root user)
+    ```bash
+    source $HOME/Ascend/cann/bin/setenv.bash
+    ```
+
+If you install to `install-path`, use:
 
 ```bash
-source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
+source ${install-path}/cann/bin/setenv.bash
 ```
 
 ### One-click Build and Run

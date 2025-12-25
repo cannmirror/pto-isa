@@ -168,6 +168,55 @@ Common options:
   export LD_LIBRARY_PATH=/path_to_compiler/lib64:$LD_LIBRARY_PATH
   ```
 
+## Run NPU Tests
+
+Set environment variables according to [Environment_Variables](./getting-started.md#environment-variables) first;
+
+- Running a Single ST Test Case
+
+  Running ST requires a working Ascend CANN environment and is typically Linux-only.
+
+  ```bash
+  python3 tests/script/run_st.py -r [sim|npu] -v [a3|a5] -t [TEST_CASE] -g [GTEST_FILTER_CASE]
+  ```
+
+  Note: the `a3` backend covers the A2/A3 family (`include/pto/npu/a2a3`).
+
+  Example:
+
+  ```bash
+  python3 tests/script/run_st.py -r npu -v a3 -t tmatmul -g TMATMULTest.case1
+  python3 tests/script/run_st.py -r sim -v a5 -t tmatmul -g TMATMULTest.case1
+  ```
+
+- Running Recommended Test Suites
+
+  ```bash
+  # Execute the following commands from the project root directory:
+  chmod +x ./tests/run_st.sh
+  ./tests/run_st.sh a5 npu simple
+  ulimit -n 65536;./tests/run_st.sh a3 sim all # use ulimit -n first if run on simulator
+  ```
+
+- Run Full ST Tests:
+
+  ```bash
+  chmod +x build.sh
+  ./build.sh --run_all --a3 --sim
+  ```
+- Run Simplified ST Tests:
+
+  ```bash
+  chmod +x build.sh
+  ./build.sh --run_simple --a5 --npu
+  ```
+- Packaging:
+
+  ```bash
+  chmod +x build.sh
+  ./build.sh --pkg
+  ```
+
 # Environment Setup (Ascend 910B/910C, Linux)
 
 ## Prerequisites
@@ -215,19 +264,19 @@ This project supports building from source. Before building, prepare the environ
 
 1. **Install the community edition CANN toolkit**
 
-    Download the appropriate `Ascend-cann-toolkit_${cann_version}_linux-${arch}.run` installer for your environment.
+    Download the appropriate `Ascend-cann-toolkit-${cann_version}-linux-${arch}.run` installer for your environment.
     
     ```bash
     # Ensure the installer is executable
-    chmod +x Ascend-cann-toolkit_${cann_version}_linux-${arch}.run
+    chmod +x Ascend-cann-toolkit-${cann_version}-linux-${arch}.run
     # Install
-    ./Ascend-cann-toolkit_${cann_version}_linux-${arch}.run --install --force --install-path=${install_path}
+    ./Ascend-cann-toolkit-${cann_version}-linux-${arch}.run --install --force --install-path=${install_path}
     ```
     - `${cann_version}`: the CANN toolkit version.
     - `${arch}`: the CPU architecture, such as `aarch64` or `x86_64`.
     - `${install_path}`: the installation path.
     - If `--install-path` is omitted, the default path is used. If installed as root, the software is placed under
-      `/usr/local/Ascend/latest`. If installed as a non-root user, it is placed under `$HOME/Ascend/latest`.
+      `/usr/local/Ascend/cann`. If installed as a non-root user, it is placed under `$HOME/Ascend/cann`.
 
 
 ## Environment Variables
@@ -235,17 +284,17 @@ This project supports building from source. Before building, prepare the environ
 - Default path (installed as root)
 
     ```bash
-    source /usr/local/Ascend/latest/bin/setenv.bash
+    source /usr/local/Ascend/cann/bin/setenv.bash
     ```
 
 - Default path (installed as a non-root user)
     ```bash
-    source $HOME/Ascend/latest/bin/setenv.bash
+    source $HOME/Ascend/cann/bin/setenv.bash
     ```
 
 - Custom installation path
     ```bash
-    source ${install_path}/latest/bin/setenv.bash
+    source ${install_path}/cann/bin/setenv.bash
     ```
 
 ## Source Code Download
