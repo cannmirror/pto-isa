@@ -64,31 +64,6 @@ AICORE inline void InitGMOffsets(__gm__ U *&currentSrc0, __gm__ S *&currentSrc1,
     currentDst = out + gmOffsetC;
 }
 
-template <typename T, typename U, typename S, uint32_t baseM, uint32_t baseK, uint32_t baseN, uint32_t stepKa,
-    uint32_t stepKb>
-AICORE inline void InitBuffers(
-    Tile<TileType::Mat, U, baseM, baseK * stepKa, BLayout::ColMajor, baseM, baseK * stepKa, SLayout::RowMajor>
-        aMatTile[BUFFER_NUM],
-    Tile<TileType::Mat, S, baseK * stepKb, baseN, BLayout::RowMajor, baseK * stepKb, baseN, SLayout::ColMajor>
-        bMatTile[BUFFER_NUM],
-    TileLeft<U, baseM, baseK, baseM, baseK> aTile[BUFFER_NUM],
-    TileRight<S, baseK, baseN, baseK, baseN> bTile[BUFFER_NUM], TileAcc<T, baseM, baseN, baseM, baseN> &cTile)
-{
-    // L1 staging buffers (aMatTile/bMatTile) are double-buffered for TLOAD overlap.
-    TASSIGN(aMatTile[0], 0x0);
-    TASSIGN(aMatTile[1], 0x0 + baseM * baseK * stepKa * sizeof(U));
-    TASSIGN(bMatTile[0], 0x0 + baseM * baseK * stepKa * BUFFER_NUM * sizeof(U));
-    TASSIGN(bMatTile[1], 0x0 + baseM * baseK * stepKa * BUFFER_NUM * sizeof(U) + baseK * baseN * stepKb * sizeof(U));
-
-    // L0A/L0B ping-pong buffers (TEXTRACT destination).
-    // Keep each per-buffer footprint <= 32 KiB to fit in a ping/pang slot.
-    TASSIGN(aTile[0], 0x0);                      // L0A ping
-    TASSIGN(aTile[1], 0x0 + L0_PINGPONG_BYTES);  // L0A pang
-    TASSIGN(bTile[0], 0x0);                      // L0B ping
-    TASSIGN(bTile[1], 0x0 + L0_PINGPONG_BYTES);  // L0B pang
-    TASSIGN(cTile, 0x0);
-}
-
 template <typename T, typename U, typename S, int m, int k, int n, uint32_t baseM, uint32_t baseK, uint32_t baseN,
     uint32_t stepKa, uint32_t stepKb, uint32_t singleCoreK>
 AICORE inline void ProcessKIteration(uint32_t kIter, uint32_t i, uint32_t j, __gm__ U *currentSrc0,
@@ -184,13 +159,10 @@ AICORE inline void RunGemmE2E(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     __gm__ U *currentSrc0 = nullptr;
     __gm__ S *currentSrc1 = nullptr;
     __gm__ T *currentDst = nullptr;
-    InitGMOffsets<T, U, S, m, k, n, singleCoreM, singleCoreK, singleCoreN>(
-        currentSrc0, currentSrc1, currentDst, out, src0, src1);
+    InitGMOffsets<T, U, S, m, k, n, singleCoreM, singleCoreK, singleCoreN>(currentSrc0, currentSrc1, currentDst, out, src0, src1);
 
-    using TileMatA =
-        Tile<TileType::Mat, U, baseM, baseK * stepKa, BLayout::ColMajor, baseM, baseK * stepKa, SLayout::RowMajor>;
-    using TileMatB =
-        Tile<TileType::Mat, S, baseK * stepKb, baseN, BLayout::RowMajor, baseK * stepKb, baseN, SLayout::ColMajor>;
+    using TileMatA = Tile<TileType::Mat, U, baseM, baseK * stepKa, BLayout::ColMajor, baseM, baseK * stepKa, SLayout::RowMajor>;
+    using TileMatB = Tile<TileType::Mat, S, baseK * stepKb, baseN, BLayout::RowMajor, baseK * stepKb, baseN, SLayout::ColMajor>;
 
     TileMatA aMatTile[BUFFER_NUM];
     TileMatB bMatTile[BUFFER_NUM];
@@ -203,7 +175,19 @@ AICORE inline void RunGemmE2E(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     RightTile bTile[BUFFER_NUM];
     ResTile cTile;
 
-    InitBuffers<T, U, S, baseM, baseK, baseN, stepKa, stepKb>(aMatTile, bMatTile, aTile, bTile, cTile);
+    // L1 staging buffers (aMatTile/bMatTile) are double-buffered for TLOAD overlap.
+    TASSIGN(aMatTile[0], 0x0);
+    TASSIGN(aMatTile[1], 0x0 + baseM * baseK * stepKa * sizeof(U));
+    TASSIGN(bMatTile[0], 0x0 + baseM * baseK * stepKa * BUFFER_NUM * sizeof(U));
+    TASSIGN(bMatTile[1], 0x0 + baseM * baseK * stepKa * BUFFER_NUM * sizeof(U) + baseK * baseN * stepKb * sizeof(U));
+
+    // L0A/L0B ping-pong buffers (TEXTRACT destination).
+    // Keep each per-buffer footprint <= 32 KiB to fit in a ping/pang slot.
+    TASSIGN(aTile[0], 0x0);                      // L0A ping
+    TASSIGN(aTile[1], 0x0 + L0_PINGPONG_BYTES);  // L0A pang
+    TASSIGN(bTile[0], 0x0);                      // L0B ping
+    TASSIGN(bTile[1], 0x0 + L0_PINGPONG_BYTES);  // L0B pang
+    TASSIGN(cTile, 0x0);
 
     constexpr uint32_t mLoop = singleCoreM / baseM;
     constexpr uint32_t nLoop = singleCoreN / baseN;
