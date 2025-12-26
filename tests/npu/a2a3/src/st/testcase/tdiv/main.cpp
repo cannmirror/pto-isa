@@ -43,7 +43,7 @@ void LaunchTDiv(T *out, T *src0, T *src1, void *stream);
 template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void test_tdiv() {
 
-    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
+    size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -100,12 +100,12 @@ TEST_F(TDIVTest, case_float_64x64_64x64_64x64) {
 TEST_F(TDIVTest, case_half_64x64_64x64_64x64) {
     test_tdiv<aclFloat16, 64, 64, 64, 64>();
 }
-TEST_F(TDIVTest, case_half_161x161_32x32_161x161) {
-    test_tdiv<aclFloat16, 161, 161, 32, 32>();
+TEST_F(TDIVTest, case_half_61x61_64x64_61x61) {
+    test_tdiv<aclFloat16, 61, 61, 64, 64>();
 }
-TEST_F(TDIVTest, case_float_77x81_32x16_77x81) {
-    test_tdiv<float, 77, 81, 32, 16>();
+TEST_F(TDIVTest, case_float_60x30_64x32_60x30) {
+    test_tdiv<float, 60, 30, 64, 32>();
 }
-TEST_F(TDIVTest, case_float_32x32_32x16_32x32) {
-    test_tdiv<float, 32, 32, 32, 16>();
+TEST_F(TDIVTest, case_float_32x32_32x32_32x32) {
+    test_tdiv<float, 32, 32, 32, 32>();
 }

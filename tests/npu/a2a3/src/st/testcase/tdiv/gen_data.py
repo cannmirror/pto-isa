@@ -21,24 +21,17 @@ def gen_golden_data_tdiv(case_name, param):
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    input2 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+    input1 = np.random.randint(1, 10, size=[h_valid, w_valid]).astype(dtype)
+    input2 = np.random.randint(1, 10, size=[h_valid, w_valid]).astype(dtype)
 
     golden = np.divide(input1, input2)
-
-    # Apply valid region constraints
-    output = np.zeros([H, W]).astype(dtype)
-    for h in range(H):
-        for w in range(W):
-            if h >= h_valid or w >= w_valid:
-                golden[h][w] = output[h][w]
 
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
     input2.tofile("input2.bin")
     golden.tofile("golden.bin")
 
-    return output, input1, input2, golden
+    return input1, input2, golden
 
 class tdivParams:
     def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
@@ -69,9 +62,9 @@ if __name__ == "__main__":
     case_params_list = [
         tdivParams(np.float32, 64, 64, 64, 64, 64, 64),
         tdivParams(np.float16, 64, 64, 64, 64, 64, 64),
-        tdivParams(np.float16, 161, 161, 32, 32, 161, 161),
-        tdivParams(np.float32, 77, 81, 32, 16, 77, 81),
-        tdivParams(np.float32, 32, 32, 32, 16, 32, 32)
+        tdivParams(np.float16, 61, 61, 64, 64, 61, 61),
+        tdivParams(np.float32, 60, 30, 64, 32, 60, 30),
+        tdivParams(np.float32, 32, 32, 32, 32, 32, 32)
     ]
 
     for i, param in enumerate(case_params_list):

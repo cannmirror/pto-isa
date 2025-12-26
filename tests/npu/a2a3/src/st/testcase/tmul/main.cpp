@@ -43,7 +43,7 @@ void LaunchTMul(T *out, T *src0, T *src1, void *stream);
 template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void test_tmul() {
 
-    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
+    size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -106,12 +106,12 @@ TEST_F(TMULTest, case_half_16x16_16x16_16x16) {
 TEST_F(TMULTest, case_int16_64x64_64x64_64x64) {
     test_tmul<int16_t, 64, 64, 64, 64>();
 }
-TEST_F(TMULTest, case_half_161x161_32x32_161x161) {
-    test_tmul<aclFloat16, 161, 161, 32, 32>();
+TEST_F(TMULTest, case_half_61x61_64x64_61x61) {
+    test_tmul<aclFloat16, 61, 61, 64, 64>();
 }
-TEST_F(TMULTest, case_int32_77x81_32x16_77x81) {
-    test_tmul<int32_t, 77, 81, 32, 16>();
+TEST_F(TMULTest, case_int32_60x30_64x32_60x30) {
+    test_tmul<int32_t, 60, 30, 64, 32>();
 }
-TEST_F(TMULTest, case_int32_32x32_32x16_32x32) {
-    test_tmul<int32_t, 32, 32, 32, 16>();
+TEST_F(TMULTest, case_int32_32x32_32x32_32x32) {
+    test_tmul<int32_t, 32, 32, 32, 32>();
 }

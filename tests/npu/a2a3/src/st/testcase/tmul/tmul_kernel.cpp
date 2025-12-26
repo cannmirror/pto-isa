@@ -20,9 +20,9 @@ __global__ AICORE void runTMul( __gm__ T __out__ *out, __gm__ T __in__ *src0,  _
     using DynStridDim5 = Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
-    TileData src0Tile(kTRows_, kTCols_);
-    TileData src1Tile(kTRows_, kTCols_);
-    TileData dstTile(kTRows_, kTCols_);
+    TileData src0Tile(kGRows_, kGCols_);
+    TileData src1Tile(kGRows_, kGCols_);
+    TileData dstTile(kGRows_, kGCols_);
     TASSIGN(src0Tile, 0x0 + 0x400 * block_idx);
     TASSIGN(src1Tile, 0x4000 + 0x400 * block_idx);
     TASSIGN(dstTile, 0x8000 + 0x400 * block_idx);
@@ -58,6 +58,6 @@ template void LaunchTMul<float, 64, 64, 64, 64>(float *out, float *src0, float *
 template void LaunchTMul<int32_t, 64, 64, 64, 64>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
 template void LaunchTMul<aclFloat16, 16, 16, 16, 16>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
 template void LaunchTMul<int16_t, 64, 64, 64, 64>(int16_t *out, int16_t *src0, int16_t *src1, void *stream);
-template void LaunchTMul<aclFloat16, 161, 161, 32, 32>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
-template void LaunchTMul<int32_t, 77, 81, 32, 16>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
-template void LaunchTMul<int32_t, 32, 32, 32, 16>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTMul<aclFloat16, 61, 61, 64, 64>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTMul<int32_t, 60, 30, 64, 32>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTMul<int32_t, 32, 32, 32, 32>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
