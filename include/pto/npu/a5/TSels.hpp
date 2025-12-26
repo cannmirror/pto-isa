@@ -113,8 +113,14 @@ template <typename TileData>
 AICORE void TSELS_IMPL(TileData &dst, TileData &src0, TileData &src1, uint8_t selectMode)
 {
     using T = typename TileData::DType;
+    static_assert(std::is_same<T, int8_t>::value || std::is_same<T, int16_t>::value ||
+                  std::is_same<T, int32_t>::value || std::is_same<T, half>::value ||
+                  std::is_same<T, float32_t>::value || std::is_same<T, uint8_t>::value ||
+                  std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value,
+                  "TSELS: Invalid data type");
     static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TSELS: Invalid data type.");
     static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+    static_assert(TileData::isRowMajor, "TSELS: not supported Layout type");
     static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
     static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
 
