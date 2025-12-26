@@ -53,12 +53,6 @@ template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSiz
     unsigned tileCols>
 PTO_INTERNAL void Bin1LNormMode(
     __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRow, unsigned validCol) {
-    if constexpr (tileCols < elementsPerRepeat) {
-        constexpr uint8_t repeatStride = rowStride / blockSizeElem;
-        Bin1LNormModeSmall<Op, T, elementsPerRepeat, tileCols, repeatStride>(
-            dstPtr, src0Ptr, src1Ptr, validRow, validCol);
-        return;
-    }
     unsigned numElements = validRow * validCol;
     unsigned headRepeats = numElements / elementsPerRepeat;
     unsigned tailElements = numElements % elementsPerRepeat;
