@@ -42,12 +42,21 @@ std::string GetGoldenDir()
     return fullPath;
 }
 
+template <typename T>
+constexpr T CeilAlign(T num_1, T num_2)
+{
+    if (num_2 == 0) {
+        return 0;
+    }
+    return (num_1 + num_2 - 1) / num_2 * num_2;
+}
+
 template <typename T, typename U, typename S, int32_t key>
 void TmatmulTest(uint32_t M, uint32_t K, uint32_t N)
 {
-    size_t aFileSize = M * K * sizeof(uint16_t); // uint16_t represent half
-    size_t bFileSize = K * N * sizeof(uint16_t); // uint16_t represent half
-    size_t cFileSize = M * N * sizeof(float);
+    size_t aFileSize = M * K * sizeof(U);
+    size_t bFileSize = K * N * sizeof(S);
+    size_t cFileSize = M * N * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -100,27 +109,27 @@ void TmatmulTest(uint32_t M, uint32_t K, uint32_t N)
 
 TEST_F(TMATMULTest, case1)
 {
-    uint32_t M = 128;
-    uint32_t N = 64;
-    uint32_t K = 128;
+    uint32_t M = 31;
+    uint32_t N = 58;
+    uint32_t K = 120;
 
     TmatmulTest<float, uint16_t, uint16_t, 1>(M, K, N);
 }
 
 TEST_F(TMATMULTest, case2)
 {
-    uint32_t M = 128;
-    uint32_t N = 64;
-    uint32_t K = 128;
+    uint32_t M = 65;
+    uint32_t N = 89;
+    uint32_t K = 90;
 
     TmatmulTest<int32_t, int8_t, int8_t, 2>(M, K, N);
 }
 
 TEST_F(TMATMULTest, case3)
 {
-    uint32_t M = 127;
-    uint32_t N = 63;
-    uint32_t K = 63;
+    uint32_t M = 5;
+    uint32_t N = 11;
+    uint32_t K = 75;
 
     TmatmulTest<float, uint16_t, uint16_t, 3>(M, K, N);
 }
@@ -128,10 +137,11 @@ TEST_F(TMATMULTest, case3)
 template <typename T, typename U, typename S, typename biasType, int32_t key>
 void TmatmulBiasTest(uint32_t M, uint32_t K, uint32_t N)
 {
-    size_t aFileSize = M * K * sizeof(U); // uint16_t represent half
-    size_t bFileSize = K * N * sizeof(S); // uint16_t represent half
+    size_t aFileSize = M * K * sizeof(U);
+    size_t bFileSize = K * N * sizeof(S);
     size_t cFileSize = M * N * sizeof(T);
-    size_t biasFileSize = 1 * N * sizeof(biasType);
+    uint32_t alignBiasN = (N * sizeof(biasType) + 63) / 64 * 64 / sizeof(biasType);
+    size_t biasFileSize = 1 * alignBiasN * sizeof(biasType);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -192,18 +202,18 @@ void TmatmulBiasTest(uint32_t M, uint32_t K, uint32_t N)
 
 TEST_F(TMATMULBIASTest, case1)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
+    uint32_t M = 26;
+    uint32_t K = 100;
+    uint32_t N = 94;
 
     TmatmulBiasTest<float, uint16_t, uint16_t, float, 1>(M, K, N);
 }
 
 TEST_F(TMATMULBIASTest, case2)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 63;
+    uint32_t M = 101;
+    uint32_t K = 288;
+    uint32_t N = 67;
 
     TmatmulBiasTest<float, uint16_t, uint16_t, float, 2>(M, K, N);
 }
@@ -219,36 +229,36 @@ TEST_F(TMATMULBIASTest, case3)
 
 TEST_F(TMATMULBIASTest, case4)
 {
-    uint32_t M = 127;
+    uint32_t M = 55;
     uint32_t K = 127;
-    uint32_t N = 63;
+    uint32_t N = 29;
 
     TmatmulBiasTest<int32_t, int8_t, int8_t, int32_t, 4>(M, K, N);
 }
 
 TEST_F(TMATMULBIASTest, case5)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
+    uint32_t M = 11;
+    uint32_t K = 402;
+    uint32_t N = 30;
 
     TmatmulBiasTest<float, uint16_t, uint16_t, float, 5>(M, K, N);
 }
 
 TEST_F(TMATMULBIASTest, case6)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
+    uint32_t M = 150;
+    uint32_t K = 89;
+    uint32_t N = 50;
 
     TmatmulBiasTest<int32_t, int8_t, int8_t, int32_t, 6>(M, K, N);
 }
 
 TEST_F(TMATMULBIASTest, case7)
 {
-    uint32_t M = 128;
-    uint32_t K = 128;
-    uint32_t N = 64;
+    uint32_t M = 135;
+    uint32_t K = 78;
+    uint32_t N = 88;
 
     TmatmulBiasTest<int32_t, int8_t, int8_t, int32_t, 7>(M, K, N);
 }
