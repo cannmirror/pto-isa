@@ -356,16 +356,21 @@ PTO_INTERNAL void TStoreAccNz2nd(typename GlobalData::DType *dstAddr, __cc__ typ
     uint16_t mSize = validRow;
     uint16_t nSize = validCol;
 
-    constexpr uint16_t srcStride = TileData::Rows;
+    uint16_t srcStride = TileData::Rows;
     uint32_t dstD = gStride3;
 
     uint16_t ndNum = validCol / gShape4;
     constexpr uint8_t c0 = 16;
-    uint16_t srcNdStride = TileData::Rows * gShape4 * c0;
+    uint16_t srcNdStride = TileData::Rows * c0 * gShape4;
+    if constexpr (TileData::Compact == CompactMode::Normal) {
+        srcStride = (validRow + FRACTAL_NZ_ROW - 1) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
+        srcNdStride = srcStride * gShape4 * c0;
+    }
+
     uint16_t dstNdStride = gStride2;
 
-    constexpr uint8_t unitFlagCtrl = 0;
     constexpr uint8_t nz2ndEn = 1;
+    constexpr uint8_t unitFlagCtrl = 0;
 
     uint64_t xmReg = 0;
     xmReg = ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
@@ -399,7 +404,10 @@ PTO_INTERNAL void TStoreAccNz2nz(typename GlobalData::DType *dstAddr, __cc__ typ
     uint16_t nSize = validCol;
 
     uint32_t c0Size = sizeof(typename GlobalData::DType) * gShape4;
-    constexpr uint16_t srcStride = TileData::Rows;
+    uint16_t srcStride = TileData::Rows;
+    if constexpr (CompactMode::Normal == TileData::Compact) {
+        srcStride = (FRACTAL_NZ_ROW + validRow - 1) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
+    }
     uint32_t dstStride = gShape2 * gShape3 * c0Size >> SHIFT_BLOCK_BYTE;
 
     constexpr uint8_t unitFlagCtrl = 0;

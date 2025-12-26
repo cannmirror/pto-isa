@@ -569,11 +569,9 @@ static constexpr int cElemSize = 4;
 } // namespace TileConfig
 
 template <TileType Loc_, typename Element_, const int Rows_, const int Cols_,
-          const BLayout BFractal_ = BLayout::RowMajor,
-          const int RowValid_ = Rows_, const int ColValid_ = Cols_,
-          const SLayout SFractal_ = SLayout::NoneBox,
-          const int SFractalSize_ = TileConfig::fractalABSize,
-          const PadValue PadVal_ = PadValue::Null>
+    const BLayout BFractal_ = BLayout::RowMajor, const int RowValid_ = Rows_, const int ColValid_ = Cols_,
+    const SLayout SFractal_ = SLayout::NoneBox, const int SFractalSize_ = TileConfig::fractalABSize,
+    const PadValue PadVal_ = PadValue::Null, const CompactMode Compact_ = CompactMode::Null>
 struct Tile {
   public:
     using DType = Element_;
@@ -625,7 +623,8 @@ struct Tile {
 
     static constexpr int SFractalSize = SFractalSize_;
     static constexpr PadValue PadVal = PadVal_;
-    
+    static constexpr CompactMode Compact = Compact_;
+
     __tf__ AICORE void SetValue(const uint32_t offset, const DType val) {
         static_assert(Loc == TileType::Vec, "Location of tile must be Location::Vec.");
         __ubuf__ DType *ptr = (__ubuf__ DType *)__cce_get_tile_ptr(data_);
@@ -774,14 +773,13 @@ template <typename T> struct is_tile : std::false_type {
 template <typename Element_, typename Layout_, typename Stride_>
 struct is_global<GlobalTensor<Element_, Layout_, Stride_>> : std::true_type {};
 
-template <TileType Loc_, typename Element_, const int Rows_, const int Cols_,
-          const BLayout BFractal_, const int RowValid_, const int ColValid_,
-          const SLayout SFractal_, const int SFractalSize_,
-          const PadValue PadVal_>
-struct is_tile<Tile<Loc_, Element_, Rows_, Cols_, BFractal_, RowValid_,
-                    ColValid_, SFractal_, SFractalSize_, PadVal_>>
+template <TileType Loc_, typename Element_, const int Rows_, const int Cols_, const BLayout BFractal_,
+    const int RowValid_, const int ColValid_, const SLayout SFractal_, const int SFractalSize_, const PadValue PadVal_,
+    const CompactMode Compact_>
+struct is_tile<
+    Tile<Loc_, Element_, Rows_, Cols_, BFractal_, RowValid_, ColValid_, SFractal_, SFractalSize_, PadVal_, Compact_>>
     : std::true_type {
-  static constexpr SLayout layout_enum = SFractal_;
+    static constexpr SLayout layout_enum = SFractal_;
 };
 
 template <typename T>

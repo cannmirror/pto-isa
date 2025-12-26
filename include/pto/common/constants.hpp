@@ -75,6 +75,11 @@ enum class PadValue {
     Min,
 };
 
+enum class CompactMode {
+    Null,
+    Normal,
+};
+
 template <typename DType, PadValue PadVal>
 struct PadValueMap {
     PTO_STATIC_ASSERT(sizeof(DType) < 0, "TLOAD: Unsupported DType for PadValue!");

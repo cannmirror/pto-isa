@@ -117,7 +117,8 @@ PTO_INTERNAL void CheckStaticAcc()
         "When GlobalData is ND format, the range of Rows is [1, 8192]."
         "When GlobalData is NZ format, the range of Rows is [1, 65535] and Cols"
         "must be an integer multiple of 16.");
-    static_assert(!(std::is_same_v<typename GlobalData::DType, __gm__ float8_e4m3_t> || std::is_same_v<typename GlobalData::DType, __gm__ float8_e5m2_t>),
+    static_assert(!(std::is_same_v<typename GlobalData::DType, __gm__ float8_e4m3_t> ||
+                      std::is_same_v<typename GlobalData::DType, __gm__ float8_e5m2_t>),
         "The compiler does not support the vector quantization mode where the output data type is float8_e4m3_t.");
     if constexpr (!isQuant) {
         static_assert(std::is_same_v<typename GlobalData::DType, __gm__ int32_t> ||
@@ -173,15 +174,20 @@ PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr, __cc__ 
 {
     uint16_t mSize = validRow;
     uint16_t nSize = validCol;
-    constexpr uint16_t srcStride = TileData::Rows;
+
+    uint16_t srcStride = TileData::Rows;
     uint32_t dstD = gStride3;
 
     uint16_t ndNum = validCol / gShape4;
     constexpr uint16_t c0 = 16;
     uint16_t srcNdStride = TileData::Rows * gShape4 * c0;
-    uint16_t dstNdStride = gStride2;
+    if constexpr (TileData::Compact == CompactMode::Normal) {
+        srcStride = (validRow + FRACTAL_NZ_ROW - 1) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
+        srcNdStride = srcStride * gShape4 * c0;
+    }
     constexpr uint8_t unitFlagCtrl = 0;
     constexpr uint8_t nz2ndEn = 1;
+    uint16_t dstNdStride = gStride2;
 
     uint64_t xmReg = 0;
     xmReg = ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
@@ -208,7 +214,10 @@ PTO_INTERNAL void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typena
 {
     uint16_t mSize = validRow;
     uint16_t nSize = validCol;
-    constexpr uint16_t srcStride = TileData::Rows;
+    uint16_t srcStride = TileData::Rows;
+    if constexpr (CompactMode::Normal == TileData::Compact) {
+        srcStride = (FRACTAL_NZ_ROW - 1 + validRow) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
+    }
     constexpr uint8_t unitFlagCtrl = 0;
     uint8_t channelSplitEn = 0;
 
