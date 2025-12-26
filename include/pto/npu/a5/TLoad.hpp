@@ -556,7 +556,6 @@ PTO_INTERNAL void TLoadMxCubeNN2NN(typename TileData::TileDType dst, typename Gl
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4)
 {
-#if defined(__DAV_CUBE__)
     // [0   1       2      3   4]
     // [1, N/16, scaleK/2, 16, 2]
     typename TileData::TileDType dstAddrP = dst;
@@ -573,7 +572,6 @@ PTO_INTERNAL void TLoadMxCubeNN2NN(typename TileData::TileDType dst, typename Gl
         dstAddrP = dst + i * tileStride;
         TLoadCubeInstr<TileData, GlobalData>(dstAddrP, srcAddrP, nBurst, lenBurst, gmStride, dstStride, 0);
     }
-#endif
 }
 
 template <typename TileData, typename GlobalData>
@@ -581,7 +579,6 @@ PTO_INTERNAL void TLoadMxCubeZZ2ZZ(typename TileData::TileDType dst, typename Gl
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4)
 {
-#if defined(__DAV_CUBE__)
     // [0   1       2      3   4]
     // [1, M/16, scaleK/2, 16, 2]
     typename TileData::TileDType dstAddrP = dst;
@@ -598,7 +595,6 @@ PTO_INTERNAL void TLoadMxCubeZZ2ZZ(typename TileData::TileDType dst, typename Gl
         dstAddrP = dst + i * tileStride;
         TLoadCubeInstr<TileData, GlobalData>(dstAddrP, srcAddrP, nBurst, lenBurst, gmStride, dstStride, 0);
     }
-#endif
 }
 
 template <typename TileData, typename GlobalData>

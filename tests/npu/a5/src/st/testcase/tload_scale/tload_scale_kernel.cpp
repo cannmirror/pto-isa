@@ -46,10 +46,10 @@ AICORE inline void runTLOAD_SCALE(__gm__ T *out, __gm__ T *src0, __gm__ T *src1)
     __gm__ T *outAddr = dstGlobal.data();
 
     /*************************************TLOAD****************************************/
-    TLOAD<TileMatAData, GlobalDataSrc0>(aMatTile, src0Global);
     uint8_t syncID = 0;
     // L1 -> UB : AIC
 #if defined(__DAV_CUBE__)
+    TLOAD<TileMatAData, GlobalDataSrc0>(aMatTile, src0Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     uint16_t validRowPreN0 = validRow / N0;
