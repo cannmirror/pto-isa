@@ -264,13 +264,13 @@ This project supports building from source. Before building, prepare the environ
 
 1. **Install the community edition CANN toolkit**
 
-    Download the appropriate `Ascend-cann-toolkit-${cann_version}-linux-${arch}.run` installer for your environment.
+    Download the appropriate `Ascend-cann-toolkit_${cann_version}_linux-${arch}.run` installer for your environment.
     
     ```bash
     # Ensure the installer is executable
-    chmod +x Ascend-cann-toolkit-${cann_version}-linux-${arch}.run
+    chmod +x Ascend-cann-toolkit_${cann_version}_linux-${arch}.run
     # Install
-    ./Ascend-cann-toolkit-${cann_version}-linux-${arch}.run --install --force --install-path=${install_path}
+    ./Ascend-cann-toolkit_${cann_version}_linux-${arch}.run --install --force --install-path=${install_path}
     ```
     - `${cann_version}`: the CANN toolkit version.
     - `${arch}`: the CPU architecture, such as `aarch64` or `x86_64`.
