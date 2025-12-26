@@ -63,25 +63,43 @@ PTO_INTERNAL void TRowReduceCheck(uint32_t srcValidRows, uint32_t srcValidCols,
                                   uint32_t dstValidRow) {
   using T = typename TileDataIn::DType;
   static_assert(is_same_v<T, half> || is_same_v<T, float>,
-                "Only support half and float.");
+                "Row reduction only supports 'half' or 'float' data types. "
+                "Fix: Define TileDataIn with DType = half or float.");
   static_assert(is_same_v<T, typename TileDataOut::DType>,
-                "Output type must be same as input type.");
-  static_assert(TileDataOut::Loc == pto::TileType::Vec &&
-                    TileDataIn::Loc == pto::TileType::Vec,
-                "This instruction only support Vec Tile.");
-  static_assert(TileDataIn::isRowMajor && !TileDataIn::isBoxedLayout,
-                "This instruction only support ND layout for input tile.");
+                "Input and output tile data types must match. "
+                "Fix: Ensure TileDataOut uses the same DType as TileDataIn.");
+  static_assert(
+      TileDataOut::Loc == pto::TileType::Vec &&
+          TileDataIn::Loc == pto::TileType::Vec,
+      "Row reduction only works on vector tiles (TileType::Vec). "
+      "Fix: Instantiate TileDataIn and TileDataOut with Loc_ = TileType::Vec.");
+  static_assert(
+      TileDataIn::isRowMajor && !TileDataIn::isBoxedLayout,
+      "Input tile must use standard ND layout (row-major, non-fractal). "
+      "Fix: Define TileDataIn with BFractal_ = BLayout::RowMajor and SFractal_ "
+      "= SLayout::NoneBox, e.g.,\n"
+      "     Tile<TileType::Vec, T, ROWS, COLS, BLayout::RowMajor, ..., "
+      "SLayout::NoneBox>");
   static_assert(
       (!TileDataOut::isBoxedLayout &&
        (TileDataOut::isRowMajor ||
         (!TileDataOut::isRowMajor && TileDataOut::Cols == 1))),
-      "This instruction only support ND or DN with Col = 1 for output tile.");
+      "Output tile layout must be either:\n"
+      "  (a) ND layout: BLayout::RowMajor + SLayout::NoneBox, OR\n"
+      "  (b) DN layout with exactly one column: BLayout::ColMajor + "
+      "SLayout::NoneBox + Cols=1.\n"
+      "Fix: Choose one of the following for TileDataOut:\n"
+      "     - Tile<..., ROWS, COLS, BLayout::RowMajor, ValidRows, 1>   // ND\n"
+      "     - Tile<..., ROWS, 1, BLayout::ColMajor, ValidRows, 1>  // DN with Cols=1");
+  // runtime checks
   PTO_ASSERT(srcValidRows != 0 && srcValidCols != 0,
-             "The input shape is invalid, validCol or validRow is 0.");
-  PTO_ASSERT(
-      srcValidRows == dstValidRow,
-      "The input valid row must be consistent with the output valid row.");
-  return;
+             "Source valid rows or columns is zero — row reduction requires at "
+             "least one element per row. "
+             "Fix: Ensure srcValidRows > 0 and srcValidCols > 0.");
+  PTO_ASSERT(srcValidRows == dstValidRow,
+             "Input and output valid row counts must be equal in row reduction "
+             "(row count is preserved). "
+             "Fix: Pass dstValidRow = srcValidRows.");
 }
 
 template <typename ReduceOp, typename TileDataOut, typename TileDataIn, 
