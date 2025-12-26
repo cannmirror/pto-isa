@@ -303,16 +303,9 @@ __global__ AICORE void TMOV2ScalingKernel(
 
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-
     TMOV(fbTile, fbMatTile);
 
-    // For temporary use only, will be removed once the TSTORE interface is supported.	
-    __fbuf__ uint64_t *fb = (__fbuf__ uint64_t *)(0);
-    uint64_t deqTensorAddr = ((uint64_t)fb >> static_cast<uint64_t>(7)) << 8;
-    set_fpc((uint64_t)deqTensorAddr);
-    pipe_barrier(PIPE_FIX);
-    __cc__ l0cType *c = (__cc__ l0cType *)(cTile.data());
-    L0CCopyOut<cType, l0cType, M, N, M, N>(out, c, M, N, 0, 0, 0, reluMode);
+    TSTORE_FP<AccTile, GlobalDataOut, FbTile>(dstGlobal, cTile, fbTile);
 
     out = dstGlobal.data();
 }
@@ -372,9 +365,9 @@ __global__ AICORE void TMOV2BiasAndScalingDyncmicKernel(__gm__ cType *out, __gm_
     using TileMatScalingData =
         Tile<TileType::Mat, scalingType, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
-    using LeftTile = Tile<TileType::Left, aType, alignM, alignK, BLayout::RowMajor, -1, alignK, SLayout::RowMajor, 512>;
-    using RightTile = TileRight<bType, alignK, alignN, alignK, -1>;
-    using AccTile = TileAcc<l0cType, alignM, alignN, alignM, -1>;
+    using LeftTile = Tile<TileType::Left, aType, alignM, alignK, BLayout::RowMajor, -1, K, SLayout::RowMajor, 512>;
+    using RightTile = TileRight<bType, alignK, alignN, K, -1>;
+    using AccTile = TileAcc<l0cType, alignM, alignN, M, -1>;
 
     using BiasTile = Tile<TileType::Bias, l0cType, 1, alignBiasN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
     using ScalingTile =
@@ -395,11 +388,11 @@ __global__ AICORE void TMOV2BiasAndScalingDyncmicKernel(__gm__ cType *out, __gm_
     TASSIGN(biasMatTile, 0x0 + aMatSize + bMatSize);
     TASSIGN(scalingMatTile, 0x0 + aMatSize + bMatSize + biasMatSize);
 
-    LeftTile aTile(alignM);
-    RightTile bTile(alignN);
-    AccTile cTile(alignN);
-    BiasTile biasTile(alignBiasN);
-    ScalingTile scalingTile(alignScalingN);
+    LeftTile aTile(M);
+    RightTile bTile(N);
+    AccTile cTile(N);
+    BiasTile biasTile(N);
+    ScalingTile scalingTile(N);
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
@@ -417,7 +410,6 @@ __global__ AICORE void TMOV2BiasAndScalingDyncmicKernel(__gm__ cType *out, __gm_
     TMOV(aTile, aMatTile);
     TMOV(bTile, bMatTile);
     TMOV(biasTile, biasMatTile);
-    TMOV(scalingTile, scalingMatTile);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
@@ -426,16 +418,9 @@ __global__ AICORE void TMOV2BiasAndScalingDyncmicKernel(__gm__ cType *out, __gm_
 
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-
     TMOV(scalingTile, scalingMatTile);
 
-    // For temporary use only, will be removed once the TSTORE interface is supported.	
-    __fbuf__ uint64_t *fb = (__fbuf__ uint64_t *)(0);
-    uint64_t deqTensorAddr = ((uint64_t)fb >> static_cast<uint64_t>(7)) << 8;
-    set_fpc((uint64_t)deqTensorAddr);
-    pipe_barrier(PIPE_FIX);
-    __cc__ l0cType *c = (__cc__ l0cType *)(cTile.data());
-    L0CCopyOut<cType, l0cType, alignM, alignN, alignM, alignN>(out, c, M, N, 0, 0, 0);
+    TSTORE_FP<AccTile, GlobalDataOut, ScalingTile>(dstGlobal, cTile, scalingTile);
   
     out = dstGlobal.data();
 }
