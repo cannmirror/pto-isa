@@ -123,8 +123,10 @@ AICORE void TSELS_IMPL(TileData &dst, TileData &src0, TileData &src1, uint8_t se
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol() == dst.GetValidCol(), "Number of columns of src0, src1 and dst must be the same.");
-    PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow() == dst.GetValidRow(), "Number of rows of src0, src1 and dst must be the same.");
+    PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol(), "Number of columns of src0, src1 must be the same.");
+    PTO_ASSERT(src1.GetValidCol() == dst.GetValidCol(), "Number of columns of src1 and dst must be the same.");
+    PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow(), "Number of rows of src0, src1 must be the same.");
+    PTO_ASSERT(src1.GetValidRow() == dst.GetValidRow(), "Number of rows of src1 and dst must be the same.");
 
     TSelsImpl<TileData, elementsPerRepeat, blockSizeElem>(dst.data(), src0.data(), src1.data(), selectMode, validRow, validCol);
 }

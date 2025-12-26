@@ -194,8 +194,10 @@ namespace pto {
         unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
         unsigned validRow = dst.GetValidRow();
 
-        PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol() == dst.GetValidCol(), "Number of columns of src0, src1 and dst must be the same.");
-        PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow() == dst.GetValidRow(), "Number of rows of src0, src1 and dst must be the same.");
+        PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol(), "Number of columns of src0, src1 must be the same.");
+        PTO_ASSERT(src1.GetValidCol() == dst.GetValidCol(), "Number of columns of src1 and dst must be the same.");
+        PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow(), "Number of rows of src0, src1 must be the same.");
+        PTO_ASSERT(src1.GetValidRow() == dst.GetValidRow(), "Number of rows of src1 and dst must be the same.");
 
         TSelsImpl<TileData, elementsPerRepeat, blockSizeElem, stride>(
             dst.data(), src0.data(), src1.data(), selectMode, validRow, numRepeatPerLine, numRemainPerLine);
