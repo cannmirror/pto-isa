@@ -17,10 +17,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 using namespace std;
 
-#define PTO_CEIL(x, y) ((((x) + (y) - 1) / (y)) * (y))
-#define PTO_DIV_ROUNDUP(x, y) ((((x) + (y) - 1) / (y)))
-
 namespace pto {
+
 #define TILE_PTRS(dst, selmask, src0, src1)                                                                        \
     using T = typename TileData::DType;                                                                            \
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);                                                    \
@@ -109,7 +107,7 @@ __tf__ PTO_INTERNAL void TSel_b32(typename TileData::TileDType __out__ dst, type
             dstPtr, src0Ptr, src1Ptr, maskPtr, pairedRepeatTimes, validRow, validCol);
         TSelTail<T, elementsPerRepeat, rowStride, maskStride>(
             dstPtr, src0Ptr, src1Ptr, maskPtr, repeatIdx, remainRepeat, validRow, validCol);
-    }
+    } // end of vf
 }
 
 template <typename TileData, typename MaskTile, unsigned elementsPerRepeat, unsigned rowStride, unsigned maskStride>
@@ -139,7 +137,7 @@ __tf__ PTO_INTERNAL void TSel_b16_8(typename TileData::TileDType __out__ dst,
                 vsts(vreg2, dstPtr, i * rowStride + j * elementsPerRepeat, distValue, preg);
             }
         }
-    }
+    } // end of vf
 }
 
 template <typename TileData, typename MaskTile>
