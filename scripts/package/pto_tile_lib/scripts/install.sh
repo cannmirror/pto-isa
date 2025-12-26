@@ -91,11 +91,11 @@ IN_FEATURE="All"
 # log functions
 # start info before shell executing
 startlog() {
-  echo "[OpsMath] [$(getdate)] [INFO]: Start Time: $(getdate)"
+  echo "[PTO] [$(getdate)] [INFO]: Start Time: $(getdate)"
 }
 
 exitlog() {
-  echo "[OpsMath] [$(getdate)] [INFO]: End Time: $(getdate)"
+  echo "[PTO] [$(getdate)] [INFO]: End Time: $(getdate)"
 }
 
 #check ascend_install.info for the change in code warning
@@ -299,13 +299,13 @@ path_version_check() {
 check_docker_path() {
   docker_path="$1"
   if [ "${docker_path}" != "/"* ]; then
-    echo "[OpsMath] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:Parameter --docker-root\
+    echo "[PTO] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:Parameter --docker-root\
  must with absolute path that which is start with root directory /. Such as --docker-root=/${docker_path}"
     exitlog
     exit 1
   fi
   if [ ! -d "${docker_path}" ]; then
-    echo "[OpsMath] [ERROR]: ERR_NO:${FILE_NOT_EXIST}; The directory:${docker_path} not exist, please create this directory."
+    echo "[PTO] [ERROR]: ERR_NO:${FILE_NOT_EXIST}; The directory:${docker_path} not exist, please create this directory."
     exitlog
     exit 1
   fi
@@ -315,7 +315,7 @@ judgment_path() {
   . "${COMMON_INC_FILE}"
   check_install_path_valid "${1}"
   if [ $? -ne 0 ]; then
-    echo "[OpsMath][ERROR]: The pto install path ${1} is invalid, only characters in [a-z,A-Z,0-9,-,_] are supported!"
+    echo "[PTO][ERROR]: The pto install path ${1} is invalid, only characters in [a-z,A-Z,0-9,-,_] are supported!"
     exitlog
     exit 1
   fi
@@ -325,14 +325,14 @@ check_install_path() {
   TARGET_INSTALL_PATH="$1"
   # empty patch check
   if [ "x${TARGET_INSTALL_PATH}" = "x" ]; then
-    echo "[OpsMath] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:Parameter --install-path\
+    echo "[PTO] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:Parameter --install-path\
  not support that the install path is empty."
     exitlog
     exit 1
   fi
   # space check
   if echo "x${TARGET_INSTALL_PATH}" | grep -q " "; then
-    echo "[OpsMath] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:Parameter --install-path\
+    echo "[PTO] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:Parameter --install-path\
  not support that the install path contains space character."
     exitlog
     exit 1
@@ -352,7 +352,7 @@ check_install_path() {
     if [ x"${prefix}" = "x" ]; then
       TARGET_INSTALL_PATH="${RUN_PATH}/${temp_path}"
     else
-      echo "[OpsMath] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES: Run package path is invalid: $RUN_PATH"
+      echo "[PTO] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES: Run package path is invalid: $RUN_PATH"
       exitlog
       exit 1
     fi
@@ -428,18 +428,19 @@ check_arch() {
 }
 
 get_opts() {
-  local i=0
-  while true; do
-    if [ "$1" = "" ]; then
+  i=0
+  while true
+  do
+    if [ "x$1" = "x" ]; then
       break
     fi
     if [ "$(expr substr "$1" 1 2)" = "--" ]; then
-      ((i++))
+      i=$(expr $i + 1)
     fi
     if [ $i -gt 2 ]; then
       break
     fi
-    shift
+    shift 1
   done
 
   if [ "$*" = "" ]; then
@@ -467,17 +468,17 @@ get_opts() {
       --run | --full | --devel)
         IN_INSTALL_TYPE=$(echo ${1} | awk -F"--" '{print $2}')
         IS_INSTALL="y"
-        ((CONFLICT_CMD_NUMS++))
+        CONFLICT_CMD_NUMS=$(expr $CONFLICT_CMD_NUMS + 1)
         shift
         ;;
       --upgrade)
         IS_UPGRADE="y"
-        ((CONFLICT_CMD_NUMS++))
+        CONFLICT_CMD_NUMS=$(expr $CONFLICT_CMD_NUMS + 1)
         shift
         ;;
       --uninstall)
         IS_UNINSTALL="y"
-        ((CONFLICT_CMD_NUMS++))
+        CONFLICT_CMD_NUMS=$(expr $CONFLICT_CMD_NUMS + 1)
         shift
         ;;
       --install-path=*)
@@ -498,12 +499,12 @@ get_opts() {
         ;;
       --check)
         IS_CHECK="y"
-        ((CONFLICT_CMD_NUMS++))
+        CONFLICT_CMD_NUMS=$(expr $CONFLICT_CMD_NUMS + 1)
         shift
         ;;
       --check-path=*)
         check_path=$1
-        ((CONFLICT_CMD_NUMS++))
+        CONFLICT_CMD_NUMS=$(expr $CONFLICT_CMD_NUMS + 1)
         shift
         ;;
       --pre-check)
@@ -525,7 +526,7 @@ get_opts() {
         shift
         ;;
       -*)
-        echo "[OpsMath] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:Unsupported parameters [$1],\
+        echo "[PTO] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:Unsupported parameters [$1],\
  operation execute failed. Please use [--help] to see the useage."
         exitlog
         exit 1
@@ -546,7 +547,7 @@ check_opts() {
   fi
 
   if [ "${CONFLICT_CMD_NUMS}" != 1 ]; then
-    echo "[OpsMath] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:\
+    echo "[PTO] [ERROR]: ERR_NO:${PARAM_INVALID};ERR_DES:\
  only support one type: full/run/devel/upgrade/uninstall/check, operation execute failed!\
  Please use [--help] to see the usage."
     exitlog
@@ -676,13 +677,13 @@ install_package() {
   # use uninstall to clean the install folder
   clean_before_reinstall
   if [ "$?" != 0 ]; then
-    comm_log_operation "Install" "${IN_INSTALL_TYPE}" "OpsMath" "$?" "${CMD_LIST}"
+    comm_log_operation "Install" "${IN_INSTALL_TYPE}" "PTO" "$?" "${CMD_LIST}"
   fi
 
   bash "${INSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "${TARGET_USERNAME}" "${TARGET_USERGROUP}" "${IN_FEATURE}" \
     "${IN_INSTALL_TYPE}" "${IS_FOR_ALL}" "${IS_SETENV}" "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$pkg_version_dir"
   if [ "$?" != 0 ]; then
-    comm_log_operation "Install" "${IN_INSTALL_TYPE}" "OpsMath" "$?" "${CMD_LIST}"
+    comm_log_operation "Install" "${IN_INSTALL_TYPE}" "PTO" "$?" "${CMD_LIST}"
   fi
   if [ $(id -u) -eq 0 ]; then
     chown -R "root":"root" "${TARGET_MOULDE_DIR}/script" 2>/dev/null
@@ -691,7 +692,7 @@ install_package() {
     chmod -R 550 "${TARGET_MOULDE_DIR}/script" 2>/dev/null
     chmod 440 "${TARGET_MOULDE_DIR}/script/filelist.csv" 2>/dev/null
   fi
-  comm_log_operation "Install" "${IN_INSTALL_TYPE}" "OpsMath" "$?" "${CMD_LIST}"
+  comm_log_operation "Install" "${IN_INSTALL_TYPE}" "PTO" "$?" "${CMD_LIST}"
 }
 
 uninstall_package() {
@@ -707,14 +708,14 @@ uninstall_package() {
     if [ "${uninstall_path}" = "" ]; then
       rm -rf "${TARGET_INSTALL_PATH}"
     fi
-    comm_log_operation "Uninstall" "${IN_INSTALL_TYPE}" "OpsMath" "$?" "${CMD_LIST}"
+    comm_log_operation "Uninstall" "${IN_INSTALL_TYPE}" "PTO" "$?" "${CMD_LIST}"
     exit 0
   fi
   bash "${UNINSTALL_SHELL_FILE}" "${TARGET_INSTALL_PATH}" "uninstall" "${IS_QUIET}" ${IN_FEATURE} "${IS_DOCKER_INSTALL}" "${DOCKER_ROOT}" "$pkg_version_dir"
   # remove precheck info in ${TARGET_VERSION_DIR}/bin/prereq_check.bash
   logandprint "[INFO]: Remove precheck info."
 
-  comm_log_operation "Uninstall" "${IN_INSTALL_TYPE}" "OpsMath" "$?" "${CMD_LIST}"
+  comm_log_operation "Uninstall" "${IN_INSTALL_TYPE}" "PTO" "$?" "${CMD_LIST}"
 }
 
 pre_check_only() {
