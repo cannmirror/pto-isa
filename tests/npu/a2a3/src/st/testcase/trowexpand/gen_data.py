@@ -52,6 +52,7 @@ if __name__ == "__main__":
         "TROWEXPANDTest.case5",
         "TROWEXPANDTest.case6",
         "TROWEXPANDTest.case7",
+        "TROWEXPANDTest.case8",
     ]
 
     case_params_list = [
@@ -63,6 +64,7 @@ if __name__ == "__main__":
         TRowExpand(np.uint8, 16, 32, 1, 512, 511),
         TRowExpand(np.uint32, 16, 8, 1, 128, 127),
         TRowExpand(np.uint16, 16, 8, 1, 128, 127),
+        TRowExpand(np.uint8, 2, 32, 1, 64, 63),
     ]
 
     for i, case_name in enumerate(case_name_list):

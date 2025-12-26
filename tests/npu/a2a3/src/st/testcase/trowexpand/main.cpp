@@ -131,3 +131,9 @@ TEST_F(TROWEXPANDTest, case7)
     bool ret = TRowExpandFramework<float, 16, 8, 1, 128, 127>();
     EXPECT_TRUE(ret);
 }
+
+TEST_F(TROWEXPANDTest, case8)
+{
+    bool ret = TRowExpandFramework<uint8_t, 2, 32, 1, 64, 63>();
+    EXPECT_TRUE(ret);
+}

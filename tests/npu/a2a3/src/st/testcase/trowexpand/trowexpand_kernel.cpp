@@ -57,3 +57,4 @@ template void launchTROWEXPAND<uint16_t, 16, 16, 1, 256, 255>(uint16_t *out, uin
 template void launchTROWEXPAND<uint8_t, 16, 32, 1, 512, 511>(uint8_t *out, uint8_t *src, void* stream);
 template void launchTROWEXPAND<uint32_t, 16, 8, 1, 128, 127>(uint32_t *out, uint32_t *src, void* stream);
 template void launchTROWEXPAND<float, 16, 8, 1, 128, 127>(float *out, float *src, void* stream);
+template void launchTROWEXPAND<uint8_t, 2, 32, 1, 64, 63>(uint8_t *out, uint8_t *src, void* stream);

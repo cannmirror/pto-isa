@@ -66,13 +66,11 @@ namespace pto {
         using DupType = typename VdupTrait<T>::DupType;
         __ubuf__ DupType *dupDst = (__ubuf__ DupType *)dstPtr;
         VdupTrait<T> trait;
-        constexpr int elementsPerRepeat = REPEAT_BYTE / sizeof(T);
-        int numRepeatPerLine = validCol / elementsPerRepeat;
-        int numRemainPerLine = validCol % elementsPerRepeat;
         constexpr int dupStride = trait.DupDstStride(dststride);
+        int dupValidCol = trait.DupSize(validCol);
 
         set_mask_count();
-        set_vector_mask(0, validCol);
+        set_vector_mask(0, dupValidCol);
         for (int i = 0; i < validRow; i++) {
             set_flag(PIPE_V, PIPE_S, EVENT_ID0);
             wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
