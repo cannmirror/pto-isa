@@ -41,7 +41,7 @@ void TPartMax(typename TileDataDst::TileDType __out__ dst,
     bool condSrc0EqDst = (src0ValidRow == dstValidRow && src0ValidCol == dstValidCol);
     bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
     PTO_ASSERT(condSrc0EqDst || condSrc1EqDst,
-        "TPARTMAX: At most one entry in the rows and cols of src0 and src1 is smaller than dst.");
+        "FIX: TPARTMAX At most one entry in the rows and cols of src0 and src1 is smaller than dst.");
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
     __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
@@ -66,7 +66,7 @@ void TPARTMAX_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
 {
     static_assert(std::is_same_v<typename TileDataDst::DType, typename TileDataSrc0::DType> &&
                   std::is_same_v<typename TileDataDst::DType, typename TileDataSrc1::DType>,
-                  "TPARTMAX: src and dst data type is different!");
+                  "FIX: TPARTMAX src and dst data type is different!");
     static_assert(std::is_same_v<typename TileDataDst::DType, int32_t> ||
                   std::is_same_v<typename TileDataDst::DType, int> ||
                   std::is_same_v<typename TileDataDst::DType, int16_t> ||
@@ -74,9 +74,9 @@ void TPARTMAX_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
                   std::is_same_v<typename TileDataDst::DType, float16_t> ||
                   std::is_same_v<typename TileDataDst::DType, float> ||
                   std::is_same_v<typename TileDataDst::DType, float32_t>,
-                  "TPARTMAX: Invalid data type.");
+                  "FIX: TPARTMAX Invalid data type.");
     static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
-                  "TPARTMAX: not supported BLayout type.");
+                  "FIX: TPARTMAX not supported BLayout type.");
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
     unsigned src0ValidRow = src0.GetValidRow();

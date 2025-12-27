@@ -21,11 +21,11 @@ template <typename TileData, typename T>
 PTO_INTERNAL
 void CheckValid() {
     static_assert((std::is_same<typename TileData::DType, T>::value),
-    "expect src and dst same datatype");
+        "FIX: TCI expect src and dst same datatype");
     static_assert((sizeof(typename TileData::DType) == 4 || (sizeof(typename TileData::DType) == 2)),
-    "expect b32 or b16");
+        "FIX: TCI expect b32 or b16");
     static_assert((TileData::Cols != 1),
-    "expect row is 1");
+        "FIX: TCI expect row is 1");
 }
 
 template <typename TileData, typename T, int descending = 0>

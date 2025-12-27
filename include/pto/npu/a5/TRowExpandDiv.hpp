@@ -49,12 +49,12 @@ namespace pto {
     template <typename TileDataDst, typename TileDataSrc1>
     PTO_INTERNAL void TROWEXPANDDIV_IMPL(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1) {
         static_assert(std::is_same_v<typename TileDataDst::DType, typename TileDataSrc1::DType>,
-                  "TROWEXPANDDIV: src and dst data type is different!");
+                  "FIX: TROWEXPANDDIV src and dst data type is different!");
         static_assert(std::is_same<typename TileDataDst::DType, float>::value ||
                       std::is_same<typename TileDataDst::DType, half>::value,
-                      "TROWEXPANDDIV: Invalid data type.");
+                      "FIX: TROWEXPANDDIV invalid data type.");
         static_assert(TileDataDst::isRowMajor && !TileDataSrc1::isRowMajor && TileDataSrc1::Cols == 1,
-                  "TROWEXPANDDIV: Invalid tile shape.");
+                  "FIX: TROWEXPANDDIV invalid tile shape.");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType); 
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType); 
         constexpr unsigned rowStride = TileDataDst::RowStride;

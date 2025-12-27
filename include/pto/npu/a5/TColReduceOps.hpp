@@ -18,22 +18,23 @@ namespace pto {
   template <typename TileDataOut, typename TileDataIn>
   PTO_INTERNAL void TColReduceCheck(int srcValidRow, int srcValidCol, int dstValidCol) {
     static_assert(TileDataOut::Loc == pto::TileType::Vec && TileDataIn::Loc == pto::TileType::Vec,
-      "This instruction only support Vec Tile");
+      "FIX: TCOLREDUCE only support Vec Tile");
     static_assert(TileDataIn::isRowMajor && TileDataIn::SFractal == SLayout::NoneBox,
-      "This instruction only support Nd fractal Tile");
+      "FIX: TCOLREDUCE input tile only support Nd fractal Tile");
     static_assert(TileDataOut::isRowMajor && TileDataOut::SFractal == SLayout::NoneBox,
-      "This instruction only support Nd fractal Tile");
-
+      "FIX: TCOLREDUCE output tile only support Nd fractal Tile");
     using T = typename TileDataIn::DType;
     static_assert(std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, int8_t> ||
       std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
       std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, bfloat16_t>,
-      "The input data type is not supported by this instruction.");
+      "FIX: TCOLREDUCE input data type is not supported by this instruction.");
 
     static_assert(std::is_same_v<typename TileDataOut::DType, T>,
-      "The input data type must be consistent with the output data type.");
-    PTO_ASSERT(srcValidCol == dstValidCol, "The input valid row must be consistent with the output valid row.");
-    PTO_ASSERT(srcValidCol != 0 && srcValidRow != 0, "The input shape is invalid, validCol or validRow is 0.");
+      "FIX: TCOLREDUCE input data type must be consistent with the output data type.");
+    PTO_ASSERT(srcValidCol == dstValidCol,
+      "FIX: TCOLREDUCE input valid row must be consistent with the output valid row.");
+    PTO_ASSERT(srcValidCol != 0 && srcValidRow != 0,
+      "FIX: TCOLREDUCE input shape is invalid, validCol or validRow is 0.");
   }
 
   template <typename InstrOp, typename T, unsigned SrcStride>

@@ -74,17 +74,18 @@ namespace pto {
     template <typename T, typename TileDataOut, typename TileDataIn>
     PTO_INTERNAL void TColReduceCheck(int SrcValidRow, int SrcValidCol, int DstValidCol) {
         static_assert(TileDataOut::Loc == pto::TileType::Vec && TileDataIn::Loc == pto::TileType::Vec,
-                      "This instruction only support Vec Tile");
+                      "FIX: TCOLREDUCE only support Vec Tile");
         static_assert(TileDataIn::isRowMajor && TileDataIn::SFractal == SLayout::NoneBox,
-                      "This instruction only support Nd fractal Tile");
+                      "FIX: TCOLREDUCE input tile only support Nd fractal Tile");
         static_assert(TileDataOut::isRowMajor && TileDataOut::SFractal == SLayout::NoneBox,
-                      "This instruction only support Nd fractal Tile");
+                      "FIX: TCOLREDUCE output tile only support Nd fractal Tile");
         static_assert(std::is_same_v<T, half> || std::is_same_v<T, float> ||
                       std::is_same_v<T, int16_t> || std::is_same_v<T, int32_t>,
-                      "The input data type is not supported by this instruction.");
+                      "FIX: TCOLREDUCE input data type is not supported by this instruction.");
         static_assert(std::is_same_v<typename TileDataOut::DType, T>,
-                      "The input data type must be consistent with the output data type.");
-        PTO_ASSERT(SrcValidCol == DstValidCol, "The input valid col must be consistent with the output valid row.");
+                      "FIX: TCOLREDUCE input data type must be consistent with the output data type.");
+        PTO_ASSERT(SrcValidCol == DstValidCol,
+            "FIX: TCOLREDUCE input valid col must be consistent with the output valid row.");
         if (SrcValidRow == 0 || SrcValidCol == 0 || DstValidCol == 0) {
             return;
         }

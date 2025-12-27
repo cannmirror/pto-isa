@@ -22,11 +22,11 @@ PTO_INTERNAL int CEIL(int a, int b)
 template <typename DstTileData, typename Src0TileData, typename Src1TileData>
 PTO_INTERNAL void CheckValid()
 {
-    static_assert(
-        (sizeof(typename DstTileData::DType) == 2) || (sizeof(typename DstTileData::DType) == 4), "expect b16/b32");
-    static_assert((sizeof(typename Src1TileData::DType) == 4), "expect b32");
+    static_assert((sizeof(typename DstTileData::DType) == 2) || (sizeof(typename DstTileData::DType) == 4),
+        "FIX: TGATHER expect b16/b32");
+    static_assert((sizeof(typename Src1TileData::DType) == 4), "FIX: TGATHER expect b32");
     static_assert((std::is_same<typename DstTileData::DType, typename Src0TileData::DType>::value),
-        "expect same size for indice and dst");
+        "FIX: TGATHER expect same size for indice and dst");
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
@@ -117,12 +117,14 @@ template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern>
 PTO_INTERNAL void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
 {
     using T = typename SrcTileData::DType;
-    static_assert(sizeof(T) == 2 || sizeof(T) == 4, "TGATHER: src element type must be 16 or 32-bit wide");
-    static_assert(
-        (DstTileData::Loc == TileType::Vec) && (SrcTileData::Loc == TileType::Vec), "TGATHER: expect vec TileType");
-    static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor), "TGATHER: expect row major");
-    static_assert((sizeof(typename DstTileData::DType) == sizeof(T)), "TGATHER: expect same type size for dst and src");
-    PTO_ASSERT(dst.GetValidCol() == DstTileData::Cols, "expect continuous memory for dst.");
+    static_assert(sizeof(T) == 2 || sizeof(T) == 4, "FIX: TGATHER src element type must be 16 or 32-bit wide");
+    static_assert((DstTileData::Loc == TileType::Vec) && (SrcTileData::Loc == TileType::Vec),
+        "FIX: TGATHER expect vec TileType");
+    static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor),
+        "FIX: TGATHER expect row major");
+    static_assert((sizeof(typename DstTileData::DType) == sizeof(T)),
+        "FIX: TGATHER expect same type size for dst and src");
+    PTO_ASSERT(dst.GetValidCol() == DstTileData::Cols, "FIX: TGATHER expect continuous memory for dst.");
     TGather<DstTileData, SrcTileData, maskPattern>(dst.data(), src.data(), src.GetValidRow(), src.GetValidCol());
 }
 } // namespace pto

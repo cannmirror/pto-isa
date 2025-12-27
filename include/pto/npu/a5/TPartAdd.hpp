@@ -134,9 +134,9 @@ void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
 {
     static_assert(std::is_same<typename TileDataDst::DType, typename TileDataSrc0::DType>::value &&
                   std::is_same<typename TileDataDst::DType, typename TileDataSrc1::DType>::value,
-                  "TPARTADD: src and dst data type is different!");
-    static_assert(sizeof(typename TileDataDst::DType) ==4 || sizeof(typename TileDataDst::DType) ==2 ||
-                  sizeof(typename TileDataDst::DType) ==1 , "TPARTADD: Invalid data type.");
+                  "FIX: TPARTADD src and dst data type is different!");
+    static_assert(sizeof(typename TileDataDst::DType) == 4 || sizeof(typename TileDataDst::DType) == 2 ||
+                  sizeof(typename TileDataDst::DType) == 1 , "FIX: TPARTADD Invalid data type.");
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
     unsigned src0ValidRow = src0.GetValidRow();

@@ -56,8 +56,8 @@ namespace pto {
     PTO_INTERNAL void TCOLEXPANDEXPDIF_IMPL(TileData &dst, TileData &src0, TileDataSrc &src1) {
         static_assert(std::is_same<typename TileData::DType, float>::value ||
                       std::is_same<typename TileData::DType, half>::value,
-                      "TCOLEXPANDEXPDIF: Invalid data type.");
-        static_assert(TileData::isRowMajor, "TCOLEXPANDEXPDIF: not supported Layout type");
+                      "FIX: TCOLEXPANDEXPDIF Invalid data type.");
+        static_assert(TileData::isRowMajor, "FIX: TCOLEXPANDEXPDIF not supported Layout type");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 
         constexpr unsigned rowStride = TileData::RowStride;

@@ -186,12 +186,13 @@ PTO_INTERNAL void TPartMasterImpl(DstTileData &dst, Src0TileData& src0, Src1Tile
     using S0 = typename Src0TileData::DType;
     using S1 = typename Src1TileData::DType;
 
-    static_assert (std::is_same_v<T, S0> && std::is_same_v<T, S1>, "TPARTMAX: Input and output types should match" );
+    static_assert(std::is_same_v<T, S0> && std::is_same_v<T, S1>,
+        "FIX: TPARTMAX/MIN Input and output types should match" );
 
-    static_assert (std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t>  || std::is_same_v<T, uint16_t> || 
+    static_assert(std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t>  || std::is_same_v<T, uint16_t> || 
                    std::is_same_v<T, int16_t> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> ||
                    std::is_same_v<T, half>    || std::is_same_v<T, float>   || std::is_same_v<T, bfloat16_t>,
-                   "TPARTMAX: Invalid data type."
+                   "FIX: TPARTMAX/MIN Invalid data type."
     );
 
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
