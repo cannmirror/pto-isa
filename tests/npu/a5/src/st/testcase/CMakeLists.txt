@@ -113,6 +113,7 @@ set(ALL_TESTCASES
     ttrans
     tstore
     textract
+    textract_compact
     trowsum
     trowmax
     trowmin

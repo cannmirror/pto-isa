@@ -617,7 +617,7 @@ __tf__ PTO_INTERNAL void TLoadMxCube(typename TileData::TileDType __out__ dst, t
 }
 
 template <typename TileData, typename GlobalData>
-__tf__ PTO_INTERNAL void StaticCheck()
+PTO_INTERNAL void StaticCheck()
 {
     static_assert((sizeof(typename TileData::DType) == 1) || (sizeof(typename TileData::DType) == 2) ||
                       (sizeof(typename TileData::DType) == 4) || (sizeof(typename TileData::DType) == 8),

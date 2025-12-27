@@ -743,6 +743,12 @@ template <typename Element_, const int Rows_, const int Cols_,
 using TileLeft =
     Tile<TileType::Left, Element_, Rows_, Cols_, BLayout::RowMajor, RowValid_,
          ColValid_, SLayout::RowMajor, TileConfig::fractalABSize>;
+
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileLeftCompact =
+    Tile<TileType::Left, Element_, Rows_, Cols_, BLayout::RowMajor, RowValid_,
+         ColValid_, SLayout::RowMajor, TileConfig::fractalABSize, PadValue::Null, CompactMode::Normal>;
 #endif
 
 #if defined (REGISTER_BASE) || defined (__CPU_SIM)
@@ -751,6 +757,12 @@ template <typename Element_, const int Rows_, const int Cols_,
 using TileLeft =
     Tile<TileType::Left, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
          ColValid_, SLayout::RowMajor, TileConfig::fractalABSize>;
+
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileLeftCompact =
+    Tile<TileType::Left, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
+         ColValid_, SLayout::RowMajor, TileConfig::fractalABSize, PadValue::Null, CompactMode::Normal>;
 #endif
 
 template <typename Element_, const int Rows_, const int Cols_,
@@ -761,9 +773,21 @@ using TileRight =
 
 template <typename Element_, const int Rows_, const int Cols_,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileRightCompact =
+  Tile<TileType::Right, Element_, Rows_, Cols_, BLayout::RowMajor, RowValid_,
+       ColValid_, SLayout::ColMajor, TileConfig::fractalABSize, PadValue::Null, CompactMode::Normal>;
+
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
 using TileAcc =
     Tile<TileType::Acc, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
          ColValid_, SLayout::RowMajor, TileConfig::fractalCSize>;
+
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileAccCompact =
+    Tile<TileType::Acc, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
+         ColValid_, SLayout::RowMajor, TileConfig::fractalCSize, PadValue::Null, CompactMode::Normal>;
 
 template <typename T> struct is_global : std::false_type {};
 template <typename T> struct is_tile : std::false_type {
