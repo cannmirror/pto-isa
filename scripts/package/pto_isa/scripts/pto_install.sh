@@ -30,7 +30,7 @@ SCENE_FILE="${CURR_PATH}/../scene.info"
 ASCEND_INSTALL_INFO="ascend_install.info"
 
 ARCH_INFO=$(uname -m)
-PTO_PLATFORM_DIR=pto_tile_lib
+PTO_PLATFORM_DIR=pto_isa
 PTO_PLATFORM_UPPER=$(echo "${PTO_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 
 TARGET_INSTALL_PATH=""
@@ -202,7 +202,7 @@ get_install_path() {
 }
 
 setenv() {
-  logandprint "[INFO]: Set the environment path [ export ASCEND_PTO_TILE_LIB_PATH=${relative_path_val}/${PTO_PLATFORM_DIR} ]."
+  logandprint "[INFO]: Set the environment path [ export ASCEND_PTO_ISA_PATH=${relative_path_val}/${PTO_PLATFORM_DIR} ]."
   if [ "${IS_DOCKER_INSTALL}" = y ]; then
     INSTALL_OPTION="--docker-root=${DOCKER_ROOT}"
   else
@@ -379,7 +379,7 @@ create_tbe_kernel_softlink() {
     return 0
   fi
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/built-in/op_impl/ai_core/tbe/kernel
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_isa/built-in/op_impl/ai_core/tbe/kernel
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -436,7 +436,7 @@ create_tbe_kernel_softlink() {
 
 create_tbe_impl_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/built-in/op_impl/ai_core/tbe/impl
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_isa/built-in/op_impl/ai_core/tbe/impl
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -459,7 +459,7 @@ create_tbe_impl_softlink() {
 
 create_tbe_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/built-in/op_impl/ai_core/tbe
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_isa/built-in/op_impl/ai_core/tbe
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -477,10 +477,10 @@ create_tbe_softlink() {
   fi
 }
 
-#create softlink cann/pto_tile_lib/built-in
+#create softlink cann/pto_isa/built-in
 create_latest_builtin_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/built-in
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_isa/built-in
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -498,10 +498,10 @@ create_latest_builtin_softlink() {
   fi
 }
 
-#create softlink cann/pto_tile_lib/lib64
+#create softlink cann/pto_isa/lib64
 create_latest_lib_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/lib64
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_isa/lib64
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -515,10 +515,10 @@ create_latest_lib_softlink() {
   fi
 }
 
-#create softlink cann/pto_tile_lib/include
+#create softlink cann/pto_isa/include
 create_latest_include_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/include
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_isa/include
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -536,10 +536,10 @@ create_latest_include_softlink() {
   fi
 }
 
-#create softlink cann/pto_tile_lib
+#create softlink cann/pto_isa
 create_latest_pto_softlink() {
   local dir_mode=""
-  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_tile_lib/
+  local dst_path=${TARGET_INSTALL_PATH}/cann/pto_isa/
   if [ -d "${dst_path}" ]; then
     dir_mode=$(stat -c %a ${dst_path})
     if [ "$(id -u)" != 0 ] && [ ! -w "${dir_mode}" ]; then
@@ -691,7 +691,7 @@ main() {
   if [ "${IS_SETENV}" != "y" ]; then
     logandprint "[INFO]: Using requirements: when pto module install finished or \
  before you run the pto module, execute the command \
- [ export ASCEND_PTO_TILE_LIB_PATH=${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR} ] to set the environment path."
+ [ export ASCEND_PTO_ISA_PATH=${TARGET_INSTALL_PATH}/cann/${PTO_PLATFORM_DIR} ] to set the environment path."
   fi
 
   logandprint "[INFO]: Pto package installed successfully! The new version takes effect immediately."

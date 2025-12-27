@@ -30,7 +30,7 @@ elseif(DEFINED ENV{ASCEND_HOME_PATH})
 endif()
 
 # set PTO_LIB_PATH before running cmake, for example:
-# export PTO_LIB_PATH=[YOUR_PATH]/pto-tile-lib
+# export PTO_LIB_PATH=[YOUR_PATH]/pto-isa
 set(PTO_LIB_PATH "$ENV{PTO_LIB_PATH}" CACHE STRING "PTO library path")
 
 if(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)

@@ -1,6 +1,6 @@
-ROOT := $(shell echo $(CURDIR) | sed -e "s@\(.*\)/pto-tile-lib/.*@\1/pto-tile-lib@")
-TEST_ROOT := $(shell echo $(CURDIR) | sed -e "s@\(.*\)/pto-tile-lib\/test/.*@\1/pto-tile-lib\/test@")
-CATEGORY := $(shell echo $(CURDIR) | sed -e 's/\(.*\)pto-tile-lib\/test\/\(.*\)/\2/')
+ROOT := $(shell echo $(CURDIR) | sed -e "s@\(.*\)/pto-isa/.*@\1/pto-isa@")
+TEST_ROOT := $(shell echo $(CURDIR) | sed -e "s@\(.*\)/pto-isa\/test/.*@\1/pto-isa\/test@")
+CATEGORY := $(shell echo $(CURDIR) | sed -e 's/\(.*\)pto-isa\/test\/\(.*\)/\2/')
 CATEGORY_NAME := $(shell echo $(CATEGORY) | sed -e 's/\//_/g')
 OBJ_ROOT := $(shell realpath $(TEST_ROOT)/../output)
 CASE_SRC_DIR := $(CATEGORY)/src
@@ -18,7 +18,7 @@ PLAT ?= dav
 
 ifeq ($(PLAT), dav)
 DEFINES += -D__PTO_MANUAL__
-#COMPILER_DIR := $(shell echo $(CURDIR) | sed -e "s@\(.*\)/pto-tile-lib/.*@\1/Ascend/latest@")
+#COMPILER_DIR := $(shell echo $(CURDIR) | sed -e "s@\(.*\)/pto-isa/.*@\1/Ascend/latest@")
 COMPILER_DIR := /usr/local/Ascend/latest
 CCEC_DIR ?= $(COMPILER_DIR)/aarch64-linux/ccec_compiler/bin
 #CCEC_DIR ?= $(COMPILER_DIR)/x86_64-linux/ccec_compiler/bin

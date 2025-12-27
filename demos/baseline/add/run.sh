@@ -14,8 +14,8 @@
 set -e 
 export ASCEND_HOME_PATH=/usr/local/Ascend/
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
-# specify your path to pto-tile-lib
-#export PTO_LIB_PATH=[YOUR_PATH]/pto-tile-lib
+# specify your path to pto-isa
+#export PTO_LIB_PATH=[YOUR_PATH]/pto-isa
 
 rm -fr build op_extension.egg-info
 python3 setup.py bdist_wheel 

@@ -20,7 +20,7 @@ getdate() {
 }
 
 logandprint() {
-  echo "[pto_tile_lib] [$(getdate)] ""$1"
+  echo "[pto_isa] [$(getdate)] ""$1"
 }
 
 check_path_pre() {
@@ -94,11 +94,11 @@ check_version_file() {
 check_pto_version_file() {
   if [ -f "${_CURR_PATH}/../../version.info" ]; then
     ver_info="${_CURR_PATH}/../../version.info"
-  # pto_tile_lib/version.info -> pto_tile_lib
-  elif [ -f "${_DEFAULT_INSTALL_PATH}/pto_tile_lib/version.info" ]; then
-    ver_info="${_DEFAULT_INSTALL_PATH}/pto_tile_lib/version.info"
+  # pto_isa/version.info -> pto_isa
+  elif [ -f "${_DEFAULT_INSTALL_PATH}/pto_isa/version.info" ]; then
+    ver_info="${_DEFAULT_INSTALL_PATH}/pto_isa/version.info"
   else
-    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST}; The [pto_tile_lib] version.info not exists."
+    logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST}; The [pto_isa] version.info not exists."
   fi
   return
 }
@@ -123,10 +123,10 @@ show_relation() {
   req_pkg_name_val="$2"
   req_pkg_path="$3"
   if [ "$relation_situation" = "SUCC" ]; then
-    logandprint "[INFO]: Relationship of pto_tile_lib with ${req_pkg_name_val} in path ${req_pkg_path} check successfully"
+    logandprint "[INFO]: Relationship of pto_isa with ${req_pkg_name_val} in path ${req_pkg_path} check successfully"
     return 0
   else
-    logandprint "[WARNING]: Relationship of pto_tile_lib with ${req_pkg_name_val} in path ${req_pkg_path} check failed. \
+    logandprint "[WARNING]: Relationship of pto_isa with ${req_pkg_name_val} in path ${req_pkg_path} check failed. \
 do you want to continue.  [y/n] "
     while true; do
       read yn
@@ -144,7 +144,7 @@ do you want to continue.  [y/n] "
 
 version_check() {
   path_val="$1"
-  #get pto_tile_lib version
+  #get pto_isa version
   check_pto_version_file
   ret_check_pto_version_file=$ver_info
   #get checked path

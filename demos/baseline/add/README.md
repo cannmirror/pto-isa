@@ -110,7 +110,7 @@ Set the PTO Tile Lib path and build a wheel:
 ```bash
 export ASCEND_HOME_PATH=/usr/local/Ascend/
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
-export PTO_LIB_PATH=[YOUR_PATH]/pto-tile-lib
+export PTO_LIB_PATH=[YOUR_PATH]/pto-isa
 rm -rf build op_extension.egg-info
 python3 setup.py bdist_wheel
 ```

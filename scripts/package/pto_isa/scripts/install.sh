@@ -18,7 +18,7 @@ PTO_COMPATIBILITY_CEHCK_ERR_DES="PtoMath compatibility check error."
 PERM_DENIED="0x0093"
 PERM_DENIED_DES="Permission denied."
 
-PTO_PLATFORM_DIR=pto_tile_lib
+PTO_PLATFORM_DIR=pto_isa
 PTO_PLATFORM_UPPER=$(echo "${PTO_PLATFORM_DIR}" | tr '[:lower:]' '[:upper:]')
 CURR_OPERATE_USER="$(id -nu 2>/dev/null)"
 CURR_OPERATE_GROUP="$(id -ng 2>/dev/null)"
@@ -575,8 +575,8 @@ init_env() {
     TARGET_VERSION_DIR=${temp_path_val}${TARGET_VERSION_DIR}
   fi
 
-  UNINSTALL_SHELL_FILE="${TARGET_VERSION_DIR}/share/info/pto_tile_lib/script/pto_uninstall.sh"
-  INSTALL_INFO_FILE="${TARGET_VERSION_DIR}/share/info/pto_tile_lib/${ASCEND_INSTALL_INFO}"
+  UNINSTALL_SHELL_FILE="${TARGET_VERSION_DIR}/share/info/pto_isa/script/pto_uninstall.sh"
+  INSTALL_INFO_FILE="${TARGET_VERSION_DIR}/share/info/pto_isa/${ASCEND_INSTALL_INFO}"
   is_multi_version_pkg "pkg_is_multi_version" "$VERSION_INFO_FILE"
   get_package_version "RUN_PKG_VERSION" "$VERSION_INFO_FILE"
 

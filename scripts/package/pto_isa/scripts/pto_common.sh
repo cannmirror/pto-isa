@@ -26,9 +26,9 @@ getdate() {
 logandprint() {
   is_error_level=$(echo $1 | grep -E 'ERROR|WARN|INFO')
   if [ "${is_quiet}" != "y" ] || [ "${is_error_level}" != "" ]; then
-    echo "[pto-tile-lib] [$(getdate)] ""$1"
+    echo "[pto-isa] [$(getdate)] ""$1"
   fi
-  echo "[pto-tile-lib] [$(getdate)] ""$1" >>"${_INSTALL_LOG_FILE}"
+  echo "[pto-isa] [$(getdate)] ""$1" >>"${_INSTALL_LOG_FILE}"
 }
 
 # create opapi soft link
@@ -54,7 +54,7 @@ createOpapiLatestSoftlink() {
   targetPkg=$2
   if [ "${targetPkg}x" = "x" ]; then
     #CHANGED
-    targetPkg=pto_tile_lib
+    targetPkg=pto_isa
   fi
 
   osName=""
@@ -62,8 +62,8 @@ createOpapiLatestSoftlink() {
     . $1/$targetPkg/scene.info
     osName=${os}
   fi
-  opapi_lib_path="$1/pto_tile_lib/built-in/op_impl/ai_core/tbe/op_api/lib/${osName}/${architecture}"
-  opapi_include_level1_path="$1/pto_tile_lib/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop"
+  opapi_lib_path="$1/pto_isa/built-in/op_impl/ai_core/tbe/op_api/lib/${osName}/${architecture}"
+  opapi_include_level1_path="$1/pto_isa/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop"
   opapi_include_level2_path="${opapi_include_level1_path}/level2"
   if [ ! -d ${opapi_lib_path} ] || [ ! -d ${opapi_include_level1_path} ] || [ ! -d ${opapi_include_level2_path} ]; then
     return 3
@@ -105,12 +105,12 @@ createOpapiLatestSoftlink() {
 
 createOpapiSoftlink() {
   osName=""
-  if [ -f "$1/pto_tile_lib/scene.info" ]; then
-    . $1/pto_tile_lib/scene.info
+  if [ -f "$1/pto_isa/scene.info" ]; then
+    . $1/pto_isa/scene.info
     osName=${os}
   fi
-  opapi_lib_path="$1/pto_tile_lib/built-in/op_impl/ai_core/tbe/op_api/lib/${osName}/${architecture}"
-  opapi_include_level1_path="$1/pto_tile_lib/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop"
+  opapi_lib_path="$1/pto_isa/built-in/op_impl/ai_core/tbe/op_api/lib/${osName}/${architecture}"
+  opapi_include_level1_path="$1/pto_isa/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop"
   opapi_include_level2_path="${opapi_include_level1_path}/level2"
 
   if [ ! -d ${opapi_lib_path} ] || [ ! -d ${opapi_include_level1_path} ] || [ ! -d ${opapi_include_level2_path} ]; then
@@ -128,10 +128,10 @@ createOpapiSoftlink() {
     done
   fi
 
-  if [ -d $1/pto_tile_lib/lib64 ]; then
+  if [ -d $1/pto_isa/lib64 ]; then
     for file_so in $(ls -1 $1/${architectureDir}/lib64 | grep -E "libaclnn_|libopapi.so"); do
       pto_lib64_src_path="$1/${architectureDir}/lib64/${file_so}"
-      pto_lib64_dst_path="$1/pto_tile_lib/lib64/${file_so}"
+      pto_lib64_dst_path="$1/pto_isa/lib64/${file_so}"
       if [ -f $pto_lib64_dst_path ] || [ -L $pto_lib64_dst_path ]; then
         rm -fr "$pto_lib64_dst_path"
       fi
@@ -150,7 +150,7 @@ createOpapiSoftlink() {
       createrelativelysoftlink ${arch_include_src_path} ${arch_include_dst_path}
 
       pto_include_src_path="${arch_include_dst_path}"
-      pto_include_dst_path="$1/pto_tile_lib/include/aclnnop/${file_level1}"
+      pto_include_dst_path="$1/pto_isa/include/aclnnop/${file_level1}"
       if [ -f $pto_include_dst_path ] || [ -L $pto_include_dst_path ]; then
         rm -fr "$pto_include_dst_path"
       fi
@@ -168,7 +168,7 @@ createOpapiSoftlink() {
       createrelativelysoftlink ${arch_include_src_path} ${arch_include_dst_path}
 
       pto_include_src_path="${arch_include_dst_path}"
-      pto_include_dst_path="$1/pto_tile_lib/include/aclnnop/level2/${file_level2}"
+      pto_include_dst_path="$1/pto_isa/include/aclnnop/level2/${file_level2}"
       if [ -f $pto_include_dst_path ] || [ -L $pto_include_dst_path ]; then
         rm -fr "$pto_include_dst_path"
       fi
@@ -191,12 +191,12 @@ removeopapisoftlink() {
 latestSoftlinksRemove() {
   targetdir=$1
   osName=""
-  if [ -f "$targetdir/pto_tile_lib/scene.info" ]; then
-    . $targetdir/pto_tile_lib/scene.info
+  if [ -f "$targetdir/pto_isa/scene.info" ]; then
+    . $targetdir/pto_isa/scene.info
     osName=${os}
   fi
-  opapi_lib_path="$targetdir/pto_tile_lib/built-in/op_impl/ai_core/tbe/op_api/lib/${osName}/${architecture}"
-  opapi_include_level1_path="$1/pto_tile_lib/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop"
+  opapi_lib_path="$targetdir/pto_isa/built-in/op_impl/ai_core/tbe/op_api/lib/${osName}/${architecture}"
+  opapi_include_level1_path="$1/pto_isa/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop"
   opapi_include_level2_path="${opapi_include_level1_path}/level2"
 
   if [ -d $(dirname $targetdir)/cann/${architectureDir}/lib64 ]; then
@@ -225,12 +225,12 @@ latestSoftlinksRemove() {
 softlinksRemove() {
   targetdir=$1
   osName=""
-  if [ -f "$targetdir/pto_tile_lib/scene.info" ]; then
-    . $targetdir/pto_tile_lib/scene.info
+  if [ -f "$targetdir/pto_isa/scene.info" ]; then
+    . $targetdir/pto_isa/scene.info
     osName=${os}
   fi
-  opapi_lib_path="$targetdir/pto_tile_lib/built-in/op_impl/ai_core/tbe/op_api/lib/${osName}/${architecture}"
-  opapi_include_level1_path="$targetdir/pto_tile_lib/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop"
+  opapi_lib_path="$targetdir/pto_isa/built-in/op_impl/ai_core/tbe/op_api/lib/${osName}/${architecture}"
+  opapi_include_level1_path="$targetdir/pto_isa/built-in/op_impl/ai_core/tbe/op_api/include/aclnnop"
   opapi_include_level2_path="${opapi_include_level1_path}/level2"
 
   # first the libopapi.so
@@ -241,9 +241,9 @@ softlinksRemove() {
     done
   fi
 
-  if [ -d $targetdir/pto_tile_lib/lib64 ]; then
-    for file_so in $(ls -l $targetdir/pto_tile_lib/lib64 | grep -E "libaclnn_|libopapi.so"); do
-      pto_lib64_path="$targetdir/pto_tile_lib/lib64/${file_so}"
+  if [ -d $targetdir/pto_isa/lib64 ]; then
+    for file_so in $(ls -l $targetdir/pto_isa/lib64 | grep -E "libaclnn_|libopapi.so"); do
+      pto_lib64_path="$targetdir/pto_isa/lib64/${file_so}"
       removeopapisoftlink ${pto_lib64_path}
     done
   fi
@@ -254,7 +254,7 @@ softlinksRemove() {
       arch_include_path="$targetdir/${architectureDir}/include/aclnnop/${file_level1}"
       removeopapisoftlink ${arch_include_path}
 
-      pto_include_path="$targetdir/pto_tile_lib/include/aclnnop/${file_level1}"
+      pto_include_path="$targetdir/pto_isa/include/aclnnop/${file_level1}"
       removeopapisoftlink ${pto_include_path}
     done
   fi
@@ -264,7 +264,7 @@ softlinksRemove() {
       arch_include_path="$targetdir/${architectureDir}/include/aclnnop/level2/${file_level2}"
       removeopapisoftlink ${arch_include_path}
 
-      pto_include_path="$targetdir/pto_tile_lib/include/aclnnop/level2/${file_level2}"
+      pto_include_path="$targetdir/pto_isa/include/aclnnop/level2/${file_level2}"
       removeopapisoftlink ${pto_include_path}
     done
   fi

@@ -82,7 +82,7 @@ After installation, add `path_to_compiler/bin` directory to `PATH` (ensure that 
 
 ```bash
 git clone <YOUR_REPO_URL>
-cd pto-tile-lib
+cd pto-isa
 ```
 
 ## Python Environment
@@ -302,5 +302,5 @@ This project supports building from source. Before building, prepare the environ
 Download the source with:
 ```bash
 # Clone the repository (master branch as an example)
-git clone https://gitcode.com/cann/pto-tile-lib
+git clone https://gitcode.com/cann/pto-isa
 ```
