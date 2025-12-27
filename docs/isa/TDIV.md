@@ -31,7 +31,7 @@ PTO_INST RecordEvent TDIV(TileData& dst, TileData& src0, TileData& src1, WaitEve
 ## Constraints
 
 - **Implementation checks (A2A3)**:
-  - `TileData::DType` must be one of: `half`, `float16_t`, `float`, `float32_t`.
+  - `TileData::DType` must be one of: `half`, `float`.
   - No explicit layout constraint is enforced in this implementation.
 - **Implementation checks (A5)**:
   - `TileData::DType` must be one of: `int32_t`, `float`, `int16_t`, `half`.
