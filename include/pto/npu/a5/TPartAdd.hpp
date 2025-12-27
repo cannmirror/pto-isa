@@ -80,19 +80,16 @@ void TPartAdd(typename TileDataDst::TileDType __out__ dst,
     typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned src0ValidRow,
     unsigned src0ValidCol, unsigned src1ValidRow, unsigned src1ValidCol, unsigned dstValidRow, unsigned dstValidCol)
 {
-    if (dstValidRow == 0 || dstValidCol == 0) {
-        return;
-    }
     using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
     __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
     bool condSrc0EqDst = (src0ValidRow == dstValidRow && src0ValidCol == dstValidCol);
     bool condSrc0RowLtDst = (src0ValidRow < dstValidRow && src0ValidCol == dstValidCol);
-    bool condSrc0ColLtDst = (src0ValidRow == dstValidRow && src0ValidCol < dstValidCol);
+    bool condSrc0ColLtDst = (src0ValidRow <= dstValidRow && src0ValidCol < dstValidCol);
     bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
     bool condSrc1RowLtDst = (src1ValidRow < dstValidRow && src1ValidCol == dstValidCol);
-    bool condSrc1ColLtDst = (src1ValidRow == dstValidRow && src1ValidCol < dstValidCol);
+    bool condSrc1ColLtDst = (src1ValidRow <= dstValidRow && src1ValidCol < dstValidCol);
 
     if (condSrc0EqDst && condSrc1EqDst) {  // src0 == src1 == dst
         TPartAddInstr<T, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem,
@@ -135,8 +132,15 @@ void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
     static_assert(std::is_same<typename TileDataDst::DType, typename TileDataSrc0::DType>::value &&
                   std::is_same<typename TileDataDst::DType, typename TileDataSrc1::DType>::value,
                   "FIX: TPARTADD src and dst data type is different!");
-    static_assert(sizeof(typename TileDataDst::DType) == 4 || sizeof(typename TileDataDst::DType) == 2 ||
-                  sizeof(typename TileDataDst::DType) == 1 , "FIX: TPARTADD Invalid data type.");
+    static_assert(std::is_same<typename TileDataDst::DType, int32_t>::value ||
+                  std::is_same<typename TileDataDst::DType, uint32_t>::value ||
+                  std::is_same<typename TileDataDst::DType, float>::value ||
+                  std::is_same<typename TileDataDst::DType, int16_t>::value ||
+                  std::is_same<typename TileDataDst::DType, uint16_t>::value ||
+                  std::is_same<typename TileDataDst::DType, half>::value ||
+                  std::is_same<typename TileDataDst::DType, bfloat16_t>::value ||
+                  std::is_same<typename TileDataDst::DType, uint8_t>::value ||
+                  std::is_same<typename TileDataDst::DType, int8_t>::value, "FIX: TPARTADD Invalid data type.");
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
     unsigned src0ValidRow = src0.GetValidRow();
@@ -148,6 +152,9 @@ void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
     constexpr unsigned dstRowStride = TileDataDst::RowStride;
     constexpr unsigned src0RowStride = TileDataSrc0::RowStride;
     constexpr unsigned src1RowStride = TileDataSrc1::RowStride;
+    if (dstValidRow == 0 || dstValidCol == 0) {
+        return;
+    }
 
     TPartAdd<TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem, dstRowStride,
              src0RowStride, src1RowStride>(dst.data(),

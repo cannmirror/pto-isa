@@ -41,7 +41,7 @@ void TPartMax(typename TileDataDst::TileDType __out__ dst,
     bool condSrc0EqDst = (src0ValidRow == dstValidRow && src0ValidCol == dstValidCol);
     bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
     PTO_ASSERT(condSrc0EqDst || condSrc1EqDst,
-        "FIX: TPARTMAX At most one entry in the rows and cols of src0 and src1 is smaller than dst.");
+        "FIX: TPARTMAX At most one entry in the valid-rows and valid-cols of src0 and src1 is smaller than dst.");
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
     __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);

@@ -155,7 +155,7 @@ void TPartInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, un
 {
     bool condSrc1EqDst = (src1ValidRow == dstValidRow && src1ValidCol == dstValidCol);
     bool condSrc1RowLtDst = (src1ValidRow < dstValidRow && src1ValidCol == dstValidCol);
-    bool condSrc1ColLtDst = (src1ValidRow == dstValidRow && src1ValidCol < dstValidCol);
+    bool condSrc1ColLtDst = (src1ValidRow <= dstValidRow && src1ValidCol < dstValidCol);
 
     if (condSrc1RowLtDst) {  // src1Row < dstRow
         if (src1ValidRow != 0) {
@@ -178,7 +178,7 @@ void TPartInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, un
     } else {
         // unsupport other conditions
         PTO_ASSERT(condSrc1EqDst || condSrc1RowLtDst || condSrc1ColLtDst,
-            "TPARTOPS: At most one entry in the rows and cols of src0 and src1 is smaller than dst.");
+            "TPARTOPS: At most one entry in the valid-rows and valid-cols of src0 and src1 is smaller than dst.");
     }
 }
 }  // namespace pto

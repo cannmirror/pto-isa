@@ -51,9 +51,7 @@ void TROWEXPANDDIV_IMPL(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1)
     static_assert(std::is_same_v<typename TileDataDst::DType, typename TileDataSrc1::DType>,
                   "TROWEXPANDDIV: src and dst data type is different!");
     static_assert(std::is_same_v<typename TileDataDst::DType, half> ||
-                  std::is_same_v<typename TileDataDst::DType, float16_t> ||
-                  std::is_same_v<typename TileDataDst::DType, float> ||
-                  std::is_same_v<typename TileDataDst::DType, float32_t>,
+                  std::is_same_v<typename TileDataDst::DType, float>,
                   "TROWEXPANDDIV: Invalid data type.");
     static_assert(TileDataDst::isRowMajor && !TileDataSrc1::isRowMajor && TileDataSrc1::Cols == 1,
                   "TROWEXPANDDIV: Invalid tile shape.");
