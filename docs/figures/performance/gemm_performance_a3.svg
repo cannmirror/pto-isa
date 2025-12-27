@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Source: kernels/manual/a2a3/gemm_performance/README.md ("Measured Performance (Reference)")
+  Platform: Ascend A3 (24 cores), fp16 inputs -> fp32 output
+  Metric: TFLOPS derived from wall time (ms)
+
+  Formula:
+    FLOPs = 2 * m * k * n
+    TFLOPS = FLOPs / time_seconds / 1e12
+
+  Data points (m=k=n):
+    1536: 0.0388 ms -> 186.8 TFLOPS
+    3072: 0.2067 ms -> 280.5 TFLOPS
+    6144: 1.5060 ms -> 308.0 TFLOPS
+    7680: 3.1680 ms -> 286.0 TFLOPS
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420" viewBox="0 0 980 420" role="img" aria-label="GEMM TFLOPS by shape (Ascend A3)">
+  <defs>
+    <style>
+      :root { color-scheme: light dark; }
+      .title { font: 600 22px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #111; }
+      .subtitle { font: 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #444; }
+      .label { font: 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #222; }
+      .tick { font: 13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #666; }
+      .grid { stroke: #e5e5e5; stroke-width: 1.2; }
+      .axis { stroke: #b5b5b5; stroke-width: 1.6; }
+      .series { fill: none; stroke: #2f6fed; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+      .marker { fill: #2f6fed; stroke: #fff; stroke-width: 1.6; }
+      .value { font: 600 13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; fill: #111; }
+      @media (prefers-color-scheme: dark) {
+        .title { fill: #f3f3f3; }
+        .subtitle { fill: #c7c7c7; }
+        .label { fill: #e6e6e6; }
+        .tick { fill: #bdbdbd; }
+        .grid { stroke: #2e2e2e; }
+        .axis { stroke: #4a4a4a; }
+        .value { fill: #f3f3f3; }
+        .series { stroke: #7aa2ff; }
+        .marker { fill: #7aa2ff; }
+      }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="420" fill="transparent" />
+
+  <text x="24" y="36" class="title">GEMM throughput (reference)</text>
+  <text x="24" y="62" class="subtitle">Ascend A3 (24 cores), fp16 inputs → fp32 output · TFLOPS computed from wall time · Data: kernels/manual/a2a3/gemm_performance/README.md</text>
+
+  <!-- Chart area -->
+  <!-- Plot box: left=90, right=940, top=95, bottom=320 -->
+  <line x1="90" y1="320" x2="940" y2="320" class="axis" />
+  <line x1="90" y1="95" x2="940" y2="95" class="axis" />
+  <line x1="90" y1="320" x2="90" y2="95" class="axis" />
+
+  <!-- Y grid (0..320 TFLOPS) -->
+  <line x1="90" y1="320" x2="940" y2="320" class="axis" />
+  <line x1="90" y1="263.75" x2="940" y2="263.75" class="grid" />
+  <line x1="90" y1="207.5" x2="940" y2="207.5" class="grid" />
+  <line x1="90" y1="151.25" x2="940" y2="151.25" class="grid" />
+  <line x1="90" y1="95" x2="940" y2="95" class="axis" />
+
+  <text x="52" y="324" class="tick">0</text>
+  <text x="46" y="268" class="tick">80</text>
+  <text x="40" y="212" class="tick">160</text>
+  <text x="40" y="156" class="tick">240</text>
+  <text x="40" y="99" class="tick">320</text>
+  <text x="22" y="208" class="label" transform="rotate(-90 22,208)">TFLOPS</text>
+
+  <!-- X axis -->
+  <text x="90" y="350" class="label">m=k=n</text>
+  <text x="200" y="350" class="tick" text-anchor="middle">1536</text>
+  <text x="410" y="350" class="tick" text-anchor="middle">3072</text>
+  <text x="620" y="350" class="tick" text-anchor="middle">6144</text>
+  <text x="830" y="350" class="tick" text-anchor="middle">7680</text>
+
+  <!-- Points mapped to y with max=320: y = 320 - (tflops/320)*225 -->
+  <!-- 186.8 -> y=188.7 ; 280.5 -> y=123.0 ; 308.0 -> y=103.7 ; 286.0 -> y=119.2 -->
+  <polyline class="series" points="200,188.7 410,123.0 620,103.7 830,119.2" />
+
+  <circle class="marker" cx="200" cy="188.7" r="5.5" />
+  <circle class="marker" cx="410" cy="123.0" r="5.5" />
+  <circle class="marker" cx="620" cy="103.7" r="5.5" />
+  <circle class="marker" cx="830" cy="119.2" r="5.5" />
+
+  <text x="200" y="174" class="value" text-anchor="middle">186.8</text>
+  <text x="410" y="108" class="value" text-anchor="middle">280.5</text>
+  <text x="620" y="89" class="value" text-anchor="middle">308.0</text>
+  <text x="830" y="104" class="value" text-anchor="middle">286.0</text>
+
+  <text x="90" y="392" class="subtitle">TFLOPS = (2·m·k·n) / wall_time_seconds / 1e12</text>
+</svg>

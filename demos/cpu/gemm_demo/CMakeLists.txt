@@ -1,0 +1,34 @@
+# --------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# --------------------------------------------------------------------------------
+
+cmake_minimum_required(VERSION 3.16)
+project(pto_cpu_demo LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+get_filename_component(PTO_TILE_LIB_REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+
+add_executable(gemm_demo gemm_demo.cpp)
+target_compile_definitions(gemm_demo PRIVATE __CPU_SIM)
+target_include_directories(gemm_demo PRIVATE
+    "${PTO_TILE_LIB_REPO_ROOT}/include"
+)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    target_compile_options(gemm_demo PRIVATE -O2)
+endif()
+
+target_compile_options(gemm_demo PRIVATE
+    -D_FORTIFY_SOURCE=2
+    -Wno-macro-redefined -Wno-ignored-attributes
+    -fstack-protector-strong
+)

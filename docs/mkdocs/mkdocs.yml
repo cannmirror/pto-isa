@@ -1,0 +1,77 @@
+site_name: PTO ISA Architectural Manual
+
+theme:
+  name: readthedocs
+
+docs_dir: src
+site_dir: ../../site
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - gen_pages.py
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+      inline_syntax: [dollar, round]
+      block_syntax: [dollar, square]
+
+extra_javascript:
+  - assets/javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - PTO ISA Manual:
+      - Preface: manual/index.md
+      - Overview: manual/01-overview.md
+      - Execution Model: manual/02-machine-model.md
+      - State and Types: manual/03-state-and-types.md
+      - Tiles and GlobalTensor: manual/04-tiles-and-globaltensor.md
+      - Synchronization: manual/05-synchronization.md
+      - PTO Assembly (PTO-AS): manual/06-assembly.md
+      - Instruction Set (overview): manual/07-instructions.md
+      - Instruction Reference (all pages): manual/isa-reference.md
+      - Programming Guide: manual/08-programming.md
+      - Glossary: manual/appendix-a-glossary.md
+  - Programming Model:
+      - Overview: docs/coding/ProgrammingModel.md
+      - Tile: docs/coding/Tile.md
+      - GlobalTensor: docs/coding/GlobalTensor.md
+      - Scalar: docs/coding/Scalar.md
+      - Event: docs/coding/Event.md
+      - Tutorial: docs/coding/tutorial.md
+      - Tutorials: docs/coding/tutorials/README.md
+      - "Example: Vec Add": docs/coding/tutorials/vec-add.md
+      - "Example: Row Softmax": docs/coding/tutorials/row-softmax.md
+      - "Example: GEMM": docs/coding/tutorials/gemm.md
+      - Optimization: docs/coding/opt.md
+      - Debugging: docs/coding/debug.md
+  - ISA Reference:
+      - ISA index: docs/isa/README.md
+      - ISA conventions: docs/isa/conventions.md
+      - PTO ISA table: docs/PTOISA.md
+      - Intrinsics header: docs/reference/pto-intrinsics-header.md
+      - PTO-AS spec: docs/grammar/PTO-AS.md
+      - Grammar conventions: docs/grammar/conventions.md
+      - Grammar index: docs/grammar/README.md
+  - Machine Model:
+      - Abstract machine: docs/machine/abstract-machine.md
+      - Machine index: docs/machine/README.md
+  - Examples:
+      - Kernels index: kernels/README.md
+      - GEMM performance kernel: kernels/manual/a2a3/gemm_performance/README.md
+      - Flash Attention kernel: kernels/manual/a2a3/flash_atten/README.md
+      - Baseline add demo: demos/baseline/add/README.md
+      - Baseline GEMM demo: demos/baseline/gemm_basic/README.md
+      - Tests index: tests/README.md
+      - Test scripts: tests/script/README.md
+  - Documentation:
+      - Docs index: docs/README.md
+      - Build this site: docs/website.md
+      - Root README: README.md
+  - Full Index: all-pages.md
