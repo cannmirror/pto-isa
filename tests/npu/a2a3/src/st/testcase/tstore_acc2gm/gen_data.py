@@ -201,7 +201,10 @@ if __name__ == "__main__":
         "TStoreAcc2gmTest.case28",
         "TStoreAcc2gmTest.case29",
         "TStoreAcc2gmTest.case30",
-        "TStoreAcc2gmTest.case31"
+        "TStoreAcc2gmTest.case31",
+        "TStoreAcc2gmTest.case32",
+        "TStoreAcc2gmTest.case33",
+        "TStoreAcc2gmTest.case34"
     ]
 
     case_params_list = [
@@ -236,11 +239,14 @@ if __name__ == "__main__":
         
 
         TStoreAcc2gmParams(np.float16, np.int8, 1, 55, 88, 32, 2, quant_type=np.uint64),
-        TStoreAcc2gmParams(np.int16, np.int8, 1, 48, 127, 32, 2, quant_type=np.uint64),
         TStoreAcc2gmParams(np.int8, np.int8, 1, 34, 85, 19, 2, quant_type=np.uint64),
         TStoreAcc2gmParams(np.uint8, np.int8, 1, 31, 32, 29, 2, quant_type=np.uint64),
         TStoreAcc2gmParams(np.int8, np.int8, 2, 32, 32, 32, 2, quant_type=np.uint64),
-        TStoreAcc2gmParams(np.uint8, np.int8, 2, 32, 32, 128, 2, quant_type=np.uint64)
+        TStoreAcc2gmParams(np.uint8, np.int8, 2, 32, 32, 128, 2, quant_type=np.uint64),
+        TStoreAcc2gmParams(np.uint8, np.int8, 1, 33, 65, 15, 2, quant_type=np.uint64),
+        TStoreAcc2gmParams(np.uint8, np.int8, 1, 19, 33, 23, 2, quant_type=np.uint64),
+        TStoreAcc2gmParams(np.uint8, np.int8, 2, 48, 64, 25, 2, quant_type=np.uint64),
+        TStoreAcc2gmParams(np.uint8, np.int8, 2, 128, 96, 17, 2, quant_type=np.uint64)
     ]
 
     for i, case_name  in enumerate(case_name_list):

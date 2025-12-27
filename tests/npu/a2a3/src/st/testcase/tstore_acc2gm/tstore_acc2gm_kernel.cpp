@@ -16,16 +16,6 @@ using namespace pto;
 
 constexpr uint16_t BLOCK_CUBE_M_N = 16;
 
-template <typename T>
-AICORE inline void DynGM2L1NZ2NZ(__cbuf__ T *dst, __gm__ T *src, unsigned TShape0, unsigned TShape1)
-{
-    uint16_t nBurst = 1;
-    uint16_t lenBurst = TShape0 * TShape1 * sizeof(T) / 32;
-    uint16_t srcGap = 0;
-    uint16_t dstGap = 0;
-    copy_gm_to_cbuf(dst, src, 0, nBurst, lenBurst, srcGap, dstGap, (pad_t)0);
-}
-
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
     int gWholeShape4, int validM, int validN, int validK>
@@ -46,7 +36,6 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
     using GlobalDataOut = GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>;
 
-    int offset = 0;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
@@ -58,7 +47,6 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
-
     TileMatAData aMatTile;
     TileMatBData bMatTile;
     TASSIGN(aMatTile, 0x0);
@@ -71,30 +59,22 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
-    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
-    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
-    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
-    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
-    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile);
-    pipe_barrier(PIPE_ALL);
+    set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
+    wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
 }
 
@@ -122,7 +102,6 @@ __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcData
     using GlobalDataSrc1 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validK, validN>,
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
 
-    int offset = 0;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
@@ -149,32 +128,24 @@ __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcData
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
-    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
-    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-    
-    pipe_barrier(PIPE_ALL);
+
     TMOV(aTile, aMatTile);
-    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
-    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile);
-    pipe_barrier(PIPE_ALL);
+    set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
+    wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
 }
 
@@ -200,7 +171,6 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
     using GlobalDataOut = GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>;
 
-    int offset = 0;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
@@ -213,7 +183,6 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
-
     TileMatAData aMatTile;
     TileMatBData bMatTile;
     TASSIGN(aMatTile, 0x0);
@@ -225,26 +194,18 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
-    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
-    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-    
-    pipe_barrier(PIPE_ALL);
+
     TMOV(aTile, aMatTile);
-    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
-    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     uint64_t preQuantScalar = static_cast<uint64_t>(*reinterpret_cast<int32_t *>(&scalarQuant));
@@ -253,9 +214,9 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
         preQuantScalar = (preQuantScalar & ~(static_cast<uint64_t>(1) << 46)) | (static_cast<uint64_t>(sign) << 46);
     }
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile, preQuantScalar);
-    pipe_barrier(PIPE_ALL);
+    set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
+    wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
 }
 
@@ -273,8 +234,8 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
 
     constexpr int Rows = gShape2 * gShape3;
     constexpr int Cols = gShape0 * gShape1 * gShape4;
-    int validRows = Rows;
-    int validCols = Cols;
+    int validRow = Rows;
+    int validCol = Cols;
 
     using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
@@ -297,7 +258,6 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
     using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
-
     TileMatAData aMatTile;
     TileMatBData bMatTile;
     TASSIGN(aMatTile, 0x0);
@@ -305,31 +265,23 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
 
     LeftTile aTile;
     RightTile bTile;
-    AccTile cTile(validRows, validCols);
+    AccTile cTile(validRow, validCol);
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
 
-    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
-    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
-    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
-    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
-    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     uint64_t preQuantScalar = static_cast<uint64_t>(*reinterpret_cast<int32_t *>(&scalarQuant));
@@ -338,9 +290,9 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
         preQuantScalar = (preQuantScalar & ~(static_cast<uint64_t>(1) << 46)) | (static_cast<uint64_t>(sign) << 46);
     }
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    pipe_barrier(PIPE_ALL);
     TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile, preQuantScalar);
-    pipe_barrier(PIPE_ALL);
+    set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
+    wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
 }
 
@@ -366,11 +318,13 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validK, validN>,
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
+    using GlobalDataSrc2 = GlobalTensor<uint64_t, Shape<1, 1, 1, 1, alignScalingN>,
+        Stride<1 * alignScalingN, 1 * alignScalingN, alignScalingN, alignScalingN, 1>>;
     using GlobalDataOut = GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>;
 
-    int offset = 0;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
+    GlobalDataSrc2 src2Global(quantTensor);
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
@@ -385,10 +339,12 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
-    TileMatScalingData scalingMatTile(validN);
+    TileMatScalingData scalingMatTile(alignScalingN);
+    uint32_t aMatSize = M * K * sizeof(srcDataType);
+    uint32_t bMatSize = K * N * sizeof(srcDataType);
     TASSIGN(aMatTile, 0x0);
-    TASSIGN(bMatTile, 0x10000);
-    TASSIGN(scalingMatTile, 0x20000);
+    TASSIGN(bMatTile, 0x0 + aMatSize);
+    TASSIGN(scalingMatTile, 0x0 + aMatSize + bMatSize);
 
     LeftTile aTile;
     RightTile bTile;
@@ -399,36 +355,25 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
     TASSIGN(cTile, 0x0);
     TASSIGN(scalingTile, 0x0);
 
-    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
-    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
-    pipe_barrier(PIPE_ALL);
-    __cbuf__ uint64_t *srcScalingAddr = scalingMatTile.data();
-    DynGM2L1NZ2NZ<uint64_t>(srcScalingAddr, quantTensor, 1, N);
+    TLOAD(scalingMatTile, src2Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
-    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
-    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
-    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMOV(scalingTile, scalingMatTile);
-    pipe_barrier(PIPE_ALL);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    pipe_barrier(PIPE_ALL);
     TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
-    pipe_barrier(PIPE_ALL);
+    set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
+    wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
 }
 
@@ -447,8 +392,8 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nz(
 
     constexpr int Rows = gShape2 * gShape3;
     constexpr int Cols = gShape0 * gShape1 * gShape4;
-    int validRows = Rows;
-    int validCols = Cols;
+    int validRow = Rows;
+    int validCol = Cols;
 
     using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
     using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
@@ -457,10 +402,12 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nz(
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validK, validN>,
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
+    using GlobalDataSrc2 = GlobalTensor<uint64_t, Shape<1, 1, 1, 1, alignScalingN>,
+        Stride<1 * alignScalingN, 1 * alignScalingN, alignScalingN, alignScalingN, 1>>;
 
-    int offset = 0;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
+    GlobalDataSrc2 src2Global(quantTensor);
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = Tile<TileType::Mat, srcDataType, M, K, BLayout::ColMajor, M, K, SLayout::RowMajor, 512>;
@@ -475,50 +422,41 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nz(
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
-    TileMatScalingData scalingMatTile(validN);
+    TileMatScalingData scalingMatTile(alignScalingN);
+    uint32_t aMatSize = M * K * sizeof(srcDataType);
+    uint32_t bMatSize = K * N * sizeof(srcDataType);
     TASSIGN(aMatTile, 0x0);
-    TASSIGN(bMatTile, 0x10000);
-    TASSIGN(scalingMatTile, 0x20000);
+    TASSIGN(bMatTile, 0x0 + aMatSize);
+    TASSIGN(scalingMatTile, 0x0 + aMatSize + bMatSize);
 
     LeftTile aTile;
     RightTile bTile;
-    AccTile cTile(validRows, validCols);
+    AccTile cTile(validRow, validCol);
     ScalingTile scalingTile(validN);
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
     TASSIGN(scalingTile, 0x0);
 
-    pipe_barrier(PIPE_ALL);
     TLOAD(aMatTile, src0Global);
-    pipe_barrier(PIPE_ALL);
     TLOAD(bMatTile, src1Global);
-    pipe_barrier(PIPE_ALL);
-    __cbuf__ uint64_t *srcScalingAddr = scalingMatTile.data();
-    DynGM2L1NZ2NZ<uint64_t>(srcScalingAddr, quantTensor, 1, N);
+    TLOAD(scalingMatTile, src2Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
-    pipe_barrier(PIPE_ALL);
     TMOV(aTile, aMatTile);
-    pipe_barrier(PIPE_ALL);
     TMOV(bTile, bMatTile);
-    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMATMUL(cTile, aTile, bTile);
-    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-    pipe_barrier(PIPE_ALL);
     TMOV(scalingTile, scalingMatTile);
-    pipe_barrier(PIPE_ALL);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    pipe_barrier(PIPE_ALL);
     TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
-    pipe_barrier(PIPE_ALL);
+    set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
+    wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
 }
 
@@ -648,17 +586,21 @@ void LaunchTStoreAcc2gmVectorNz2nd(uint8_t *out, uint8_t *src0, uint8_t *src1, u
             <<<1, nullptr, stream>>>(reinterpret_cast<half *>(out), reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
     } else if constexpr (tilingKey == 2) {
-        TStoreAcc2gmVectorNz2nd<0, int32_t, int16_t, int8_t, 1, 1, 1, 48, 127, 1, 1, 1, 48, 127, 48, 127, 32>
-            <<<1, nullptr, stream>>>(reinterpret_cast<int16_t *>(out), reinterpret_cast<int8_t *>(src0),
-                reinterpret_cast<int8_t *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
-    } else if constexpr (tilingKey == 3) {
         TStoreAcc2gmVectorNz2nd<0, int32_t, int8_t, int8_t, 1, 1, 1, 34, 85, 1, 1, 1, 34, 85, 34, 85, 19>
             <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
-    } else if constexpr (tilingKey == 4) {
+    } else if constexpr (tilingKey == 3) {
         TStoreAcc2gmVectorNz2nd<0, int32_t, uint8_t, int8_t, 1, 1, 1, 31, 32, 1, 1, 1, 31, 32, 31, 32, 29>
             <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out), reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
+    } else if constexpr (tilingKey == 4) {
+        TStoreAcc2gmVectorNz2nd<0, float, int8_t, half, 1, 1, 1, 33, 65, 1, 1, 1, 33, 65, 33, 65, 15>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<half *>(src0),
+                reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
+    } else if constexpr (tilingKey == 5) {
+        TStoreAcc2gmVectorNz2nd<0, float, uint8_t, half, 1, 1, 1, 19, 33, 1, 1, 1, 19, 33, 19, 33, 23>
+            <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out), reinterpret_cast<half *>(src0),
+                reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
     }
 }
 
@@ -673,6 +615,14 @@ void LaunchTStoreAcc2gmVectorNz2nz(uint8_t *out, uint8_t *src0, uint8_t *src1, u
         TStoreAcc2gmVectorNz2nz<0, int32_t, uint8_t, int8_t, 1, 2, 2, 16, 16, 1, 2, 2, 16, 16, 32, 32, 128>
             <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out), reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
+    } else if constexpr (tilingKey == 3) {
+        TStoreAcc2gmVectorNz2nz<0, float, int8_t, half, 2, 2, 3, 16, 16, 2, 2, 3, 16, 16, 48, 64, 25>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<half *>(src0),
+                reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
+    } else if constexpr (tilingKey == 4) {
+        TStoreAcc2gmVectorNz2nz<0, float, uint8_t, half, 3, 2, 8, 16, 16, 3, 2, 8, 16, 16, 128, 96, 17>
+            <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out), reinterpret_cast<half *>(src0),
+                reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
     }
 }
 
@@ -721,7 +671,13 @@ template void LaunchTStoreAcc2gmVectorNz2nd<3>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
 template void LaunchTStoreAcc2gmVectorNz2nd<4>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
+template void LaunchTStoreAcc2gmVectorNz2nd<5>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
 template void LaunchTStoreAcc2gmVectorNz2nz<1>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
 template void LaunchTStoreAcc2gmVectorNz2nz<2>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
+template void LaunchTStoreAcc2gmVectorNz2nz<3>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
+template void LaunchTStoreAcc2gmVectorNz2nz<4>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);

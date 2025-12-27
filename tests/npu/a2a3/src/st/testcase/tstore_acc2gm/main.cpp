@@ -545,22 +545,42 @@ TEST_F(TStoreAcc2gmTest, case26)
     test_tstore_acc2gm_vector_nz2nd<1, uint16_t, int8_t, 55, 88, 32>();
 }
 
+TEST_F(TStoreAcc2gmTest, case27)
+{
+    test_tstore_acc2gm_vector_nz2nd<2, int8_t, int8_t, 34, 85, 19>();
+}
+
 TEST_F(TStoreAcc2gmTest, case28)
 {
-    test_tstore_acc2gm_vector_nz2nd<3, int8_t, int8_t, 34, 85, 19>();
+    test_tstore_acc2gm_vector_nz2nd<3, uint8_t, int8_t, 31, 32, 29>();
 }
 
 TEST_F(TStoreAcc2gmTest, case29)
 {
-    test_tstore_acc2gm_vector_nz2nd<4, uint8_t, int8_t, 31, 32, 29>();
+    test_tstore_acc2gm_vector_nz2nz<1, int8_t, int8_t, 32, 32, 32>();
 }
 
 TEST_F(TStoreAcc2gmTest, case30)
 {
-    test_tstore_acc2gm_vector_nz2nz<1, int8_t, int8_t, 32, 32, 32>();
+    test_tstore_acc2gm_vector_nz2nz<2, uint8_t, int8_t, 32, 32, 128>();
 }
 
 TEST_F(TStoreAcc2gmTest, case31)
 {
-    test_tstore_acc2gm_vector_nz2nz<2, uint8_t, int8_t, 32, 32, 128>();
+    test_tstore_acc2gm_vector_nz2nd<4, uint8_t, uint16_t, 33, 65, 15>();
+}
+
+TEST_F(TStoreAcc2gmTest, case32)
+{
+    test_tstore_acc2gm_vector_nz2nd<5, uint8_t, uint16_t, 19, 33, 23>();
+}
+
+TEST_F(TStoreAcc2gmTest, case33)
+{
+    test_tstore_acc2gm_vector_nz2nz<3, uint8_t, uint16_t, 48, 64, 25>();
+}
+
+TEST_F(TStoreAcc2gmTest, case34)
+{
+    test_tstore_acc2gm_vector_nz2nz<4, uint8_t, uint16_t, 128, 96, 17>();
 }
