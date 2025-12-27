@@ -38,8 +38,9 @@ bash run.sh -r npu -v Ascend910B1
 # Run a single case from the generated set
 bash run.sh -r npu -v Ascend910B1 -c case_float_H_128_S0_128_S1_1024
 
-# Provide custom cases (semicolon separated: HEAD_SIZE,S0,S1,CUBE_S0,CUBE_S1)
-bash run.sh -r npu -v Ascend910B1 --cases "128,128,1024,128,128;128,512,2048,128,128"
+# Provide custom cases (semicolon separated: HEAD_SIZE,S0,S1,CUBE_S0,TILE_S1)
+# TILE_S1: supports 128 (=CUBE_S1),256,512
+bash run.sh -r npu -v Ascend910B1 --cases "128,128,1024,128,128;128,2048,2048,128,512"
 
 # Provide custom cases and run just one of them
 bash run.sh -r npu -v Ascend910B1 --cases "128,128,1024,128,128;128,512,2048,128,128" \

@@ -93,7 +93,7 @@ namespace pto{
     }
 
      template <unsigned Cube_M, unsigned Tile_K, unsigned Cube_N, layout_t LAYOUT = layout_t::NONE, typename TileDataA, typename TileDataB, typename TileDataC>
-    AICORE inline void pto_macro_matmul(TileDataA &aMatTile, TileDataB &bMatTile, TileDataC &cAccTile){
+    AICORE inline void pto_macro_matmul(TileDataA &aMatTile, TileDataB &bMatTile, TileDataC &cAccTile, bool accumulate = false) {
 
 
         constexpr layout_t layout = deduce_layout<TileDataA, TileDataB>();
@@ -138,7 +138,7 @@ namespace pto{
             wait_flag(PIPE_MTE1, PIPE_M, pingpong);
 
             // TMATMUL: first K-slice initializes, subsequent slices accumulate.
-            if (k == 0){
+            if (k == 0 && !accumulate) {
                 TMATMUL(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
                 // TMATMUL_UF(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong], UNIT_FLAG_ENABLE(k, (K / Cube_K)));
             } else {

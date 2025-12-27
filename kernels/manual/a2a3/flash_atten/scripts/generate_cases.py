@@ -13,10 +13,14 @@
 Generate TFA case configuration and emit a shared header/JSON for host/kernel build.
 
 Usage examples:
-  python3 generate_cases.py --cases "128,128,1024,128,128" \
-      --cases "128,512,2048,128,128"
+    python3 generate_cases.py --cases "128,128,1024,128,256" \
+            --cases "128,512,2048,128,256"
 
-Each --cases entry format: HEAD_SIZE,S0,S1,CUBE_S0,CUBE_S1
+    # Override cube-side preload depth (defaults to 4)
+    python3 generate_cases.py --qk-preload 6
+
+Each --cases entry format: HEAD_SIZE,S0,S1,CUBE_S0[,TILE_S1]
+CUBE_S1 is fixed at 128; TILE_S1 defaults to 256 if omitted.
 Defaults replicate the previous hard-coded set if --cases is omitted.
 """
 import argparse
@@ -25,40 +29,48 @@ import os
 from pathlib import Path
 from typing import List, Dict
 
+TILE_S1_DEFAULT = 256
+QK_PRELOAD_DEFAULT = 4
+
 DEFAULT_CASES = [
-    (128, 128, 1024, 128, 128),
-    (128, 128, 2048, 128, 128),
-    (128, 128, 8192, 128, 128),
-    (128, 512, 1024, 128, 128),
-    (128, 512, 2048, 128, 128),
-    (128, 512, 8192, 128, 128),
+    (128, 128, 1024, 128, TILE_S1_DEFAULT),
+    (128, 128, 2048, 128, TILE_S1_DEFAULT),
+    (128, 128, 8192, 128, TILE_S1_DEFAULT),
+    (128, 512, 1024, 128, TILE_S1_DEFAULT),
+    (128, 512, 2048, 128, TILE_S1_DEFAULT),
+    (128, 512, 8192, 128, TILE_S1_DEFAULT),
 ]
 
 
-def _parse_case_entry(raw: str) -> Dict[str, int]:
+def _parse_case_entry(raw: str, qk_preload: int) -> Dict[str, int]:
     parts = [p.strip() for p in raw.split(',') if p.strip()]
-    if len(parts) != 5:
-        raise ValueError(f"Expected 5 comma-separated values (HEAD_SIZE,S0,S1,CUBE_S0,CUBE_S1), got '{raw}'")
-    head, s0, s1, cube_s0, cube_s1 = map(int, parts)
+    if len(parts) not in (4, 5):
+        raise ValueError(f"Expected 4 or 5 comma-separated values (HEAD_SIZE,S0,S1,CUBE_S0[,TILE_S1]), got '{raw}'")
+    head, s0, s1, cube_s0 = map(int, parts[:4])
+    tile_s1 = int(parts[4]) if len(parts) == 5 else TILE_S1_DEFAULT
     return {
         "head_size": head,
         "s0": s0,
         "s1": s1,
         "cube_s0": cube_s0,
-        "cube_s1": cube_s1,
+        "cube_s1": 128,
+        "tile_s1": tile_s1,
+        "qk_preload": qk_preload,
     }
 
 
-def _default_cases() -> List[Dict[str, int]]:
+def _default_cases(qk_preload: int) -> List[Dict[str, int]]:
     return [
         {
             "head_size": head,
             "s0": s0,
             "s1": s1,
             "cube_s0": cube_s0,
-            "cube_s1": cube_s1,
+            "cube_s1": 128,
+            "tile_s1": tile_s1,
+            "qk_preload": qk_preload,
         }
-        for (head, s0, s1, cube_s0, cube_s1) in DEFAULT_CASES
+        for (head, s0, s1, cube_s0, tile_s1) in DEFAULT_CASES
     ]
 
 
@@ -67,13 +79,24 @@ def _case_name(case: Dict[str, int]) -> str:
 
 
 def _normalize_case(case: Dict[str, int]) -> Dict[str, int]:
+    if case["qk_preload"] < 1:
+        raise ValueError("qk_preload must be >= 1")
+
     # Ensure cube_s0 does not exceed s0 and divides evenly; otherwise set cube_s0 = s0
     if case["cube_s0"] > case["s0"] or case["s0"] % case["cube_s0"] != 0:
         case["cube_s0"] = case["s0"]
 
-    # Ensure cube_s1 does not exceed s1 and divides evenly; otherwise set cube_s1 = s1
-    if case["cube_s1"] > case["s1"] or case["s1"] % case["cube_s1"] != 0:
-        case["cube_s1"] = case["s1"]
+    # Fix cube_s1 to 128 and ensure divisibility
+    if case["cube_s1"] != 128:
+        case["cube_s1"] = 128
+    if case["s1"] % case["cube_s1"] != 0:
+        raise ValueError("S1 must be divisible by CUBE_S1 (128)")
+
+    # Ensure TILE_S1 divides S1 and is a multiple of CUBE_S1
+    if case["tile_s1"] % case["cube_s1"] != 0:
+        raise ValueError("TILE_S1 must be divisible by CUBE_S1 (128)")
+    if case["s1"] % case["tile_s1"] != 0:
+        raise ValueError("S1 must be divisible by TILE_S1")
 
     return case
 
@@ -82,7 +105,7 @@ def _render_macro(cases: List[Dict[str, int]]) -> str:
     lines = ["#define TFA_FOR_EACH_CASE(MACRO) \\"]
     for idx, case in enumerate(cases):
         suffix = " \\" if idx + 1 != len(cases) else ""
-        line = f"    MACRO({case['s0']}, {case['head_size']}, {case['s1']}, {case['cube_s0']}, {case['cube_s1']}){suffix}"
+        line = f"    MACRO({case['s0']}, {case['head_size']}, {case['s1']}, {case['cube_s0']}, {case['cube_s1']}, {case['tile_s1']}, {case['qk_preload']}){suffix}"
         lines.append(line)
     return "\n".join(lines)
 
@@ -99,6 +122,8 @@ def _render_header(cases: List[Dict[str, int]]) -> str:
                     str(case["s1"]),
                     str(case["cube_s0"]),
                     str(case["cube_s1"]),
+                    str(case["tile_s1"]),
+                    str(case["qk_preload"]),
                     f'"{_case_name(case)}"',
                 ]
             ) + "}"
@@ -118,6 +143,8 @@ struct GeneratedTfaCase {{
     int s1;
     int cube_s0;
     int cube_s1;
+    int tile_s1;
+    int qk_preload;
     const char *name;
 }};
 
@@ -135,7 +162,13 @@ def main() -> None:
         "--cases",
         action="append",
         default=None,
-        help="Case entry in the format HEAD_SIZE,S0,S1,CUBE_S0,CUBE_S1 (repeat for multiple entries)",
+        help="Case entry in the format HEAD_SIZE,S0,S1,CUBE_S0[,TILE_S1] (repeat for multiple entries; CUBE_S1 fixed at 128)",
+    )
+    parser.add_argument(
+        "--qk-preload",
+        type=int,
+        default=QK_PRELOAD_DEFAULT,
+        help="qkPreloadNum (cube pipeline preload depth) applied to all generated cases",
     )
     parser.add_argument(
         "--output-header",
@@ -150,9 +183,9 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.cases:
-        cases = [_normalize_case(_parse_case_entry(entry)) for entry in args.cases]
+        cases = [_normalize_case(_parse_case_entry(entry, args.qk_preload)) for entry in args.cases]
     else:
-        cases = [_normalize_case(case) for case in _default_cases()]
+        cases = [_normalize_case(case) for case in _default_cases(args.qk_preload)]
 
     header_text = _render_header(cases)
     header_path = Path(args.output_header)
@@ -174,7 +207,7 @@ def main() -> None:
     print(f"[INFO] Wrote {json_path}")
     print("[INFO] Cases generated:")
     for case in json_payload:
-        print(f"  - {case['name']} (H={case['head_size']}, S0={case['s0']}, S1={case['s1']}, CUBE_S0={case['cube_s0']}, CUBE_S1={case['cube_s1']})")
+        print(f"  - {case['name']} (H={case['head_size']}, S0={case['s0']}, S1={case['s1']}, CUBE_S0={case['cube_s0']}, CUBE_S1={case['cube_s1']}, TILE_S1={case['tile_s1']}, QK_PRELOAD={case['qk_preload']})")
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@
 """
 Generate Q/K input and golden output for TBMM_QK cases.
 Supports dynamic case configuration via CLI or generated_cases.json.
+Softmax/pv tiling follows TILE_S1 (default 256).
 """
 import argparse
 import json
@@ -26,14 +27,18 @@ np.random.seed(7)
 
 S0_BASE = 64
 HEAD_SIZE = 128
+TILE_S1_DEFAULT = 256
 
-def gen_case(path, s0, s1, head_size=HEAD_SIZE, cube_s1=128):
+def gen_case(path, s0, s1, head_size=HEAD_SIZE, cube_s1=128, tile_s1=TILE_S1_DEFAULT):
     # generate inputs in FP16, compute golden in FP32
     q_fp32 = (np.random.randn(s0, head_size).astype(np.float16) * 1.5).astype(np.float32)
     k_fp32 = (np.random.randn(head_size, s1).astype(np.float16) * 1.5).astype(np.float32)
     q = q_fp32.astype(np.float16)
     k = k_fp32.astype(np.float16)
     golden = (q.astype(np.float32).dot(k.astype(np.float32))).astype(np.float32)
+
+    assert s1 % tile_s1 == 0, "S1 must be divisible by TILE_S1"
+    assert tile_s1 % cube_s1 == 0, "TILE_S1 must be divisible by CUBE_S1"
 
     # write FP16 inputs and FP32 golden
     q.tofile(os.path.join(path, 'q.bin'))
@@ -42,11 +47,10 @@ def gen_case(path, s0, s1, head_size=HEAD_SIZE, cube_s1=128):
     kt.tofile(os.path.join(path, 'kt.bin'))       
     golden.tofile(os.path.join(path, 'qk.bin'))
     # also produce softmax x_exp (per-row) saved as FP16 and tmp_float_exp saved as FP32
-    # compute softmax in tiled fashion by Cube_S1 tiles (tile size 128)
+    # compute softmax in tiled fashion by TILE_S1 tiles (default 256)
     arr_f32 = golden.astype(np.float32)
     scale = 1/np.sqrt(HEAD_SIZE)
-    Cube_S1 = cube_s1
-    num_tiles = s1 // Cube_S1
+    num_tiles = s1 // tile_s1
 
     # allocate full arrays to collect per-tile exponentials and per-tile global sums
     full_exp = np.zeros((s0, s1), dtype=np.float32)
@@ -58,8 +62,8 @@ def gen_case(path, s0, s1, head_size=HEAD_SIZE, cube_s1=128):
     global_sum = None
 
     for ti in range(num_tiles):
-        c0 = ti * Cube_S1
-        c1 = c0 + Cube_S1
+        c0 = ti * tile_s1
+        c1 = c0 + tile_s1
         tile = arr_f32[:, c0:c1]
         # local max per row for this tile
         local_max = np.max(tile, axis=1, keepdims=True).astype(np.float32)
@@ -101,13 +105,13 @@ def gen_case(path, s0, s1, head_size=HEAD_SIZE, cube_s1=128):
     soft_f32 = soft.astype(np.float32)
     # compute full pv by accumulating per-tile partials
     pv = np.zeros((s0, head_size), dtype=np.float32)
-    # compute per-tile partials (Cube_S1=128)
-    num_tiles = s1 // cube_s1
+    # compute per-tile partials based on TILE_S1
+    num_tiles = s1 // tile_s1
     pv_tile_fifo_parts = []
     for ti in range(num_tiles):
-        c0 = ti * cube_s1
-        soft_tile = soft_f32[:, c0:c0+cube_s1]
-        v_tile = v[c0:c0+cube_s1, :].astype(np.float32)
+        c0 = ti * tile_s1
+        soft_tile = soft_f32[:, c0:c0+tile_s1]
+        v_tile = v[c0:c0+tile_s1, :].astype(np.float32)
         pv_tile_fifo = (soft_tile.dot(v_tile)).astype(np.float32)
         pv_tile_fifo_parts.append(pv_tile_fifo)
         pv += pv_tile_fifo
@@ -145,7 +149,7 @@ def gen_case(path, s0, s1, head_size=HEAD_SIZE, cube_s1=128):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate TFA golden data")
     parser.add_argument("--case", dest="case_name", help="Generate only the specified case name (e.g. case_float_H_128_S0_512_S1_2048)")
-    parser.add_argument("--cases", action="append", help="Explicit case entry HEAD_SIZE,S0,S1[,CUBE_S0,CUBE_S1] (repeatable)")
+    parser.add_argument("--cases", action="append", help="Explicit case entry HEAD_SIZE,S0,S1[,CUBE_S0[,TILE_S1]] (repeatable; CUBE_S1 fixed at 128)")
     parser.add_argument("--cases-json", dest="cases_json", default=None, help="Path to generated_cases.json (defaults to ../generated_cases.json if present)")
     parser.add_argument("--head-size", type=int, help="HEAD_SIZE for a single on-demand case")
     parser.add_argument("--s0", type=int, help="S0 for a single on-demand case")
@@ -158,31 +162,36 @@ if __name__ == '__main__':
     def parse_case_entry(entry: str):
         parts = [p.strip() for p in entry.split(',') if p.strip()]
         if len(parts) < 3:
-            raise ValueError("Case entry must be HEAD_SIZE,S0,S1 or HEAD_SIZE,S0,S1,CUBE_S0,CUBE_S1")
+            raise ValueError("Case entry must be HEAD_SIZE,S0,S1 or HEAD_SIZE,S0,S1,CUBE_S0[,TILE_S1]")
         head, s0, s1 = map(int, parts[:3])
-        cube_s1 = int(parts[-1]) if len(parts) >= 4 else 128
-        return head, s0, s1, cube_s1
+        # optional CUBE_S0 (ignored for data layout but validated) and optional TILE_S1; CUBE_S1 is fixed to 128
+        cube_s0 = int(parts[3]) if len(parts) >= 4 else s0
+        if s0 % cube_s0 != 0:
+            raise ValueError("S0 must be divisible by CUBE_S0")
+        tile_s1 = int(parts[4]) if len(parts) >= 5 else TILE_S1_DEFAULT
+        cube_s1 = 128
+        return head, s0, s1, cube_s1, tile_s1
 
     cases = []
     if args.cases:
         for entry in args.cases:
-            head, s0, s1, cube_s1 = parse_case_entry(entry)
-            cases.append((f"case_float_H_{head}_S0_{s0}_S1_{s1}", (s0, head, s1, cube_s1)))
+            head, s0, s1, cube_s1, tile_s1 = parse_case_entry(entry)
+            cases.append((f"case_float_H_{head}_S0_{s0}_S1_{s1}", (s0, head, s1, cube_s1, tile_s1)))
     elif args.head_size and args.s0 and args.s1:
-        cases.append((f"case_float_H_{args.head_size}_S0_{args.s0}_S1_{args.s1}", (args.s0, args.head_size, args.s1, 128)))
+        cases.append((f"case_float_H_{args.head_size}_S0_{args.s0}_S1_{args.s1}", (args.s0, args.head_size, args.s1, 128, TILE_S1_DEFAULT)))
     elif args.cases_json or default_json.exists():
         json_path = Path(args.cases_json) if args.cases_json else default_json
         payload = json.loads(json_path.read_text())
         for entry in payload:
-            cases.append((entry["name"], (entry["s0"], entry["head_size"], entry["s1"], entry.get("cube_s1", 128))))
+            cases.append((entry["name"], (entry["s0"], entry["head_size"], entry["s1"], entry.get("cube_s1", 128), entry.get("tile_s1", TILE_S1_DEFAULT))))
     else:
         cases = [
-            ('case_float_H_128_S0_128_S1_1024', (128, HEAD_SIZE, 1024, 128)),
-            ('case_float_H_128_S0_128_S1_2048', (128, HEAD_SIZE, 2048, 128)),
-            ('case_float_H_128_S0_128_S1_8192', (128, HEAD_SIZE, 8192, 128)),
-            ('case_float_H_128_S0_512_S1_1024', (512, HEAD_SIZE, 1024, 128)),
-            ('case_float_H_128_S0_512_S1_2048', (512, HEAD_SIZE, 2048, 128)),
-            ('case_float_H_128_S0_512_S1_8192', (512, HEAD_SIZE, 8192, 128)),
+            ('case_float_H_128_S0_128_S1_1024', (128, HEAD_SIZE, 1024, 128, TILE_S1_DEFAULT)),
+            ('case_float_H_128_S0_128_S1_2048', (128, HEAD_SIZE, 2048, 128, TILE_S1_DEFAULT)),
+            ('case_float_H_128_S0_128_S1_8192', (128, HEAD_SIZE, 8192, 128, TILE_S1_DEFAULT)),
+            ('case_float_H_128_S0_512_S1_1024', (512, HEAD_SIZE, 1024, 128, TILE_S1_DEFAULT)),
+            ('case_float_H_128_S0_512_S1_2048', (512, HEAD_SIZE, 2048, 128, TILE_S1_DEFAULT)),
+            ('case_float_H_128_S0_512_S1_8192', (512, HEAD_SIZE, 8192, 128, TILE_S1_DEFAULT)),
         ]
 
     if args.case_name:
@@ -194,14 +203,14 @@ if __name__ == '__main__':
             cases = filtered
         else:
             try:
-                head, s0, s1, cube_s1 = parse_case_entry(target)
+                head, s0, s1, cube_s1, tile_s1 = parse_case_entry(target)
                 synthetic_name = f"case_float_H_{head}_S0_{s0}_S1_{s1}"
-                cases = [(synthetic_name, (s0, head, s1, cube_s1))]
+                cases = [(synthetic_name, (s0, head, s1, cube_s1, tile_s1))]
             except Exception:
                 raise ValueError(f"Requested case '{args.case_name}' not found in configured cases")
 
     build_dir = script_root / "build"
-    for name, (s0, head_size, s1, cube_s1) in cases:
+    for name, (s0, head_size, s1, cube_s1, tile_s1) in cases:
         case_dir = build_dir / name
         os.makedirs(case_dir, exist_ok=True)
-        gen_case(str(case_dir), s0, s1, head_size, cube_s1)
+        gen_case(str(case_dir), s0, s1, head_size, cube_s1, tile_s1)
