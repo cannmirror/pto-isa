@@ -49,6 +49,7 @@ print_success() {
 }
 
 print_error() {
+  # test pipeline
   echo
   echo $dotted_line
   local msg="$1"
