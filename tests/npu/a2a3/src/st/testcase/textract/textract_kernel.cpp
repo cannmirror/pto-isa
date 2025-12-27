@@ -56,11 +56,11 @@ AICORE inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     TLOAD(bMatTile, src1Global);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-
+    pipe_barrier(PIPE_ALL);
     /**********************************TMOV && TEXTRACT**********************************/
     TMOV(aTile, aMatTile);
     TMOV(bTile, bMatTile);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     TMATMUL(cTile, aTile, bTile);
@@ -71,21 +71,21 @@ AICORE inline void runTMOV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     out = dstGlobal.data();
 }
 
-template <typename T, typename U, typename S, int M, int N, int K, bool isAtranspose, bool isBtranspose, int targetM,
-    int targetN, int targetK, bool isKAlign = false>
+template <typename T, typename U, typename S, int M, int N, int K, bool isAtranspose, bool isBtranspose, int baseM,
+    int baseN, int baseK, bool isKAlign = false>
 AICORE inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
     // static shape
     using GlobalDataSrc0 = std::conditional_t<isAtranspose,
-        GlobalTensor<U, pto::Shape<1, 1, 1, targetM, targetK>,
-            pto::Stride<targetM * targetK, targetM * targetK, targetM * targetK, 1, targetM>, Layout::DN>,
-        GlobalTensor<U, pto::Shape<1, 1, 1, targetM, targetK>,
-            pto::Stride<targetM * targetK, targetM * targetK, targetM * targetK, targetK, 1>, Layout::ND>>;
+        GlobalTensor<U, pto::Shape<1, 1, 1, baseM, baseK>,
+            pto::Stride<baseM * baseK, baseM * baseK, baseM * baseK, 1, baseM>, Layout::DN>,
+        GlobalTensor<U, pto::Shape<1, 1, 1, baseM, baseK>,
+            pto::Stride<baseM * baseK, baseM * baseK, baseM * baseK, baseK, 1>, Layout::ND>>;
     using GlobalDataSrc1 = std::conditional_t<isBtranspose,
-        GlobalTensor<S, pto::Shape<1, 1, 1, targetK, targetN>,
-            pto::Stride<targetN * targetK, targetN * targetK, targetN * targetK, 1, targetK>, Layout::DN>,
-        GlobalTensor<S, pto::Shape<1, 1, 1, targetK, targetN>,
-            pto::Stride<targetN * targetK, targetN * targetK, targetN * targetK, targetN, 1>, Layout::ND>>;
+        GlobalTensor<S, pto::Shape<1, 1, 1, baseK, baseN>,
+            pto::Stride<baseN * baseK, baseN * baseK, baseN * baseK, 1, baseK>, Layout::DN>,
+        GlobalTensor<S, pto::Shape<1, 1, 1, baseK, baseN>,
+            pto::Stride<baseN * baseK, baseN * baseK, baseN * baseK, baseN, 1>, Layout::ND>>;
     using GlobalDataOut = GlobalTensor<T, Shape<1, 1, 1, M, N>, Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
 
     GlobalDataSrc0 src0Global(src0);
@@ -93,15 +93,15 @@ AICORE inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *src1
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = std::conditional_t<isAtranspose,
-        Tile<TileType::Mat, U, targetM, targetK, BLayout::RowMajor, targetM, targetK, SLayout::ColMajor, 512>,
-        Tile<TileType::Mat, U, targetM, targetK, BLayout::ColMajor, targetM, targetK, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, U, baseM, baseK, BLayout::RowMajor, baseM, baseK, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, U, baseM, baseK, BLayout::ColMajor, baseM, baseK, SLayout::RowMajor, 512>>;
     using TileMatBData = std::conditional_t<isBtranspose,
-        Tile<TileType::Mat, S, targetK, targetN, BLayout::RowMajor, targetK, targetN, SLayout::ColMajor, 512>,
-        Tile<TileType::Mat, S, targetK, targetN, BLayout::ColMajor, targetK, targetN, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, S, baseK, baseN, BLayout::RowMajor, baseK, baseN, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, S, baseK, baseN, BLayout::ColMajor, baseK, baseN, SLayout::RowMajor, 512>>;
 
-    using LeftTile = TileLeft<U, targetM, targetK, targetM, targetK>;
-    using RightTile = TileRight<S, targetK, targetN, targetK, targetN>;
-    using AccTile = TileAcc<T, targetM, targetN, M, N>;
+    using LeftTile = TileLeft<U, baseM, baseK, baseM, baseK>;
+    using RightTile = TileRight<S, baseK, baseN, baseK, baseN>;
+    using AccTile = TileAcc<T, baseM, baseN, M, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -126,16 +126,16 @@ AICORE inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *src1
     /*************************************TLOAD****************************************/
     TLOAD(aMatTile, src0Global);
     TLOAD(bMatTile, src1Global);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     /**********************************TMOV*******************************************/
     TMOV(aTile, aMatTile);
     TMOV(bTile, bMatTile);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    mad(c, a, b, targetM, K, targetN, false, isKAlign, false, true);  // 是否使能K16对齐，避免b32场景读取脏数据
+    mad(c, a, b, baseM, K, baseN, false, isKAlign, false, true);  // 是否使能K16对齐，避免b32场景读取脏数据
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     /****************************************TSTORE*****************************************/
@@ -189,13 +189,13 @@ AICORE inline void runTEXTRACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     /*************************************TLOAD****************************************/
     TLOAD(aMatTile, src0Global);
     TLOAD(bMatTile, src1Global);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     /**********************************TMOV && TEXTRACT**********************************/
     TEXTRACT(aTile, aMatTile, indexM, indexK);
     TEXTRACT(bTile, bMatTile, indexK, indexN);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     TMATMUL(cTile, aTile, bTile);
@@ -206,7 +206,7 @@ AICORE inline void runTEXTRACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 }
 
 template <typename T, typename U, typename S, int M, int N, int K, uint16_t indexM, uint16_t indexN, uint16_t indexK,
-    bool isAtranspose, bool isBtranspose, int targetM, int targetN, int targetK, bool isKAlign = false>
+    bool isAtranspose, bool isBtranspose, int baseM, int baseN, int baseK, bool isKAlign = false>
 AICORE inline void runTEXTRACT_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
     constexpr int mValid = M - indexM;
@@ -214,15 +214,15 @@ AICORE inline void runTEXTRACT_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *
     constexpr int kValid = K - indexK;
 
     using GlobalDataSrc0 = std::conditional_t<isAtranspose,
-        GlobalTensor<U, pto::Shape<1, 1, 1, targetM, targetK>,
-            pto::Stride<targetM * targetK, targetM * targetK, targetM * targetK, 1, targetM>, Layout::DN>,
-        GlobalTensor<U, pto::Shape<1, 1, 1, targetM, targetK>,
-            pto::Stride<targetM * targetK, targetM * targetK, targetM * targetK, targetK, 1>, Layout::ND>>;
+        GlobalTensor<U, pto::Shape<1, 1, 1, baseM, baseK>,
+            pto::Stride<baseM * baseK, baseM * baseK, baseM * baseK, 1, baseM>, Layout::DN>,
+        GlobalTensor<U, pto::Shape<1, 1, 1, baseM, baseK>,
+            pto::Stride<baseM * baseK, baseM * baseK, baseM * baseK, baseK, 1>, Layout::ND>>;
     using GlobalDataSrc1 = std::conditional_t<isBtranspose,
-        GlobalTensor<S, pto::Shape<1, 1, 1, targetK, targetN>,
-            pto::Stride<targetN * targetK, targetN * targetK, targetN * targetK, 1, targetK>, Layout::DN>,
-        GlobalTensor<S, pto::Shape<1, 1, 1, targetK, targetN>,
-            pto::Stride<targetN * targetK, targetN * targetK, targetN * targetK, targetN, 1>, Layout::ND>>;
+        GlobalTensor<S, pto::Shape<1, 1, 1, baseK, baseN>,
+            pto::Stride<baseN * baseK, baseN * baseK, baseN * baseK, 1, baseK>, Layout::DN>,
+        GlobalTensor<S, pto::Shape<1, 1, 1, baseK, baseN>,
+            pto::Stride<baseN * baseK, baseN * baseK, baseN * baseK, baseN, 1>, Layout::ND>>;
     using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, mValid, nValid>,
         pto::Stride<1 * mValid * nValid, 1 * mValid * nValid, mValid * nValid, nValid, 1>>;
 
@@ -231,15 +231,15 @@ AICORE inline void runTEXTRACT_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData = std::conditional_t<isAtranspose,
-        Tile<TileType::Mat, U, targetM, targetK, BLayout::RowMajor, targetM, targetK, SLayout::ColMajor, 512>,
-        Tile<TileType::Mat, U, targetM, targetK, BLayout::ColMajor, targetM, targetK, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, U, baseM, baseK, BLayout::RowMajor, baseM, baseK, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, U, baseM, baseK, BLayout::ColMajor, baseM, baseK, SLayout::RowMajor, 512>>;
     using TileMatBData = std::conditional_t<isBtranspose,
-        Tile<TileType::Mat, S, targetK, targetN, BLayout::RowMajor, targetK, targetN, SLayout::ColMajor, 512>,
-        Tile<TileType::Mat, S, targetK, targetN, BLayout::ColMajor, targetK, targetN, SLayout::RowMajor, 512>>;
+        Tile<TileType::Mat, S, baseK, baseN, BLayout::RowMajor, baseK, baseN, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, S, baseK, baseN, BLayout::ColMajor, baseK, baseN, SLayout::RowMajor, 512>>;
 
-    using LeftTile = TileLeft<U, targetM - indexM, targetK - indexK, targetM - indexM, targetK - indexK>;
-    using RightTile = TileRight<S, targetK - indexK, targetN - indexN, targetK - indexK, targetN - indexN>;
-    using AccTile = TileAcc<T, targetM - indexM, targetN - indexN, mValid, nValid>;
+    using LeftTile = TileLeft<U, baseM - indexM, baseK - indexK, baseM - indexM, baseK - indexK>;
+    using RightTile = TileRight<S, baseK - indexK, baseN - indexN, baseK - indexK, baseN - indexN>;
+    using AccTile = TileAcc<T, baseM - indexM, baseN - indexN, mValid, nValid>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -264,16 +264,16 @@ AICORE inline void runTEXTRACT_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *
     /*************************************TLOAD****************************************/
     TLOAD(aMatTile, src0Global);
     TLOAD(bMatTile, src1Global);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     /**********************************TEXTRACT*******************************************/
     TEXTRACT(aTile, aMatTile, indexM, indexK);
     TEXTRACT(bTile, bMatTile, indexK, indexN);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    mad(c, a, b, targetM - indexM, kValid, targetN - indexN, false, isKAlign, false, true);
+    mad(c, a, b, baseM - indexM, kValid, baseN - indexN, false, isKAlign, false, true);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     /****************************************TSTORE*****************************************/
@@ -327,19 +327,94 @@ AICORE inline void runTEXTRACT_DYNAMIC(__gm__ T *out, __gm__ U *src0, __gm__ S *
     /*************************************TLOAD****************************************/
     TLOAD(aMatTile, src0Global);
     TLOAD(bMatTile, src1Global);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
     /**********************************TMOV && TEXTRACT**********************************/
     TEXTRACT(aTile, aMatTile, indexM, indexK);
     TEXTRACT(bTile, bMatTile, indexK, indexN);
-
+    pipe_barrier(PIPE_ALL);
     set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
     TMATMUL(cTile, aTile, bTile);
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
 
+    TSTORE(dstGlobal, cTile);
+    out = dstGlobal.data();
+}
+
+template <typename T, typename U, typename S, int M, int N, int K, uint16_t indexM, uint16_t indexN, uint16_t indexK,
+    bool isAtranspose, bool isBtranspose, int baseM, int baseN, int baseK, bool isKAlign = false>
+AICORE inline void runTEXTRACT_COMPACT(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
+{
+    constexpr int mValid = M - indexM;
+    constexpr int nValid = N - indexN;
+    constexpr int kValid = K - indexK;
+
+    using GlobalDataSrc0 = std::conditional_t<isAtranspose,
+        GlobalTensor<U, pto::Shape<1, 1, 1, baseM, baseK>,
+            pto::Stride<baseM * baseK, baseM * baseK, baseM * baseK, 1, baseM>, Layout::DN>,
+        GlobalTensor<U, pto::Shape<1, 1, 1, baseM, baseK>,
+            pto::Stride<baseM * baseK, baseM * baseK, baseM * baseK, baseK, 1>, Layout::ND>>;
+    using GlobalDataSrc1 = std::conditional_t<isBtranspose,
+        GlobalTensor<S, pto::Shape<1, 1, 1, baseK, baseN>,
+            pto::Stride<baseN * baseK, baseN * baseK, baseN * baseK, 1, baseK>, Layout::DN>,
+        GlobalTensor<S, pto::Shape<1, 1, 1, baseK, baseN>,
+            pto::Stride<baseN * baseK, baseN * baseK, baseN * baseK, baseN, 1>, Layout::ND>>;
+    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, mValid, nValid>,
+        pto::Stride<1 * mValid * nValid, 1 * mValid * nValid, mValid * nValid, nValid, 1>>;
+
+    GlobalDataSrc0 src0Global(src0);
+    GlobalDataSrc1 src1Global(src1);
+    GlobalDataOut dstGlobal(out);
+
+    using TileMatAData = std::conditional_t<isAtranspose,
+        Tile<TileType::Mat, U, baseM, baseK, BLayout::RowMajor, baseM, baseK, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, U, baseM, baseK, BLayout::ColMajor, baseM, baseK, SLayout::RowMajor, 512>>;
+    using TileMatBData = std::conditional_t<isBtranspose,
+        Tile<TileType::Mat, S, baseK, baseN, BLayout::RowMajor, baseK, baseN, SLayout::ColMajor, 512>,
+        Tile<TileType::Mat, S, baseK, baseN, BLayout::ColMajor, baseK, baseN, SLayout::RowMajor, 512>>;
+
+    using LeftTile = Tile<TileType::Left, U, baseM - indexM, baseK - indexK, BLayout::RowMajor, mValid, kValid, SLayout::RowMajor, 512, PadValue::Null, CompactMode::Normal>;
+    using RightTile = Tile<TileType::Right, S, baseK - indexK, baseN - indexN, BLayout::RowMajor, kValid, nValid, SLayout::ColMajor, 512, PadValue::Null, CompactMode::Normal>;
+    using AccTile = Tile<TileType::Acc, T, baseM - indexM, baseN - indexN, BLayout::ColMajor, mValid, nValid, SLayout::RowMajor, 1024, PadValue::Null, CompactMode::Normal>;
+    TileMatAData aMatTile;
+    TileMatBData bMatTile;
+    TASSIGN(aMatTile, 0x0);
+    TASSIGN(bMatTile, 0x10000);
+
+    LeftTile aTile;
+    RightTile bTile;
+    AccTile cTile;
+    TASSIGN(aTile, 0x0);
+    TASSIGN(bTile, 0x0);
+    TASSIGN(cTile, 0x0);
+
+    using AType = typename LeftTile::DType;
+    using BType = typename RightTile::DType;
+    using CType = typename AccTile::DType;
+
+    __ca__ AType *a = (__ca__ AType *)(aTile.data());
+    __cb__ BType *b = (__cb__ BType *)(bTile.data());
+    __cc__ CType *c = (__cc__ CType *)(cTile.data());
+
+    /*************************************TLOAD****************************************/
+    TLOAD(aMatTile, src0Global);
+    TLOAD(bMatTile, src1Global);
+    pipe_barrier(PIPE_ALL);
+    set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    /**********************************TEXTRACT*******************************************/
+    TEXTRACT(aTile, aMatTile, indexM, indexK);
+    TEXTRACT(bTile, bMatTile, indexK, indexN);
+    pipe_barrier(PIPE_ALL);
+    set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    mad(c, a, b, mValid, kValid, nValid, false, isKAlign, false, true);
+    set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    /****************************************TSTORE*****************************************/
     TSTORE(dstGlobal, cTile);
     out = dstGlobal.data();
 }
@@ -462,14 +537,14 @@ extern "C" __global__ AICORE void launchTMOV_21(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 29;
     constexpr uint32_t K = 44;
 
-    constexpr uint16_t targetM = 32;
-    constexpr uint16_t targetN = 32;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 32;
+    constexpr uint16_t baseN = 32;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = false;
     constexpr bool isBtranspose = false;
 
-    runTMOV_UNALIGN<float, float, float, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTMOV_UNALIGN<float, float, float, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
@@ -481,15 +556,15 @@ extern "C" __global__ AICORE void launchTMOV_22(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 29;
     constexpr uint32_t K = 36;
 
-    constexpr uint16_t targetM = 32;
-    constexpr uint16_t targetN = 32;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 32;
+    constexpr uint16_t baseN = 32;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = false;
     constexpr bool isBtranspose = false;
     constexpr bool isKAlign = true;
 
-    runTMOV_UNALIGN<float, float, float, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK, isKAlign>(
+    runTMOV_UNALIGN<float, float, float, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK, isKAlign>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
@@ -501,14 +576,14 @@ extern "C" __global__ AICORE void launchTMOV_23(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 66;
     constexpr uint32_t K = 40;
 
-    constexpr uint16_t targetM = 80;
-    constexpr uint16_t targetN = 96;
-    constexpr uint16_t targetK = 64;
+    constexpr uint16_t baseM = 80;
+    constexpr uint16_t baseN = 96;
+    constexpr uint16_t baseK = 64;
 
     constexpr bool isAtranspose = false;
     constexpr bool isBtranspose = false;
 
-    runTMOV_UNALIGN<int32_t, int8_t, int8_t, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTMOV_UNALIGN<int32_t, int8_t, int8_t, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ int32_t *>(out),
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
@@ -520,14 +595,14 @@ extern "C" __global__ AICORE void launchTMOV_24(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 82;
     constexpr uint32_t K = 40;
 
-    constexpr uint16_t targetM = 80;
-    constexpr uint16_t targetN = 96;
-    constexpr uint16_t targetK = 64;
+    constexpr uint16_t baseM = 80;
+    constexpr uint16_t baseN = 96;
+    constexpr uint16_t baseK = 64;
 
     constexpr bool isAtranspose = false;
     constexpr bool isBtranspose = false;
 
-    runTMOV_UNALIGN<int32_t, int8_t, int8_t, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTMOV_UNALIGN<int32_t, int8_t, int8_t, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ int32_t *>(out),
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
@@ -539,14 +614,14 @@ extern "C" __global__ AICORE void launchTMOV_25(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 39;
     constexpr uint32_t K = 39;
 
-    constexpr uint16_t targetM = 48;
-    constexpr uint16_t targetN = 48;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 48;
+    constexpr uint16_t baseN = 48;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = false;
     constexpr bool isBtranspose = false;
 
-    runTMOV_UNALIGN<float, bfloat16_t, bfloat16_t, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTMOV_UNALIGN<float, bfloat16_t, bfloat16_t, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ bfloat16_t *>(src0),
         reinterpret_cast<__gm__ bfloat16_t *>(src1));
@@ -558,14 +633,14 @@ extern "C" __global__ AICORE void launchTMOV_31(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 29;
     constexpr uint32_t K = 44;
 
-    constexpr uint16_t targetM = 32;
-    constexpr uint16_t targetN = 32;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 32;
+    constexpr uint16_t baseN = 32;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = true;
     constexpr bool isBtranspose = true;
 
-    runTMOV_UNALIGN<float, float, float, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTMOV_UNALIGN<float, float, float, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
@@ -577,15 +652,15 @@ extern "C" __global__ AICORE void launchTMOV_32(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 29;
     constexpr uint32_t K = 36;
 
-    constexpr uint16_t targetM = 32;
-    constexpr uint16_t targetN = 32;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 32;
+    constexpr uint16_t baseN = 32;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = true;
     constexpr bool isBtranspose = true;
     constexpr bool isKAlign = true;
 
-    runTMOV_UNALIGN<float, float, float, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK, isKAlign>(
+    runTMOV_UNALIGN<float, float, float, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK, isKAlign>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
@@ -597,14 +672,14 @@ extern "C" __global__ AICORE void launchTMOV_33(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 66;
     constexpr uint32_t K = 40;
 
-    constexpr uint16_t targetM = 96;
-    constexpr uint16_t targetN = 80;
-    constexpr uint16_t targetK = 64;
+    constexpr uint16_t baseM = 96;
+    constexpr uint16_t baseN = 80;
+    constexpr uint16_t baseK = 64;
 
     constexpr bool isAtranspose = true;
     constexpr bool isBtranspose = true;
 
-    runTMOV_UNALIGN<int32_t, int8_t, int8_t, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTMOV_UNALIGN<int32_t, int8_t, int8_t, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ int32_t *>(out),
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
@@ -616,14 +691,14 @@ extern "C" __global__ AICORE void launchTMOV_34(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 82;
     constexpr uint32_t K = 40;
 
-    constexpr uint16_t targetM = 96;
-    constexpr uint16_t targetN = 96;
-    constexpr uint16_t targetK = 64;
+    constexpr uint16_t baseM = 96;
+    constexpr uint16_t baseN = 96;
+    constexpr uint16_t baseK = 64;
 
     constexpr bool isAtranspose = true;
     constexpr bool isBtranspose = true;
 
-    runTMOV_UNALIGN<int32_t, int8_t, int8_t, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTMOV_UNALIGN<int32_t, int8_t, int8_t, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ int32_t *>(out),
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
@@ -635,14 +710,14 @@ extern "C" __global__ AICORE void launchTMOV_35(__gm__ uint8_t *out, __gm__ uint
     constexpr uint32_t N = 39;
     constexpr uint32_t K = 39;
 
-    constexpr uint16_t targetM = 48;
-    constexpr uint16_t targetN = 48;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 48;
+    constexpr uint16_t baseN = 48;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = true;
     constexpr bool isBtranspose = true;
 
-    runTMOV_UNALIGN<float, bfloat16_t, bfloat16_t, M, N, K, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTMOV_UNALIGN<float, bfloat16_t, bfloat16_t, M, N, K, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ bfloat16_t *>(src0),
         reinterpret_cast<__gm__ bfloat16_t *>(src1));
@@ -866,14 +941,14 @@ extern "C" __global__ AICORE void launchTEXTRACT_21(__gm__ uint8_t *out, __gm__ 
     constexpr uint16_t indexN = 16;
     constexpr uint16_t indexK = 32;
 
-    constexpr uint16_t targetM = 32;
-    constexpr uint16_t targetN = 32;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 32;
+    constexpr uint16_t baseN = 32;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = false;
     constexpr bool isBtranspose = false;
 
-    runTEXTRACT_UNALIGN<float, float, float, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTEXTRACT_UNALIGN<float, float, float, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
@@ -888,14 +963,14 @@ extern "C" __global__ AICORE void launchTEXTRACT_22(__gm__ uint8_t *out, __gm__ 
     constexpr uint16_t indexN = 64;
     constexpr uint16_t indexK = 32;
 
-    constexpr uint16_t targetM = 80;
-    constexpr uint16_t targetN = 96;
-    constexpr uint16_t targetK = 64;
+    constexpr uint16_t baseM = 80;
+    constexpr uint16_t baseN = 96;
+    constexpr uint16_t baseK = 64;
 
     constexpr bool isAtranspose = false;
     constexpr bool isBtranspose = false;
 
-    runTEXTRACT_UNALIGN<int32_t, int8_t, int8_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTEXTRACT_UNALIGN<int32_t, int8_t, int8_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ int32_t *>(out),
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
@@ -910,14 +985,14 @@ extern "C" __global__ AICORE void launchTEXTRACT_23(__gm__ uint8_t *out, __gm__ 
     constexpr uint16_t indexN = 16;
     constexpr uint16_t indexK = 32;
 
-    constexpr uint16_t targetM = 48;
-    constexpr uint16_t targetN = 48;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 48;
+    constexpr uint16_t baseN = 48;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = false;
     constexpr bool isBtranspose = false;
 
-    runTEXTRACT_UNALIGN<float, bfloat16_t, bfloat16_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTEXTRACT_UNALIGN<float, bfloat16_t, bfloat16_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ bfloat16_t *>(src0),
         reinterpret_cast<__gm__ bfloat16_t *>(src1));
@@ -932,14 +1007,14 @@ extern "C" __global__ AICORE void launchTEXTRACT_31(__gm__ uint8_t *out, __gm__ 
     constexpr uint16_t indexN = 16;
     constexpr uint16_t indexK = 32;
 
-    constexpr uint16_t targetM = 32;
-    constexpr uint16_t targetN = 32;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 32;
+    constexpr uint16_t baseN = 32;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = true;
     constexpr bool isBtranspose = true;
 
-    runTEXTRACT_UNALIGN<float, float, float, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTEXTRACT_UNALIGN<float, float, float, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ float *>(src0),
         reinterpret_cast<__gm__ float *>(src1));
@@ -954,14 +1029,14 @@ extern "C" __global__ AICORE void launchTEXTRACT_32(__gm__ uint8_t *out, __gm__ 
     constexpr uint16_t indexN = 64;
     constexpr uint16_t indexK = 32;
 
-    constexpr uint16_t targetM = 96;
-    constexpr uint16_t targetN = 80;
-    constexpr uint16_t targetK = 64;
+    constexpr uint16_t baseM = 96;
+    constexpr uint16_t baseN = 80;
+    constexpr uint16_t baseK = 64;
 
     constexpr bool isAtranspose = true;
     constexpr bool isBtranspose = true;
 
-    runTEXTRACT_UNALIGN<int32_t, int8_t, int8_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTEXTRACT_UNALIGN<int32_t, int8_t, int8_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ int32_t *>(out),
         reinterpret_cast<__gm__ int8_t *>(src0),
         reinterpret_cast<__gm__ int8_t *>(src1));
@@ -976,14 +1051,14 @@ extern "C" __global__ AICORE void launchTEXTRACT_33(__gm__ uint8_t *out, __gm__ 
     constexpr uint16_t indexN = 16;
     constexpr uint16_t indexK = 32;
 
-    constexpr uint16_t targetM = 48;
-    constexpr uint16_t targetN = 48;
-    constexpr uint16_t targetK = 48;
+    constexpr uint16_t baseM = 48;
+    constexpr uint16_t baseN = 48;
+    constexpr uint16_t baseK = 48;
 
     constexpr bool isAtranspose = true;
     constexpr bool isBtranspose = true;
 
-    runTEXTRACT_UNALIGN<float, bfloat16_t, bfloat16_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, targetM, targetN, targetK>(
+    runTEXTRACT_UNALIGN<float, bfloat16_t, bfloat16_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
         reinterpret_cast<__gm__ float *>(out),
         reinterpret_cast<__gm__ bfloat16_t *>(src0),
         reinterpret_cast<__gm__ bfloat16_t *>(src1));
@@ -1082,3 +1157,313 @@ template void launchTEXTRACT<32>(uint8_t *out, uint8_t *src0, uint8_t *src1, voi
 template void launchTEXTRACT<33>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void launchTEXTRACT<41>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 template void launchTEXTRACT<42>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_1(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 20;
+    constexpr uint32_t N = 215;
+    constexpr uint32_t K = 22;
+
+    constexpr uint16_t indexM = 0;
+    constexpr uint16_t indexN = 0;
+    constexpr uint16_t indexK = 0;
+
+    constexpr uint16_t baseM = 128;
+    constexpr uint16_t baseN = 256;
+    constexpr uint16_t baseK = 128;
+
+    constexpr bool isAtranspose = true;
+    constexpr bool isBtranspose = false;
+
+    runTEXTRACT_COMPACT<float, float, float, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK, true>(
+        reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ float *>(src0),
+        reinterpret_cast<__gm__ float *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_2(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 46;
+    constexpr uint32_t N = 36;
+    constexpr uint32_t K = 203;
+
+    constexpr uint16_t indexM = 0;
+    constexpr uint16_t indexN = 0;
+    constexpr uint16_t indexK = 0;
+
+    constexpr uint16_t baseM = 128;
+    constexpr uint16_t baseN = 128;
+    constexpr uint16_t baseK = 256;
+
+    constexpr bool isAtranspose = true;
+    constexpr bool isBtranspose = false;
+
+    runTEXTRACT_COMPACT<int32_t, int8_t, int8_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ int32_t *>(out),
+        reinterpret_cast<__gm__ int8_t *>(src0),
+        reinterpret_cast<__gm__ int8_t *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_3(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 220;
+    constexpr uint32_t N = 25;
+    constexpr uint32_t K = 30;
+
+    constexpr uint16_t indexM = 0;
+    constexpr uint16_t indexN = 0;
+    constexpr uint16_t indexK = 0;
+
+    constexpr uint16_t baseM = 256;
+    constexpr uint16_t baseN = 128;
+    constexpr uint16_t baseK = 128;
+
+    constexpr bool isAtranspose = true;
+    constexpr bool isBtranspose = false;
+
+    runTEXTRACT_COMPACT<float, bfloat16_t, bfloat16_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ bfloat16_t *>(src0),
+        reinterpret_cast<__gm__ bfloat16_t *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_11(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 20;
+    constexpr uint32_t N = 215;
+    constexpr uint32_t K = 22;
+
+    constexpr uint16_t indexM = 0;
+    constexpr uint16_t indexN = 0;
+    constexpr uint16_t indexK = 0;
+
+    constexpr uint16_t baseM = 128;
+    constexpr uint16_t baseN = 256;
+    constexpr uint16_t baseK = 128;
+
+    constexpr bool isAtranspose = false;
+    constexpr bool isBtranspose = true;
+
+    runTEXTRACT_COMPACT<float, float, float, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ float *>(src0),
+        reinterpret_cast<__gm__ float *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_12(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 46;
+    constexpr uint32_t N = 36;
+    constexpr uint32_t K = 203;
+
+    constexpr uint16_t indexM = 0;
+    constexpr uint16_t indexN = 0;
+    constexpr uint16_t indexK = 0;
+
+    constexpr uint16_t baseM = 128;
+    constexpr uint16_t baseN = 128;
+    constexpr uint16_t baseK = 256;
+
+    constexpr bool isAtranspose = false;
+    constexpr bool isBtranspose = true;
+
+    runTEXTRACT_COMPACT<int32_t, int8_t, int8_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ int32_t *>(out),
+        reinterpret_cast<__gm__ int8_t *>(src0),
+        reinterpret_cast<__gm__ int8_t *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_13(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 220;
+    constexpr uint32_t N = 25;
+    constexpr uint32_t K = 30;
+
+    constexpr uint16_t indexM = 0;
+    constexpr uint16_t indexN = 0;
+    constexpr uint16_t indexK = 0;
+
+    constexpr uint16_t baseM = 256;
+    constexpr uint16_t baseN = 128;
+    constexpr uint16_t baseK = 128;
+
+    constexpr bool isAtranspose = false;
+    constexpr bool isBtranspose = true;
+
+    runTEXTRACT_COMPACT<float, bfloat16_t, bfloat16_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ bfloat16_t *>(src0),
+        reinterpret_cast<__gm__ bfloat16_t *>(src1));
+}
+
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_21(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 20;
+    constexpr uint32_t N = 215;
+    constexpr uint32_t K = 22;
+
+    constexpr uint16_t indexM = 16;
+    constexpr uint16_t indexN = 16;
+    constexpr uint16_t indexK = 16;
+
+    constexpr uint16_t baseM = 128;
+    constexpr uint16_t baseN = 256;
+    constexpr uint16_t baseK = 128;
+
+    constexpr bool isAtranspose = false;
+    constexpr bool isBtranspose = false;
+
+    runTEXTRACT_COMPACT<float, float, float, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK, true>(
+        reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ float *>(src0),
+        reinterpret_cast<__gm__ float *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_22(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 46;
+    constexpr uint32_t N = 36;
+    constexpr uint32_t K = 203;
+
+    constexpr uint16_t indexM = 32;
+    constexpr uint16_t indexN = 32;
+    constexpr uint16_t indexK = 32;
+
+    constexpr uint16_t baseM = 128;
+    constexpr uint16_t baseN = 128;
+    constexpr uint16_t baseK = 256;
+
+    constexpr bool isAtranspose = false;
+    constexpr bool isBtranspose = false;
+
+    runTEXTRACT_COMPACT<int32_t, int8_t, int8_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ int32_t *>(out),
+        reinterpret_cast<__gm__ int8_t *>(src0),
+        reinterpret_cast<__gm__ int8_t *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_23(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 220;
+    constexpr uint32_t N = 25;
+    constexpr uint32_t K = 30;
+
+    constexpr uint16_t indexM = 16;
+    constexpr uint16_t indexN = 16;
+    constexpr uint16_t indexK = 16;
+
+    constexpr uint16_t baseM = 256;
+    constexpr uint16_t baseN = 128;
+    constexpr uint16_t baseK = 128;
+
+    constexpr bool isAtranspose = false;
+    constexpr bool isBtranspose = false;
+
+    runTEXTRACT_COMPACT<float, bfloat16_t, bfloat16_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ bfloat16_t *>(src0),
+        reinterpret_cast<__gm__ bfloat16_t *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_31(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 20;
+    constexpr uint32_t N = 215;
+    constexpr uint32_t K = 22;
+
+    constexpr uint16_t indexM = 16;
+    constexpr uint16_t indexN = 16;
+    constexpr uint16_t indexK = 16;
+
+    constexpr uint16_t baseM = 128;
+    constexpr uint16_t baseN = 256;
+    constexpr uint16_t baseK = 128;
+
+    constexpr bool isAtranspose = true;
+    constexpr bool isBtranspose = true;
+
+    runTEXTRACT_COMPACT<float, float, float, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK, true>(
+        reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ float *>(src0),
+        reinterpret_cast<__gm__ float *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_32(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 46;
+    constexpr uint32_t N = 36;
+    constexpr uint32_t K = 203;
+
+    constexpr uint16_t indexM = 32;
+    constexpr uint16_t indexN = 32;
+    constexpr uint16_t indexK = 32;
+
+    constexpr uint16_t baseM = 128;
+    constexpr uint16_t baseN = 128;
+    constexpr uint16_t baseK = 256;
+
+    constexpr bool isAtranspose = true;
+    constexpr bool isBtranspose = true;
+
+    runTEXTRACT_COMPACT<int32_t, int8_t, int8_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ int32_t *>(out),
+        reinterpret_cast<__gm__ int8_t *>(src0),
+        reinterpret_cast<__gm__ int8_t *>(src1));
+}
+extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_33(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
+{
+    constexpr uint32_t M = 220;
+    constexpr uint32_t N = 25;
+    constexpr uint32_t K = 30;
+
+    constexpr uint16_t indexM = 16;
+    constexpr uint16_t indexN = 16;
+    constexpr uint16_t indexK = 16;
+
+    constexpr uint16_t baseM = 256;
+    constexpr uint16_t baseN = 128;
+    constexpr uint16_t baseK = 128;
+
+    constexpr bool isAtranspose = true;
+    constexpr bool isBtranspose = true;
+
+    runTEXTRACT_COMPACT<float, bfloat16_t, bfloat16_t, M, N, K, indexM, indexN, indexK, isAtranspose, isBtranspose, baseM, baseN, baseK>(
+        reinterpret_cast<__gm__ float *>(out),
+        reinterpret_cast<__gm__ bfloat16_t *>(src0),
+        reinterpret_cast<__gm__ bfloat16_t *>(src1));
+}
+
+template <int32_t tilingKey>
+void launchTEXTRACT_COMPACT(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
+{
+    if constexpr (tilingKey == 1) {
+        launchTEXTRACT_COMPACT_1<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 2) {
+        launchTEXTRACT_COMPACT_2<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 3) {
+        launchTEXTRACT_COMPACT_3<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 11) {
+        launchTEXTRACT_COMPACT_11<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 12) {
+        launchTEXTRACT_COMPACT_12<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 13) {
+        launchTEXTRACT_COMPACT_13<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 21) {
+        launchTEXTRACT_COMPACT_21<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 22) {
+        launchTEXTRACT_COMPACT_22<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 23) {
+        launchTEXTRACT_COMPACT_23<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 31) {
+        launchTEXTRACT_COMPACT_31<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 32) {
+        launchTEXTRACT_COMPACT_32<<<1, nullptr, stream>>>(out, src0, src1);
+    } else if constexpr (tilingKey == 33) {
+        launchTEXTRACT_COMPACT_33<<<1, nullptr, stream>>>(out, src0, src1);
+    }
+}
+
+
+template void launchTEXTRACT_COMPACT<1>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<2>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<3>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<11>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<12>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<13>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<21>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<22>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<23>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<31>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<32>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void launchTEXTRACT_COMPACT<33>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
