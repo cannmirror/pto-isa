@@ -11,45 +11,69 @@
 # --------------------------------------------------------------------------------
 
 import os
-import struct
-import ctypes
 import numpy as np
 np.random.seed(23)
 
 
-def gen_golden_data(param):
-    data_type = param.data_type
-    rows = param.row
-    cols = param.col
+def recalculate_indices(indices, rows, cols):
+    for row in range(indices.shape[0]):
+        for col in range(indices.shape[1]):
+            indices[row, col] = indices[row, col] * cols + col
+    return indices
 
-    input_arr = np.random.uniform(low=-8, high=8, size=(rows, cols)).astype(data_type)
-    indexes = np.random.randint(0, rows, size=(rows, cols)).astype(np.uint16)
-    output_arr = np.zeros((rows, cols), dtype=data_type)
-    for i in range(rows):
-        for j in range(cols):
-            ind = indexes[i][j]
-            output_arr[ind, j] = input_arr[i, j]
-    input_arr.tofile('input.bin')
-    indexes.tofile('indexes.bin')
-    output_arr.tofile('golden.bin')
+
+def scatter(src, indices):
+    dst = np.zeros_like(src, dtype=src.dtype).flatten()
+    for row in range(indices.shape[0]):
+        for col in range(indices.shape[1]):
+            idx = indices[row, col]
+            dst[idx] = src[row, col]
+    return dst
 
 
 class TScatterParams:
-    def __init__(self, name, data_type, row, col):
+    def __init__(self, name, src0_type, src1_type, src0_row, src0_col, src1_row, src1_col):
         self.name = name
-        self.data_type = data_type
-        self.row = row
-        self.col = col
+        self.src0_type = src0_type
+        self.src1_type = src1_type
+        self.src0_row = src0_row
+        self.src0_col = src0_col
+        self.src1_row = src1_row
+        self.src1_col = src1_col
+
+
+def gen_golden_data(param: TScatterParams):
+    src0_type = param.src0_type
+    src1_type = param.src1_type
+    src0_row = param.src0_row
+    src0_col = param.src0_col
+    src1_row = param.src1_row  # index
+    src1_col = param.src1_col  # index
+
+    src_data = np.random.randint(0, 20, (src0_row * src0_col)).astype(src0_type)
+    src_data = src_data.reshape((src0_row, src0_col))
+
+    indices = np.random.randint(0, 2, (src1_row * src1_col)).astype(src1_type)
+    indices = indices.reshape((src1_row, src1_col))
+    indices = recalculate_indices(indices, src0_row, src0_col)
+
+    golden = scatter(src_data, indices)
+
+    src_data.tofile('input.bin')
+    indices.tofile('indexes.bin')
+    golden.tofile('golden.bin')
+    os.chdir(original_dir)
 
 
 if __name__ == "__main__":
     case_params_list = [
-        TScatterParams("TSCATTERTest.case1", np.float32, 32, 64),
-        TScatterParams("TSCATTERTest.case2", np.float16, 63, 64),
-        TScatterParams("TSCATTERTest.case3", np.int32, 31, 128),
-        TScatterParams("TSCATTERTest.case4", np.int16, 15, 64 * 3),
-        TScatterParams("TSCATTERTest.case5", np.float32, 7, 64 * 7),
-        TScatterParams("TSCATTERTest.case6", np.float32, 256, 16)
+        TScatterParams("TSCATTERTest.case1", np.int16, np.uint16, 2, 32, 1, 32),
+        TScatterParams("TSCATTERTest.case2", np.float16, np.uint16, 63, 64, 63, 64),
+        TScatterParams("TSCATTERTest.case3", np.int32, np.uint32, 31, 128, 31, 128),
+        TScatterParams("TSCATTERTest.case4", np.int16, np.int16, 15, 64 * 3, 15, 192),
+        TScatterParams("TSCATTERTest.case5", np.float32, np.int32, 7, 64 * 7, 7, 448),
+        TScatterParams("TSCATTERTest.case6", np.int8, np.uint16, 256, 32, 256, 32),
+        TScatterParams("TSCATTERTest.case7", np.float32, np.uint32, 32, 64, 32, 64)
     ]
 
     for case in case_params_list:

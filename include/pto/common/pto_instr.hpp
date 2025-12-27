@@ -690,8 +690,8 @@ PTO_INST RecordEvent TCOLMIN(TileDataOut &dst, TileDataIn &src, WaitEvents&... e
   return {};
 }
 
-template <typename TileData, typename TileInd, typename... WaitEvents>
-PTO_INST RecordEvent TSCATTER(TileData &dst, TileData &src, TileInd &indexes, WaitEvents&... events) {
+template <typename TileDataD, typename TileDataS, typename TileDataI, typename... WaitEvents>
+PTO_INST RecordEvent TSCATTER(TileDataD &dst, TileDataS &src, TileDataI &indexes, WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TSCATTER, dst, src, indexes);
   return {};

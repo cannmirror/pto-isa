@@ -12,57 +12,79 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TSCATTER_HPP
 
 #include <pto/common/constants.hpp>
-#include "TBinOp.hpp"
+
 namespace pto 
 {
-    template <typename TileData, typename TileIndex>
-    __tf__ PTO_INTERNAL void TScatter(typename TileData::TileDType __out__ dst,
-                                typename TileData::TileDType __in__ src0,
-                                typename TileIndex::TileDType __in__ src1,
-                                unsigned validRow,
-                                unsigned validCol
-                                ) 
-    {
-        using T = typename TileData::DType;
-        __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-        __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-        __ubuf__ typename TileIndex::DType *indPtr = (__ubuf__ typename TileIndex::DType *)__cce_get_tile_ptr(src1);
+    template <typename TileDataD, typename TileDataS, typename TileDataI>
+    __tf__ PTO_INTERNAL void TScatterImpl(
+        typename TileDataD::TileDType __out__ dst,
+        typename TileDataS::TileDType __in__ src,
+        typename TileDataI::TileDType __in__ idx,
+        unsigned validRow,
+        unsigned validCol
+    ) {
+        using TD = typename TileDataD::DType;
+        using TS = typename TileDataS::DType;
+        using TI = typename TileDataI::DType;
+        __ubuf__ TD *dstPtr = (__ubuf__ TD *)__cce_get_tile_ptr(dst);
+        __ubuf__ TS *srcPtr = (__ubuf__ TS *)__cce_get_tile_ptr(src);
+        __ubuf__ TI *indPtr = (__ubuf__ TI *)__cce_get_tile_ptr(idx);
         set_flag(PIPE_V, PIPE_S, EVENT_ID0);
         wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
         for (int i = 0; i < validRow; i++) {
             for (int j = 0; j < validCol; j++) {
-                typename TileIndex::DType index = (typename TileIndex::DType)(*(indPtr + i * TileIndex::Cols + j));
-                int dstOffset = index * TileData::Cols + j;
-                dstPtr[dstOffset] = src0Ptr[i * TileData::Cols + j];
+                TI ix = *(indPtr + i * TileDataI::Cols + j);
+                dstPtr[ix] = srcPtr[i * TileDataS::Cols + j];
             }
         }
         set_flag(PIPE_S, PIPE_V, EVENT_ID0);
         wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
     }
 
-    template <typename TileData, typename TileIndex>
-    PTO_INTERNAL void TSCATTER_IMPL(TileData &dst, TileData &src0, TileIndex &indexes)
+    template <typename TileDataD, typename TileDataS, typename TileDataI>
+    PTO_INTERNAL void TSCATTER_IMPL(TileDataD &dst, TileDataS &src, TileDataI &idx)
     {
-        static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
-                      std::is_same<typename TileData::DType, int>::value ||
-                      std::is_same<typename TileData::DType, int16_t>::value ||
-                      std::is_same<typename TileData::DType, half>::value ||
-                      std::is_same<typename TileData::DType, float16_t>::value ||
-                      std::is_same<typename TileData::DType, float>::value ||
-                      std::is_same<typename TileData::DType, float32_t>::value,
-                      "TSCATTER: Invalid data type");
-        static_assert(std::is_same<typename TileIndex::DType, uint16_t>::value || std::is_same<typename TileIndex::DType, uint32_t>::value, "TSCATTER: Invalid data type of indexes");    
-        static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
-        static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
-        static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
-        
-        PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
-        PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
-        PTO_ASSERT(src0.GetValidCol() == indexes.GetValidCol(), "Number of columns of src and indexes must be the same.");
-        PTO_ASSERT(src0.GetValidRow() == indexes.GetValidRow(), "Number of rows of src and indexes must be the same.");
-        unsigned validRow = dst.GetValidRow();
-        unsigned validCol = dst.GetValidCol();
-        TScatter<TileData, TileIndex>(dst.data(), src0.data(), indexes.data(), validRow, validCol);
+        using TD = typename TileDataD::DType;
+        using TS = typename TileDataS::DType;
+        using TI = typename TileDataI::DType;
+        static_assert(std::is_same<TD, int32_t>::value ||
+                      std::is_same<TD, int16_t>::value ||
+                      std::is_same<TD, int8_t>::value ||
+                      std::is_same<TD, uint32_t>::value ||
+                      std::is_same<TD, uint16_t>::value ||
+                      std::is_same<TD, uint8_t>::value ||
+                      std::is_same<TD, half>::value ||
+                      std::is_same<TD, float16_t>::value ||
+                      std::is_same<TD, float32_t>::value ||
+                      std::is_same<TD, bfloat16_t>::value,
+                      "TSCATTER: Invalid data type.");
+        static_assert(std::is_same<TD, TS>::value,
+                      "TSCATTER: Data type of dst and src must be the same.");
+        static_assert((sizeof(TD) == 4 && sizeof(TI) == 4) ||
+                      (sizeof(TD) == 2 && sizeof(TI) == 2) ||
+                      (sizeof(TD) == 1 && sizeof(TI) == 2),
+                      "TSCATTER: Invalid data type of idx.");
+        static_assert(std::is_same<TI, uint16_t>::value ||
+                      std::is_same<TI, uint32_t>::value ||
+                      std::is_same<TI, int16_t>::value ||
+                      std::is_same<TI, int32_t>::value,
+                      "TSCATTER: Invalid data type of idx.");
+        static_assert(TileDataD::Loc == TileType::Vec &&
+                      TileDataS::Loc == TileType::Vec &&
+                      TileDataI::Loc == TileType::Vec,
+                      "TSCATTER: TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileDataD::ValidCol <= TileDataD::Cols &&
+                      TileDataS::ValidCol <= TileDataS::Cols &&
+                      TileDataI::ValidCol <= TileDataI::Cols,
+                      "TSCATTER: Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataD::ValidRow <= TileDataD::Rows &&
+                      TileDataS::ValidRow <= TileDataS::Rows &&
+                      TileDataI::ValidRow <= TileDataI::Rows,
+                      "TSCATTER: Number of valid rows must not be greater than number of tile rows.");
+
+        unsigned validRow = idx.GetValidRow();
+        unsigned validCol = idx.GetValidCol();
+        TScatterImpl<TileDataD, TileDataS, TileDataI>(dst.data(), src.data(), idx.data(), validRow, validCol);
     }
 }
 
