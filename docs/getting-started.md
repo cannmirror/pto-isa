@@ -302,5 +302,5 @@ This project supports building from source. Before building, prepare the environ
 Download the source with:
 ```bash
 # Clone the repository (master branch as an example)
-git clone https://gitcode.com/cann/pto-isa
+git clone https://gitcode.com/cann/pto-isa.git
 ```
