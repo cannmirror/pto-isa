@@ -249,8 +249,7 @@ AICORE void TMovToVecNd2Nz(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, uint32_t vali
     constexpr int32_t srcCol = SrcTileData::Cols;
     constexpr int32_t srcByteSize = srcRow * srcCol * sizeof(T);
     constexpr int32_t dstByteSize = DstTileData::Rows * DstTileData::Cols * sizeof(T);
-    static_assert((srcByteSize % CUBE_BLOCK_SIZE == 0) && (dstByteSize >= srcByteSize),
-        "SrcTile bytes size must be 512B align and dstTile greater than or equal to srcTile.");
+    static_assert((srcByteSize % REPEAT_BYTE == 0), "SrcTile bytes size must be 256B align.");
 
     constexpr uint32_t elementsPerRepeat = REPEAT_BYTE / sizeof(T);
     uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
