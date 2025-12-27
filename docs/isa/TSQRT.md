@@ -31,7 +31,7 @@ PTO_INST RecordEvent TSQRT(TileData& dst, TileData& src, WaitEvents&... events);
 ## Constraints
 
 - **Implementation checks (A2A3)**:
-  - `TileData::DType` must be one of: `float32_t`, `float`, `half`.
+  - `TileData::DType` must be one of: `float`, `half`.
   - Tile location must be vector (`TileData::Loc == TileType::Vec`).
   - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
   - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`.

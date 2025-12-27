@@ -6,9 +6,9 @@ Row-wise broadcast multiply: multiply each row of `src0` by a per-row scalar vec
 
 ## Math Interpretation
 
-For each element `(i, j)` in the valid region:
+Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. For each element in `0 <= i < R` and `0 <= j < C`:
 
-$$ \mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} \cdot \mathrm{src1}_{0,i} $$
+$$ \mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} \cdot \mathrm{src1}_{0,j} $$
 
 ## Assembly Syntax
 
@@ -74,4 +74,3 @@ void example_manual() {
   TROWEXPANDMUL(dst, src0, src1);
 }
 ```
-

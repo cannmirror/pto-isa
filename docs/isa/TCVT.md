@@ -54,11 +54,11 @@ Supported data types:
 |  half             | A2/A3/A5 |          |            | A2/A3/A5 | A2/A3/A5 | A2/A3/A5 |          |          | A2/A3/A5 |
 |  bfloat16_t       | A2/A3/A5 | A5       |            | A2/A3/A5 |          |          |          |          |          |
 |  int32_t          | A2/A3/A5 | A2/A3    |            |          | A2/A3/A5 |          |          | A5       |          |
-|  int16_t          | A2/A3/A5 | A2/A3/A5 |            | A5       |          |          | A5       |          | A2/A3/A5 |
-|  int8_t           | A2/A3/A5 |          |            | A5       | A5       |          |          |          |          |
+|  int16_t          | A2/A3/A5 | A2/A3/A5 |            | A5       |          |          | A5       |          | A5       |
+|  int8_t           | A5       | A2/A3    |            | A5       | A5       |          |          |          |          |
 |  uint32_t         |          |          |            |          |          |          |          |          |          |
 |  uint16_t         |          |          |            |          |          |          |          |          |          |
-|  uint8_t          | A2/A3/A5 |          |            |          |          |          | A5       | A5       |          |
+|  uint8_t          | A5       | A2/A3    |            |          |          |          | A5       | A5       |          |
 
 The RoundMode limit is shown in the following table:
 |      src      |      dst     | NONE | RINT | FLOOR | CEIL | ROUND | TRUNC | ODD |
