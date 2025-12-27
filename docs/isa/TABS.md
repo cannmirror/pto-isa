@@ -31,7 +31,7 @@ PTO_INST RecordEvent TABS(TileData& dst, TileData& src, WaitEvents&... events);
 ## Constraints
 
 - **Implementation checks (CPU sim)**:
-  - `TileData::DType` must be one of: `int32_t`, `int`, `int16_t`, `half`, `float`.
+  - `TileData::DType` must be one of: `int32_t`, `int16_t`, `half`, `float`.
   - The implementation iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
 - **NPU support**:
   - Implemented on A2A3 (see `include/pto/npu/a2a3/TUnaryOp.hpp`).

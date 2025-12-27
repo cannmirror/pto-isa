@@ -9,7 +9,6 @@
         <version>package/pto_isa/version.xml</version>
         <cleanup>share/info/pto_isa/script/cleanup.sh</cleanup>
         <parallel>true</parallel>
-        <check_features>true</check_features>
     </package_info>
     <generate_info value="pto_isa_version.h" dst_path="share/info/pto_isa" install_path="$(TARGET_ENV)/include/version" install_mod="440" install_type="devel" generator="version_header">
        <pto_isa_VERSION>$(ASCEND_VER)</pto_isa_VERSION>
@@ -42,6 +41,7 @@
         <path value="share" install_mod="550"/>
         <path value="share/info" install_mod="750"/>
         <path value="share/info/pto_isa" install_mod="550"/>
+        <path value="share/info/pto_isa/script" install_mod="550"/>
         <path value="$(TARGET_ENV)/include"/>
         <path value="$(TARGET_ENV)/include/pto"/>
         <path value="$(TARGET_ENV)/include/pto/common"/>

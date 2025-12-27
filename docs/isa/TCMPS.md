@@ -4,13 +4,31 @@
 
 Compare a tile against a scalar and write per-element comparison results.
 
+The comparison operator is selected by `cmpMode` (`pto::CmpMode`). Conceptually, each element produces a predicate
+value where **true encodes as `1`** and **false encodes as `0`**; how those predicate values are represented in
+`dst` (elementwise 0/1 or a packed mask-like encoding) is implementation-defined.
+
+## cmpMode
+
+`cmpMode` selects the per-element comparison:
+
+- `CmpMode::EQ`: equal (`==`)
+- `CmpMode::NE`: not equal (`!=`)
+- `CmpMode::LT`: less-than (`<`)
+- `CmpMode::LE`: less-or-equal (`<=`)
+- `CmpMode::GT`: greater-than (`>`)
+- `CmpMode::GE`: greater-or-equal (`>=`)
+
 ## Math Interpretation
 
 For each element `(i, j)` in the valid region:
 
-$$ \mathrm{dst}_{i,j} = \left(\mathrm{src}_{i,j}\ \mathrm{cmpMode}\ \mathrm{scalar}\right) $$
+Define the predicate:
 
-The encoding/type of `dst` is implementation-defined (often a mask-like tile).
+$$ p_{i,j} = \left(\mathrm{src}_{i,j}\ \mathrm{cmpMode}\ \mathrm{scalar}\right) $$
+
+`p_{i,j}` is `1` when the comparison is true and `0` otherwise. The encoding/type of `dst` is implementation-defined
+(often a mask-like tile).
 
 ## Assembly Syntax
 

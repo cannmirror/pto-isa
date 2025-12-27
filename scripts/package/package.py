@@ -508,8 +508,7 @@ def generate_filelist_file_by_xml_config(xml_config: XmlConfig,
     )
     generate_filelist(file_install_list, 'filelist.csv')
     # 先生成再检查，有利于问题定位
-    if package_check:
-        check_filelist(file_install_list, check_features, check_move)
+    check_filelist(file_install_list, check_features, check_move)
 
 
 def get_pkg_xml_relative_path(pkg_args: Namespace) -> str:

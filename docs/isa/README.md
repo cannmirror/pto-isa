@@ -70,6 +70,9 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TCOLMIN`: `docs/isa/TCOLMIN.md`
 - `TCOLEXPAND`: `docs/isa/TCOLEXPAND.md`
 
+## Padding
+- `TFILLPAD`: `docs/isa/TFILLPAD.md`
+
 ## Memory (GM <-> Tile)
 - `TLOAD`: `docs/isa/TLOAD.md`
 - `TSTORE`: `docs/isa/TSTORE.md`

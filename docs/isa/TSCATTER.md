@@ -34,7 +34,7 @@ PTO_INST RecordEvent TSCATTER(TileData& dst, TileData& src, TileInd& indexes, Wa
 
 - **Implementation checks (A2A3)**:
   - `TileData::Loc` must be `TileType::Vec`.
-  - `TileData::DType` must be one of: `int32_t`, `int`, `int16_t`, `half`, `float16_t`, `float`, `float32_t`.
+  - `TileData::DType` must be one of: `int32_t`, `int16_t`, `half`, `float`.
   - `TileInd::DType` must be `uint16_t` or `uint32_t`.
   - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`.
   - No bounds checks are enforced on `indexes` values.
@@ -78,4 +78,3 @@ void example_manual() {
   TSCATTER(dst, src, idx);
 }
 ```
-

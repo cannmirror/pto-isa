@@ -256,10 +256,9 @@ main() {
   if [ "${UNINSTALL_MODE}" != "upgrade" ]; then
     remove_dir_if_empty ${TARGET_VERSION_DIR}/${PTO_PLATFORM_DIR}
   fi
-  remove_dir_if_empty ${INSTALLED_PATH}/cann/share/info
-  remove_dir_if_empty ${INSTALLED_PATH}/cann/share
-  remove_dir_if_empty ${INSTALLED_PATH}/cann
-  remove_dir_if_empty ${INSTALLED_PATH}
+
+  chmod +w -R ${INSTALLED_PATH}
+  find ${INSTALLED_PATH} -type d -empty -delete
 
   logandprint "[INFO]: Pto package uninstalled successfully! Uninstallation takes effect immediately."
 }

@@ -1,0 +1,74 @@
+# TFILLPAD
+
+## Introduction
+
+Copy a source tile into a destination tile and fill the remaining (padded) elements with a compile-time pad value
+selected by `TileDataDst::PadVal` (e.g., `PadValue::Min`/`PadValue::Max`).
+
+This is commonly used to materialize deterministic values outside the runtime valid region so that subsequent ops can
+operate on a full static tile shape.
+
+## Math Interpretation
+
+Let `VR = src.GetValidRow()` and `VC = src.GetValidCol()`. For each destination element `(i, j)`:
+
+$$
+\mathrm{dst}_{i,j} =
+\begin{cases}
+\mathrm{src}_{i,j} & \text{if } i < VR \text{ and } j < VC \\
+\mathrm{pad}       & \text{otherwise}
+\end{cases}
+$$
+
+`pad` is determined by `TileDataDst::PadVal` and the element type (e.g., `+inf/-inf` for floating types when available,
+otherwise `std::numeric_limits<T>::max()/min()`).
+
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
+
+Synchronous form (conceptual):
+
+```text
+%dst = tfillpad %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+## C++ Intrinsic
+
+Implemented in the backend headers pulled in by `include/pto/common/pto_instr_impl.hpp`:
+
+```cpp
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TFILLPAD(TileDataDst& dst, TileDataSrc& src);
+
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TFILLPAD_INPLACE(TileDataDst& dst, TileDataSrc& src);
+
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TFILLPAD_EXPAND(TileDataDst& dst, TileDataSrc& src);
+```
+
+## Constraints
+
+- `TileDataDst::PadVal != PadValue::Null`.
+- `sizeof(TileDataDst::DType) == sizeof(TileDataSrc::DType)` and element size must be `1`, `2`, or `4` bytes.
+- `TFILLPAD`: `TileDataDst::Rows/Cols` must match `TileDataSrc::Rows/Cols`.
+- `TFILLPAD_EXPAND`: `TileDataDst::Rows >= TileDataSrc::Rows` and `TileDataDst::Cols >= TileDataSrc::Cols`.
+
+## Examples
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example() {
+  using SrcT = Tile<TileType::Vec, float, 16, 16>;
+  using DstT = Tile<TileType::Vec, float, 16, 16, BLayout::RowMajor, 16, 16, SLayout::NoneBox, TileConfig::fractalABSize, PadValue::Min>;
+
+  SrcT src;
+  DstT dst;
+  TFILLPAD(dst, src);
+}
+```
+

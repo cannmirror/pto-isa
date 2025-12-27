@@ -31,12 +31,12 @@ PTO_INST RecordEvent TMULS(TileData& dst, TileData& src0, typename TileData::DTy
 ## Constraints
 
 - **Implementation checks (A2A3)**:
-  - `TileData::DType` must be one of: `int16_t`, `int32_t`, `half`, `float32_t`.
+  - `TileData::DType` must be one of: `int16_t`, `int32_t`, `half`, `float`.
   - Tile location must be vector (`TileData::Loc == TileType::Vec`).
   - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
   - Runtime: `src0.GetValidRow() == dst.GetValidRow()` and `src0.GetValidCol() == dst.GetValidCol()`.
 - **Implementation checks (A5)**:
-  - `TileData::DType` must be one of:`int16_t`, `int32_t`, `half`, `float32_t`.
+  - `TileData::DType` must be one of:`int16_t`, `int32_t`, `half`, `float`.
   - Tile location must be vector (`TileData::Loc == TileType::Vec`).
   - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
   - Runtime: `src0.GetValidCol() == dst.GetValidCol()`.

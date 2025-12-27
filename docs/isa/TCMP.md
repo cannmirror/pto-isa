@@ -4,13 +4,29 @@
 
 Compare two tiles and write a packed predicate mask.
 
+The comparison operator is selected by `cmpMode` (`pto::CmpMode`). Conceptually, each element produces a predicate
+value where **true encodes as `1`** and **false encodes as `0`**; the implementation packs these predicate values
+into `dst` using a target-defined layout.
+
+## cmpMode
+
+`cmpMode` selects the per-element comparison:
+
+- `CmpMode::EQ`: equal (`==`)
+- `CmpMode::NE`: not equal (`!=`)
+- `CmpMode::LT`: less-than (`<`)
+- `CmpMode::LE`: less-or-equal (`<=`)
+- `CmpMode::GT`: greater-than (`>`)
+- `CmpMode::GE`: greater-or-equal (`>=`)
+
 ## Math Interpretation
 
 Conceptually, for each element `(i, j)` in the valid region, define a predicate:
 
 $$ p_{i,j} = \left(\mathrm{src0}_{i,j}\ \mathrm{cmpMode}\ \mathrm{src1}_{i,j}\right) $$
 
-The predicate mask is stored in `dst` using an implementation-defined packed layout.
+`p_{i,j}` is `1` when the comparison is true and `0` otherwise. The predicate mask is stored in `dst` using an
+implementation-defined packed layout (typically one bit per element).
 
 ## Assembly Syntax
 
