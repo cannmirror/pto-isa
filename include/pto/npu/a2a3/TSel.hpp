@@ -49,8 +49,8 @@ __tf__ PTO_INTERNAL void TSel(typename TileData::TileDType __out__ dst, typename
         set_mask_norm();
         set_vector_mask(-1, -1);
     } else {
-        static_assert(
-            sizeof(typename TileData::DType) == 4 || sizeof(typename TileData::DType) == 2, "TSEL: Invalid data type.");
+        static_assert(sizeof(typename TileData::DType) == 4 || sizeof(typename TileData::DType) == 2,
+            "Fix: TSEL has invalid data type.");
     }
 }
 
