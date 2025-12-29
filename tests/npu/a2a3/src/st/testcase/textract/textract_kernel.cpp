@@ -376,9 +376,10 @@ AICORE inline void runTEXTRACT_COMPACT(__gm__ T *out, __gm__ U *src0, __gm__ S *
         Tile<TileType::Mat, S, baseK, baseN, BLayout::RowMajor, baseK, baseN, SLayout::ColMajor, 512>,
         Tile<TileType::Mat, S, baseK, baseN, BLayout::ColMajor, baseK, baseN, SLayout::RowMajor, 512>>;
 
-    using LeftTile = Tile<TileType::Left, U, baseM - indexM, baseK - indexK, BLayout::RowMajor, mValid, kValid, SLayout::RowMajor, 512, PadValue::Null, CompactMode::Normal>;
-    using RightTile = Tile<TileType::Right, S, baseK - indexK, baseN - indexN, BLayout::RowMajor, kValid, nValid, SLayout::ColMajor, 512, PadValue::Null, CompactMode::Normal>;
-    using AccTile = Tile<TileType::Acc, T, baseM - indexM, baseN - indexN, BLayout::ColMajor, mValid, nValid, SLayout::RowMajor, 1024, PadValue::Null, CompactMode::Normal>;
+    using LeftTile = TileLeftCompact<U, baseM - indexM, baseK - indexK, mValid, kValid>;
+    using RightTile = TileRightCompact<S, baseK - indexK, baseN - indexN, kValid, nValid>;
+    using AccTile = TileAccCompact<T, baseM - indexM, baseN - indexN, mValid, nValid>;
+
     TileMatAData aMatTile;
     TileMatBData bMatTile;
     TASSIGN(aMatTile, 0x0);

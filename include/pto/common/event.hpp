@@ -59,6 +59,7 @@ namespace pto {
     TMOV_M2R, /* Mat to Right */
     TMOV_M2S, /* Mat to Scaling */
     TMOV_A2V, /* Acc to Vec */
+    TMOV_A2M, /* Acc to Mat */
     TSTORE_ACC,
     TSTORE_MAT, /* Mat to GM */
     TMATMUL,
@@ -87,8 +88,8 @@ namespace pto {
 #endif
 #ifdef __DAV_CUBE__
     PIPE_MTE1 /* TMOV_M2B */, PIPE_MTE1 /* TMOV_M2L */, PIPE_MTE1 /* TMOV_M2R */, PIPE_FIX /* TMOV_M2S */,
-    PIPE_FIX /* TMOV_A2V */, PIPE_FIX /* TSTORE_ACC */, PIPE_MTE3 /* TSTORE_MAT */, PIPE_M /* TMATMUL */, 
-    PIPE_MTE1 /* TEXTRACT */,
+    PIPE_FIX /* TMOV_A2V */, PIPE_FIX /* TMOV_A2M */, PIPE_FIX /* TSTORE_ACC */, PIPE_MTE3 /* TSTORE_MAT */,
+    PIPE_M /* TMATMUL */, PIPE_MTE1 /* TEXTRACT */,
 #endif
     PIPE_MTE2 /* TLOAD */, PIPE_MTE3 /* TSTORE_VEC */, PIPE_S /* SCALAR */, PIPE_S /* TRESHAPE */
   };
