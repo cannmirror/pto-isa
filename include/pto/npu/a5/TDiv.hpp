@@ -47,17 +47,31 @@ namespace pto {
     template <typename T, typename TileData>
     PTO_INTERNAL
     void TDivCheck() {
-        static_assert(std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, float> ||
-                      std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, half> ||
-                      std::is_same_v<T, bfloat16_t> ||std::is_same_v<T, uint8_t> ||std::is_same_v<T, int8_t>,
-                      "TDiv: Invalid data type.");
+        static_assert(
+            std::is_same_v<T, int32_t> || 
+            std::is_same_v<T, uint32_t> || 
+            std::is_same_v<T, float> ||
+            std::is_same_v<T, int16_t> || 
+            std::is_same_v<T, uint16_t> || 
+            std::is_same_v<T, half> ||
+            std::is_same_v<T, bfloat16_t>,
+            "TDiv: Invalid data type.");
         static_assert(TileData::isRowMajor, "TDiv: not supported Layout type");
+        static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
     }
 
     template <typename TileData>
     AICORE void TDIV_IMPL(TileData &dst, TileData &src0, TileData &src1) {
         using T = typename TileData::DType;
         TDivCheck<T, TileData>();
+        
+        PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of cols of src and dst must be the same.");
+        PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
+        PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol(), "Number of cols of src0 and src1 must be the same.");
+        PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow(), "Number of rows of src0 and src1 must be the same.");
+
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T); 
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T); 
         constexpr unsigned rowStride = TileData::RowStride;

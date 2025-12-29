@@ -45,15 +45,26 @@ __tf__ PTO_INTERNAL void TMax(typename TileData::TileDType __out__ dst, typename
 template <typename TileData>
 PTO_INTERNAL void TMAX_IMPL(TileData &dst, TileData &src0, TileData &src1)
 {
-    static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
-                  std::is_same<typename TileData::DType, int>::value ||
-                  std::is_same<typename TileData::DType, int16_t>::value ||
-                  std::is_same<typename TileData::DType, half>::value ||
-                  std::is_same<typename TileData::DType, float16_t>::value ||
-                  std::is_same<typename TileData::DType, float>::value ||
-                  std::is_same<typename TileData::DType, float32_t>::value,
-                  "TMAX: Invalid data type.");
+    static_assert(
+        std::is_same<typename TileData::DType, int32_t>::value ||
+        std::is_same<typename TileData::DType, int>::value ||
+        std::is_same<typename TileData::DType, int16_t>::value ||
+        std::is_same<typename TileData::DType, half>::value ||
+        std::is_same<typename TileData::DType, float16_t>::value ||
+        std::is_same<typename TileData::DType, float>::value ||
+        std::is_same<typename TileData::DType, float32_t>::value,
+            "TMAX: Invalid data type.");
+
     static_assert(TileData::isRowMajor, "TMAX: not supported Layout type.");
+    static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+    static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+
+    PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of cols of src and dst must be the same.");
+    PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
+    PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol(), "Number of cols of src0 and src1 must be the same.");
+    PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow(), "Number of rows of src0 and src1 must be the same.");
+    
     constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned rowStride = TileData::RowStride;

@@ -31,8 +31,12 @@ template <typename T> struct DivOp {
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ PTO_INTERNAL void TDiv(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
-    typename TileData::TileDType __in__ src1, unsigned validRow, unsigned validCol)
+__tf__ PTO_INTERNAL void TDiv(
+    typename TileData::TileDType __out__ dst, 
+    typename TileData::TileDType __in__ src0,
+    typename TileData::TileDType __in__ src1, 
+    unsigned validRow, 
+    unsigned validCol)
 {
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
@@ -45,11 +49,23 @@ __tf__ PTO_INTERNAL void TDiv(typename TileData::TileDType __out__ dst, typename
 template <typename TileData>
 AICORE void TDIV_IMPL(TileData &dst, TileData &src0, TileData &src1)
 {
-    static_assert(std::is_same<typename TileData::DType, half>::value ||
-                  std::is_same<typename TileData::DType, float16_t>::value ||
-                  std::is_same<typename TileData::DType, float>::value ||
-                  std::is_same<typename TileData::DType, float32_t>::value,
-                  "TDIV: Invalid data type.");
+    static_assert(
+        std::is_same<typename TileData::DType, half>::value ||
+        std::is_same<typename TileData::DType, float16_t>::value ||
+        std::is_same<typename TileData::DType, float>::value ||
+        std::is_same<typename TileData::DType, float32_t>::value,
+            "TDIV: Invalid data type.");
+                  
+    static_assert(TileData::isRowMajor, "TDIV: not supported Layout type");
+    static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+    static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+
+    PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of cols of src and dst must be the same.");
+    PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
+    PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol(), "Number of cols of src0 and src1 must be the same.");
+    PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow(), "Number of rows of src0 and src1 must be the same.");
+    
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned stride = TileData::RowStride;
