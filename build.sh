@@ -176,6 +176,7 @@ clean_build_out() {
 
 
 build_package() {
+  # push test
   echo "---------------package start-----------------"
   clean_build_out
   clean_build
