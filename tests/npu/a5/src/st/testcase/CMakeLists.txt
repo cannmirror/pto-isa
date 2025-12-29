@@ -109,6 +109,8 @@ set(ALL_TESTCASES
     tload_mix
     tload_shape2d
     tload
+    tload_mx_ND_DN
+    tload_mx_NZ
     tmrgsort
     ttrans
     tstore
@@ -168,7 +170,6 @@ set(ALL_TESTCASES
     trowexpand_trowsum
     trowsum_trowexpand
     trowexpand_tdiv
-    tload_scale
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
