@@ -88,13 +88,13 @@ namespace pto {
     PTO_INTERNAL void TROWEXPAND_IMPL(TileDataDst &dst, TileDataSrc &src) {
         using T = typename TileDataSrc::DType;
         static_assert((sizeof(typename TileDataSrc::DType) == 1) || (sizeof(typename TileDataSrc::DType) == 2) ||
-                      (sizeof(typename TileDataSrc::DType) == 4), "FIX: TROWEXPAND Data type must be b8/b16/b32");
-        static_assert(TileDataSrc::Loc == pto::TileType::Vec, "FIX: TROWEXPAND Src TileType must be Vec!");
+                      (sizeof(typename TileDataSrc::DType) == 4), "Fix: TROWEXPAND Data type must be b8/b16/b32");
+        static_assert(TileDataSrc::Loc == pto::TileType::Vec, "Fix: TROWEXPAND Src TileType must be Vec!");
         static_assert((TileDataSrc::isRowMajor && (TileDataSrc::SFractal == SLayout::NoneBox)) &&
                       (TileDataDst::isRowMajor && (TileDataDst::SFractal == SLayout::NoneBox)),
-                      "FIX: TROWEXPAND Src and dst layout must be ND!");
+                      "Fix: TROWEXPAND Src and dst layout must be ND!");
         static_assert(std::is_same_v<typename TileDataDst::DType, T>,
-                      "FIX: TROWEXPAND input data type must be consistent with the output data type");
+                      "Fix: TROWEXPAND input data type must be consistent with the output data type");
         constexpr int dststride = TileDataDst::RowStride;
         constexpr int srcstride = TileDataSrc::RowStride;
         int validRow = dst.GetValidRow();

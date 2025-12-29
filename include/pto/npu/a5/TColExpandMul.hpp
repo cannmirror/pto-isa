@@ -50,8 +50,8 @@ namespace pto {
     PTO_INTERNAL void TCOLEXPANDMUL_IMPL(TileData &dst, TileData &src0, TileDataSrc &src1) {
         static_assert(std::is_same<typename TileData::DType, float>::value ||
                       std::is_same<typename TileData::DType, half>::value,
-                      "FIX: TCOLEXPANDMUL Invalid data type.");
-        static_assert(TileData::isRowMajor, "FIX: TCOLEXPANDMUL not supported Layout type");
+                      "Fix: TCOLEXPANDMUL Invalid data type.");
+        static_assert(TileData::isRowMajor, "Fix: TCOLEXPANDMUL not supported Layout type");
         constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 
         constexpr unsigned rowStride = TileData::RowStride;

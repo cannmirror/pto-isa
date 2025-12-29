@@ -21,19 +21,19 @@ namespace pto {
 template <typename TileDataOut, typename TileDataIn>
 PTO_INTERNAL void TRowExpandCheck(unsigned srcValidRow, unsigned srcValidCol,unsigned dstValidRow) {
     static_assert((sizeof(typename TileDataIn::DType) == 1) || (sizeof(typename TileDataIn::DType) == 2) ||
-                  (sizeof(typename TileDataIn::DType) == 4), "FIX: TROWEXPAND data type must be b8/b16/b32");
-    static_assert(TileDataIn::Loc == pto::TileType::Vec, "FIX: TROWEXPAND Src TileType must be Vec Tile!");
-    static_assert(TileDataOut::Loc == pto::TileType::Vec, "FIX: TROWEXPAND Dst TileType must be Vec Tile!");
+                  (sizeof(typename TileDataIn::DType) == 4), "Fix: TROWEXPAND data type must be b8/b16/b32");
+    static_assert(TileDataIn::Loc == pto::TileType::Vec, "Fix: TROWEXPAND Src TileType must be Vec Tile!");
+    static_assert(TileDataOut::Loc == pto::TileType::Vec, "Fix: TROWEXPAND Dst TileType must be Vec Tile!");
     static_assert(TileDataIn::isRowMajor && TileDataIn::SFractal == SLayout::NoneBox,
-      "FIX: TROWEXPAND only support Nd fractal Tile");
+      "Fix: TROWEXPAND only support Nd fractal Tile");
     static_assert(TileDataOut::isRowMajor && TileDataOut::SFractal == SLayout::NoneBox,
-      "FIX: TROWEXPAND only support Nd fractal Tile");
+      "Fix: TROWEXPAND only support Nd fractal Tile");
     static_assert(std::is_same_v<typename TileDataOut::DType, typename TileDataIn::DType>,
-      "FIX: TROWEXPAND input data type must be consistent with the output data type.");
+      "Fix: TROWEXPAND input data type must be consistent with the output data type.");
     PTO_ASSERT(srcValidRow == dstValidRow,
-        "FIX: TROWEXPAND input valid row must be consistent with the output valid row.");
+        "Fix: TROWEXPAND input valid row must be consistent with the output valid row.");
     PTO_ASSERT(srcValidRow != 0 && srcValidCol != 0,
-        "FIX: TROWEXPAND input shape is invalid, validCol or validRow is 0.");
+        "Fix: TROWEXPAND input shape is invalid, validCol or validRow is 0.");
 }
 
 template <typename T, unsigned DstStride, unsigned SrcStride>

@@ -86,20 +86,20 @@ namespace pto {
     PTO_INTERNAL void TCOLSUM_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp, bool IsBinary) {
         using T = typename TileDataSrc::DType;
         static_assert(TileDataDst::Loc == pto::TileType::Vec && TileDataSrc::Loc == pto::TileType::Vec &&
-                      TileDataTmp::Loc == pto::TileType::Vec, "FIX: TCOLSUM only support Vec Tile");
+                      TileDataTmp::Loc == pto::TileType::Vec, "Fix: TCOLSUM only support Vec Tile");
         static_assert(TileDataSrc::isRowMajor && TileDataSrc::SFractal == SLayout::NoneBox,
-                      "FIX: TCOLSUM only support Nd fractal Tile");
+                      "Fix: TCOLSUM only support Nd fractal Tile");
         static_assert(TileDataDst::isRowMajor && TileDataDst::SFractal == SLayout::NoneBox,
-                      "FIX: TCOLSUM only support Nd fractal Tile");
+                      "Fix: TCOLSUM only support Nd fractal Tile");
         static_assert(TileDataTmp::isRowMajor && TileDataTmp::SFractal == SLayout::NoneBox,
-                      "FIX: TCOLSUM only support Nd fractal Tile");
+                      "Fix: TCOLSUM only support Nd fractal Tile");
         static_assert(std::is_same_v<T, half> || std::is_same_v<T, float> ||
                       std::is_same_v<T, int16_t> || std::is_same_v<T, int32_t>,
-                      "FIX: TCOLSUM input data type is not supported by this instruction.");
+                      "Fix: TCOLSUM input data type is not supported by this instruction.");
         static_assert(std::is_same_v<typename TileDataDst::DType, T> && std::is_same_v<typename TileDataTmp::DType, T>,
-            "FIX: TCOLSUM input data type must be consistent with the output data type and the tmp data type.");
+            "Fix: TCOLSUM input data type must be consistent with the output data type and the tmp data type.");
         PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), 
-                   "FIX: TCOLSUM input valid col must be consistent with the output valid row.");
+                   "Fix: TCOLSUM input valid col must be consistent with the output valid row.");
 
         if (src.GetValidRow() == 0 || src.GetValidCol() == 0) {
             return;

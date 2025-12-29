@@ -23,7 +23,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define PTO_INTERNAL AICORE PTO_INLINE
 
 #define OP_NAME(Name) __attribute__((vf_name(#Name)))
-#define OP_TYPE(TypeName) __attribute__((vf_name(#TypeName)))
+#define OP_TYPE(TypeName) __attribute__((vf_kind(#TypeName)))
 
 // -----------------------------------------------------------------------------
 // PTO assertion helpers

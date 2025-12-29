@@ -131,7 +131,7 @@ void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
 {
     static_assert(std::is_same<typename TileDataDst::DType, typename TileDataSrc0::DType>::value &&
                   std::is_same<typename TileDataDst::DType, typename TileDataSrc1::DType>::value,
-                  "FIX: TPARTADD src and dst data type is different!");
+                  "Fix: TPARTADD src and dst data type is different!");
     static_assert(std::is_same<typename TileDataDst::DType, int32_t>::value ||
                   std::is_same<typename TileDataDst::DType, uint32_t>::value ||
                   std::is_same<typename TileDataDst::DType, float>::value ||
@@ -140,7 +140,7 @@ void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
                   std::is_same<typename TileDataDst::DType, half>::value ||
                   std::is_same<typename TileDataDst::DType, bfloat16_t>::value ||
                   std::is_same<typename TileDataDst::DType, uint8_t>::value ||
-                  std::is_same<typename TileDataDst::DType, int8_t>::value, "FIX: TPARTADD Invalid data type.");
+                  std::is_same<typename TileDataDst::DType, int8_t>::value, "Fix: TPARTADD Invalid data type.");
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
     unsigned src0ValidRow = src0.GetValidRow();
