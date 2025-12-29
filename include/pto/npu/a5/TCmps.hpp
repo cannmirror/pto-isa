@@ -51,9 +51,11 @@ AICORE void GenCmpCall (RegTensorDst &dst, RegTensorSrc &src0, T src1, CmpMode c
 }
 
 template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0>
-__tf__ AICORE void TCmps_8B(typename TileDataDst::TileDType __out__ dst,
+__tf__ PTO_INTERNAL OP_NAME(TCMPS) OP_TYPE(element_wise)
+void TCmps_8B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
-        CmpMode mode, unsigned validRow, unsigned validCol)
+        CmpMode mode, unsigned validRow, unsigned validCol,
+        unsigned version = VFImplKind::VFIMPL_DEFAULT)
 {
         __ubuf__ typename TileDataSrc::DType *srcPtr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
@@ -77,9 +79,11 @@ __tf__ AICORE void TCmps_8B(typename TileDataDst::TileDType __out__ dst,
 
 
 template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0>
-__tf__ AICORE void TCmps_16B(typename TileDataDst::TileDType __out__ dst,
+__tf__ PTO_INTERNAL OP_NAME(TCMPS) OP_TYPE(element_wise)
+void TCmps_16B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
-        CmpMode mode, unsigned validRow, unsigned validCol)
+        CmpMode mode, unsigned validRow, unsigned validCol,
+        unsigned version = VFImplKind::VFIMPL_DEFAULT)
 {
         __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataSrc::DType *srcPtr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
@@ -103,9 +107,11 @@ __tf__ AICORE void TCmps_16B(typename TileDataDst::TileDType __out__ dst,
 
 
 template <typename TileDataDst, typename TileDataSrc, typename T, typename dataType0>
-__tf__ AICORE void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
+__tf__ PTO_INTERNAL OP_NAME(TCMPS) OP_TYPE(element_wise)
+void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, T src1, 
-        CmpMode mode, unsigned validRow, unsigned validCol)
+        CmpMode mode, unsigned validRow, unsigned validCol, 
+        unsigned version = VFImplKind::VFIMPL_DEFAULT)
 {
         __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataSrc::DType *srcPtr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
@@ -148,6 +154,21 @@ __tf__ AICORE void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
 
 template <typename TileDataDst, typename TileDataSrc0, typename T>
 AICORE void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
+    static_assert(std::is_same<typename TileDataSrc0::DType, int32_t>::value || 
+                std::is_same<typename TileDataSrc0::DType, uint32_t>::value || std::is_same<typename TileDataSrc0::DType, float>::value ||
+                std::is_same<typename TileDataSrc0::DType, int16_t>::value || std::is_same<typename TileDataSrc0::DType, uint16_t>::value ||
+                std::is_same<typename TileDataSrc0::DType, half>::value || std::is_same<typename TileDataSrc0::DType, uint8_t>::value ||
+                std::is_same<typename TileDataSrc0::DType, int8_t>::value,
+                "TCMPS: Invalid data type.");
+    static_assert(TileDataDst::isRowMajor, "TCMPS: not supported Layout type");
+    static_assert(TileDataDst::Loc == TileType::Vec, "TileType of dst tile must be TileType::Vec.");
+    static_assert(TileDataDst::ValidCol <= TileDataDst::Cols, "Number of valid columns for dst must not be greater than number of tile columns.");
+    static_assert(TileDataDst::ValidRow <= TileDataDst::Rows, "Number of valid rows for dst must not be greater than number of tile rows.");
+    static_assert(TileDataSrc0::Loc == TileType::Vec, "TileType of src tile must be TileType::Vec.");
+    static_assert(TileDataSrc0::ValidCol <= TileDataSrc0::Cols, "Number of valid columns for scr must not be greater than number of tile columns.");
+    static_assert(TileDataSrc0::ValidRow <= TileDataSrc0::Rows, "Number of valid rows for src must not be greater than number of tile rows.");
+    PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
+    PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
     if constexpr (sizeof(typename TileDataSrc0::DType) == 4) {

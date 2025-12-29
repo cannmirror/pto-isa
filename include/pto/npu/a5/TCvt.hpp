@@ -420,7 +420,12 @@ inline AICORE void castData(__ubuf__ int32_t *dst, __ubuf__ int64_t *src, int32_
 
 
 template <typename TileDataD, typename TileDataS, typename R>
-inline AICORE void implTCVT(TileDataD &dst, TileDataS &src)
+__tf__ PTO_INTERNAL OP_NAME(TCVT) OP_TYPE(element_wise)
+void implTCVT(TileDataD &dst, 
+              TileDataS &src, 
+              unsigned kValidRows,
+              unsigned kValidCols,
+              BinOpsImpl version = BinOpsImpl::BinOpsIMPL_DEFAULT)
 {
     uint16_t rows = src.GetValidRow();
     uint16_t cols = src.GetValidCol();
@@ -435,31 +440,33 @@ inline AICORE void implTCVT(TileDataD &dst, TileDataS &src)
 template <typename TileDataD, typename TileDataS>
 AICORE void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
 {
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
     __VEC_SCOPE__ { 
         switch (mode) {
             case RoundMode::CAST_RINT:
-                implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
+                implTCVT<TileDataD,TileDataS,RoundRType>(dst,src, validRow, validCol);
                 break;
             case RoundMode::CAST_ROUND:
-                implTCVT<TileDataD,TileDataS,RoundAType>(dst,src);
+                implTCVT<TileDataD,TileDataS,RoundAType>(dst,src, validRow, validCol);
                 break;
             case RoundMode::CAST_FLOOR:
-                implTCVT<TileDataD,TileDataS,RoundFType>(dst,src);
+                implTCVT<TileDataD,TileDataS,RoundFType>(dst,src, validRow, validCol);
                 break;
             case RoundMode::CAST_CEIL:
-                implTCVT<TileDataD,TileDataS,RoundCType>(dst,src);
+                implTCVT<TileDataD,TileDataS,RoundCType>(dst,src, validRow, validCol);
                 break;
             case RoundMode::CAST_TRUNC:
-                implTCVT<TileDataD,TileDataS,RoundZType>(dst,src);
+                implTCVT<TileDataD,TileDataS,RoundZType>(dst,src, validRow, validCol);
                 break;
             case RoundMode::CAST_ODD:
                 if constexpr (std::is_same<typename TileDataD::DType, half>::value && 
                     std::is_same<typename TileDataS::DType, float>::value) {
-                    implTCVT<TileDataD,TileDataS,RoundOType>(dst,src);
+                    implTCVT<TileDataD,TileDataS,RoundOType>(dst,src, validRow, validCol);
                 } 
                 break;
             default:
-                implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
+                implTCVT<TileDataD,TileDataS,RoundRType>(dst,src, validRow, validCol);
                 break;
         }
     }
