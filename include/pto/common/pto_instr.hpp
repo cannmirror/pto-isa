@@ -22,10 +22,12 @@ PTO_INST void TASSIGN(T &obj, AddrType addr) {
   MAP_INSTR_IMPL(TASSIGN, obj, addr);
 }
 
-template <Op OpCode>
-PTO_INST void TSYNC() {
-  TSYNC_IMPL<OpCode>();
-}
+#ifndef __CPU_SIM
+  template <Op OpCode>
+  PTO_INST void TSYNC() {
+    TSYNC_IMPL<OpCode>();
+  }
+#endif
 
 template <typename... WaitEvents>
 PTO_INST void TSYNC(WaitEvents&... events) {

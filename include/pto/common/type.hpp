@@ -117,7 +117,8 @@ namespace pto {
 }
 
 #if defined(__CPU_SIM)
-    #if defined(__has_include) && __has_include(<stdfloat>) && !(defined(__clang__) && __clang_major__>=15)
+    // Note: clang version should be >=15 and gcc version should be >=14
+    #if defined(__has_include) && __has_include(<stdfloat>) && !(defined(__clang__))
         #include <stdfloat>
         typedef std::float16_t half;
         typedef std::float16_t bfloat16_t;
