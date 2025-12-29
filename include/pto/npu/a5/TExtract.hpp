@@ -269,7 +269,8 @@ __tf__ AICORE void TExtractVecToMat(typename DstTileData::TileDType __out__ dst,
         copy_ubuf_to_cbuf(dstPtr, srcPtr, 0, 1, blockLen, 0, 0);
     } else if constexpr (!SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::RowMajor)) {
         uint16_t blockCout = CeilDivision(dstValidCol, c0Size);
-        uint16_t blockLen = dstValidRow * c0Size * sizeof(T) / BLOCK_BYTE_SIZE;
+        uint32_t alignRow = (dstValidRow + FRACTAL_NZ_ROW - 1) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
+        uint16_t blockLen = alignRow * c0Size * sizeof(T) / BLOCK_BYTE_SIZE;
         constexpr uint16_t srcStride = SrcTileData::Rows - DstTileData::Rows;
         copy_ubuf_to_cbuf(dstPtr, srcPtr, 0, blockCout, blockLen, srcStride, 0);
     }

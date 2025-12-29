@@ -254,9 +254,10 @@ AICORE void TMovToVecNd2Nz(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, uint32_t vali
     constexpr uint32_t elementsPerRepeat = REPEAT_BYTE / sizeof(T);
     uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
     constexpr bool isOptForConflict = (dstByteSize >= (srcRow + 1) * srcCol * sizeof(T)) ? true : false;
-    uint32_t blockStride = isOptForConflict ? ((validRow + 1) * C0_SIZE_BYTE) / BLOCK_BYTE_SIZE :
-        (validRow * C0_SIZE_BYTE) / BLOCK_BYTE_SIZE;
-    uint32_t virtualRow = isOptForConflict ? validRow + 1 : validRow;
+    uint32_t alignRow = (validRow + FRACTAL_NZ_ROW - 1) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
+    uint32_t blockStride = isOptForConflict ? ((alignRow + 1) * C0_SIZE_BYTE) / BLOCK_BYTE_SIZE :
+        (alignRow * C0_SIZE_BYTE) / BLOCK_BYTE_SIZE;
+    uint32_t virtualRow = isOptForConflict ? alignRow + 1 : alignRow;
     uint32_t repeatStride = 1;
     uint16_t innerLoopNum = validRow - 1;
     __VEC_SCOPE__
