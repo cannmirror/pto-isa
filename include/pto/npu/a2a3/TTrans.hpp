@@ -241,12 +241,12 @@ __tf__ PTO_INTERNAL void TTrans(typename TileData::TileDType __out__ dst, typena
 
 template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
 PTO_INTERNAL void TTRANS_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataTmp &tmp) {
-    using TS = typename TileDataSrc::DType;
-    using TD = typename TileDataDst::DType;
-    static_assert(sizeof(TS) == 4 || sizeof(TS) == 2 || sizeof(TS) == 1);
-    static_assert(sizeof(TS) == sizeof(TD), "TTRANS: Inconsistent input and output data types.");
-    static_assert(TileDataSrc::isRowMajor, "TTRANS: not supported Layout type.");
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(TS);
+    using T = typename TileDataSrc::DType;
+    using U = typename TileDataDst::DType;
+    static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "Fix: TTRANS has unsupported data type.");
+    static_assert(sizeof(T) == sizeof(U), "Fix: TTRANS has inconsistent input and output data type.");
+    static_assert(TileDataSrc::isRowMajor, "Fix: TTRANS has not supported layout type.");
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned dstStride = TileDataDst::RowStride;
     constexpr unsigned srcStride = TileDataSrc::RowStride;
 

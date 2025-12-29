@@ -18,50 +18,47 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-template <typename T> struct AddOp {
-    PTO_INTERNAL static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
-    {
+template <typename T>
+struct AddOp {
+    PTO_INTERNAL static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats) {
         vadd(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
     }
     PTO_INTERNAL static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
-                                uint8_t dstRepeatStride, uint8_t src0RepeatStride, uint8_t src1RepeatStride)
-    {
+        uint8_t dstRepeatStride, uint8_t src0RepeatStride, uint8_t src1RepeatStride) {
         vadd(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, src1RepeatStride);
     }
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
 __tf__ PTO_INTERNAL void TAdd(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
-    typename TileData::TileDType __in__ src1, unsigned validRow, unsigned validCol)
-{    
+    typename TileData::TileDType __in__ src1, unsigned validRow, unsigned validCol) {
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
     __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
     BinaryInstr<AddOp<T>, TileData, elementsPerRepeat, blockSizeElem, rowStride>(
-                dstPtr, src0Ptr, src1Ptr, validRow, validCol);
+        dstPtr, src0Ptr, src1Ptr, validRow, validCol);
 }
 
 template <typename TileData>
-PTO_INTERNAL void TADD_IMPL(TileData &dst, TileData &src0, TileData &src1)
-{
+PTO_INTERNAL void TADD_IMPL(TileData &dst, TileData &src0, TileData &src1) {
     static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
-                  std::is_same<typename TileData::DType, int>::value ||
-                  std::is_same<typename TileData::DType, int16_t>::value ||
-                  std::is_same<typename TileData::DType, half>::value ||
-                  std::is_same<typename TileData::DType, float16_t>::value ||
-                  std::is_same<typename TileData::DType, float>::value ||
-                  std::is_same<typename TileData::DType, float32_t>::value,
-                  "TADD: Invalid data type.");
-    static_assert(TileData::isRowMajor, "TADD: not supported Layout type.");
+                      std::is_same<typename TileData::DType, int>::value ||
+                      std::is_same<typename TileData::DType, int16_t>::value ||
+                      std::is_same<typename TileData::DType, half>::value ||
+                      std::is_same<typename TileData::DType, float16_t>::value ||
+                      std::is_same<typename TileData::DType, float>::value ||
+                      std::is_same<typename TileData::DType, float32_t>::value,
+        "Fix: TADD has invalid data type.");
+    static_assert(TileData::isRowMajor, "Fix: TADD has not supported Layout type.");
     constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned rowStride = TileData::RowStride;
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    TAdd<TileData, elementsPerRepeat, blockSizeElem, rowStride>
-        (dst.data(), src0.data(), src1.data(), validRow, validCol);
+    TAdd<TileData, elementsPerRepeat, blockSizeElem, rowStride>(
+        dst.data(), src0.data(), src1.data(), validRow, validCol);
 }
 
 template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
@@ -75,7 +72,8 @@ __tf__ PTO_INTERNAL void TAdd(typename TileDataDst::TileDType __out__ dstData,
         constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
         constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
         constexpr unsigned rowStride = TileDataDst::RowStride;
-        BinaryInstr<AddOp<T>, T, TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, validRow, validCol);
+        BinaryInstr<AddOp<T>, T, TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>(
+            dst, src0, src1, validRow, validCol);
     } else {
         BinaryPlusInstr<AddOp<T>, T, TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1, validRow, validCol);
     }
@@ -84,16 +82,15 @@ __tf__ PTO_INTERNAL void TAdd(typename TileDataDst::TileDType __out__ dstData,
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
 PTO_INTERNAL void TADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
     using T = typename TileDataDst::DType;
-    static_assert(std::is_same<T, typename TileDataSrc0::DType>::value ||
-                  std::is_same<T, typename TileDataSrc1::DType>::value,
-                  "The data type of dst must be consistent with of src0 and src1.");
+    static_assert(
+        std::is_same<T, typename TileDataSrc0::DType>::value || std::is_same<T, typename TileDataSrc1::DType>::value,
+        "Fix: The data type of dst must be consistent with of src0 and src1.");
 
-    static_assert(std::is_same<T, int32_t>::value ||
-                  std::is_same<T, int16_t>::value ||
-                  std::is_same<T, half>::value ||
-                  std::is_same<T, float>::value, "TADD: Invalid data type.");
+    static_assert(std::is_same<T, int32_t>::value || std::is_same<T, int16_t>::value || std::is_same<T, half>::value ||
+                      std::is_same<T, float>::value,
+        "Fix: TADD has invalid data type.");
     static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
-        "TADD: not supported Layout type.");
+        "Fix: TADD has not supported Layout type.");
 
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
@@ -105,5 +102,5 @@ PTO_INTERNAL void TADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &
         TPARTADD_IMPL(dst, src0, src1);
     }
 }
-}  // namespace pto
+} // namespace pto
 #endif

@@ -19,8 +19,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
 template <typename T, typename U>
-PTO_INTERNAL MaskReg PSetTyped(U dist)
-{
+PTO_INTERNAL MaskReg PSetTyped(U dist) {
     if constexpr (sizeof(T) == sizeof(float)) {
         return pset_b32(dist);
     } else if constexpr (sizeof(T) == sizeof(half)) {
@@ -64,7 +63,7 @@ __tf__ PTO_INTERNAL void TFillPad(typename TileDataDst::TileDType __out__ dst,
     T padValue;
     *(T *)&padValue = *((T *)&uint_pv);
 
-    static_assert(sizeof(T) == sizeof(U), "TCOPY: src and dst data type is different!");
+    static_assert(sizeof(T) == sizeof(U), "Fix: TFillPad src and dst data type is different!");
     __VEC_SCOPE__ {
         constexpr auto distValue =
             std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
@@ -110,9 +109,9 @@ PTO_INTERNAL void TFILLPAD_IMPL(TileDataDst &dst, TileDataSrc &src) {
 
     using T = typename TileDataSrc::DType;
     using U = typename TileDataDst::DType;
-    static_assert(TileDataDst::PadVal != PadValue::Null, "TFillPad: dst vecTile pad value must not be Null!");
-    static_assert(sizeof(T) == sizeof(U), "TFillPad: src and dst data type is different!");
-    static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TFillPad: Invalid data type.");
+    static_assert(TileDataDst::PadVal != PadValue::Null, "Fix: TFillPad dst vecTile pad value must not be Null!");
+    static_assert(sizeof(T) == sizeof(U), "Fix: TFillPad src and dst data type is different!");
+    static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "Fix: TFillPad has invalid data type.");
 
     TFillPad<TileDataDst, TileDataSrc, inplace>(
         dst.data(), src.data(), validDstRow, validDstCol, validSrcRow, validSrcCol);
@@ -121,15 +120,14 @@ PTO_INTERNAL void TFILLPAD_IMPL(TileDataDst &dst, TileDataSrc &src) {
 template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TFILLPAD(TileDataDst &dst, TileDataSrc &src) {
     static_assert(TileDataDst::Cols == TileDataSrc::Cols && TileDataDst::Rows == TileDataSrc::Rows,
-        "TFillPad: Dst/Src vecTile Rows/Cols must be the same.");
-
+        "Fix: TFillPad Dst/Src vecTile Rows/Cols must be the same.");
     TFILLPAD_IMPL<TileDataDst, TileDataSrc, false>(dst, src);
 }
 
 template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TFILLPAD_INPLACE(TileDataDst &dst, TileDataSrc &src) {
     static_assert(TileDataDst::Cols == TileDataSrc::Cols && TileDataDst::Rows == TileDataSrc::Rows,
-        "TFillPad: Dst vecTile Rows/Cols must be greater or equal to src vecTile.");
+        "Fix: TFillPad Dst vecTile Rows/Cols must be greater or equal to src vecTile.");
 
     TFILLPAD_IMPL<TileDataDst, TileDataSrc, true>(dst, src);
 }
@@ -137,7 +135,7 @@ PTO_INTERNAL void TFILLPAD_INPLACE(TileDataDst &dst, TileDataSrc &src) {
 template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TFILLPAD_EXPAND(TileDataDst &dst, TileDataSrc &src) {
     static_assert(TileDataDst::Cols >= TileDataSrc::Cols && TileDataDst::Rows >= TileDataSrc::Rows,
-        "TFillPad: Dst/Src vecTile Rows/Cols must be the same.");
+        "Fix: TFillPad Dst/Src vecTile Rows/Cols must be the same.");
 
     TFILLPAD_IMPL<TileDataDst, TileDataSrc, false>(dst, src);
 }

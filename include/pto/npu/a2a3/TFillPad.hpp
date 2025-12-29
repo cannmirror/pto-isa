@@ -26,7 +26,7 @@ AICORE constexpr auto getCopyNullPtr() {
     } else if constexpr (sizeof(T) == 1) {
         return (__ubuf__ uint16_t *)0;
     } else {
-        static_assert(sizeof(T) < 0, "TFILLPAD: Unsupported DType for PadValue!");
+        static_assert(sizeof(T) < 0, "Fix: TFILLPAD has unsupported DType for PadValue!");
     }
 }
 
@@ -74,7 +74,7 @@ PTO_INTERNAL uint64_t getPadMask(uint64_t validCol) {
     } else if constexpr (sizeof(T) == 1) {
         return 0;
     } else {
-        static_assert(sizeof(T) < 0, "TFILLPAD: Unsupported DType for PadValue!");
+        static_assert(sizeof(T) < 0, "Fix: TFILLPAD has unsupported DType for PadValue!");
     }
 }
 
@@ -218,18 +218,18 @@ __tf__ PTO_INTERNAL void TFillPad(typename TileDataDst::TileDType __out__ dst,
 template <typename TileDataDst, typename TileDataSrc, bool inplace>
 PTO_INTERNAL void TFILLPAD_IMPL(TileDataDst &dst, TileDataSrc &src) {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc::DType);
-    constexpr unsigned srcStride = TileDataSrc::RowStride;
     constexpr unsigned dstStride = TileDataDst::RowStride;
-    uint64_t validSrcRow = src.GetValidRow();
-    uint64_t validSrcCol = src.GetValidCol();
+    constexpr unsigned srcStride = TileDataSrc::RowStride;
     uint64_t validDstRow = dst.GetValidRow();
     uint64_t validDstCol = dst.GetValidCol();
+    uint64_t validSrcRow = src.GetValidRow();
+    uint64_t validSrcCol = src.GetValidCol();
 
     using T = typename TileDataSrc::DType;
     using U = typename TileDataDst::DType;
-    static_assert(TileDataDst::PadVal != PadValue::Null, "TFillPad: dst vecTile pad value must not be Null!");
-    static_assert(sizeof(T) == sizeof(U), "TFillPad: src and dst data type is different!");
-    static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TFillPad: Invalid data type.");
+    static_assert(TileDataDst::PadVal != PadValue::Null, "Fix: TFillPad dst vecTile pad value must not be Null!");
+    static_assert(sizeof(T) == sizeof(U), "Fix: TFillPad src and dst data type is different!");
+    static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "Fix: TFillPad has invalid data type.");
 
     if (validDstRow == 0 || validDstCol == 0) {
         return;
@@ -244,7 +244,7 @@ PTO_INTERNAL void TFILLPAD_IMPL(TileDataDst &dst, TileDataSrc &src) {
 template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TFILLPAD(TileDataDst &dst, TileDataSrc &src) {
     static_assert(TileDataDst::Cols == TileDataSrc::Cols && TileDataDst::Rows == TileDataSrc::Rows,
-        "TFillPad: Dst/Src vecTile Rows/Cols must be the same.");
+        "Fix: TFillPad Dst/Src vecTile Rows/Cols must be the same.");
 
     TFILLPAD_IMPL<TileDataDst, TileDataSrc, false>(dst, src);
 }
@@ -252,7 +252,7 @@ PTO_INTERNAL void TFILLPAD(TileDataDst &dst, TileDataSrc &src) {
 template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TFILLPAD_INPLACE(TileDataDst &dst, TileDataSrc &src) {
     static_assert(TileDataDst::Cols == TileDataSrc::Cols && TileDataDst::Rows == TileDataSrc::Rows,
-        "TFillPad: Dst vecTile Rows/Cols must be greater or equal to src vecTile.");
+        "Fix: TFillPad Dst vecTile Rows/Cols must be greater or equal to src vecTile.");
 
     TFILLPAD_IMPL<TileDataDst, TileDataSrc, true>(dst, src);
 }
@@ -260,7 +260,7 @@ PTO_INTERNAL void TFILLPAD_INPLACE(TileDataDst &dst, TileDataSrc &src) {
 template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TFILLPAD_EXPAND(TileDataDst &dst, TileDataSrc &src) {
     static_assert(TileDataDst::Cols >= TileDataSrc::Cols && TileDataDst::Rows >= TileDataSrc::Rows,
-        "TFillPad: Dst/Src vecTile Rows/Cols must be the same.");
+        "Fix: TFillPad Dst/Src vecTile Rows/Cols must be the same.");
 
     TFILLPAD_IMPL<TileDataDst, TileDataSrc, false>(dst, src);
 }
