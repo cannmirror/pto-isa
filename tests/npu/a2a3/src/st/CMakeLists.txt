@@ -75,5 +75,8 @@ include_directories(
 if (DEFINED ENV{ACCURATE_RSQRT})
     add_compile_definitions(ACCURATE_RSQRT)
 endif ()
+if (DEFINED ENV{ACCURATE_RECIP})
+    add_compile_definitions(ACCURATE_RECIP)
+endif ()
 
 add_subdirectory(testcase)

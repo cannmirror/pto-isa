@@ -30,8 +30,16 @@ PTO_INST RecordEvent TRECIP(TileData& dst, TileData& src, WaitEvents&... events)
 
 ## Constraints
 
-- Division-by-zero behavior is target-defined; the CPU simulator asserts in debug builds.
-- The op iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
+- **Implementation checks (NPU)**:
+  - `TileData::DType` must be one of: `float` or `half`;
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`);
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`;
+  - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`;
+  - Tile layout must be row-major (`TileData::isRowMajor`).
+- **Valid region**:
+  - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain.
+- **Domain / NaN**:
+  - Division-by-zero behavior is target-defined; the CPU simulator asserts in debug builds.
 
 ## Examples
 

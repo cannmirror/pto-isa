@@ -206,6 +206,18 @@ void TUnaryOp(typename TileData::TileDType __out__ dst,
                 dstPtr, srcPtr, kValidRows, kValidCols, version);
 }
 
+template <typename T, typename TileData>
+__tf__ PTO_INTERNAL
+void TUnaryCheck(TileData &dst, TileData &src) {
+    static_assert(std::is_same_v<T, float32_t> || std::is_same_v<T, float> ||
+                  std::is_same_v<T, float16_t> || std::is_same_v<T, half>,
+                  "TUnaryOp: Invalid data type.");
+    static_assert(TileData::isRowMajor, "TUnaryOp: Not supported Layout type");
+    static_assert(TileData::Loc == TileType::Vec, "TUnaryOp: TileType of src and dst tiles must be TileType::Vec.");
+    static_assert(TileData::ValidCol <= TileData::Cols, "TUnaryOp: Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileData::ValidRow <= TileData::Rows, "TUnaryOp: Number of valid rows must not be greater than number of tile rows.");
+}
+
 /* TEXP */
 template<typename T> AICORE void _vexp(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
     vexp(reg_dst, reg_src, preg, MODE_ZEROING);
@@ -233,8 +245,10 @@ AICORE void TEXP_IMPL(TileData &dst, TileData &src) {
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    static_assert(TileData::isRowMajor, "TEXP: not supported Layout type");
-    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TEXP: not supported Layout type");
+    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TEXP: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TEXP: Number of rows of src and dst must be the same.");
+
+    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
 
     TExp<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
 }
@@ -266,8 +280,10 @@ AICORE void TSQRT_IMPL(TileData &dst, TileData &src) {
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    static_assert(TileData::isRowMajor, "TSQRT: not supported Layout type");
-    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TSQRT: not supported Layout type");
+    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TSQRT: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TSQRT: Number of rows of src and dst must be the same.");
+
+    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
 
     TSqrt<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
 }
@@ -277,7 +293,7 @@ template <typename TileData>
 __tf__ PTO_INTERNAL OP_NAME(TRSQRT) OP_TYPE(element_wise)
 void TRsqrtCustom(typename TileData::TileDType __out__ dst,
                                     typename TileData::TileDType __in__ src,
-                                    unsigned validCol, unsigned validRow,
+                                    unsigned validRow, unsigned validCol,
                                     UnaryOpsImpl version = UnaryOpsImpl::UnaryOpsIMPL_DEFAULT) {
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
@@ -316,8 +332,10 @@ AICORE void TRSQRT_IMPL(TileData &dst, TileData &src) {
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    static_assert(TileData::isRowMajor, "TRSQRT: not supported Layout type");
-    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TRSQRT: not supported Layout type");
+    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TRSQRT: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TRSQRT: Number of rows of src and dst must be the same.");
+
+    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
 
     TRsqrtCustom<TileData>(dst.data(), src.data(), validRow, validCol);
 }
@@ -335,8 +353,10 @@ AICORE void TABS_IMPL(TileData &dst, TileData &src) {
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    static_assert(TileData::isRowMajor, "TABS: not supported Layout type");
-    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TABS: not supported Layout type");
+    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TABS: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TABS: Number of rows of src and dst must be the same.");
+
+    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
 
     TUnaryOp<TileData, _vabs, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
 }
@@ -354,8 +374,10 @@ AICORE void TLOG_IMPL(TileData &dst, TileData &src) {
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    static_assert(TileData::isRowMajor, "TLOG: not supported Layout type");
-    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TLOG: not supported Layout type");
+    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TLOG: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TLOGT: Number of rows of src and dst must be the same.");
+
+    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
 
     TUnaryOp<TileData, _vlog, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
 }
@@ -364,7 +386,7 @@ AICORE void TLOG_IMPL(TileData &dst, TileData &src) {
 template <typename TileData>
 __tf__ AICORE void TRecipCustom(typename TileData::TileDType __out__ dst,
                                     typename TileData::TileDType __in__ src,
-                                    unsigned validCol, unsigned validRow) {
+                                    unsigned validRow, unsigned validCol) {
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
@@ -399,8 +421,10 @@ AICORE void TRECIP_IMPL(TileData &dst, TileData &src) {
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    static_assert(TileData::isRowMajor, "TRECIP: not supported Layout type");
-    static_assert(std::is_same_v<typename TileData::DType, float> || std::is_same_v<typename TileData::DType, half>, "TRECIP: not supported Layout type");
+    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TRECIP: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TRECIP: Number of rows of src and dst must be the same.");
+
+    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
 
     TRecipCustom<TileData>(dst.data(), src.data(), validRow, validCol);
 }

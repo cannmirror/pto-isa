@@ -33,9 +33,14 @@ PTO_INST RecordEvent TABS(TileData& dst, TileData& src, WaitEvents&... events);
 - **Implementation checks (CPU sim)**:
   - `TileData::DType` must be one of: `int32_t`, `int`, `int16_t`, `half`, `float`.
   - The implementation iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
-- **NPU support**:
-  - Implemented on A2A3 (see `include/pto/npu/a2a3/TUnaryOp.hpp`).
-  - A5 support is target-defined (no `include/pto/npu/a5/*` implementation is currently included for `TABS`).
+- **Implementation checks (NPU)**:
+  - `TileData::DType` must be one of: `float` or `half`;
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`);
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`;
+  - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`;
+  - Tile layout must be row-major (`TileData::isRowMajor`).
+- **Valid region**:
+  - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain.
 
 ## Examples
 
