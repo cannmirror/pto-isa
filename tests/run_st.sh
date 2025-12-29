@@ -199,6 +199,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowsum_trowexpand -g TROWSUM_TROWEXPANDTest.case_float_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand_tdiv -g TROWEXPAND_TDIVTest.case_float_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_ub2l1 -g TMovUb2l1Test.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tscatter -g TSCATTERTest.case1
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd
@@ -258,5 +259,6 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowsum_trowexpand
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowexpand_tdiv
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_ub2l1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tscatter
   fi
 fi
