@@ -44,21 +44,52 @@ namespace pto {
                     dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols, version);
     }
 
+    template <typename T, typename TileData>
+    PTO_INTERNAL
+    void TDivCheck() {
+        static_assert(std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, float> ||
+                      std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, half> ||
+                      std::is_same_v<T, bfloat16_t> ||std::is_same_v<T, uint8_t> ||std::is_same_v<T, int8_t>,
+                      "TDiv: Invalid data type.");
+        static_assert(TileData::isRowMajor, "TDiv: not supported Layout type");
+    }
+
     template <typename TileData>
     AICORE void TDIV_IMPL(TileData &dst, TileData &src0, TileData &src1) {
-        static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
-                      std::is_same<typename TileData::DType, float>::value ||
-                      std::is_same<typename TileData::DType, int16_t>::value ||
-                      std::is_same<typename TileData::DType, half>::value,
-                      "TDIV: Invalid data type.");
-        static_assert(TileData::isRowMajor, "TDIV: not supported Layout type");
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 
+        using T = typename TileData::DType;
+        TDivCheck<T, TileData>();
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T); 
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T); 
         constexpr unsigned rowStride = TileData::RowStride;
         unsigned validRow = dst.GetValidRow();
         unsigned validCol = dst.GetValidCol();
+        if (validRow == 0 || validCol == 0) {
+            return;
+        }
 
-        TDiv<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1.data(), validRow, validCol);
+        TDiv<TileData, elementsPerRepeat, blockSizeElem, rowStride>
+            (dst.data(), src0.data(), src1.data(), validRow, validCol);
+    }
+
+    template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+    PTO_INTERNAL void TDIV_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
+    {
+        static_assert(std::is_same_v<TileDataDst, TileDataSrc0> && std::is_same_v<TileDataDst, TileDataSrc1>,
+                      "TDIV: Input tileshape must be consistent with the out tileshape.");
+
+        using T = typename TileDataDst::DType;
+        TDivCheck<T, TileDataDst>();
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T); 
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T); 
+        constexpr unsigned rowStride = TileDataDst::RowStride;
+        unsigned validRow = dst.GetValidRow();
+        unsigned validCol = dst.GetValidCol();
+        if (validRow == 0 || validCol == 0) {
+            return;
+        }
+
+        TDiv<TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>
+            (dst.data(), src0.data(), src1.data(), validRow, validCol);
     }
 }
 #endif

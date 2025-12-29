@@ -59,5 +59,25 @@ namespace pto {
 
         TMin<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1.data(), validRow, validCol);
     }
+
+    template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+    PTO_INTERNAL void TMIN_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
+        static_assert(std::is_same_v<TileDataDst, TileDataSrc0> && std::is_same_v<TileDataDst, TileDataSrc1>,
+                      "Fix: TMIN Input tileshape must be consistent with the out tileshape.");
+
+        using T = typename TileDataDst::DType;
+        TMinCheck<T, TileDataDst>();
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T); 
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T); 
+        constexpr unsigned rowStride = TileDataDst::RowStride;
+        unsigned validRow = dst.GetValidRow();
+        unsigned validCol = dst.GetValidCol();
+        if (validRow == 0 || validCol == 0) {
+            return;
+        }
+
+        TMin<TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>
+            (dst.data(), src0.data(), src1.data(), validRow, validCol);
+    }
 }
 #endif

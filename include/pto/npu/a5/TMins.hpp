@@ -64,5 +64,29 @@ AICORE void TMINS_IMPL(TileData &dst, TileData &src0, typename TileData::DType s
 
     TMinS<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1, validRow, validCol);
 }
+
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TMINS_IMPL(TileDataDst &dst, TileDataSrc &src0, typename TileDataSrc::DType src1)
+{
+    static_assert(std::is_same_v<TileDataDst, TileDataSrc>,
+                  "Fix: TMINS Input tileshape must be consistent with the out tileshape.");
+
+    using T = typename TileDataDst::DType;
+    static_assert(TileDataDst::Loc == TileDataDst::Vec, "Fix: TileType of src and dst tiles must be TileType::Vec.");
+    static_assert(TileDataDst::ValidCol <= TileDataDst::Cols,
+                  "Fix: Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileDataDst::ValidRow <= TileDataDst::Rows,
+                  "Fix: Number of valid rows must not be greater than number of tile rows.");
+
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
+    constexpr unsigned rowStride = TileDataDst::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Fix: Number of columns of src and dst must be the same.");
+
+    TMinS<TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1, validRow, validCol);
+}
 }  // namespace pto
 #endif

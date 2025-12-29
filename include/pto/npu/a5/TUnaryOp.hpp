@@ -253,6 +253,24 @@ AICORE void TEXP_IMPL(TileData &dst, TileData &src) {
     TExp<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
 }
 
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TEXP_IMPL(TileDataDst &dst, TileDataSrc &src) {
+    static_assert(std::is_same_v<TileDataDst, TileDataSrc>,
+                  "TEXP: Input tileshape must be consistent with the out tileshape.");
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+    constexpr unsigned rowStride = TileDataDst::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    static_assert(TileDataDst::isRowMajor, "TEXP: not supported Layout type");
+    static_assert(std::is_same_v<typename TileDataDst::DType, float> ||
+                  std::is_same_v<typename TileDataDst::DType, half>, "TEXP: not supported Layout type");
+
+    TUnaryOp<TileDataDst, _vexp, elementsPerRepeat, blockSizeElem, rowStride>
+        (dst.data(), src.data(), validRow, validCol);
+}
+
 /* TSQRT */
 template<typename T> AICORE void _vsqrt(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
     vsqrt(reg_dst, reg_src, preg, MODE_ZEROING);
@@ -286,6 +304,24 @@ AICORE void TSQRT_IMPL(TileData &dst, TileData &src) {
     TUnaryCheck<typename TileData::DType, TileData>(dst, src);
 
     TSqrt<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
+}
+
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TSQRT_IMPL(TileDataDst &dst, TileDataSrc &src) {
+    static_assert(std::is_same_v<TileDataDst, TileDataSrc>,
+                  "TSQRT: Input tileshape must be consistent with the out tileshape.");
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+    constexpr unsigned rowStride = TileDataDst::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    static_assert(TileDataDst::isRowMajor, "TSQRT: not supported Layout type");
+    static_assert(std::is_same_v<typename TileDataDst::DType, float> ||
+                  std::is_same_v<typename TileDataDst::DType, half>, "TSQRT: not supported Layout type");
+
+    TUnaryOp<TileDataDst, _vsqrt, elementsPerRepeat, blockSizeElem, rowStride>
+        (dst.data(), src.data(), validRow, validCol);
 }
 
 /* TRSQRT */
@@ -338,6 +374,23 @@ AICORE void TRSQRT_IMPL(TileData &dst, TileData &src) {
     TUnaryCheck<typename TileData::DType, TileData>(dst, src);
 
     TRsqrtCustom<TileData>(dst.data(), src.data(), validRow, validCol);
+}
+
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TRSQRT_IMPL(TileDataDst &dst, TileDataSrc &src) {
+    static_assert(std::is_same_v<TileDataDst, TileDataSrc>,
+                  "TRSQRT: Input tileshape must be consistent with the out tileshape.");
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+    constexpr unsigned rowStride = TileDataDst::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    static_assert(TileDataDst::isRowMajor, "TRSQRT: not supported Layout type");
+    static_assert(std::is_same_v<typename TileDataDst::DType, float> ||
+                  std::is_same_v<typename TileDataDst::DType, half>, "TRSQRT: not supported Layout type");
+
+    TRsqrtCustom<TileDataDst>(dst.data(), src.data(), validRow, validCol);
 }
 
 /* TABS */
