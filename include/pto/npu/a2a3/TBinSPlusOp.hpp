@@ -39,39 +39,29 @@ namespace pto
 
   template <typename Op, typename T, unsigned elemPerRpt, unsigned elemPerBlk, unsigned dstStride, unsigned srcStride>
   PTO_INTERNAL void BinSPlusTail(__ubuf__ T* dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned remain) {
-    unsigned numLoop = validRow / REPEAT_MAX;
-    unsigned remainAfterLoop = validRow % REPEAT_MAX;
-    constexpr uint8_t dstRptStride = dstStride / elemPerBlk;
-    constexpr uint8_t srcRptStride = srcStride / elemPerBlk;
     const bool strideOverFlag = ((dstStride / elemPerBlk > REPEAT_STRIDE_MAX) ||
                                   (srcStride / elemPerBlk > REPEAT_STRIDE_MAX));
-    unsigned dstOffset;
-    unsigned srcOffset;
+    unsigned dstOffset = 0;
+    unsigned srcOffset = 0;
     SetContMaskByDType<T>(remain);
-    for (int i = 0; i < numLoop; i++) {
-      if constexpr (strideOverFlag) {
-        for (uint64_t j = 0; j < REPEAT_MAX; j++) {
-          dstOffset = i * REPEAT_MAX * dstStride + j * dstStride;
-          srcOffset = i * REPEAT_MAX * srcStride + j * srcStride;
-          Op::BinSInstr(dst + dstOffset, src0 + srcOffset, src1, 1, 1, 1);
-        }
-      } else {
-        dstOffset = i * REPEAT_MAX * dstStride;
-        srcOffset = i * REPEAT_MAX * srcStride;
-        Op::BinSInstr(dst + dstOffset, src0 + srcOffset, src1, REPEAT_MAX, dstRptStride, srcRptStride);
+    if constexpr (strideOverFlag) {
+      for (int i = 0; i < validRow; i++) {
+        Op::BinSInstr(dst + dstOffset, src0 + srcOffset, src1, 1, 1, 1);
+        dstOffset += dstStride;
+        srcOffset += srcStride;
       }
-    }
+    } else {
+      unsigned numLoop = validRow / REPEAT_MAX;
+      unsigned remainAfterLoop = validRow % REPEAT_MAX;
+      constexpr uint8_t dstRptStride = dstStride / elemPerBlk;
+      constexpr uint8_t srcRptStride = srcStride / elemPerBlk;
+      for (int i = 0; i < numLoop; i++) {
+        Op::BinSInstr(dst + dstOffset, src0 + srcOffset, src1, REPEAT_MAX, dstRptStride, srcRptStride);
+        dstOffset += REPEAT_MAX * dstStride;
+        srcOffset += REPEAT_MAX * srcStride;
+      }
 
-    if (remainAfterLoop) {
-      if constexpr (strideOverFlag) {
-        for (unsigned j = 0; j < remainAfterLoop; j++) {
-          dstOffset = numLoop * REPEAT_MAX * dstStride + j * dstStride;
-          srcOffset = numLoop * REPEAT_MAX * srcStride + j * srcStride;
-          Op::BinSInstr(dst + dstOffset, src0 + srcOffset, src1, 1, 1, 1);
-        }
-      } else {
-        dstOffset = numLoop * REPEAT_MAX * dstStride;
-        srcOffset = numLoop * REPEAT_MAX * srcStride;
+      if (remainAfterLoop) {
         Op::BinSInstr(dst + dstOffset, src0 + srcOffset, src1, remainAfterLoop, dstRptStride, srcRptStride);
       }
     }
