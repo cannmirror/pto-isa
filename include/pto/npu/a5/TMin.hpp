@@ -43,6 +43,16 @@ namespace pto {
                     dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols, version);
     }
 
+    template <typename T, typename TileData>
+    PTO_INTERNAL
+    void TMinCheck() {
+        static_assert(std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, float> ||
+                      std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, half> ||
+                      std::is_same_v<T, bfloat16_t> ||std::is_same_v<T, uint8_t> ||std::is_same_v<T, int8_t>,
+                      "TMin: Invalid data type.");
+        static_assert(TileData::isRowMajor, "TMin: not supported Layout type");
+    }
+
     template <typename TileData>
     AICORE void TMIN_IMPL(TileData &dst, TileData &src0, TileData &src1) {
         using T = typename TileData::DType;

@@ -42,19 +42,20 @@ __tf__ PTO_INTERNAL OP_NAME(TADD) OP_TYPE(element_wise) void TAdd(typename TileD
         dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols, version);
 }
 
+template <typename T, typename TileData>
+PTO_INTERNAL
+void TAddCheck() {
+    static_assert(std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, float> ||
+                  std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, half> ||
+                  std::is_same_v<T, bfloat16_t> ||std::is_same_v<T, uint8_t> ||std::is_same_v<T, int8_t>,
+                  "Fix: TAdd Invalid data type.");
+    static_assert(TileData::isRowMajor, "Fix: TAdd not supported Layout type");
+}
+
 template <typename TileData>
 PTO_INTERNAL void TADD_IMPL(TileData &dst, TileData &src0, TileData &src1) {
-    static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
-                      std::is_same<typename TileData::DType, uint32_t>::value ||
-                      std::is_same<typename TileData::DType, float>::value ||
-                      std::is_same<typename TileData::DType, int16_t>::value ||
-                      std::is_same<typename TileData::DType, uint16_t>::value ||
-                      std::is_same<typename TileData::DType, half>::value ||
-                      std::is_same<typename TileData::DType, bfloat16_t>::value ||
-                      std::is_same<typename TileData::DType, uint8_t>::value ||
-                      std::is_same<typename TileData::DType, int8_t>::value,
-        "Fix: TADD has invalid data type.");
-    static_assert(TileData::isRowMajor, "Fix: TADD has not supported Layout type");
+    using T = typename TileData::DType;
+    TAddCheck<T, TileData>();
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned rowStride = TileData::RowStride;

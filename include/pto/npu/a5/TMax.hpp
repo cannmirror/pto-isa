@@ -44,6 +44,16 @@ namespace pto {
                     dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols, version);
     }
 
+    template <typename T, typename TileData>
+    PTO_INTERNAL
+    void TMaxCheck() {
+        static_assert(std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, float> ||
+                      std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, half> ||
+                      std::is_same_v<T, bfloat16_t> ||std::is_same_v<T, uint8_t> ||std::is_same_v<T, int8_t>,
+                      "Fix: TMax Invalid data type.");
+        static_assert(TileData::isRowMajor, "Fix: TMax not supported Layout type");
+    }
+
     template <typename TileData>
     AICORE void TMAX_IMPL(TileData &dst, TileData &src0, TileData &src1) {
         using T = typename TileData::DType;
