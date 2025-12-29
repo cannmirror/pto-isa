@@ -88,20 +88,19 @@ AICORE void TMovToVec(DstTileData &dst, SrcTileData &src)
 }
 
 template <typename DstTileData, typename SrcTileData, QuantMode_t QuantPre, ReluPreMode reluMode>
-__tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src)
+__tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+    uint16_t validRow, uint16_t validCol)
 {
     using SrcType = typename SrcTileData::DType;
     using DstType = typename DstTileData::DType;
-    __cc__ SrcType *srcAddr = (__cc__ SrcType *)(src);
-    __cbuf__ DstType *dstAddr = (__cbuf__ DstType *)(dst);
+    __cc__ SrcType *srcAddr = (__cc__ SrcType *)__cce_get_tile_ptr(src);
+    __cbuf__ DstType *dstAddr = (__cbuf__ DstType *)__cce_get_tile_ptr(dst);
 
-    constexpr uint16_t nSize = SrcTileData::ValidCol;
-    constexpr uint16_t mSize = SrcTileData::ValidRow;
     constexpr uint32_t dstStride_dst_D = DstTileData::Rows;
     constexpr uint16_t srcStride = SrcTileData::Rows;
 
     copy_matrix_cc_to_cbuf(
-        dstAddr, srcAddr, 0, nSize, mSize, dstStride_dst_D, srcStride, 0, QuantPre, reluMode, false, false);
+        dstAddr, srcAddr, 0, validCol, validRow, dstStride_dst_D, srcStride, 0, QuantPre, reluMode, false, false);
 }
 template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isCastQuant>
 PTO_INTERNAL void CheckTMovCcToCb()
@@ -164,9 +163,11 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
         TMovToVec<DstTileData, SrcTileData>(dst, src);
     } else if constexpr (SrcTileData::Loc == TileType::Acc && DstTileData::Loc == TileType::Mat) {
         CheckTMovCcToCb<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+        uint16_t m = src.GetValidRow();
+        uint16_t n = src.GetValidCol();
         constexpr QuantMode_t quantPre =
             GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
-        TMovCcToCb<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data());
+        TMovCcToCb<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data(), m, n);
     }
 }
 
@@ -175,8 +176,10 @@ template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
 PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     static_assert((DstTileData::Loc == TileType::Mat && SrcTileData::Loc == TileType::Acc), "TMov: Invalid TileType.");
+    uint16_t m = src.GetValidRow();
+    uint16_t n = src.GetValidCol();
     constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
-    TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data());
+    TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(), m, n);
 }
 
 // scalar quant
@@ -184,9 +187,11 @@ template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = Rel
 PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
 {
     CheckTMovCcToCb<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, false>();
+    uint16_t m = src.GetValidRow();
+    uint16_t n = src.GetValidCol();
     constexpr QuantMode_t quantPre = GetScalarPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
     set_quant_pre(preQuantScalar);
-    TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data());
+    TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(), m, n);
 }
 
 // vector quant
@@ -205,8 +210,10 @@ PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
     CheckTMovCcToCb<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, false>();
     static_assert(FpTileData::Loc == TileType::Scaling, "Fp only support Scaling.");
     constexpr QuantMode_t quantPre = GetVectorPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    uint16_t m = src.GetValidRow();
+    uint16_t n = src.GetValidCol();
     SetFPC<FpTileData>(fp.data());
-    TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data());
+    TMovCcToCb<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(), m, n);
 }
 }  // namespace pto
 #endif  // TMOV_HPP

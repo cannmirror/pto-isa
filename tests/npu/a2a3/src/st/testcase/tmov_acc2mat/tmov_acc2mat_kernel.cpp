@@ -151,8 +151,8 @@ __global__ AICORE void runTMOV_nz2nz(__gm__ outType *out, __gm__ aType *src0, __
 
     runMATMUL<aType, bType, M, K, N, validM, validK, validN>(src0, src1);
 
-    using AccTile = TileAcc<CType<aType>, M, N, validM, validN>;
-    AccTile cTile;
+    using AccTile = TileAcc<CType<aType>, M, N, -1, -1>;
+    AccTile cTile(validM, validN);
     TASSIGN(cTile, 0x0);
 
     using DstTileData = Tile<TileType::Mat, outType, M, N, BLayout::ColMajor, validM, validN, SLayout::RowMajor, 512>;
@@ -195,8 +195,8 @@ __global__ AICORE void runVectorQuantTMOV_nz2nz(
 
     runMATMULFB<aType, bType, fbType, M, K, N, validM, validK, validN>(src0, src1, src2);
 
-    using AccTile = TileAcc<CType<aType>, M, N, validM, validN>;
-    AccTile cTile;
+    using AccTile = TileAcc<CType<aType>, M, N, -1, -1>;
+    AccTile cTile(validM, validN);
     TASSIGN(cTile, 0x0);
     using FbTile = Tile<TileType::Scaling, fbType, 1, N, BLayout::RowMajor, 1, validN, SLayout::NoneBox>;
     FbTile fbTile;
@@ -237,8 +237,8 @@ __global__ AICORE void runScalarQuantTMOV_nz2nz(
 
     runMATMUL<aType, bType, M, K, N, validM, validK, validN>(src0, src1);
 
-    using AccTile = TileAcc<CType<aType>, M, N, validM, validN>;
-    AccTile cTile;
+    using AccTile = TileAcc<CType<aType>, M, N, -1, -1>;
+    AccTile cTile(validM, validN);
     TASSIGN(cTile, 0x0);
 
     using DstTileData = Tile<TileType::Mat, outType, M, N, BLayout::ColMajor, validM, validN, SLayout::RowMajor, 512>;
