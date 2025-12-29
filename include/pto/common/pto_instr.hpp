@@ -29,7 +29,7 @@ PTO_INST void TSYNC() {
 
 template <typename... WaitEvents>
 PTO_INST void TSYNC(WaitEvents&... events) {
-  waitAllEvents(events...);
+  WaitAllEvents(events...);
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>

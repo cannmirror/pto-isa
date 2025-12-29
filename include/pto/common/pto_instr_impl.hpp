@@ -13,6 +13,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/type.hpp>
+#include <pto/common/event.hpp>
 
 #ifdef MEMORY_BASE
 #include "pto/npu/a2a3/TAssign.hpp"
@@ -114,8 +115,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TMul.hpp"
 #include "pto/npu/a5/TScatter.hpp"
 #endif
-
-#include <pto/common/event.hpp>
 
 #ifdef __CPU_SIM
     #include "pto/cpu/ElementTileOp.h"

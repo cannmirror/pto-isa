@@ -49,7 +49,7 @@ Most intrinsics in `include/pto/common/pto_instr.hpp` have a trailing `WaitEvent
 Pattern:
 
 - The intrinsic calls `TSYNC(events...)`.
-- `TSYNC(events...)` calls `waitAllEvents(events...)`, which invokes `events.Wait()` on each event.
+- `TSYNC(events...)` calls `WaitAllEvents(events...)`, which invokes `events.Wait()` on each event.
 - The instruction then executes, and the intrinsic returns a `RecordEvent`.
 
 This enables a programming style where you:
