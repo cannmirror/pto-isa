@@ -2,19 +2,19 @@
   <img src="docs/figures/pto_logo.svg" alt="PTO Tile Lib" width="220" />
 </p>
 
-# PTO Tile Lib
+# PTO Tile Library
 
 Parallel Tile Operation (PTO) is a virtual instruction set architecture designed by Ascend CANN, focusing on tile-level operations. This repository offers high-performance, cross-platform tile operations across Ascend platforms. By porting to PTO instruction sequences, users can migrate Ascend hardware more easily.
 
 ## News
 
-* **2025-12-31**: PTO Tile Lib becomes publicly available.
+* **2025-12-27**: PTO Tile Library becomes publicly available.
 
 ## Overview
 
 The PTO ISA (Instruction Set Architecture) is built on Ascend’s underlying hardware and software abstractions, providing over 90 standard tile-level operations.
 
-Ascend hardware architectures have significantly evolved over generations, leading to major changes in the instruction sets. The PTO instruction set bridges these hardware differences by raising the abstraction level. We ensure that these PTO instructions work correctly across platforms while maintaining backward compatibility. However, this abstraction does not hide performance tuning opportunities. Users can still fine-tune performance by adjusting Tile sizes, Tile shapes, instruction order, Tile transformations, and other Tile operations. This provides sufficient control to fine-tune internal pipeline flows.
+Ascend hardware architectures have significantly evolved over generations, leading to major changes in the instruction sets. The PTO instruction set bridges these hardware differences by raising the abstraction level. We ensure that these PTO instructions work correctly across platforms while maintaining backward compatibility. However, this abstraction does not hide performance tuning opportunities. Users can still fine-tune performance by adjusting tile sizes, tile shapes, instruction order, etc. This provides sufficient control to fine-tune internal pipeline flows.
 
 Our goal is to offer users a simplified, yet powerful way to optimize performance, enabling them to write high-performance code with PTO instructions.
 
@@ -22,13 +22,14 @@ Currently, PTO instructions are integrated into the following frameworks:
 
 * [PyPTO](https://gitcode.com/cann/pypto/)
 * [TileLang Ascend](https://github.com/tile-ai/tilelang-ascend/)
+* More languages comming soon
 
 ## Target Users of this Repository
 
 PTO Tile Lib is not aimed at beginner-level users. The intended audience includes:
 
 * Backend developers implementing frameworks that directly interface with Ascend hardware.
-* Cross-platform application developers (NPU & GPU).
+* Cross-platform application developers.
 * High-performance operator developers (manual operator implementations).
 
 ## Performance
@@ -56,7 +57,9 @@ Detailed analysis and tuning notes: `kernels/manual/a2a3/gemm_performance/README
 
 - Kernel: `kernels/manual/a2a3/flash_atten/`
 
-![Flash Attention normalized TFLOPS (A2/A3 reference)](docs/figures/performance/fa_normalized_tflops_a2a3.svg)
+Detailed analysis and tuning notes: `kernels/manual/a2a3/flash_atten/README.md`.
+
+![Flash Attention normalized TFLOPS (A2/A3)](docs/figures/performance/fa_normalized_tflops_a2a3.svg)
 
 ## Coming Soon
 
@@ -65,31 +68,28 @@ The following features will be released in the future:
 | Feature | Description | Scope |
 | --- | --- | --- |
 | PTO Auto Mode | BiSheng compiler support to automatically allocate tile buffers and insert synchronization. | Compiler / toolchain |
-| PTO-AS | Assembler and disassembler for PTO ISA. | Developer tooling |
-| Convolution extension | Tile library support for convolution kernels. | ISA Extension |
-| Collective communication extension | Tile library support for multi-card communication. | ISA Extension |
+| PTO Tile Fusion | BiSheng compiler support to fuse tile operations automatically. | Compiler / toolchain |
+| PTO-AS | Byte Code Support for PTO ISA. | Compiler / toolchain |
+| **Convolution extension** | PTO ISA support for convolution kernels. | ISA Extension |
+| **Collective communication extension** | PTO ISA support for collective communication. | ISA Extension |
+| **System schedule extension** | PTO ISA support for SPMD/MPMD programming. | ISA Extension |
 
-## Design Philosophy of PTO Instructions
-
-* **Tile as the Standard Unit**: Tile is a fixed unit that cannot be indexed by pointers, making it easier for compilers to perform alias analysis.
-* **Static to Dynamic Conversion, Code Specialization**: Tiles are implemented without address or index calculations, removing dynamic Masks.
-* **Reduced Flexibility for Higher Performance**: We write high-performance operators for standard Tile shapes, using the "container theory" where multiple choices for achieving the same performance are reduced. This minimizes the complexity for compilers and users.
 
 ## How to Use PTO Tile Library
 
-PTO instructions support two modes: **Auto Mode** (where the user does not allocate buffers or manage pipelining) and **Manual Mode** (where the user must allocate buffer addresses and manage pipelining). We recommend the following steps for optimizing operators:
+PTO instructions support two modes: **Auto Mode (Available only in CPU simulation)** (where the user does not allocate buffers or manage pipelining) and **Manual Mode** (where the user must allocate buffer addresses and manage pipelining). We recommend the following steps for optimizing operators:
 
 1. Develop the operator based on Auto Mode, generating PTO instruction sequences according to the algorithm logic.
 2. Verify functionality and correctness in CPU simulation.
 3. Port the code to Ascend hardware to ensure correctness and collect performance data.
 4. Identify performance bottlenecks (CUBE Bound, MTE Bound, Vector Bound) and begin optimization and tuning.
 
-We ensure that each PTO instruction, when implemented within a fixed Tile shape, fully leverages the capabilities of the underlying hardware. We encapsulate low-level hardware implementations into the Tile abstractions and utilize expert knowledge to create a variety of Tile templates. During static compilation, the compiler selects the best assembly implementation for the current shape based on template parameters. By merging different PTO instructions, we achieve optimal performance.
+We ensure that each PTO instruction, when implemented within a fixed tile shape, fully leverages the capabilities of the underlying hardware. We encapsulate low-level hardware implementations into the tile abstractions and utilize expert knowledge to create a variety of tile templates. During static compilation, the compiler selects the best assembly implementation for the current shape based on template parameters. By merging different PTO instructions, we achieve optimal performance.
 
-In this repository, we demonstrate how standard Tile operations can be mapped to various pipelines through template parameters:
+In this repository, we demonstrate how standard tile operations can be mapped to various pipelines through template parameters:
 
-* Static Tile Shape (Row, Col)
-* Dynamic Tile Mask (Valid Mask)
+* Static tile Shape (Row, Col)
+* Dynamic tile Mask (Valid Mask)
 * Event Record & Wait (Set wait flag)
 * Specialized Fixed Function (SFU)
 * Fixed Pipeline (FIXP)
@@ -113,11 +113,9 @@ For detailed, OS-specific setup (Windows / Linux / macOS), see: [docs/getting-st
 
 This repository includes an MkDocs (Read the Docs theme) site under `docs/mkdocs/`.
 
-Using a Python venv (recommended):
+Install mkdocs first:
 
 ```bash
-python3 -m venv .venv-mkdocs
-source .venv-mkdocs/bin/activate
 python -m pip install -r docs/mkdocs/requirements.txt
 python -m mkdocs serve -f docs/mkdocs/mkdocs.yml
 ```
