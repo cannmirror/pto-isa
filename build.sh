@@ -21,6 +21,7 @@ export BASE_PATH=$(
   pwd
 )
 
+
 export INCLUDE_PATH="${ASCEND_HOME_PATH}/include"
 export ASCEND_ENV_PATH="${ASCEND_HOME_PATH}/bin"
 export BUILD_PATH="${BASE_PATH}/build"
