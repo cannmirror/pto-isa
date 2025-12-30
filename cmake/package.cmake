@@ -64,7 +64,7 @@ function(pack_built_in)
       ${COMMON_FILES}
       ${CMAKE_SOURCE_DIR}/scripts/package/common/sh/multi_version.inc
   )
-  set(LATEST_MANAGER_FILES
+  set(LATEST_MANGER_FILES
       ${COMMON_FILES}
       ${CMAKE_SOURCE_DIR}/scripts/package/common/sh/common_func.inc
       ${CMAKE_SOURCE_DIR}/scripts/package/common/sh/version_compatiable.inc
@@ -82,7 +82,7 @@ function(pack_built_in)
   install(FILES ${PACKAGE_FILES}
       DESTINATION share/info/pto_isa/script
   )
-  install(FILES ${LATEST_MANAGER_FILES}
+  install(FILES ${LATEST_MANGER_FILES}
       DESTINATION latest_manager
   )
   install(DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/package/latest_manager/scripts/

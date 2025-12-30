@@ -34,7 +34,7 @@ from common.py.pkg_parser import (
     ParseOption, XmlConfig, parse_xml_config, get_cann_version_info
 )
 from common.py.utils.pkg_utils import (
-    BUILD_DIR, CONFIG_SCRIPT_PATH, CompressError, ContainAsteriskError, DELIVERY_DIR, DELIVERY_PATH, FAIL,
+    CONFIG_SCRIPT_PATH, CompressError, ContainAsteriskError, DELIVERY_PATH, FAIL,
     FilelistError, GenerateFilelistError, PackageNameEmptyError, SUCCESS, TOP_DIR,
     UnknownOperateTypeError, path_join
 )
@@ -68,7 +68,7 @@ def get_compress_cmd(pkg_args: Namespace,
         CommLog.cilog_error("the repack type '%s' is not support!", suffix)
         sys.exit(FAIL)
     try:
-        makeself_dir = os.path.join(BUILD_DIR, "makeself.txt")
+        makeself_dir = os.path.join(TOP_DIR, "build/makeself.txt")
         with open(makeself_dir, 'w') as f:
             f.write(pack_cmd)
     except Exception as exception:
@@ -140,7 +140,7 @@ def generate_version_header_content(target_conf) -> Iterator[str]:
 
 
 def generate_customized_file(target_conf, ext_name):
-    filepath = os.path.join(BUILD_DIR, target_conf.get('value'))
+    filepath = os.path.join(TOP_DIR, "build", target_conf.get('value'))
 
     generator = target_conf.get('generator', 'info')
     if generator == 'version_header':
@@ -540,7 +540,7 @@ def generate_config_inc(package_attr: Dict):
     if 'parallel' not in package_attr and 'parallel_limit' not in package_attr and 'use_move' not in package_attr:
         return
     year = datetime.now(timezone.utc).year
-    config_inc = os.path.join(BUILD_DIR, 'config.inc')
+    config_inc = os.path.join(TOP_DIR, "build", 'config.inc')
     header = [
         '#!/bin/sh\n',
         '#----------------------------------------------------------------------------\n',
@@ -563,7 +563,7 @@ def main(pkg_name='', xml_file='', main_args=None):
     参数: pkg_name, os_arch, type
     返回值: SUCCESS/FAIL
     """
-    delivery_dir = DELIVERY_DIR
+    delivery_dir = os.path.join(TOP_DIR, DELIVERY_PATH)
     if not os.path.exists(delivery_dir):
         return FAIL
 
@@ -684,7 +684,7 @@ if __name__ == "__main__":
             args.build_type = args.build_type.lower()
         status = main(args.pkg_name, args.xml_file, main_args=args)
     except Exception as e:
-        CommLog.cilog_error("exception occurred (%s)!", e)
+        CommLog.cilog_error("exception is occurred (%s)!", e)
         CommLog.cilog_info("%s", traceback.format_exc())
         status = FAIL
     sys.exit(status)
