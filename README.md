@@ -22,7 +22,7 @@ Currently, PTO instructions are integrated into the following frameworks:
 
 * [PyPTO](https://gitcode.com/cann/pypto/)
 * [TileLang Ascend](https://github.com/tile-ai/tilelang-ascend/)
-* More languages comming soon
+* More languages coming soon
 
 ## Target Users of this Repository
 
@@ -100,7 +100,7 @@ PTO ISA defines over 90 standard operations. This repository implements a growin
 
 * Ascend A2 (Ascend 910B)
 * Ascend A3 (Ascend 910C)
-* Ascend A5 (Ascend 950 )
+* Ascend A5 (Ascend 950)
 * CPU (x86_64 / AArch64)
 
 For more details please refer to [Released PTO ISA](include/README.md)
@@ -261,4 +261,3 @@ source ${install-path}/cann/bin/setenv.bash
 ## License
 
 This project is licensed under the CANN Open Software License Agreement Version 2.0. See the `LICENSE` file for details.
-

@@ -42,4 +42,3 @@ A GlobalTensor is a typed view over GM with:
 - an optional layout hint
 
 See: `docs/coding/GlobalTensor.md`
-

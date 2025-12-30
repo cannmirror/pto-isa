@@ -11,10 +11,10 @@
 # makeself.cmake - 自定义 makeself 打包脚本
 
 # 设置 makeself 路径
-set(MAKESELF_EXE ${CPACK_MAKESELF_PATH}/makeself.sh)
-set(MAKESELF_HEADER_EXE ${CPACK_MAKESELF_PATH}/makeself-header.sh)
-if(NOT MAKESELF_EXE)
-    message(FATAL_ERROR "makeself not found! Install it with: sudo apt install makeself")
+set(MAKESELF_EXE "${CPACK_MAKESELF_PATH}/makeself.sh")
+set(MAKESELF_HEADER_EXE "${CPACK_MAKESELF_PATH}/makeself-header.sh")
+if(NOT EXISTS "${MAKESELF_EXE}" OR NOT EXISTS "${MAKESELF_HEADER_EXE}")
+    message(FATAL_ERROR "makeself not found at ${CPACK_MAKESELF_PATH}; ensure it is downloaded or pass -DCANN_3RD_LIB_PATH=...")
 endif()
 
 # 创建临时安装目录
@@ -33,8 +33,16 @@ endif()
 
 # 生成安装配置文件
 set(CSV_OUTPUT ${CPACK_CMAKE_BINARY_DIR}/filelist.csv)
+set(_pto_pkg_cmd python3 ${CPACK_CMAKE_SOURCE_DIR}/scripts/package/package.py --pkg_name pto_isa)
+if(DEFINED CPACK_SOC AND NOT CPACK_SOC STREQUAL "")
+    list(APPEND _pto_pkg_cmd --chip_name ${CPACK_SOC})
+endif()
+list(APPEND _pto_pkg_cmd --os_arch linux-${CPACK_ARCH})
 execute_process(
-        COMMAND python3 ${CPACK_CMAKE_SOURCE_DIR}/scripts/package/package.py --pkg_name pto_isa --chip_name ${CPACK_SOC} --os_arch linux-${CPACK_ARCH}
+        COMMAND "${CMAKE_COMMAND}" -E env
+                PTO_PACKAGE_BUILD_DIR=${CPACK_CMAKE_BINARY_DIR}
+                PTO_PACKAGE_DELIVERY_DIR=${STAGING_DIR}
+                ${_pto_pkg_cmd}
         WORKING_DIRECTORY ${CPACK_CMAKE_BINARY_DIR}
         OUTPUT_VARIABLE result
         ERROR_VARIABLE error
@@ -43,7 +51,7 @@ execute_process(
 )
 message(STATUS "package.py result: ${code}")
 if (NOT code EQUAL 0)
-    message(FATAL_ERROR "Filelist generation failed: ${result}")
+    message(FATAL_ERROR "Filelist generation failed.\nstdout:\n${result}\nstderr:\n${error}")
 else ()
     message(STATUS "Filelist generated successfully: ${result}")
 

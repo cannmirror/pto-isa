@@ -48,4 +48,3 @@ Most kernels follow the same mapping:
 - compute tile row/col from `block_idx`
 
 For a concrete worked example, see `docs/coding/tutorials/vec-add.md`.
-

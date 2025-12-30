@@ -15,13 +15,13 @@ This directory documents the PTO ISA (Instruction Set Architecture) used by PTO 
 
 ## Where to Start
 
-- ISA overview: `docs/PTOISA.md`
-- Instruction index: `docs/isa/README.md`
-- Common conventions: `docs/isa/conventions.md`
-- PTO assembly syntax reference (PTO-AS): `docs/grammar/PTO-AS.md`
-- Getting started (recommended: run on CPU first): `docs/getting-started.md`
-- Implementation and extension notes: `docs/coding/README.md`
-- Kernel examples (NPU-focused): `kernels/README.md`
+- ISA overview: [`docs/PTOISA.md`](PTOISA.md)
+- Instruction index: [`docs/isa/README.md`](isa/README.md)
+- Common conventions: [`docs/isa/conventions.md`](isa/conventions.md)
+- PTO assembly syntax reference (PTO-AS): [`docs/grammar/PTO-AS.md`](grammar/PTO-AS.md)
+- Getting started (recommended: run on CPU first): [`docs/getting-started.md`](getting-started.md)
+- Implementation and extension notes: [`docs/coding/README.md`](coding/README.md)
+- Kernel examples (NPU-focused): [`kernels/README.md`](../kernels/README.md)
 
 ## Documentation Layout
 

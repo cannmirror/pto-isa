@@ -38,4 +38,3 @@ Unless a section explicitly says otherwise:
 6. PTO assembly: `manual/06-assembly.md`
 7. Instruction set structure: `manual/07-instructions.md`
 8. Programming guide (Auto/Manual patterns): `manual/08-programming.md`
-
