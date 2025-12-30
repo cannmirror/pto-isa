@@ -146,6 +146,7 @@ run_simple_st() {
   echo "execute samples success"
 }
 
+
 run_all_st() {
   echo $dotted_line
   echo "Start to run all st"
