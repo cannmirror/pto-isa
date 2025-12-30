@@ -11,6 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <acl/acl.h>
 #include <pto/pto-inst.hpp>
 
+#include "fa_performance_kernel.h"
 #include "pto_macro_matmul.hpp"
 #include "pto_macro_fa_softmax.hpp"
 #include "pto_macro_fa_gu.hpp"
@@ -27,7 +28,9 @@ enum FftsBufferFlag : uint32_t {
     BUF1_SM_READY,    // Buffer 1: Softmax output ready
     BUF1_SV_CONSUMED, // Buffer 1: SV consumed
     UPDATE_READY,     // Update stage ready
-    UPDATE_CONSUMED   // Update stage consumed
+    UPDATE_CONSUMED,  // Update stage consumed
+    CV_COMM_CTRL,      // CV comm slot handshake
+    CV_BLOCK_END,    // CV comm slot block end
 };
 #endif
 
@@ -39,7 +42,7 @@ enum CoreEvtID : uint32_t {
 };
 
 #define VEC_CORES 2
-
+constexpr int MAX_CORES = 25;
 // -----------------------------------------------------------------------------
 // Performance tuning knobs (high-level)
 //
@@ -55,13 +58,6 @@ enum CoreEvtID : uint32_t {
 // - *_TNBuffers: ping/pong depth for Mat tiles (overlap) and Vec tiles (latency hiding)
 // - QKV_CV_FIFO / PV_CV_FIFO: FIFO depth between stages (avoid backpressure)
 // -----------------------------------------------------------------------------
-
-#define DEFAULT_CV_FIFO_SIZE 12
-constexpr int DEFAULT_CV_FIFO_CONS_SYNC_PERIOD = DEFAULT_CV_FIFO_SIZE / 2;
-constexpr int DEFAULT_CUBE_S1 = 128;
-constexpr int DEFAULT_TILE_S1 = 256;
-constexpr int DEFAULT_QK_PRELOAD = 4;
-constexpr std::size_t PROFILE_BYTES_PER_BLOCK = 1024 * 3; // cube + two vec subblocks
 
 // Inline macro used for small, performance-sensitive functions
 #ifndef PTO_INLINE
@@ -104,8 +100,27 @@ AICORE inline bool should_notify_consumption(int sync_iter) {
     static_assert(FifoSize >= 1, "CV FIFO size must be >= 1");
     constexpr int period = (SyncPeriod > 0) ? SyncPeriod : 1;
     static_assert(period >= 1, "CV FIFO consume sync period must be >= 1");
-    if (sync_iter < static_cast<int>(FifoSize) - (period-1)) return false;
     return ((sync_iter + 1) % period) == 0; // notify one tile earlier than the wait check
+}
+
+// Compute how many consumption notifications have not been waited on yet so we can drain them at kernel tail.
+AICORE inline int pending_consumption_events(int tiles_processed, int fifo_size, int sync_period) {
+    if (tiles_processed <= 0 || sync_period <= 0 || fifo_size <= 0) return 0;
+
+    const int notify_count = tiles_processed / sync_period; // notifications fire every sync_period tiles
+
+    int wait_count = 0;
+    if (tiles_processed > fifo_size) {
+        const int last_iter = tiles_processed - 1;
+        wait_count = (last_iter / sync_period) - ((fifo_size - 1) / sync_period); // waits start after FIFO is filled
+        if (wait_count < 0) wait_count = 0;
+    }
+
+    int pending = notify_count - wait_count;
+    if (pending < 0) pending = 0;
+
+    const int max_pending = (fifo_size + sync_period - 1) / sync_period; // ceil(fifo_size / sync_period)
+    return (pending > max_pending) ? max_pending : pending;
 }
 
 template <typename TileType>
@@ -285,11 +300,11 @@ AICORE inline void compute_qk(int tile_id, int sub_tile_id, __gm__ half *q, __gm
             wait_flag_dev(BUF0_SM_CONSUMED); // wait for SM consume data
 
         using GlobalDataQK =
-            GlobalTensor<float, pto::Shape<1, 1, 1, Cube_S0, Cube_S1>, pto::Stride<1, 1, 1, Tile_S1, 1>>;
+            GlobalTensor<float, pto::Shape<1, 1, 1, Cube_S0, Cube_S1>, pto::Stride<1, 1, 1, Cube_S1, 1>>;
         const uint32_t buf_idx = static_cast<uint32_t>(tile_id % QKP_CV_FIFO);
-        const size_t base_elems =
-            static_cast<size_t>(buf_idx) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(Tile_S1) +
-            static_cast<size_t>(sub_tile_id) * static_cast<size_t>(Cube_S1);
+        const size_t base_elems = static_cast<size_t>(buf_idx) * static_cast<size_t>(kTileFactor) *
+            static_cast<size_t>(Cube_S0) * static_cast<size_t>(Cube_S1) +
+            static_cast<size_t>(sub_tile_id) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(Cube_S1);
         GlobalDataQK qkGlobalTile(qk_tile_fifo + base_elems);
         TSTORE(qkGlobalTile, qkAccTile);
 
@@ -331,8 +346,14 @@ AICORE inline void compute_pv(int tile_id, int sub_tile_id, __gm__ half *p_tile_
             wait_flag_dev(BUF1_SM_READY); // wait for softmax produce data
 
         // For TILE_S1 > CUBE_S1, need to stride by Tile_S1 for each Cube_S1 chunk
+        #ifndef P_FIFO_USE_NZ
         using GlobalXexpTileT =
             GlobalTensor<half, pto::Shape<1, 1, 1, Cube_S0, Cube_S1>, pto::Stride<1, 1, 1, Cube_S1, 1>>;
+        #else
+        using GlobalXexpTileT =
+            GlobalTensor<half, pto::Shape<1, Cube_S1/16, Cube_S0/16, 16, 16>, pto::Stride<Cube_S0*Cube_S1, Cube_S0*16, 16*16, 16, 1>, Layout::NZ>;
+        #endif
+
         const uint32_t buf_idx = static_cast<uint32_t>(tile_id % QKP_CV_FIFO);
         const size_t base_elems =
             static_cast<size_t>(buf_idx) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(Tile_S1) +
@@ -406,15 +427,24 @@ AICORE inline void compute_p(int tile_id, int row_slice, __gm__ float *qk_tile_f
             wait_flag_dev(BUF0_QK_READY); // wait for QK produce data
 
         const uint32_t buf_idx = static_cast<uint32_t>(tile_id % QKP_CV_FIFO);
-        const size_t base_elems =
-            static_cast<size_t>(buf_idx) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(Tile_S1);
+        const size_t base_elems = static_cast<size_t>(buf_idx) * static_cast<size_t>(kTileFactor) *
+            static_cast<size_t>(Cube_S0) * static_cast<size_t>(Cube_S1);
         const size_t subblock_base_rows = static_cast<size_t>(Cube_S0 / VEC_CORES) * static_cast<size_t>(get_subblockid());
         const size_t row_offset = subblock_base_rows + static_cast<size_t>(row_slice * Vec_S0);
-        __gm__ float *qk_ptr = qk_tile_fifo + base_elems + row_offset * static_cast<size_t>(Tile_S1);
-        using GlobalDataQK_VEC =
-            GlobalTensor<float, pto::Shape<1, 1, 1, Vec_S0, Tile_S1>, pto::Stride<1, 1, 1, Tile_S1, 1>>;
-        GlobalDataQK_VEC qkGlobalTile(qk_ptr);
-        TLOAD(qkVecTile, qkGlobalTile);
+        __gm__ float *qk_ptr = qk_tile_fifo + base_elems + row_offset * static_cast<size_t>(Cube_S1);
+
+        using GlobalDataQK_Sub =
+            GlobalTensor<float, pto::Shape<1, 1, 1, Vec_S0, Cube_S1>, pto::Stride<1, 1, 1, Cube_S1, 1>>;
+        using TileDataF_Sub = Tile<TileType::Vec, float, Vec_S0, Tile_S1, BLayout::RowMajor, Vec_S0, Cube_S1>;
+        for (int sub_col = 0; sub_col < static_cast<int>(kTileFactor); ++sub_col) {
+            __gm__ float *qk_ptr_sub = qk_ptr + static_cast<size_t>(sub_col) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(Cube_S1);
+            GlobalDataQK_Sub qkGlobalSub(qk_ptr_sub);
+
+            TileDataF_Sub qkVecSub;
+            const uint64_t col_byte_offset = static_cast<uint64_t>(sub_col * Cube_S1 * sizeof(float));
+            TASSIGN(qkVecSub, (uint64_t)qkVecTile.data() + col_byte_offset);
+            TLOAD(qkVecSub, qkGlobalSub);
+        }
 
         if (row_slice == static_cast<int>(kTileFactor) - 1 && should_notify_consume)
             ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, BUF0_SM_CONSUMED)); // notify for SM consume data
@@ -558,11 +588,12 @@ AICORE inline void compute_gu(int tile_id, int num_tiles, __gm__ float *pv_tile_
     }
 }
 
-template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1 = DEFAULT_CUBE_S1, int TILE_S1 = DEFAULT_TILE_S1, int QK_PRELOAD = DEFAULT_QK_PRELOAD,
-    int CV_FIFO_SIZE = DEFAULT_CV_FIFO_SIZE, bool INTERMEDIATE_CHECK = false, int CV_FIFO_CONS_SYNC_PERIOD = DEFAULT_CV_FIFO_CONS_SYNC_PERIOD>
+template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD,
+    int CV_FIFO_SIZE, bool INTERMEDIATE_CHECK, int CV_FIFO_CONS_SYNC_PERIOD>
 __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__ half *k, __gm__ half *v,
     __gm__ half *p_tile_fifo, __gm__ float *exp_max_ififo, __gm__ float *global_sum_out, __gm__ float *exp_max_out,
-    __gm__ float *o_out, __gm__ float *o_parts_out, __gm__ float *qk_tile_fifo, __gm__ float *pv_tile_fifo, __gm__ uint8_t *profile_buf) {
+    __gm__ float *o_out, __gm__ float *o_parts_out, __gm__ float *qk_tile_fifo, __gm__ float *pv_tile_fifo, __gm__ uint8_t *cv_comm_buf,
+    __gm__ uint8_t *profile_buf) {
     uint64_t tStart = get_sys_cnt();
 
     set_ffts_base_addr((uint64_t)ffts_addr);
@@ -573,6 +604,7 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
 
     // Rename dimensions for clarity: S0 (rows total), Cube_S0 (per-block rows), S1 (cols), HEAD_SIZE (inner)
     constexpr uint32_t Cube_S0 = CUBE_S0;
+    constexpr uint32_t block_rows = S0 / CUBE_S0;
     constexpr uint32_t Cube_S1 = CUBE_S1; // per-tile S1 chunk
     constexpr uint32_t Tile_S1 = TILE_S1; // logical tile along S1
     static_assert(Tile_S1 % Cube_S1 == 0, "TILE_S1 must be divisible by CUBE_S1");
@@ -663,9 +695,40 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
     // block offset for logical S0
     const int block_idx = get_block_idx();
     const int block_offset_rows = block_idx * static_cast<int>(Cube_S0);
+
+    constexpr bool use_cv_comm = (!INTERMEDIATE_CHECK) && (block_rows >= static_cast<uint32_t>(MAX_CORES));
+    int comm_slot = block_idx;
+
+    if constexpr (use_cv_comm) {
+        if constexpr (DAV_CUBE) {
+            PTO_ASSERT(cv_comm_buf != nullptr, "cv_comm_buf must be non-null when CV comm is enabled on cube cores");
+            comm_slot = static_cast<int>(get_coreid() & 0x7f);
+            comm_slot %= MAX_CORES;
+            __gm__ volatile uint32_t *comm_slot_ptr = reinterpret_cast<__gm__ volatile uint32_t *>(cv_comm_buf +
+                static_cast<std::size_t>(block_idx) * kFaCvCommSlotBytes);
+            comm_slot_ptr[0] = static_cast<uint32_t>(comm_slot);
+            dcci(comm_slot_ptr, SINGLE_CACHE_LINE);
+            dsb(DSB_DDR);
+            #ifdef _DEBUG
+            cce::printf("Core %d Cube Block %d, comm_slot %d\n", get_coreid(), block_idx, comm_slot);
+            #endif            
+            ffts_cross_core_sync(PIPE_MTE1, _getFFTSMsg(0x2, CV_COMM_CTRL));
+        } else if constexpr (DAV_VEC) {
+            static_assert(use_cv_comm, "cv_comm_buf must be provided when CV comm is enabled on vector cores");
+            PTO_ASSERT(cv_comm_buf != nullptr, "cv_comm_buf must be non-null when CV comm is enabled on vector cores");
+            __gm__ volatile uint32_t *comm_slot_ptr = reinterpret_cast<__gm__ volatile uint32_t *>(cv_comm_buf +
+                static_cast<std::size_t>(block_idx) * kFaCvCommSlotBytes);
+            dcci(comm_slot_ptr, SINGLE_CACHE_LINE);
+            wait_flag_dev(CV_COMM_CTRL);
+            comm_slot = static_cast<int>(comm_slot_ptr[0]);
+            #ifdef _DEBUG
+            cce::printf("Core %d Vec Block %d, SubBlock %d, comm_slot %d\n", get_coreid(), block_idx, int(get_subblockid()), comm_slot);
+            #endif
+        }
+    }
     __gm__ uint64_t *profile_entry = nullptr;
     if (profile_buf != nullptr) {
-        std::size_t profile_block_base = static_cast<std::size_t>(block_idx) * PROFILE_BYTES_PER_BLOCK;
+        std::size_t profile_block_base = static_cast<std::size_t>(block_idx) * kFaProfileBytesPerBlock;
         std::size_t profile_offset = profile_block_base;
         if constexpr (DAV_VEC) {
             profile_offset += (static_cast<std::size_t>(get_subblockid()) + 1U) * 1024U; // vec subblock 0/1 use 2nd/3rd KB
@@ -681,14 +744,14 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
         static_cast<size_t>(HEAD_SIZE);
 
     __gm__ half *q_block = q + block_offset_rows * HEAD_SIZE;
-    __gm__ half *p_tile_fifo_block = p_tile_fifo + static_cast<size_t>(block_idx) * p_fifo_block_stride;
-    __gm__ float *exp_max_ififo_block = exp_max_ififo + static_cast<size_t>(block_idx) * p_max_fifo_block_stride;
+    __gm__ half *p_tile_fifo_block = p_tile_fifo + static_cast<size_t>(comm_slot) * p_fifo_block_stride;
+    __gm__ float *exp_max_ififo_block = exp_max_ififo + static_cast<size_t>(comm_slot) * p_max_fifo_block_stride;
     __gm__ float *global_sum_block = global_sum_out + block_offset_rows;
     __gm__ float *exp_max_block = exp_max_out + block_offset_rows;
     __gm__ float *o_out_block = o_out + static_cast<size_t>(block_offset_rows) * static_cast<size_t>(HEAD_SIZE);
     __gm__ float *o_parts_block = o_parts_out + static_cast<size_t>(block_offset_rows) * static_cast<size_t>(HEAD_SIZE);
-    __gm__ float *qk_tile_fifo_block = qk_tile_fifo + static_cast<size_t>(block_idx) * qk_fifo_block_stride;
-    __gm__ float *pv_tile_fifo_block = pv_tile_fifo + static_cast<size_t>(block_idx) * pv_fifo_block_stride;
+    __gm__ float *qk_tile_fifo_block = qk_tile_fifo + static_cast<size_t>(comm_slot) * qk_fifo_block_stride;
+    __gm__ float *pv_tile_fifo_block = pv_tile_fifo + static_cast<size_t>(comm_slot) * pv_fifo_block_stride;
 
     int num_tiles_s1 = S1 / Tile_S1;
     if constexpr (DAV_CUBE) {
@@ -779,6 +842,10 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
         }
     }
 
+    const int pending_qk_sm_consumed = pending_consumption_events(num_tiles_s1, static_cast<int>(qkp_tile_fifo_size), CV_FIFO_CONS_SYNC_PERIOD);
+    const int pending_sv_consumed = pending_qk_sm_consumed; // same schedule and FIFO settings
+    const int pending_update_consumed = pending_consumption_events(num_tiles_s1, static_cast<int>(qkp_tile_fifo_size), CV_FIFO_CONS_SYNC_PERIOD);
+
     if constexpr (DAV_CUBE) {
         wait_flag(PIPE_M, PIPE_MTE1, EVENT_ID0);
         wait_flag(PIPE_M, PIPE_MTE1, EVENT_ID1);
@@ -787,7 +854,12 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
         wait_flag(PIPE_MTE1, PIPE_MTE2, EVENT_ID2);
         wait_flag(PIPE_MTE1, PIPE_MTE2, EVENT_ID3);          
         wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
-        wait_flag(PIPE_FIX, PIPE_M, EVENT_ID1);        
+        wait_flag(PIPE_FIX, PIPE_M, EVENT_ID1);       
+        for (int i = 0; i < pending_qk_sm_consumed; ++i)
+            wait_flag_dev(BUF0_SM_CONSUMED);
+        for (int i = 0; i < pending_update_consumed; ++i)
+            wait_flag_dev(UPDATE_CONSUMED);
+        wait_flag_dev(CV_BLOCK_END); // wait for vector done all reading
     }
 
     if constexpr (DAV_VEC) {
@@ -795,6 +867,9 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
         wait_flag(PIPE_V, PIPE_MTE2, EVENT_ID1);
         wait_flag(PIPE_MTE3, PIPE_V, EVENT_ID0);
         wait_flag(PIPE_MTE3, PIPE_V, EVENT_ID1);   
+        for (int i = 0; i < pending_sv_consumed; ++i)
+            wait_flag_dev(BUF1_SV_CONSUMED);
+        ffts_cross_core_sync(PIPE_MTE2, _getFFTSMsg(0x2, CV_BLOCK_END)); // cube can exit CV comm now
     }
 
     pipe_barrier(PIPE_ALL);
@@ -814,43 +889,84 @@ __global__ AICORE void runTFA(__gm__ uint64_t *ffts_addr, __gm__ half *q, __gm__
 #endif
 }
 
+// Empty kernel to warm up cores
+__global__ AICORE void warmup_kernel() {}
+
+// Vec-side prefetch kernel to pull q/k/v into L2 cache using TLOAD only
+template <int S0, int HEAD_SIZE, int S1>
+__global__ AICORE void l2prefetch_kernel(__gm__ half *q, __gm__ half *k, __gm__ half *v) {
+    (void)S1; // prefetch only depends on S0 and HEAD_SIZE
+    constexpr int TILE = 128;
+    static_assert(S0 % TILE == 0, "S0 must be divisible by 128 for prefetch");
+    if constexpr (DAV_VEC) {
+        constexpr int ROW_TILES = S0 / TILE;
+
+        using TileS0 = Tile<TileType::Vec, half, TILE, HEAD_SIZE, BLayout::RowMajor, TILE, HEAD_SIZE>;
+        using GlobalS0 = GlobalTensor<half, pto::Shape<1, 1, 1, TILE, HEAD_SIZE>, pto::Stride<1, 1, 1, HEAD_SIZE, 1>>;
+
+        if( get_subblockid() != 0 ) return; // only one subblock does prefetch
+
+        TileS0 tile0;
+
+        TASSIGN(tile0, 0u);
+
+        const int block = get_block_idx();
+        const int tensor_sel = block % 3; // 0->q, 1->k, 2->v
+        const int row_tile0 = block / 3;   // one 128xHEAD tile per block per tensor
+
+        if (row_tile0 >= ROW_TILES) return; // safety guard
+
+        __gm__ half *base_ptr = (tensor_sel == 0) ? q : ((tensor_sel == 1) ? k : v);
+
+        const size_t off0 = static_cast<size_t>(row_tile0) * static_cast<size_t>(TILE) * static_cast<size_t>(HEAD_SIZE);
+        GlobalS0 global0(base_ptr + off0);
+        TLOAD(tile0, global0);
+    }
+}
+
 // Host wrapper
-template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1 = DEFAULT_CUBE_S1, int TILE_S1 = DEFAULT_TILE_S1, int QK_PRELOAD = DEFAULT_QK_PRELOAD,
-    int CV_FIFO_SIZE = DEFAULT_CV_FIFO_SIZE, bool INTERMEDIATE_CHECK = false, int CV_FIFO_CONS_SYNC_PERIOD = DEFAULT_CV_FIFO_CONS_SYNC_PERIOD>
+template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD,
+    int CV_FIFO_SIZE, bool INTERMEDIATE_CHECK, int CV_FIFO_CONS_SYNC_PERIOD>
 void LaunchTFA(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, aclFloat16 *p_tile_fifo, float *exp_max_ififo,
     float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, float *qk_tile_fifo, float *pv_tile_fifo,
-    uint8_t *profile_data, void *stream) {
+    uint8_t *profile_data, aclrtStream stream, uint8_t *cv_comm_buf) {
     static_assert(S0 % CUBE_S0 == 0, "S0 must be divisible by CUBE_S0");
     constexpr uint32_t block_rows = S0 / CUBE_S0;
+
+    // Warm up all cores first, then prefetch q/k/v into L2
+    warmup_kernel<<<24, nullptr, stream>>>();
+    constexpr uint32_t prefetch_blocks = 3 * (S0 / 128);
+    l2prefetch_kernel<S0, HEAD_SIZE, S1><<<prefetch_blocks, nullptr, stream>>>((__gm__ half *)q, (__gm__ half *)k, (__gm__ half *)v);
+
     runTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, CV_FIFO_SIZE, INTERMEDIATE_CHECK, CV_FIFO_CONS_SYNC_PERIOD><<<block_rows, nullptr, stream>>>((__gm__ uint64_t *)ffts, (half *)q,
         (half *)k, (half *)v, (half *)p_tile_fifo, exp_max_ififo, global_sum_out, exp_max_out, o_out, o_parts_out, qk_tile_fifo,
-        pv_tile_fifo, profile_data);
+        pv_tile_fifo, cv_comm_buf, profile_data);
 }
 
 // Backward-compatible overload without profiling buffer
 template <int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD, int CV_FIFO_SIZE, bool INTERMEDIATE_CHECK, int CV_FIFO_CONS_SYNC_PERIOD>
 void LaunchTFA(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, aclFloat16 *p_tile_fifo, float *exp_max_ififo,
     float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, float *qk_tile_fifo, float *pv_tile_fifo,
-    void *stream) {
+    aclrtStream stream, uint8_t *cv_comm_buf) {
     LaunchTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, CV_FIFO_SIZE, INTERMEDIATE_CHECK, CV_FIFO_CONS_SYNC_PERIOD>(ffts, q, k, v,
-        p_tile_fifo, exp_max_ififo, global_sum_out, exp_max_out, o_out, o_parts_out, qk_tile_fifo, pv_tile_fifo, nullptr, stream);
+        p_tile_fifo, exp_max_ififo, global_sum_out, exp_max_out, o_out, o_parts_out, qk_tile_fifo, pv_tile_fifo, nullptr, stream, cv_comm_buf);
 }
 
 #include "generated_cases.h"
 
 #define INSTANTIATE_TFA(S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD) \
-template void LaunchTFA<S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, DEFAULT_CV_FIFO_SIZE, false, DEFAULT_CV_FIFO_CONS_SYNC_PERIOD>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
+template void LaunchTFA<S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, kFaCvFifoSize, false, kFaCvFifoConsSyncPeriod>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
     aclFloat16 *p_out, float *p_out_fp32, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, \
-    float *qk_out, float *pv_out, uint8_t *profile_data, void *stream); \
-template void LaunchTFA<S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, DEFAULT_CV_FIFO_SIZE, false, DEFAULT_CV_FIFO_CONS_SYNC_PERIOD>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
+    float *qk_out, float *pv_out, uint8_t *profile_data, aclrtStream stream, uint8_t *cv_comm_buf); \
+template void LaunchTFA<S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, kFaCvFifoSize, false, kFaCvFifoConsSyncPeriod>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
     aclFloat16 *p_out, float *p_out_fp32, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, \
-    float *qk_out, float *pv_out, void *stream); \
-template void LaunchTFA<S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, DEFAULT_CV_FIFO_SIZE, true, DEFAULT_CV_FIFO_CONS_SYNC_PERIOD>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
+    float *qk_out, float *pv_out, aclrtStream stream, uint8_t *cv_comm_buf); \
+template void LaunchTFA<S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, kFaCvFifoSize, true, kFaCvFifoConsSyncPeriod>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
     aclFloat16 *p_out, float *p_out_fp32, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, \
-    float *qk_out, float *pv_out, uint8_t *profile_data, void *stream); \
-template void LaunchTFA<S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, DEFAULT_CV_FIFO_SIZE, true, DEFAULT_CV_FIFO_CONS_SYNC_PERIOD>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
+    float *qk_out, float *pv_out, uint8_t *profile_data, aclrtStream stream, uint8_t *cv_comm_buf); \
+template void LaunchTFA<S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, kFaCvFifoSize, true, kFaCvFifoConsSyncPeriod>(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, \
     aclFloat16 *p_out, float *p_out_fp32, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, \
-    float *qk_out, float *pv_out, void *stream);
+    float *qk_out, float *pv_out, aclrtStream stream, uint8_t *cv_comm_buf);
 
 TFA_FOR_EACH_CASE(INSTANTIATE_TFA)
 
