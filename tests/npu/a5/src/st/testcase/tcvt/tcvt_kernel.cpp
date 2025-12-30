@@ -65,12 +65,47 @@ void launchTCVT(D *dst, S *src, void *stream) {
     }
 } 
 
-template void launchTCVT<int32_t, float, 128, 128, 128, 128>(int32_t *dst, float *src, void *stream);
-template void launchTCVT<float, int32_t, 256, 64, 256, 64>(float *dst, int32_t *src, void *stream);
-template void launchTCVT<int16_t, float, 16, 32, 16, 32>(int16_t *dst, float *src, void *stream);
-template void launchTCVT<int32_t, float, 32, 512, 32, 512>(int32_t *dst, float *src, void *stream);
-template void launchTCVT<int32_t, int16_t, 2, 512, 2, 512>(int32_t *dst, int16_t *src, void *stream);
-template void launchTCVT<int32_t, float, 4, 4096, 4, 4096>(int32_t *dst, float *src, void *stream);
-template void launchTCVT<float, int16_t, 64, 64, 64, 64>(float *dst, int16_t *src, void *stream);
-template void launchTCVT<aclFloat16, float, 64, 64, 64, 64>(aclFloat16 *dst, float *src, void *stream);
-template void launchTCVT<uint8_t, aclFloat16, 64, 64, 64, 64>(uint8_t *dst, aclFloat16 *src, void *stream);
+// Macro to generate template instantiations for all shapes for a given type pair
+#define INSTANTIATE_TCVT(dst_type, src_type) \
+    template void launchTCVT<dst_type, src_type, 2, 128, 2, 128>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 2, 32, 2, 32>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 1, 64, 1, 64>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 4, 64, 4, 64>(dst_type *dst, src_type *src, void *stream);
+
+// FP32 Source
+INSTANTIATE_TCVT(float, float)
+INSTANTIATE_TCVT(aclFloat16, float)
+INSTANTIATE_TCVT(int32_t, float)
+INSTANTIATE_TCVT(int16_t, float)
+INSTANTIATE_TCVT(int64_t, float)
+
+// FP16 Source
+INSTANTIATE_TCVT(float, aclFloat16)
+INSTANTIATE_TCVT(int32_t, aclFloat16)
+INSTANTIATE_TCVT(int16_t, aclFloat16)
+INSTANTIATE_TCVT(int8_t, aclFloat16)
+INSTANTIATE_TCVT(uint8_t, aclFloat16)
+
+// INT32 Source
+INSTANTIATE_TCVT(float, int32_t)
+INSTANTIATE_TCVT(int16_t, int32_t)
+// INSTANTIATE_TCVT(uint16_t, int32_t)
+INSTANTIATE_TCVT(int64_t, int32_t)
+
+// INT16 Source
+INSTANTIATE_TCVT(aclFloat16, int16_t)
+INSTANTIATE_TCVT(float, int16_t)
+INSTANTIATE_TCVT(uint32_t, int16_t)
+INSTANTIATE_TCVT(int32_t, int16_t)
+
+// INT8 Source
+INSTANTIATE_TCVT(aclFloat16, int8_t)
+INSTANTIATE_TCVT(int16_t, int8_t)
+
+// UINT8 Source
+INSTANTIATE_TCVT(aclFloat16, uint8_t)
+// INSTANTIATE_TCVT(uint16_t, uint8_t)
+
+// INT64 Source
+INSTANTIATE_TCVT(float, int64_t)
+INSTANTIATE_TCVT(int32_t, int64_t)

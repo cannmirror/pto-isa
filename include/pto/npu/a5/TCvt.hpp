@@ -56,17 +56,17 @@ template <typename R, typename DST, typename SRC>
 inline AICORE void cast32to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     typedef SRC __attribute__((ext_vector_type(ELE_CNT_B32))) SRC_VEC;
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B16))) DST_VEC;
-    SRC_VEC v_input_0, v_input_1;
+    
     uint32_t len32 = ELE_CNT_B32;
-    uint32_t new_len = len * 2;
     vector_bool preg_f32 = plt_b32(len32, POST_UPDATE);
     
-    FOR_ELEMENTS(ELE_CNT_B32*2)
-        vlds(v_input_0, v_input_1, src, srcOffset, DINTLV_B32);
-
-        vector_bool preg_f16 = plt_b16(new_len, POST_UPDATE); // len should be subtructed here by ElementsNum
-
+    FOR_ELEMENTS(ELE_CNT_B32)
+        SRC_VEC v_input_0, v_input_1;
         DST_VEC v_output_odd, v_output_even, v_output;
+
+        vector_bool preg_f16 = plt_b16(len, POST_UPDATE);
+
+        vlds(v_input_0, v_input_1, src, srcOffset, DINTLV_B32);
         if constexpr (std::is_same<R, void>::value) {
             vcvt(v_output_odd, v_input_1, preg_f32, RS_ENABLE, PART_ODD);
             vcvt(v_output_even, v_input_0, preg_f32, RS_ENABLE, PART_EVEN);    
@@ -179,13 +179,12 @@ inline AICORE void cast16to8(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstO
    
     uint32_t len16 = ELE_CNT_B16;
     vector_bool preg_f16 = plt_b16(len16, POST_UPDATE);
-    uint32_t new_len = len * 4;
 
     FOR_ELEMENTS(ELE_CNT_B8)
         SRC_VEC v_input_0, v_input_1;
         DST_VEC v_output_odd, v_output_even, v_output;
 
-        vector_bool preg_b8 = plt_b8(new_len, POST_UPDATE);
+        vector_bool preg_b8 = plt_b8(len, POST_UPDATE);
 
         vlds(v_input_0, v_input_1, src, srcOffset, DINTLV_B16);
         vcvt(v_output_odd, v_input_1, preg_f16, R(), RS_ENABLE, PART_ODD);

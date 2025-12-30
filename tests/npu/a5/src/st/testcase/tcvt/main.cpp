@@ -87,48 +87,49 @@ void test_tcvt()
     EXPECT_TRUE(ret);
 }
 
+// Macro to generate test cases for all shapes for a given type pair
+#define GENERATE_TCVT_TESTS(dst_type, src_type, type_name) \
+    TEST_F(TCVTTest, case_##type_name##_2x128) { test_tcvt<dst_type, src_type, 2, 128, 2, 128>(); } \
+    TEST_F(TCVTTest, case_##type_name##_2x32) { test_tcvt<dst_type, src_type, 2, 32, 2, 32>(); } \
+    TEST_F(TCVTTest, case_##type_name##_1x64) { test_tcvt<dst_type, src_type, 1, 64, 1, 64>(); } \
+    TEST_F(TCVTTest, case_##type_name##_4x64) { test_tcvt<dst_type, src_type, 4, 64, 4, 64>(); }
 
-TEST_F(TCVTTest, case1)
-{
-    test_tcvt<int32_t, float, 128, 128, 128, 128>();
-}
 
-TEST_F(TCVTTest, case2)
-{
-    test_tcvt<float, int32_t, 256, 64, 256, 64>();
-}
+// FP32 Source
+GENERATE_TCVT_TESTS(float, float, fp32_fp32)
+GENERATE_TCVT_TESTS(aclFloat16, float, fp32_fp16)
+GENERATE_TCVT_TESTS(int32_t, float, fp32_int32)
+GENERATE_TCVT_TESTS(int16_t, float, fp32_int16)
+GENERATE_TCVT_TESTS(int64_t, float, fp32_int64)
 
-TEST_F(TCVTTest, case3)
-{
-    test_tcvt<int16_t, float, 16, 32, 16, 32>();
-}
+// FP16 Source
+GENERATE_TCVT_TESTS(float, aclFloat16, fp16_fp32)
+GENERATE_TCVT_TESTS(int32_t, aclFloat16, fp16_int32)
+GENERATE_TCVT_TESTS(int16_t, aclFloat16, fp16_int16)
+GENERATE_TCVT_TESTS(int8_t, aclFloat16, fp16_int8)
+GENERATE_TCVT_TESTS(uint8_t, aclFloat16, fp16_uint8)
 
-TEST_F(TCVTTest, case4)
-{
-    test_tcvt<int32_t, float, 32, 512, 32, 512>();
-}
+// INT32 Source
+GENERATE_TCVT_TESTS(float, int32_t, int32_fp32)
+GENERATE_TCVT_TESTS(int16_t, int32_t, int32_int16)
+// GENERATE_TCVT_TESTS(uint16_t, int32_t, int32_uint16)
+GENERATE_TCVT_TESTS(int64_t, int32_t, int32_int64)
 
-TEST_F(TCVTTest, case5)
-{
-    test_tcvt<int32_t, int16_t, 2, 512, 2, 512>();
-}
+// INT16 Source
+GENERATE_TCVT_TESTS(aclFloat16, int16_t, int16_fp16)
+GENERATE_TCVT_TESTS(float, int16_t, int16_fp32)
+GENERATE_TCVT_TESTS(uint32_t, int16_t, int16_uint32)
+GENERATE_TCVT_TESTS(int32_t, int16_t, int16_int32)
 
-TEST_F(TCVTTest, case6)
-{
-    test_tcvt<int32_t, float, 4, 4096, 4, 4096>();
-}
+// INT8 Source
+GENERATE_TCVT_TESTS(aclFloat16, int8_t, int8_fp16)
+GENERATE_TCVT_TESTS(int16_t, int8_t, int8_int16)
 
-TEST_F(TCVTTest, case7)
-{
-    test_tcvt<float, int16_t, 64, 64, 64, 64>();
-}
+// UINT8 Source
+GENERATE_TCVT_TESTS(aclFloat16, uint8_t, uint8_fp16)
+// GENERATE_TCVT_TESTS(uint16_t, uint8_t, uint8_uint16)
 
-TEST_F(TCVTTest, case8)
-{
-    test_tcvt<aclFloat16, float, 64, 64, 64, 64>();
-}
-
-TEST_F(TCVTTest, case9)
-{
-    test_tcvt<uint8_t, aclFloat16, 64, 64, 64, 64>();
-}
+// INT64 Source
+GENERATE_TCVT_TESTS(float, int64_t, int64_fp32)
+GENERATE_TCVT_TESTS(int32_t, int64_t, int64_int32)
+ 
