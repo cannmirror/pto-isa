@@ -41,4 +41,3 @@ Reference implementations:
 
 - GEMM: `kernels/manual/a2a3/gemm_performance/README.md`
 - Flash Attention: `kernels/manual/a2a3/flash_atten/README.md`
-

@@ -13,7 +13,7 @@
 
 """基础构件。"""
 
-import os 
+import os
 from functools import partial
 from itertools import chain, tee
 from operator import methodcaller
@@ -22,6 +22,17 @@ from typing import Callable, Dict, Iterator, List, Optional, TypeVar, Set
 
 TOP_DIR = str(Path(__file__).resolve().parents[5])
 TOP_SOURCE_DIR = TOP_DIR + '/scripts/'
+def _resolve_path_from_topdir(path: str) -> str:
+    if os.path.isabs(path):
+        return path
+    return os.path.join(TOP_DIR, path)
+
+
+BUILD_DIR = _resolve_path_from_topdir(os.environ.get("PTO_PACKAGE_BUILD_DIR", "build"))
+DELIVERY_DIR = _resolve_path_from_topdir(
+    os.environ.get("PTO_PACKAGE_DELIVERY_DIR", "build/_CPack_Packages/makeself_staging")
+)
+
 DELIVERY_PATH = "build/_CPack_Packages/makeself_staging"
 CONFIG_SCRIPT_PATH = 'package'
 BLOCK_CONFIG_PATH = 'package/module'
