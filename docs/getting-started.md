@@ -14,7 +14,7 @@ This guide covers prerequisites and setup on **macOS / Linux / Windows**, and sh
 - Python `>= 3.8` (3.10+ recommended)
 - CMake `>= 3.16`
 - A C++ compiler with C++23 support:
-  - Linux: GCC 11+ or Clang 16+
+  - Linux: GCC 14+ or Clang 16+
   - macOS: Xcode/AppleClang (or Homebrew LLVM)
   - Windows: Visual Studio 2022 Build Tools (MSVC)
 - Python packages: `numpy` (the CPU test data generators use it)
