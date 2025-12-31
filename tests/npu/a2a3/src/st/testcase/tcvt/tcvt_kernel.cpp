@@ -10,12 +10,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/pto-inst.hpp>
 #include <pto/common/constants.hpp>
+#include "acl/acl.h"
 
 using namespace std;
 using namespace pto;
 
 template <typename T, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-inline AICORE void runTCVT(__gm__ T __out__ *out, __gm__ S __in__ *src) {
+__global__ AICORE void runTCVT(__gm__ T *out, __gm__ S *src) {
 
     //if (block_idx > 0) return;
 
@@ -53,89 +54,53 @@ inline AICORE void runTCVT(__gm__ T __out__ *out, __gm__ S __in__ *src) {
     out = dstGlobal.data();
 }
 
-
-extern "C" __global__ AICORE void launchTCVT_1(__gm__ int *out, __gm__ float *src) {
-    constexpr uint32_t M = 128;
-    constexpr uint32_t N = 128;
-    constexpr uint32_t K = 128;
-    constexpr uint32_t L = 128;
-    runTCVT<int, float, M, N, K, L>(out, src);
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void launchTCVT(D *dst, S *src, void *stream) {
+    if constexpr ( std::is_same_v<D, aclFloat16> ) {
+        runTCVT<half, S, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>((half*) dst, src);
+    } else if constexpr ( std::is_same_v<S, aclFloat16> ) {
+        runTCVT<D, half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(dst, (half*)src);
+    } else {
+         runTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(dst, src);
+    }
 }
 
+// Macro to generate template instantiations for all shapes for a given type pair
+#define INSTANTIATE_TCVT(dst_type, src_type) \
+    template void launchTCVT<dst_type, src_type, 2, 128, 2, 128>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 2, 32, 2, 32>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 1, 64, 1, 64>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 4, 64, 4, 64>(dst_type *dst, src_type *src, void *stream);
 
-extern "C" __global__ AICORE void launchTCVT_2(__gm__ float *out, __gm__ int *src) {
-    constexpr uint32_t M = 256;
-    constexpr uint32_t N = 64;
-    constexpr uint32_t K = 256;
-    constexpr uint32_t L = 64;
-    runTCVT<float, int, M, N, K, L>(out, src);
-}
+// FP32 Source
+INSTANTIATE_TCVT(float, float)
+INSTANTIATE_TCVT(aclFloat16, float)
+INSTANTIATE_TCVT(int32_t, float)
+INSTANTIATE_TCVT(int16_t, float)
+INSTANTIATE_TCVT(int64_t, float)
 
-extern "C" __global__ AICORE void launchTCVT_3(__gm__ int16_t *out, __gm__ float *src) {
-    constexpr uint32_t M = 16;
-    constexpr uint32_t N = 32;
-    constexpr uint32_t K = 16;
-    constexpr uint32_t L = 32;
-    runTCVT<int16_t, float, M, N, K, L>(out, src);
-}
+// FP16 Source
+INSTANTIATE_TCVT(float, aclFloat16)
+INSTANTIATE_TCVT(int32_t, aclFloat16)
+INSTANTIATE_TCVT(int16_t, aclFloat16)
+INSTANTIATE_TCVT(int8_t, aclFloat16)
+INSTANTIATE_TCVT(uint8_t, aclFloat16)
 
-extern "C" __global__ AICORE void launchTCVT_4(__gm__ int *out, __gm__ float *src) {
-    constexpr uint32_t M = 32;
-    constexpr uint32_t N = 512;
-    constexpr uint32_t K = 32;
-    constexpr uint32_t L = 512;
-    runTCVT<int, float, M, N, K, L>(out, src);
-}
+// INT32 Source
+INSTANTIATE_TCVT(float, int32_t)
+INSTANTIATE_TCVT(int16_t, int32_t)
+INSTANTIATE_TCVT(int64_t, int32_t)
 
-extern "C" __global__ AICORE void launchTCVT_5(__gm__ int16_t *out, __gm__ int *src) {
-    constexpr uint32_t M = 2;
-    constexpr uint32_t N = 512;
-    constexpr uint32_t K = 2;
-    constexpr uint32_t L = 512;
-    runTCVT<int16_t, int, M, N, K, L>(out, src);
-}
+// INT16 Source
+INSTANTIATE_TCVT(aclFloat16, int16_t)
+INSTANTIATE_TCVT(float, int16_t)
 
-extern "C" __global__ AICORE void launchTCVT_6(__gm__ float *out, __gm__ int *src) {
-    constexpr uint32_t M = 4;
-    constexpr uint32_t N = 4096;
-    constexpr uint32_t K = 4;
-    constexpr uint32_t L = 4096;
-    runTCVT<float, int, M, N, K, L>(out, src);
-}
+// INT8 Source
+INSTANTIATE_TCVT(aclFloat16, int8_t)
 
-extern "C" __global__ AICORE void launchTCVT_7(__gm__ float *out, __gm__ int16_t *src) {
-    constexpr uint32_t M = 64;
-    constexpr uint32_t N = 64;
-    constexpr uint32_t K = 64;
-    constexpr uint32_t L = 64;
-    runTCVT<float, int16_t, M, N, K, L>(out, src);
-}
+// UINT8 Source
+INSTANTIATE_TCVT(aclFloat16, uint8_t)
 
-
-void launchTCVT1(int *out, float *src, void *stream) {
-        launchTCVT_1<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT2(float *out, int *src, void *stream) {
-        launchTCVT_2<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT3(int16_t *out, float *src, void *stream) {
-        launchTCVT_3<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT4(int *out, float *src, void *stream){
-        launchTCVT_4<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT5(int16_t *out, int *src, void *stream){
-        launchTCVT_5<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT6(float *out, int *src, void *stream){
-        launchTCVT_6<<<1, nullptr, stream>>>(out, src);
-}
-
-void launchTCVT7(float *out, int16_t *src, void *stream){
-        launchTCVT_7<<<1, nullptr, stream>>>(out, src);
-}
+// INT64 Source
+INSTANTIATE_TCVT(float, int64_t)
+INSTANTIATE_TCVT(int32_t, int64_t)
