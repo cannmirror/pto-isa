@@ -27,6 +27,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include "test_common.h"
 #include "runtime/rt.h"
+#include "fa_performance_kernel.h"
 #include "generated_cases.h"
 
 using namespace std;
@@ -37,14 +38,16 @@ static std::vector<std::string> Split(const std::string &s, char delim) {
     std::stringstream ss(s);
     std::string item;
     while (std::getline(ss, item, delim)) {
-        if (!item.empty()) out.push_back(item);
+        if (!item.empty())
+            out.push_back(item);
     }
     return out;
 }
 
 static std::string Trim(const std::string &s) {
     const auto start = s.find_first_not_of(" \t\n\r");
-    if (start == std::string::npos) return "";
+    if (start == std::string::npos)
+        return "";
     const auto end = s.find_last_not_of(" \t\n\r");
     return s.substr(start, end - start + 1);
 }
@@ -62,18 +65,10 @@ static std::vector<std::string> SplitAny(const std::string &s, const std::string
             token.push_back(ch);
         }
     }
-    if (!token.empty()) out.push_back(token);
+    if (!token.empty())
+        out.push_back(token);
     return out;
 }
-
-static constexpr int kCvFifoSize = 12;
-static constexpr int kCvFifoConsSyncPeriod = kCvFifoSize / 2;
-static constexpr int kCubeS1 = 128;
-static constexpr int kDefaultQkPreload = 4;
-
-template<int S0, int HEAD_SIZE, int S1, int CUBE_S0 = S0, int CUBE_S1 = kCubeS1, int TILE_S1 = 256, int QK_PRELOAD = kDefaultQkPreload, int CV_FIFO_SIZE = kCvFifoSize,
-    bool INTERMEDIATE_CHECK = false, int CV_FIFO_CONS_SYNC_PERIOD = kCvFifoConsSyncPeriod>
-void LaunchTFA(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, aclFloat16 *p_tile_fifo, float *exp_max_ififo, float *global_sum_out, float *exp_max_out, float *o_out, float *o_parts_out, float *qk_tile_fifo, float *pv_tile_fifo, uint8_t *profile_data, aclrtStream stream);
 
 // Track current case name for golden IO (replaces gtest naming)
 static thread_local std::string g_case_name;
@@ -83,7 +78,8 @@ static int g_chip_id = 0; // device id selected via CLI
 static const std::string kReportCsv = "./report.csv";
 
 static void AppendReportRow(const std::string &case_name, int head, int s0, int s1, int cube_s0, int cube_s1,
-    int tile_s1, uint64_t start_time, uint64_t end_time, double duration_us, double avg_block_us, double gops, const std::string &tflops_str, bool ok) {
+    int tile_s1, uint64_t start_time, uint64_t end_time, double duration_us, double avg_block_us, double gops,
+    const std::string &tflops_str, bool ok) {
     const bool exists = std::ifstream(kReportCsv).good();
     std::ofstream ofs(kReportCsv, std::ios::app);
     if (!ofs.is_open()) {
@@ -91,13 +87,12 @@ static void AppendReportRow(const std::string &case_name, int head, int s0, int 
         return;
     }
     if (!exists) {
-        ofs << "case,HEAD,S0,S1,CUBE_S0,CUBE_S1,TILE_S1,start_time,end_time,duration_us,avg_block_us,GOPS,TFLOPS,result\n";
+        ofs << "case,HEAD,S0,S1,CUBE_S0,CUBE_S1,TILE_S1,start_time,end_time,duration_us,avg_block_us,GOPS,TFLOPS,"
+               "result\n";
     }
-    ofs << case_name << ',' << head << ',' << s0 << ',' << s1 << ',' << cube_s0 << ',' << cube_s1 << ',' << tile_s1 << ','
-        << start_time << ',' << end_time << ','
-        << std::fixed << std::setprecision(3) << duration_us << ','
-        << std::setprecision(3) << avg_block_us << ','
-        << std::setprecision(6) << gops << ',' << tflops_str << ','
+    ofs << case_name << ',' << head << ',' << s0 << ',' << s1 << ',' << cube_s0 << ',' << cube_s1 << ',' << tile_s1
+        << ',' << start_time << ',' << end_time << ',' << std::fixed << std::setprecision(3) << duration_us << ','
+        << std::setprecision(3) << avg_block_us << ',' << std::setprecision(6) << gops << ',' << tflops_str << ','
         << (ok ? "OK" : "NOK") << '\n';
 }
 
@@ -117,15 +112,20 @@ std::string GetGoldenDir() {
  * Example:
  *   run_tfa<float, 64, 128, 256, true>(); // enable intermediate checks
  */
-template<typename T, int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD, bool INTERMEDIATE_CHECK>
+template <typename T, int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD,
+    bool INTERMEDIATE_CHECK>
 void run_tfa() {
-    constexpr size_t qk_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(TILE_S1);
-    constexpr size_t p_fifo_stride = qk_fifo_stride;
-    constexpr size_t p_max_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0);
-    constexpr size_t pv_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
     constexpr int tile_factor = TILE_S1 / CUBE_S1;
+    constexpr size_t qk_fifo_stride = static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0) *
+                                      static_cast<size_t>(tile_factor) * static_cast<size_t>(CUBE_S1);
+    constexpr size_t p_fifo_stride = qk_fifo_stride;
+    constexpr size_t p_max_fifo_stride = static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0);
+    constexpr size_t pv_fifo_stride =
+        static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
     const size_t block_rows = S0 / CUBE_S0;
-    constexpr size_t profile_bytes_per_block = 1024 * 3; // cube + two vec subblocks
+    constexpr size_t cv_comm_slots = static_cast<size_t>(S0) / static_cast<size_t>(CUBE_S0);
+    constexpr size_t cv_comm_bytes = cv_comm_slots * kFaCvCommSlotBytes;
+    constexpr size_t profile_bytes_per_block = kFaProfileBytesPerBlock; // cube + two vec subblocks
     const size_t profile_bytes = profile_bytes_per_block * block_rows;
 
     g_fifo_summary.clear();
@@ -166,9 +166,12 @@ void run_tfa() {
     aclrtMalloc((void **)&kDevice, kSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&xexpDevice, p_fifo_bytes_half, ACL_MEM_MALLOC_HUGE_FIRST); // p_out (half) FIFO layout
     void *expMaxIfifoDevice = nullptr;
-    aclrtMalloc((void **)&expMaxIfifoDevice, p_fifo_bytes_float, ACL_MEM_MALLOC_HUGE_FIRST); // exp_max ififo (float) FIFO layout
+    aclrtMalloc((void **)&expMaxIfifoDevice, p_fifo_bytes_float,
+        ACL_MEM_MALLOC_HUGE_FIRST); // exp_max ififo (float) FIFO layout
     uint8_t *profileDevice = nullptr;
     aclrtMalloc((void **)&profileDevice, profile_bytes, ACL_MEM_MALLOC_HUGE_FIRST);
+    uint8_t *cvCommDevice = nullptr;
+    aclrtMalloc((void **)&cvCommDevice, cv_comm_bytes, ACL_MEM_MALLOC_HUGE_FIRST);
     // allocate v and out2 buffers
     size_t vSize = S1 * HEAD_SIZE * sizeof(aclFloat16);
     size_t pvPartSize = S0 * HEAD_SIZE * sizeof(T);
@@ -237,7 +240,11 @@ void run_tfa() {
     }
 
     // Launch kernel, pass ffts ctrl addr and device-side log buffer, and xexp/tmp_float_exp device ptrs
-    LaunchTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, kCvFifoSize, INTERMEDIATE_CHECK, kCvFifoConsSyncPeriod>((uint16_t *)ffts, (aclFloat16*)qDevice, (aclFloat16*)kDevice, (aclFloat16*)vDevice, (aclFloat16*)xexpDevice, (float*)expMaxIfifoDevice, (float*)gSumDevice, (float*)expMaxDevice, (float*)oDevice, (float*)oPartsDevice, (float*)outDevice, (float*)out2Device, profileDevice, stream);
+    LaunchTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, kFaCvFifoSize, INTERMEDIATE_CHECK,
+        kFaCvFifoConsSyncPeriod>((uint16_t *)ffts, (aclFloat16 *)qDevice, (aclFloat16 *)kDevice, (aclFloat16 *)vDevice,
+        (aclFloat16 *)xexpDevice, (float *)expMaxIfifoDevice, (float *)gSumDevice, (float *)expMaxDevice,
+        (float *)oDevice, (float *)oPartsDevice, (float *)outDevice, (float *)out2Device, profileDevice, stream,
+        cvCommDevice);
 
     aclrtSynchronizeStream(stream);
 
@@ -282,49 +289,61 @@ void run_tfa() {
     WriteFile(GetGoldenDir() + "/out2.bin", out2Host, out2TotalSize);
 
     if constexpr (INTERMEDIATE_CHECK) {
-        const size_t qk_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(TILE_S1);
-        const size_t p_fifo_stride = qk_fifo_stride; // same dimensions as qk (Cube_S0 x TILE_S1)
-        const size_t p_max_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0);
-        const size_t pv_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
+        const size_t qk_fifo_stride = static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0) *
+                                      static_cast<size_t>(tile_factor) * static_cast<size_t>(CUBE_S1);
+        const size_t p_fifo_stride = qk_fifo_stride; // same dimensions as qk (Cube_S0 x kTileFactor x Cube_S1)
+        const size_t p_max_fifo_stride = static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0);
+        const size_t pv_fifo_stride =
+            static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
         const int block_rows = S0 / CUBE_S0;
-        const int fifo_start_tile = std::max(0, num_tiles - kCvFifoSize);
+        const int fifo_start_tile = std::max(0, num_tiles - kFaCvFifoSize);
         for (int b = 0; b < block_rows; ++b) {
             const size_t qk_off = static_cast<size_t>(b) * qk_fifo_stride;
             const size_t p_off = static_cast<size_t>(b) * p_fifo_stride;
             const size_t p_max_off = static_cast<size_t>(b) * p_max_fifo_stride;
             const size_t pv_off = static_cast<size_t>(b) * pv_fifo_stride;
-            WriteFile(GetGoldenDir() + "/block" + std::to_string(b) + "_qk_fifo.bin", outHost + qk_off, qk_fifo_stride * sizeof(float));
-            WriteFile(GetGoldenDir() + "/block" + std::to_string(b) + "_p_fifo.bin", reinterpret_cast<uint8_t*>(xexpHost) + p_off * sizeof(aclFloat16), p_fifo_stride * sizeof(aclFloat16));
-            WriteFile(GetGoldenDir() + "/block" + std::to_string(b) + "_p_max_fifo.bin", reinterpret_cast<uint8_t*>(tmpFloatExpHost) + p_max_off * sizeof(float), p_max_fifo_stride * sizeof(float));
-            WriteFile(GetGoldenDir() + "/block" + std::to_string(b) + "_pv_fifo.bin", reinterpret_cast<uint8_t*>(out2Host) + pv_off * sizeof(float), pv_fifo_stride * sizeof(float));
+            WriteFile(GetGoldenDir() + "/block" + std::to_string(b) + "_qk_fifo.bin", outHost + qk_off,
+                qk_fifo_stride * sizeof(float));
+            WriteFile(GetGoldenDir() + "/block" + std::to_string(b) + "_p_fifo.bin",
+                reinterpret_cast<uint8_t *>(xexpHost) + p_off * sizeof(aclFloat16), p_fifo_stride * sizeof(aclFloat16));
+            WriteFile(GetGoldenDir() + "/block" + std::to_string(b) + "_p_max_fifo.bin",
+                reinterpret_cast<uint8_t *>(tmpFloatExpHost) + p_max_off * sizeof(float),
+                p_max_fifo_stride * sizeof(float));
+            WriteFile(GetGoldenDir() + "/block" + std::to_string(b) + "_pv_fifo.bin",
+                reinterpret_cast<uint8_t *>(out2Host) + pv_off * sizeof(float), pv_fifo_stride * sizeof(float));
         }
     }
     // write per-tile global_sum parts
     for (int ti = 0; ti < num_tiles; ++ti) {
         size_t partOffset = static_cast<size_t>(ti) * static_cast<size_t>(S0);
-        WriteFile(GetGoldenDir() + "/global_sum_part" + std::to_string(ti) + "_out.bin", gSumHost + partOffset, S0 * sizeof(float));
+        WriteFile(GetGoldenDir() + "/global_sum_part" + std::to_string(ti) + "_out.bin", gSumHost + partOffset,
+            S0 * sizeof(float));
     }
     // write per-tile exp_max parts
     for (int ti = 0; ti < num_tiles; ++ti) {
         size_t partOffset = static_cast<size_t>(ti) * static_cast<size_t>(S0);
-        WriteFile(GetGoldenDir() + "/exp_max_part" + std::to_string(ti) + "_out.bin", expMaxHost + partOffset, S0 * sizeof(float));
+        WriteFile(GetGoldenDir() + "/exp_max_part" + std::to_string(ti) + "_out.bin", expMaxHost + partOffset,
+            S0 * sizeof(float));
     }
     // write running output
     WriteFile(GetGoldenDir() + "/o_out.bin", oHost, oSize);
     // write per-iteration running output snapshots
     for (int ti = 0; ti < num_tiles; ++ti) {
         size_t byteOffset = static_cast<size_t>(ti) * pvPartSize;
-        WriteFile(GetGoldenDir() + "/o_part" + std::to_string(ti) + "_out.bin", ((uint8_t*)oPartsHost) + byteOffset, pvPartSize);
+        WriteFile(GetGoldenDir() + "/o_part" + std::to_string(ti) + "_out.bin", ((uint8_t *)oPartsHost) + byteOffset,
+            pvPartSize);
     }
 
     if constexpr (INTERMEDIATE_CHECK) {
         // Build expected FIFO contents from golden tensors and compare against device dumps
         const int block_rows = S0 / CUBE_S0;
-        const size_t qk_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(TILE_S1);
+        const size_t qk_fifo_stride =
+            static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(TILE_S1);
         const size_t p_fifo_stride = qk_fifo_stride; // same dims as qk (Cube_S0 x TILE_S1)
-        const size_t p_max_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0);
-        const size_t pv_fifo_stride = static_cast<size_t>(kCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
-        const int fifo_start_tile = std::max(0, num_tiles - kCvFifoSize);
+        const size_t p_max_fifo_stride = static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0);
+        const size_t pv_fifo_stride =
+            static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
+        const int fifo_start_tile = std::max(0, num_tiles - kFaCvFifoSize);
 
         std::vector<float> golden_qk(S0 * S1);
         size_t qk_file_size = 0;
@@ -332,31 +351,35 @@ void run_tfa() {
 
         std::vector<aclFloat16> golden_p_half(S0 * S1);
         size_t p_file_size = 0;
-        ReadFile(GetGoldenDir() + "/p.bin", p_file_size, golden_p_half.data(), golden_p_half.size() * sizeof(aclFloat16));
+        ReadFile(
+            GetGoldenDir() + "/p.bin", p_file_size, golden_p_half.data(), golden_p_half.size() * sizeof(aclFloat16));
 
         std::vector<float> golden_p(golden_p_half.size());
         for (size_t i = 0; i < golden_p_half.size(); ++i) {
             golden_p[i] = aclFloat16ToFloat(golden_p_half[i]);
         }
 
-            std::vector<std::vector<float>> golden_pv_tiles(num_tiles, std::vector<float>(static_cast<size_t>(S0) * HEAD_SIZE));
-            for (int ti = 0; ti < num_tiles; ++ti) {
-                std::string fname = GetGoldenDir() + "/pv_tile_fifo" + std::to_string(ti) + ".bin";
-                size_t pv_file_size = 0;
-                ReadFile(fname, pv_file_size, golden_pv_tiles[ti].data(), golden_pv_tiles[ti].size() * sizeof(float));
-            }
+        std::vector<std::vector<float>> golden_pv_tiles(
+            num_tiles, std::vector<float>(static_cast<size_t>(S0) * HEAD_SIZE));
+        for (int ti = 0; ti < num_tiles; ++ti) {
+            std::string fname = GetGoldenDir() + "/pv_tile_fifo" + std::to_string(ti) + ".bin";
+            size_t pv_file_size = 0;
+            ReadFile(fname, pv_file_size, golden_pv_tiles[ti].data(), golden_pv_tiles[ti].size() * sizeof(float));
+        }
 
         std::vector<std::vector<float>> golden_exp_max_tiles(num_tiles, std::vector<float>(static_cast<size_t>(S0)));
         for (int ti = 0; ti < num_tiles; ++ti) {
             std::string fname = GetGoldenDir() + "/exp_max_part" + std::to_string(ti) + ".bin";
             size_t exp_max_file_size = 0;
-            ReadFile(fname, exp_max_file_size, golden_exp_max_tiles[ti].data(), golden_exp_max_tiles[ti].size() * sizeof(float));
+            ReadFile(fname, exp_max_file_size, golden_exp_max_tiles[ti].data(),
+                golden_exp_max_tiles[ti].size() * sizeof(float));
         }
 
         auto cmp_buf = [](const float *ref, const float *got, size_t count, const std::string &label) {
             std::vector<float> ref_vec(ref, ref + count);
             std::vector<float> got_vec(got, got + count);
-            const bool is_exp_max = (label.find("p_max") != std::string::npos) || (label.find("exp_max") != std::string::npos);
+            const bool is_exp_max =
+                (label.find("p_max") != std::string::npos) || (label.find("exp_max") != std::string::npos);
             const float tol = is_exp_max ? 1e-2f : 1e-3f;
             std::cout << "[CHECK] comparing " << label << " count=" << count << " tol=" << tol << std::endl;
             const bool ok = ResultCmp<float>(ref_vec, got_vec, tol);
@@ -383,19 +406,26 @@ void run_tfa() {
             std::vector<float> exp_pv(pv_fifo_stride, 0.0f);
 
             for (int ti = fifo_start_tile; ti < num_tiles; ++ti) {
-                const uint32_t buf_idx = static_cast<uint32_t>(ti % kCvFifoSize);
-                size_t qk_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(TILE_S1);
+                const uint32_t buf_idx = static_cast<uint32_t>(ti % kFaCvFifoSize);
+                size_t qk_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) *
+                                static_cast<size_t>(tile_factor) * static_cast<size_t>(CUBE_S1);
                 size_t p_off = qk_off;
                 size_t p_max_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0);
-                size_t pv_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
+                size_t pv_off =
+                    static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
 
                 // Copy qk tile
                 for (int r = 0; r < CUBE_S0; ++r) {
                     const int global_r = b * CUBE_S0 + r;
                     const int c0 = ti * TILE_S1;
-                    const float *src = &golden_qk[static_cast<size_t>(global_r) * S1 + c0];
-                    float *dst = &exp_qk[qk_off + static_cast<size_t>(r) * TILE_S1];
-                    std::copy_n(src, TILE_S1, dst);
+                    for (int sub_col = 0; sub_col < tile_factor; ++sub_col) {
+                        const float *src = &golden_qk[static_cast<size_t>(global_r) * S1 + c0 + sub_col * CUBE_S1];
+                        float *dst = &exp_qk[qk_off +
+                                             static_cast<size_t>(sub_col) * static_cast<size_t>(CUBE_S0) *
+                                                 static_cast<size_t>(CUBE_S1) +
+                                             static_cast<size_t>(r) * CUBE_S1];
+                        std::copy_n(src, CUBE_S1, dst);
+                    }
                 }
 
                 // Copy p tile (converted to float) with new layout: contiguous sub-tiles of width CUBE_S1
@@ -404,7 +434,10 @@ void run_tfa() {
                     const int c0 = ti * TILE_S1;
                     for (int sub_col = 0; sub_col < tile_factor; ++sub_col) {
                         const float *src = &golden_p[static_cast<size_t>(global_r) * S1 + c0 + sub_col * CUBE_S1];
-                        float *dst = &exp_p[p_off + static_cast<size_t>(sub_col) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(CUBE_S1) + static_cast<size_t>(r) * CUBE_S1];
+                        float *dst = &exp_p[p_off +
+                                            static_cast<size_t>(sub_col) * static_cast<size_t>(CUBE_S0) *
+                                                static_cast<size_t>(CUBE_S1) +
+                                            static_cast<size_t>(r) * CUBE_S1];
                         std::copy_n(src, CUBE_S1, dst);
                     }
                     exp_p_max[p_max_off + static_cast<size_t>(r)] = golden_exp_max_tiles[ti][global_r];
@@ -427,25 +460,32 @@ void run_tfa() {
             std::vector<float> got_pv(pv_fifo_stride);
 
             size_t qk_block_file_size = 0;
-            ReadFile(GetGoldenDir() + "/block" + std::to_string(b) + "_qk_fifo.bin", qk_block_file_size, got_qk.data(), got_qk.size() * sizeof(float));
+            ReadFile(GetGoldenDir() + "/block" + std::to_string(b) + "_qk_fifo.bin", qk_block_file_size, got_qk.data(),
+                got_qk.size() * sizeof(float));
             size_t p_block_file_size = 0;
-            ReadFile(GetGoldenDir() + "/block" + std::to_string(b) + "_p_fifo.bin", p_block_file_size, got_p_half.data(), got_p_half.size() * sizeof(aclFloat16));
+            ReadFile(GetGoldenDir() + "/block" + std::to_string(b) + "_p_fifo.bin", p_block_file_size,
+                got_p_half.data(), got_p_half.size() * sizeof(aclFloat16));
             size_t p_max_block_file_size = 0;
-            ReadFile(GetGoldenDir() + "/block" + std::to_string(b) + "_p_max_fifo.bin", p_max_block_file_size, got_p_max.data(), got_p_max.size() * sizeof(float));
+            ReadFile(GetGoldenDir() + "/block" + std::to_string(b) + "_p_max_fifo.bin", p_max_block_file_size,
+                got_p_max.data(), got_p_max.size() * sizeof(float));
             for (size_t i = 0; i < got_p_half.size(); ++i) {
                 got_p[i] = aclFloat16ToFloat(got_p_half[i]);
             }
             size_t pv_block_file_size = 0;
-            ReadFile(GetGoldenDir() + "/block" + std::to_string(b) + "_pv_fifo.bin", pv_block_file_size, got_pv.data(), got_pv.size() * sizeof(float));
+            ReadFile(GetGoldenDir() + "/block" + std::to_string(b) + "_pv_fifo.bin", pv_block_file_size, got_pv.data(),
+                got_pv.size() * sizeof(float));
 
             for (int ti = fifo_start_tile; ti < num_tiles; ++ti) {
-                const uint32_t buf_idx = static_cast<uint32_t>(ti % kCvFifoSize);
-                const size_t qk_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(TILE_S1);
+                const uint32_t buf_idx = static_cast<uint32_t>(ti % kFaCvFifoSize);
+                const size_t qk_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) *
+                                      static_cast<size_t>(tile_factor) * static_cast<size_t>(CUBE_S1);
                 const size_t p_off = qk_off;
                 const size_t p_max_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0);
-                const size_t pv_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
+                const size_t pv_off =
+                    static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
 
-                const size_t qk_tile_elems = static_cast<size_t>(CUBE_S0) * static_cast<size_t>(TILE_S1);
+                const size_t qk_tile_elems =
+                    static_cast<size_t>(CUBE_S0) * static_cast<size_t>(tile_factor) * static_cast<size_t>(CUBE_S1);
                 const size_t p_tile_elems = static_cast<size_t>(CUBE_S0) * static_cast<size_t>(TILE_S1);
                 const size_t pv_tile_elems = static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
 
@@ -454,11 +494,14 @@ void run_tfa() {
                 const bool tile_p_ok = cmp_buf(&exp_p[p_off], &got_p[p_off], p_tile_elems, "p_fifo" + blk_tile);
                 block_qk_ok = block_qk_ok && tile_qk_ok;
                 block_p_ok = block_p_ok && tile_p_ok;
-                if (!tile_qk_ok) fail_qk_tiles.insert(ti);
-                if (!tile_p_ok) fail_p_tiles.insert(ti);
+                if (!tile_qk_ok)
+                    fail_qk_tiles.insert(ti);
+                if (!tile_p_ok)
+                    fail_p_tiles.insert(ti);
                 const bool tile_pv_ok = cmp_buf(&exp_pv[pv_off], &got_pv[pv_off], pv_tile_elems, "pv_fifo" + blk_tile);
                 block_pv_ok = block_pv_ok && tile_pv_ok;
-                if (!tile_pv_ok) fail_pv_tiles.insert(ti);
+                if (!tile_pv_ok)
+                    fail_pv_tiles.insert(ti);
                 // exp_max fifo is 1D per row; tile 0 is skipped
                 if (ti != 0) {
                     std::vector<float> exp_p_max_row(CUBE_S0);
@@ -467,15 +510,16 @@ void run_tfa() {
                         exp_p_max_row[r] = exp_p_max[p_max_off + static_cast<size_t>(r)];
                         got_p_max_row[r] = got_p_max[p_max_off + static_cast<size_t>(r)];
                     }
-                    const bool tile_p_max_ok = cmp_buf(exp_p_max_row.data(), got_p_max_row.data(), exp_p_max_row.size(), "p_max_fifo" + blk_tile);
+                    const bool tile_p_max_ok = cmp_buf(
+                        exp_p_max_row.data(), got_p_max_row.data(), exp_p_max_row.size(), "p_max_fifo" + blk_tile);
                     block_p_max_ok = block_p_max_ok && tile_p_max_ok;
-                    if (!tile_p_max_ok) fail_p_max_tiles.insert(ti);
+                    if (!tile_p_max_ok)
+                        fail_p_max_tiles.insert(ti);
                 }
             }
             const bool block_ok = block_qk_ok && block_p_ok && block_p_max_ok && block_pv_ok;
             std::cout << "[CHECK] block " << b << " qk=" << (block_qk_ok ? "OK" : "FAIL")
-                      << " p=" << (block_p_ok ? "OK" : "FAIL")
-                      << " p_max=" << (block_p_max_ok ? "OK" : "FAIL")
+                      << " p=" << (block_p_ok ? "OK" : "FAIL") << " p_max=" << (block_p_max_ok ? "OK" : "FAIL")
                       << " pv=" << (block_pv_ok ? "OK" : "FAIL") << std::endl;
             all_ok = all_ok && block_ok;
         }
@@ -487,7 +531,8 @@ void run_tfa() {
                 std::cout << "[CHECK] " << label << " tiles failed: ";
                 bool first = true;
                 for (int ti : fails) {
-                    if (!first) std::cout << ",";
+                    if (!first)
+                        std::cout << ",";
                     std::cout << ti;
                     first = false;
                 }
@@ -504,7 +549,8 @@ void run_tfa() {
             std::string out;
             bool first = true;
             for (int v : s) {
-                if (!first) out += ",";
+                if (!first)
+                    out += ",";
                 out += std::to_string(v);
                 first = false;
             }
@@ -512,9 +558,8 @@ void run_tfa() {
         };
 
         g_fifo_summary = "[SUMMARY] fifo fails -> qk:" + set_to_string(fail_qk_tiles) +
-             " p:" + set_to_string(fail_p_tiles) +
-             " p_max:" + set_to_string(fail_p_max_tiles) +
-             " pv:" + set_to_string(fail_pv_tiles);
+                         " p:" + set_to_string(fail_p_tiles) + " p_max:" + set_to_string(fail_p_max_tiles) +
+                         " pv:" + set_to_string(fail_pv_tiles);
 
         std::cout << (all_ok ? "[CHECK] FIFO intermediate ok" : "[CHECK] FIFO intermediate FAILED") << std::endl;
     } else {
@@ -533,6 +578,7 @@ void run_tfa() {
     aclrtFree(gSumDevice);
     aclrtFree(expMaxDevice);
     aclrtFree(profileDevice);
+    aclrtFree(cvCommDevice);
 
     // Final running output compare
     std::vector<float> golden_o(S0 * HEAD_SIZE);
@@ -584,21 +630,21 @@ void run_tfa() {
         tflops_str = "NA";
     } else {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(6) << gops / (duration_ns + 1e-9);
+        oss << std::fixed << std::setprecision(6) << gops / (duration_us + 1e-9);
         tflops_str = oss.str();
     }
     double avg_block_us = 0.0;
     if (block_duration_count > 0) {
         avg_block_us = block_duration_us_sum / static_cast<double>(block_duration_count);
     }
-    AppendReportRow(g_case_name, HEAD_SIZE, S0, S1, CUBE_S0, CUBE_S1, TILE_S1, start_min, end_max, duration_us, avg_block_us, gops, tflops_str, o_ok);
+    AppendReportRow(g_case_name, HEAD_SIZE, S0, S1, CUBE_S0, CUBE_S1, TILE_S1, start_min, end_max, duration_us,
+        avg_block_us, gops, tflops_str, o_ok);
 
     std::cout << (o_ok ? "test success" : "test failed") << std::endl;
     if (!g_fifo_summary.empty()) {
         std::cout << g_fifo_summary << std::endl;
     }
     std::cout << "[SUMMARY] o_out status: " << (o_ok ? "OK" : "FAIL") << std::endl;
-
 
     aclrtFreeHost(outHost); // Free host memory
     aclrtFreeHost(qHost);
@@ -615,10 +661,9 @@ void run_tfa() {
     aclrtDestroyStream(stream);
     aclrtResetDevice(g_chip_id);
     aclFinalize();
-
 }
 
-template<typename T, int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD>
+template <typename T, int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD>
 void run_case(const std::string &case_name) {
     g_case_name = case_name;
     if (g_enable_intermediate) {
@@ -635,8 +680,11 @@ int main(int argc, char **argv) {
     };
 
     std::vector<CaseEntry> cases = {
-#define TFA_CASE_ENTRY(S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD) \
-    {"case_float_H_" #HEAD "_S0_" #S0 "_S1_" #S1, [](){ run_case<float, S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD>("case_float_H_" #HEAD "_S0_" #S0 "_S1_" #S1); }},
+#define TFA_CASE_ENTRY(S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD)    \
+    {"case_float_H_" #HEAD "_S0_" #S0 "_S1_" #S1, []() {                       \
+         run_case<float, S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD>( \
+             "case_float_H_" #HEAD "_S0_" #S0 "_S1_" #S1);                     \
+     }},
         TFA_FOR_EACH_CASE(TFA_CASE_ENTRY)
 #undef TFA_CASE_ENTRY
     };
@@ -695,14 +743,16 @@ int main(int argc, char **argv) {
         auto normalize_filter = [](const std::string &f) {
             // Accept either canonical case name or numeric tuple HEAD,S0,S1[,CUBE_S0[,TILE_S1]]
             const std::string trimmed = Trim(f);
-            if (trimmed.rfind("case_float", 0) == 0) return trimmed;
+            if (trimmed.rfind("case_float", 0) == 0)
+                return trimmed;
             std::vector<std::string> parts = Split(trimmed, ',');
             if (parts.size() >= 3) {
                 try {
                     int head = std::stoi(Trim(parts[0]));
                     int s0 = std::stoi(Trim(parts[1]));
                     int s1 = std::stoi(Trim(parts[2]));
-                    return std::string("case_float_H_") + std::to_string(head) + "_S0_" + std::to_string(s0) + "_S1_" + std::to_string(s1);
+                    return std::string("case_float_H_") + std::to_string(head) + "_S0_" + std::to_string(s0) + "_S1_" +
+                           std::to_string(s1);
                 } catch (...) {
                     return trimmed; // fallback to trimmed original
                 }
@@ -711,14 +761,16 @@ int main(int argc, char **argv) {
         };
         for (auto &f : raw_filters) {
             const std::string norm = normalize_filter(f);
-            if (!norm.empty()) filters.push_back(norm);
+            if (!norm.empty())
+                filters.push_back(norm);
         }
     }
 
     std::cout << "[DEBUG] Available cases (" << cases.size() << "): ";
     for (size_t i = 0; i < cases.size(); ++i) {
         std::cout << cases[i].name;
-        if (i + 1 != cases.size()) std::cout << ",";
+        if (i + 1 != cases.size())
+            std::cout << ",";
     }
     std::cout << std::endl;
 
@@ -726,7 +778,8 @@ int main(int argc, char **argv) {
         std::cout << "[DEBUG] Requested filters: ";
         for (size_t i = 0; i < filters.size(); ++i) {
             std::cout << filters[i];
-            if (i + 1 != filters.size()) std::cout << ",";
+            if (i + 1 != filters.size())
+                std::cout << ",";
         }
         std::cout << std::endl;
     } else {
@@ -734,7 +787,8 @@ int main(int argc, char **argv) {
     }
 
     auto should_run = [&](const std::string &name) {
-        if (filters.empty()) return true;
+        if (filters.empty())
+            return true;
         return std::find(filters.begin(), filters.end(), name) != filters.end();
     };
 
@@ -757,7 +811,8 @@ int main(int argc, char **argv) {
     std::cout << "[DEBUG] Will run cases (" << to_run.size() << "): ";
     for (size_t i = 0; i < to_run.size(); ++i) {
         std::cout << to_run[i];
-        if (i + 1 != to_run.size()) std::cout << ",";
+        if (i + 1 != to_run.size())
+            std::cout << ",";
     }
     std::cout << std::endl;
 
@@ -769,4 +824,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
