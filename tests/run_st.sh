@@ -45,6 +45,7 @@ fi
 
 if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
   if [ "$ENABLE_SIMPLE" = "true" ]; then           # 单个用例
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolexpand -g TCOLEXPANDTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolsum -g TCOLSUMTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolmax -g TCOLMAXTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolmin -g TCOLMINTest.case1
@@ -97,6 +98,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
 
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolexpand
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolsum
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolmax
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolmin

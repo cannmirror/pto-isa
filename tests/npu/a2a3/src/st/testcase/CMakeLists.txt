@@ -160,6 +160,7 @@ tassign
 tstore_mat2gm
 tscatter
 tfa
+tcolexpand
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
