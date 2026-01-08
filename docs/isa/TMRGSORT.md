@@ -52,7 +52,7 @@ PTO_INST RecordEvent TMRGSORT(DstTileData& dst, SrcTileData& src, uint32_t block
 - **Implementation checks (A2A3/A5)**:
   - Element type must be `half` or `float` and must match across `dst/tmp/src*` tiles.
   - All tiles must be `TileType::Vec`, row-major, and have `Rows == 1` (list stored in a single row).
-  - UB memory usage is checked (compile-time and runtime) against target limits (total `Cols` across inputs plus `tmp`/`dst`).
+  - UB memory usage is checked (compile-time and runtime) against target limits (single `Cols` across inputs plus `tmp`/`dst`).
 - **Single-list variant (`TMRGSORT(dst, src, blockLen)`)**:
   - `blockLen` must be a multiple of 64 (as checked by the implementation).
   - `src.GetValidCol()` must be an integer multiple of `blockLen * 4`.

@@ -184,30 +184,26 @@ namespace pto
     };
     template <typename T, unsigned Cols>
     PTO_INTERNAL void TDivs_naive(__ubuf__ T *dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned validCol) {
-        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
-        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        PtoSetWaitFlag<PIPE_V, PIPE_S>();
         for (int row = 0; row < validRow; row++) {
             for (int col = 0; col < validCol; col++) {
                 int idx = row * Cols + col;
                 dst[idx] = src0[idx] / src1;
             }
         }
-        set_flag(PIPE_S, PIPE_V, EVENT_ID0);
-        wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
+        PtoSetWaitFlag<PIPE_S, PIPE_V>();
     }
 
     template <typename T, unsigned Cols>
     PTO_INTERNAL void TSDiv_naive(__ubuf__ T *dst, __ubuf__ T* src0, T src1, unsigned validRow, unsigned validCol) {
-        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
-        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        PtoSetWaitFlag<PIPE_V, PIPE_S>();
         for (int row = 0; row < validRow; row++) {
             for (int col = 0; col < validCol; col++) {
                 int idx = row * Cols + col;
                 dst[idx] = src1 / src0[idx];
             }
         }
-        set_flag(PIPE_S, PIPE_V, EVENT_ID0);
-        wait_flag(PIPE_S, PIPE_V, EVENT_ID0);
+        PtoSetWaitFlag<PIPE_S, PIPE_V>();
     }
 
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
@@ -255,7 +251,7 @@ namespace pto
                       std::is_same<typename TileData::DType, float>::value ||
                       std::is_same<typename TileData::DType, float32_t>::value,
                       "TDIVS: Invalid data type");
-
+        static_assert(TileData::isRowMajor, "TDIVS: not supported Layout type.");
         static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
@@ -283,7 +279,7 @@ namespace pto
                       std::is_same<typename TileData::DType, float>::value ||
                       std::is_same<typename TileData::DType, float32_t>::value,
                       "TDIVS: Invalid data type");
-
+        static_assert(TileData::isRowMajor, "TDIVS: not supported Layout type.");
         static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
@@ -306,7 +302,14 @@ namespace pto
         typename TileDataDst::TileDType __in__ srcData, T __in__ scalar, unsigned validRow, unsigned validCol) {
         __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
         __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
-        TBinSPlusInstr<DivSOp<T>, T, TileDataDst, TileDataSrc>(dst, src, scalar, validRow, validCol);
+        if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
+            constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
+            constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
+            constexpr unsigned stride = TileDataDst::RowStride;
+            TBinSInstr<DivSOp<T>, T, TileDataDst, elementsPerRepeat, blockSizeElem, stride>(dst, src, scalar, validRow, validCol);
+        } else {
+            TBinSPlusInstr<DivSOp<T>, T, TileDataDst, TileDataSrc>(dst, src, scalar, validRow, validCol);
+        }
     }
 
     template <typename TileDataDst, typename TileDataSrc>
@@ -346,7 +349,14 @@ namespace pto
         typename TileDataSrc::TileDType __in__ srcData, T __in__ scalar, unsigned validRow, unsigned validCol) {
         __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
         __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
-        TBinSPlusInstr<SDivOp<T>, T, TileDataDst, TileDataSrc>(dst, src, scalar, validRow, validCol);
+        if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
+            constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
+            constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
+            constexpr unsigned stride = TileDataDst::RowStride;
+            TBinSInstr<SDivOp<T>, T, TileDataDst, elementsPerRepeat, blockSizeElem, stride>(dst, src, scalar, validRow, validCol);
+        } else {
+            TBinSPlusInstr<SDivOp<T>, T, TileDataDst, TileDataSrc>(dst, src, scalar, validRow, validCol);
+        }
     }
     template <typename TileDataDst, typename TileDataSrc>
     PTO_INTERNAL void TDIVS_IMPL(TileDataDst &dst, typename TileDataDst::DType scalar, TileDataSrc &src) {

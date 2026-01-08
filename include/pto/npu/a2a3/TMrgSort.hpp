@@ -17,7 +17,7 @@ namespace pto {
 constexpr const int STRUCTSIZE = 8;
 constexpr const int STRUCT_SIZE_SHIFT = 3;
 constexpr const int COL_SIZE = 49152; // UBSIZE / ELEMSIZE = 192 * 1024 B / 4B
-constexpr const int UBSIZE = 196608;  // 192*1024 B
+constexpr const int UB_SIZE = 196608;  // 192*1024 B
 constexpr const int BLOCK_NUM = 4;
 constexpr const int ONE_ROW = 1;
 constexpr const int EMPTY_LIST_SIZE = 0;
@@ -41,8 +41,7 @@ PTO_INTERNAL void GetExhaustedData(
     uint16_t &mrgSortList0, uint16_t &mrgSortList1, uint16_t &mrgSortList2, uint16_t &mrgSortList3)
 {
     if constexpr (exhausted) {
-        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
-        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        PtoSetWaitFlag<PIPE_V, PIPE_S>();
         int64_t mrgSortResult = get_vms4_sr();
         // VMS4_SR[15:0], number of finished region proposals in list0
         mrgSortList0 = static_cast<uint64_t>(mrgSortResult) & 0xFFFF;
@@ -168,14 +167,19 @@ template <typename DstTileData, typename TmpTileData, typename Src0TileData, typ
     typename Src2TileData, typename Src3TileData, unsigned listNum>
 PTO_INTERNAL void CheckOverMemory()
 {
-    constexpr int32_t src1Col = (listNum >= LIST_NUM_2 ? Src1TileData::Cols : EMPTY_LIST_SIZE);
-    constexpr int32_t src2Col = (listNum >= LIST_NUM_3 ? Src2TileData::Cols : EMPTY_LIST_SIZE);
-    constexpr int32_t src3Col = (listNum == LIST_NUM_4 ? Src3TileData::Cols : EMPTY_LIST_SIZE);
-    constexpr int32_t totalSrcCols = Src0TileData::Cols + src1Col + src2Col + src3Col;
     constexpr size_t elemSize = sizeof(typename DstTileData::DType);
-    constexpr size_t srcSize = totalSrcCols * elemSize;
-    constexpr size_t tmpSize = (listNum == LIST_NUM_1) ? EMPTY_LIST_SIZE : TmpTileData::Cols * elemSize;
-    static_assert(srcSize + tmpSize <= UBSIZE, "ERROR: Total memory usage exceeds UB limit!");
+    constexpr size_t tmpSize = (listNum == LIST_NUM_1) ? DstTileData::Cols * elemSize : TmpTileData::Cols * elemSize;
+    static_assert((tmpSize + Src0TileData::Cols * elemSize) <= UB_SIZE,
+        "ERROR: memory usage exceeds UB limit!");
+    if constexpr (listNum >= LIST_NUM_2) {
+        static_assert(Src1TileData::Cols * elemSize <= UB_SIZE, "ERROR: src1 memory usage exceeds UB limit!");
+    }
+    if constexpr (listNum >= LIST_NUM_3) {
+        static_assert(Src2TileData::Cols * elemSize <= UB_SIZE, "ERROR: src2 memory usage exceeds UB limit!");
+    }
+    if constexpr (listNum >= LIST_NUM_4) {
+        static_assert(Src3TileData::Cols * elemSize <= UB_SIZE, "ERROR: src3 memory usage exceeds UB limit!");
+    }
 }
 
 template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
@@ -211,9 +215,9 @@ PTO_INTERNAL void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &execut
     CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src3TileData>();
     CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src3TileData, LIST_NUM_4>();
     unsigned dstCol = dst.GetValidCol();
-    PTO_ASSERT(
-        src0.GetValidCol() + src1.GetValidCol() + src2.GetValidCol() + src3.GetValidCol() + tmp.GetValidCol() + dstCol <
-            COL_SIZE,
+    PTO_ASSERT((src0.GetValidCol() + src1.GetValidCol() + src2.GetValidCol() + src3.GetValidCol() + tmp.GetValidCol()) *
+                       sizeof(typename DstTileData::DType) <
+                   UB_SIZE,
         "ERROR: Total memory usage exceeds UB limit!");
     constexpr unsigned ELE_NUM_SHIFT = (std::is_same<typename DstTileData::DType, float>::value) ? 1 : 2;
     unsigned src0Col = src0.GetValidCol() >> ELE_NUM_SHIFT;
@@ -234,7 +238,9 @@ PTO_INTERNAL void TMRGSORT_IMPL(DstTileData &dst, MrgSortExecutedNumList &execut
     CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src0TileData>();
     CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src2TileData, Src0TileData, LIST_NUM_3>();
     unsigned dstCol = dst.GetValidCol();
-    PTO_ASSERT(src0.GetValidCol() + src1.GetValidCol() + src2.GetValidCol() + tmp.GetValidCol() + dstCol < COL_SIZE,
+    PTO_ASSERT((src0.GetValidCol() + src1.GetValidCol() + src2.GetValidCol() + tmp.GetValidCol()) *
+                       sizeof(typename DstTileData::DType) <
+                   UB_SIZE,
         "ERROR: Total memory usage exceeds UB limit!");
     constexpr unsigned ELE_NUM_SHIFT = (std::is_same<typename DstTileData::DType, float>::value) ? 1 : 2;
     unsigned src0Col = src0.GetValidCol() >> ELE_NUM_SHIFT;
@@ -253,7 +259,8 @@ PTO_INTERNAL void TMRGSORT_IMPL(
     CheckStatic<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src0TileData, Src0TileData>();
     CheckOverMemory<DstTileData, TmpTileData, Src0TileData, Src1TileData, Src0TileData, Src0TileData, LIST_NUM_2>();
     unsigned dstCol = dst.GetValidCol();
-    PTO_ASSERT(src0.GetValidCol() + src1.GetValidCol() + tmp.GetValidCol() + dstCol < COL_SIZE,
+    PTO_ASSERT(
+        (src0.GetValidCol() + src1.GetValidCol() + tmp.GetValidCol()) * sizeof(typename DstTileData::DType) < UB_SIZE,
         "ERROR: Total memory usage exceeds UB limit!");
     constexpr unsigned ELE_NUM_SHIFT = (std::is_same<typename DstTileData::DType, float>::value) ? 1 : 2;
     unsigned src0Col = src0.GetValidCol() >> ELE_NUM_SHIFT;
@@ -272,8 +279,8 @@ PTO_INTERNAL void TMRGSORT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t blo
     CheckOverMemory<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData, LIST_NUM_1>();
     uint32_t dstCol = dst.GetValidCol();
     uint32_t srcCol = src.GetValidCol();
-    uint32_t validRow = dst.GetValidRow();
-    PTO_ASSERT(srcCol + dstCol < COL_SIZE, "ERROR: Total memory usage exceeds UB limit!");
+    PTO_ASSERT((srcCol + dstCol) * sizeof(typename DstTileData::DType) < UB_SIZE,
+        "ERROR: Total memory usage exceeds UB limit!");
     // A struct is 8 bytes
     uint32_t numStrcutures = blockLen * sizeof(typename SrcTileData::DType) >> STRUCT_SIZE_SHIFT;
     PTO_ASSERT(blockLen % TMRGSORT_BLOCK_LEN == 0, "blockLen is a multiple of 64");

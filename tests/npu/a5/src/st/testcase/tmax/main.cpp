@@ -12,11 +12,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "acl/acl.h"
 #include <gtest/gtest.h>
 
-#include "acl/acl.h"
-
 using namespace std;
 using namespace PtoTestCommon;
-
 
 class TMAXTest : public testing::Test {
 protected:
@@ -26,21 +23,6 @@ protected:
     {}
 };
 
-template <typename T>
-bool ResultCmp1(const T* golden, const T* devFinal, int tileRow, int tileCol, int validRow, int validCol, float tolerance){
-    // Iterate over the valid region and compare elements
-    for (int h = 0; h < validRow; ++h) {
-        for (int w = 0; w < validCol; ++w) {
-            int index = h * validRow + w;
-            if (std::abs(golden[index] - devFinal[index]) > tolerance){
-                std::cerr << "Mismatch at (" << h << ", " << w << "): golden = " << golden[index] << ", devFinal = " << devFinal[index] << std::endl;
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
@@ -49,13 +31,21 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int padValueType>
+template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH,
+    int src1TileW, int vRows, int vCols, bool sameTile>
 void LaunchTMax(T *out, T *src0, T *src1, void *stream);
 
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int padValueType>
+template <int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH,
+    int src1TileW, int vRows, int vCols, bool sameTile>
+void LaunchTMaxHalf(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+
+template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH,
+    int src1TileW, int vRows, int vCols, bool isHalf = false,
+    bool sameTile = (dstTileH == src0TileH && dstTileH == src1TileH && dstTileW == src0TileW && dstTileW == src1TileW)>
 void test_tmax() {
-    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
+    size_t fileSizeDst = dstTileH * dstTileW * sizeof(T);
+    size_t fileSizeSrc0 = src0TileH * src0TileW * sizeof(T);
+    size_t fileSizeSrc1 = src1TileH * src1TileW * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -65,25 +55,31 @@ void test_tmax() {
     T *dstHost, *src0Host, *src1Host;
     T *dstDevice, *src0Device, *src1Device;
 
-    aclrtMallocHost((void **)(&dstHost), fileSize);
-    aclrtMallocHost((void **)(&src0Host), fileSize);
-    aclrtMallocHost((void **)(&src1Host), fileSize);
+    aclrtMallocHost((void **)(&dstHost), fileSizeDst);
+    aclrtMallocHost((void **)(&src0Host), fileSizeSrc0);
+    aclrtMallocHost((void **)(&src1Host), fileSizeSrc1);
 
-    aclrtMalloc((void **)&dstDevice, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&dstDevice, fileSizeDst, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src0Device, fileSizeSrc0, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src1Device, fileSizeSrc1, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    ReadFile(GetGoldenDir() + "/input1.bin", fileSize, src0Host, fileSize);
-    ReadFile(GetGoldenDir() + "/input2.bin", fileSize, src1Host, fileSize);
+    ReadFile(GetGoldenDir() + "/input1.bin", fileSizeSrc0, src0Host, fileSizeSrc0);
+    ReadFile(GetGoldenDir() + "/input2.bin", fileSizeSrc1, src1Host, fileSizeSrc1);
 
-    aclrtMemcpy(src0Device, fileSize, src0Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, fileSize, src1Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTMax<T, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, padValueType>(dstDevice, src0Device, src1Device, stream);
+    aclrtMemcpy(src0Device, fileSizeSrc0, src0Host, fileSizeSrc0, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(src1Device, fileSizeSrc1, src1Host, fileSizeSrc1, ACL_MEMCPY_HOST_TO_DEVICE);
+    if constexpr (isHalf) {
+        LaunchTMaxHalf<dstTileH, dstTileW, src0TileH, src0TileW, src1TileH,
+            src1TileW, vRows, vCols, sameTile>(dstDevice, src0Device, src1Device, stream);
+    } else {
+        LaunchTMax<T, dstTileH, dstTileW, src0TileH, src0TileW, src1TileH,
+            src1TileW, vRows, vCols, sameTile>(dstDevice, src0Device, src1Device, stream);
+    }
 
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, fileSizeDst, dstDevice, fileSizeDst, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, fileSize);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, fileSizeDst);
 
     aclrtFree(dstDevice);
     aclrtFree(src0Device);
@@ -96,39 +92,49 @@ void test_tmax() {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(fileSize);
-    std::vector<T> devFinal(fileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize);
+    std::vector<T> golden(fileSizeDst);
+    std::vector<T> devFinal(fileSizeDst);
+    ReadFile(GetGoldenDir() + "/golden.bin", fileSizeDst, golden.data(), fileSizeDst);
+    ReadFile(GetGoldenDir() + "/output.bin", fileSizeDst, devFinal.data(), fileSizeDst);
 
-    bool ret = ResultCmp1<T>(golden.data(), devFinal.data(), kTRows_, kTCols_, kVRows_, kVCols_, 0.001f);
+    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TMAXTest, case_float_64x64_64x64_64x64_PAD_VALUE_NULL) {
-    test_tmax<float, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
+TEST_F(TMAXTest, case_float_64x64_64x64_64x64_64x64) {
+    test_tmax<float, 64, 64, 64, 64, 64, 64, 64, 64>();
 }
-TEST_F(TMAXTest, case_int32_64x64_64x64_64x64_PAD_VALUE_NULL) {
-    test_tmax<int32_t, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
+TEST_F(TMAXTest, case_int32_64x64_64x64_64x64_64x64) {
+    test_tmax<int32_t, 64, 64, 64, 64, 64, 64, 64, 64>();
 }
-TEST_F(TMAXTest, case_half_64x64_64x64_64x64_PAD_VALUE_NULL) {
-    test_tmax<aclFloat16, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
+TEST_F(TMAXTest, case_int16_64x64_64x64_64x64_64x64) {
+    test_tmax<int16_t, 64, 64, 64, 64, 64, 64, 64, 64>();
 }
-TEST_F(TMAXTest, case_int16_64x64_64x64_64x64_PAD_VALUE_NULL) {
-    test_tmax<int16_t, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
+TEST_F(TMAXTest, case_half_16x256_16x256_16x256_16x256) {
+    test_tmax<aclFloat16, 16, 256, 16, 256, 16, 256, 16, 256, true>();
 }
-
-
-TEST_F(TMAXTest, case_float_60x60_64x64_60x60_PAD_VALUE_MAX) {
-    test_tmax<float, 60, 60, 64, 64, 60, 60, PAD_VALUE_MAX>();
+TEST_F(TMAXTest, case_half_16x64_16x128_16x128_16x64) {
+    test_tmax<aclFloat16, 16, 64, 16, 128, 16, 128, 16, 64, true>();
 }
-TEST_F(TMAXTest, case_int32_60x60_64x64_60x60_PAD_VALUE_MAX) {
-    test_tmax<int32_t, 60, 60, 64, 64, 60, 60, PAD_VALUE_MAX>();
+TEST_F(TMAXTest, case_float_16x32_16x64_16x32_16x32) {
+    test_tmax<float, 16, 32, 16, 64, 16, 32, 16, 32>();
 }
-TEST_F(TMAXTest, case_half_1x3600_2x4096_1x3600_PAD_VALUE_MAX) {
-    test_tmax<aclFloat16, 1, 3600, 2, 4096, 1, 3600, PAD_VALUE_MAX>();
+TEST_F(TMAXTest, case_int16_32x128_32x128_32x256_32x128) {
+    test_tmax<int16_t, 32, 128, 32, 128, 32, 256, 32, 128>();
 }
-TEST_F(TMAXTest, case_int16_16x200_20x512_16x200_PAD_VALUE_MAX) {
-    test_tmax<int16_t, 16, 200, 20, 512, 16, 200, PAD_VALUE_MAX>();
+TEST_F(TMAXTest, case_int32_16x32_16x64_16x32_16x32) {
+    test_tmax<int32_t, 16, 32, 16, 64, 16, 32, 16, 32>();
+}
+TEST_F(TMAXTest, case_half_16x64_16x128_16x128_16x63) {
+    test_tmax<aclFloat16, 16, 64, 16, 128, 16, 128, 16, 63, true>();
+}
+TEST_F(TMAXTest, case_float_16x32_16x64_16x32_16x31) {
+    test_tmax<float, 16, 32, 16, 64, 16, 32, 16, 31>();
+}
+TEST_F(TMAXTest, case_int16_32x128_32x128_32x256_32x127) {
+    test_tmax<int16_t, 32, 128, 32, 128, 32, 256, 32, 127>();
+}
+TEST_F(TMAXTest, case_int32_16x32_16x64_16x32_16x31) {
+    test_tmax<int32_t, 16, 32, 16, 64, 16, 32, 16, 31>();
 }

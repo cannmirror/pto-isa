@@ -80,30 +80,31 @@ bool TRowExpandFramework()
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
 
-    return ResultCmp(golden, devFinal, 0.001f);
+    return ResultCmp(golden, devFinal, 0.001f, 0, 1000, false, true);
 }
 
 TEST_F(TROWEXPANDTest, case0)
 {
-    bool ret = TRowExpandFramework<uint16_t, 16, 16, 16, 512, 512>();
+    bool ret = TRowExpandFramework<uint16_t, 16, 16, 1, 512, 512>();
     EXPECT_TRUE(ret);
 }
 
 TEST_F(TROWEXPANDTest, case1)
 {
-    bool ret = TRowExpandFramework<uint8_t, 16, 32, 32, 256, 256>();
+    bool ret = TRowExpandFramework<uint8_t, 16, 32, 1, 256, 256>();
     EXPECT_TRUE(ret);
 }
 
 TEST_F(TROWEXPANDTest, case2)
 {
-    bool ret = TRowExpandFramework<uint32_t, 16, 8, 8, 128, 128>();
+    bool ret = TRowExpandFramework<uint32_t, 16, 8, 1, 128, 128>();
     EXPECT_TRUE(ret);
 }
 
+
 TEST_F(TROWEXPANDTest, case3)
 {
-    bool ret = TRowExpandFramework<float, 16, 32, 32, 512, 512>();
+    bool ret = TRowExpandFramework<float, 16, 32, 1, 512, 512>();
     EXPECT_TRUE(ret);
 }
 
@@ -134,5 +135,41 @@ TEST_F(TROWEXPANDTest, case7)
 TEST_F(TROWEXPANDTest, case8)
 {
     bool ret = TRowExpandFramework<uint8_t, 2, 32, 1, 64, 63>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case9)
+{
+    bool ret = TRowExpandFramework<uint16_t, 4080, 1, 1, 16, 16>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case10)
+{
+    bool ret = TRowExpandFramework<uint16_t, 16, 1, 1, 16, 16>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case11)
+{
+    bool ret = TRowExpandFramework<uint32_t, 4080, 1, 1, 8, 8>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case12)
+{
+    bool ret = TRowExpandFramework<uint32_t, 16, 1, 1, 8, 8>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case13)
+{
+    bool ret = TRowExpandFramework<float, 4080, 1, 1, 8, 8>();
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(TROWEXPANDTest, case14)
+{
+    bool ret = TRowExpandFramework<float, 16, 1, 1, 8, 8>();
     EXPECT_TRUE(ret);
 }

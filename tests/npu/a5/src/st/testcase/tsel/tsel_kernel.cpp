@@ -43,7 +43,7 @@ __global__ AICORE void runTSel(
     constexpr uint64_t tileSize = Rows * Cols * sizeof(T);
     constexpr uint64_t maskSize = maskVRow * maskVCol;
     constexpr uint64_t totalSize = tileSize * 3 + maskSize;
-    static_assert(totalSize <= 184 * 1024, "UB size overflow, should be less than 192KB.");
+    static_assert(totalSize <= 192 * 1024, "UB size overflow, should be less than 192KB.");
 
     TASSIGN(src0Tile, 0x0);
     TASSIGN(src1Tile, (uint64_t)(tileSize));

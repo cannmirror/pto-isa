@@ -32,7 +32,36 @@ __tf__ AICORE void TMatmul(typename TileRes::TileDType __out__ cMatrix, typename
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
-__tf__ AICORE void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
+__tf__ AICORE void TMatmulBias(typename TileRes::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
+    typename TileRight::TileDType __in__ bMatrix, uint64_t bias, uint16_t m, uint16_t k, uint16_t n)
+{
+    constexpr bool gemvCtrl = GetGemvCtrl<TileLeft>();
+
+    __cc__ typename TileRes::DType *c = (__cc__ typename TileRes::DType *)__cce_get_tile_ptr(cMatrix);
+    __ca__ typename TileLeft::DType *a = (__ca__ typename TileLeft::DType *)__cce_get_tile_ptr(aMatrix);
+    __cb__ typename TileRight::DType *b = (__cb__ typename TileRight::DType *)__cce_get_tile_ptr(bMatrix);
+    uint64_t xd = ((uint64_t)c) & 0xffffffffULL | ((bias & 0xffffffffULL) << 32);
+    c = (__cc__ typename TileRes::DType *)xd;
+
+    mad(c, a, b, m, k, n, 0, gemvCtrl, cmatrixSource, cmatrixInitVal);
+}
+
+template <typename TileRes, typename TileLeft, typename TileRight, bool biasBufferCtrl, bool cmatrixInitVal>
+__tf__ AICORE void TMatmulMx(typename TileRes::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
+    typename TileRight::TileDType __in__ bMatrix, uint16_t m, uint16_t k, uint16_t n)
+{
+    // CmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0：use the real number in C matrix
+    constexpr bool gemvCtrl = GetGemvCtrl<TileLeft>();
+
+    __cc__ typename TileRes::DType *c = (__cc__ typename TileRes::DType *)__cce_get_tile_ptr(cMatrix);
+    __ca__ typename TileLeft::DType *a = (__ca__ typename TileLeft::DType *)__cce_get_tile_ptr(aMatrix);
+    __cb__ typename TileRight::DType *b = (__cb__ typename TileRight::DType *)__cce_get_tile_ptr(bMatrix);
+
+    mad_mx(c, a, b, m, k, n, 0, gemvCtrl, biasBufferCtrl, cmatrixInitVal);
+}
+
+template <typename TileRes, typename TileLeft, typename TileRight, bool biasBufferCtrl, bool cmatrixInitVal>
+__tf__ AICORE void TMatmulMxBias(typename TileRes::TileDType __out__ cMatrix,
     typename TileLeft::TileDType __in__ aMatrix, typename TileRight::TileDType __in__ bMatrix, uint64_t bias,
     uint16_t m, uint16_t k, uint16_t n)
 {
@@ -44,7 +73,43 @@ __tf__ AICORE void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
     uint64_t xd = ((uint64_t)c) & 0xffffffffULL | ((bias & 0xffffffffULL) << 32);
     c = (__cc__ typename TileRes::DType *)xd;
 
-    mad(c, a, b, m, k, n, 0, gemvCtrl, cmatrixSource, cmatrixInitVal);
+    mad_mx(c, a, b, m, k, n, 0, gemvCtrl, biasBufferCtrl, cmatrixInitVal);
+}
+
+template <typename TileRes, typename TileLeft, typename TileLeftScale, typename TileRight, typename TileRightScale>
+PTO_INTERNAL void CheckMadMxValid()
+{
+    constexpr const int BASEK = 64;
+    using AType = typename TileLeft::DType;
+    using BType = typename TileRight::DType;
+    using CType = typename TileRes::DType;
+    static_assert((std::is_same_v<AType, float8_e4m3_t> && std::is_same_v<BType, float8_e4m3_t> &&
+                      std::is_same_v<CType, float>) || // e4m3e4m3
+                      (std::is_same_v<AType, float8_e4m3_t> && std::is_same_v<BType, float8_e5m2_t> &&
+                          std::is_same_v<CType, float>) || // e4m3e5m2
+                      (std::is_same_v<AType, float8_e5m2_t> && std::is_same_v<BType, float8_e4m3_t> &&
+                          std::is_same_v<CType, float>) || // e5m2e4m3
+                      (std::is_same_v<AType, float8_e5m2_t> && std::is_same_v<BType, float8_e5m2_t> &&
+                          std::is_same_v<CType, float>) || // e5m2e5m2
+                      (std::is_same_v<AType, float4_e1m2x2_t> && std::is_same_v<BType, float4_e1m2x2_t> &&
+                          std::is_same_v<CType, float>) || // e1m2e1m2
+                      (std::is_same_v<AType, float4_e1m2x2_t> && std::is_same_v<BType, float4_e2m1x2_t> &&
+                          std::is_same_v<CType, float>) || // e1m2e2m1
+                      (std::is_same_v<AType, float4_e2m1x2_t> && std::is_same_v<BType, float4_e2m1x2_t> &&
+                          std::is_same_v<CType, float>) ||                                                 // e2m1e2m1
+                      (std::is_same_v<AType, float4_e2m1x2_t> && std::is_same_v<BType, float4_e1m2x2_t> && // e2m1e1m2
+                          std::is_same_v<CType, float>),
+        "TMatmulMX:No supported data type");
+    static_assert((TileLeft::Cols % BASEK == 0), "TMatmulMX:k must be a multiple of 64.");
+    static_assert(
+        (TileLeft::Rows == TileRes::Rows) && (TileLeft::Cols == TileRight::Rows) && (TileRight::Cols == TileRes::Cols),
+        "TMatmulMX:Inconsistent number of m, k, n");
+    static_assert(
+        ((TileLeft::Loc == TileType::Left) && (!TileLeft::isRowMajor) && (TileLeft::SFractal == SLayout::RowMajor)) &&
+            ((TileRight::Loc == TileType::Right) && (TileRight::isRowMajor) &&
+                (TileRight::SFractal == SLayout::ColMajor)) &&
+            ((TileRes::Loc == TileType::Acc) && (!TileRes::isRowMajor) && (TileRes::SFractal == SLayout::RowMajor)),
+        "TMatmulMX:Non-conforming matrix fractal");
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight>
@@ -93,8 +158,7 @@ PTO_INTERNAL void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &b
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight>
-PTO_INTERNAL void TMATMUL_ACC_IMPL(
-    TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
+PTO_INTERNAL void TMATMUL_ACC_IMPL(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
 {
     // cmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0：use the real number in C matrix
     CheckMadValid<TileRes, TileLeft, TileRight>();
@@ -107,8 +171,7 @@ PTO_INTERNAL void TMATMUL_ACC_IMPL(
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias>
-PTO_INTERNAL void TMATMUL_BIAS_IMPL(
-    TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData)
+PTO_INTERNAL void TMATMUL_BIAS_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData)
 {
     // cmatrixSource control matrix source, 0: C matrix is in L0C, 1: C matrix is in C2
     // cmatrixInitVal Indicates the initial matrix, 1: the number in C matrix is 0, 0：use the real number in C matrix
@@ -122,6 +185,49 @@ PTO_INTERNAL void TMATMUL_BIAS_IMPL(
     uint16_t n = bMatrix.GetValidCol();
 
     TMatmulBias<TileRes, TileLeft, TileRight, true, false>(
+        cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n);
+}
+
+template <typename TileRes, typename TileLeft, typename TileLeftScale, typename TileRight, typename TileRightScale>
+PTO_INTERNAL void TMATMUL_MX_IMPL(
+    TileRes &cMatrix, TileLeft &aMatrix, TileLeftScale &aScaleMatrix, TileRight &bMatrix, TileRightScale &bScaleMatrix)
+{
+    uint16_t m = aMatrix.GetValidRow();
+    uint16_t k = aMatrix.GetValidCol();
+    uint16_t n = bMatrix.GetValidCol();
+
+    CheckMadMxValid<TileRes, TileLeft, TileLeftScale, TileRight, TileRightScale>();
+
+    TMatmulMx<TileRes, TileLeft, TileRight, false, true>(cMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
+}
+
+template <typename TileRes, typename TileLeft, typename TileLeftScale, typename TileRight, typename TileRightScale>
+PTO_INTERNAL void TMATMUL_MX_IMPL(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix,
+    TileLeftScale &aScaleMatrix, TileRight &bMatrix, TileRightScale &bScaleMatrix)
+{
+    uint16_t m = aMatrix.GetValidRow();
+    uint16_t k = aMatrix.GetValidCol();
+    uint16_t n = bMatrix.GetValidCol();
+
+    CheckMadMxValid<TileRes, TileLeft, TileLeftScale, TileRight, TileRightScale>();
+
+    TMatmulMx<TileRes, TileLeft, TileRight, false, false>(cOutMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
+}
+
+template <typename TileRes, typename TileLeft, typename TileLeftScale, typename TileRight, typename TileRightScale,
+    typename TileBias>
+PTO_INTERNAL void TMATMUL_MX_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileLeftScale &aScaleMatrix, TileRight &bMatrix,
+    TileRightScale &bScaleMatrix, TileBias &biasData)
+{
+    CheckMadMxValid<TileRes, TileLeft, TileLeftScale, TileRight, TileRightScale>();
+    static_assert(std::is_same_v<typename TileBias::DType, float>, "TMatmulMX:No supported bias data type.");
+    static_assert((TileBias::Loc == TileType::Bias) && (TileBias::Rows == 1), "TMatmulMX:TileBias must be single row.");
+
+    uint16_t m = aMatrix.GetValidRow();
+    uint16_t k = aMatrix.GetValidCol();
+    uint16_t n = bMatrix.GetValidCol();
+
+    TMatmulMxBias<TileRes, TileLeft, TileRight, true, false>(
         cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n);
 }
 } // namespace pto

@@ -49,7 +49,7 @@ This table tracks per-instruction backend availability:
 | [`TCOLMAX`](../docs/isa/TCOLMAX.md) | Yes | Yes | Yes | Yes |
 | [`TCOLMIN`](../docs/isa/TCOLMIN.md) | TODO | TODO | TODO | TODO |
 | [`TCOLSUM`](../docs/isa/TCOLSUM.md) | Yes | Yes | Yes | Yes |
-| [`TCVT`](../docs/isa/TCVT.md) | Yes | TODO | TODO | TODO |
+| [`TCVT`](../docs/isa/TCVT.md) | Yes | Yes | Yes | Yes |
 | [`TDIV`](../docs/isa/TDIV.md) | Yes | Yes | Yes | Yes |
 | [`TDIVS`](../docs/isa/TDIVS.md) | Yes | Yes | Yes | Yes |
 | [`TEXP`](../docs/isa/TEXP.md) | Yes | Yes | Yes | Yes |
@@ -86,9 +86,9 @@ This table tracks per-instruction backend availability:
 | [`TREMS`](../docs/isa/TREMS.md) | Yes | TODO | TODO | TODO |
 | [`TRESHAPE`](../docs/isa/TRESHAPE.md) | TODO | TODO | TODO | TODO |
 | [`TROWEXPAND`](../docs/isa/TROWEXPAND.md) | Yes | Yes | Yes | Yes |
-| [`TROWEXPANDDIV`](../docs/isa/TROWEXPANDDIV.md) | Yes | Yes | Yes | TODO |
-| [`TROWEXPANDMUL`](../docs/isa/TROWEXPANDMUL.md) | Yes | Yes | Yes | TODO |
-| [`TROWEXPANDSUB`](../docs/isa/TROWEXPANDSUB.md) | Yes | Yes | Yes | TODO |
+| [`TROWEXPANDDIV`](../docs/isa/TROWEXPANDDIV.md) | Yes | Yes | Yes | Yes |
+| [`TROWEXPANDMUL`](../docs/isa/TROWEXPANDMUL.md) | Yes | Yes | Yes | Yes |
+| [`TROWEXPANDSUB`](../docs/isa/TROWEXPANDSUB.md) | Yes | Yes | Yes | Yes |
 | [`TROWMAX`](../docs/isa/TROWMAX.md) | Yes | Yes | Yes | Yes |
 | [`TROWMIN`](../docs/isa/TROWMIN.md) | TODO | TODO | TODO | TODO |
 | [`TROWSUM`](../docs/isa/TROWSUM.md) | Yes | Yes | Yes | Yes |

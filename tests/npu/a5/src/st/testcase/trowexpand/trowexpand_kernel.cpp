@@ -22,12 +22,10 @@ __global__ AICORE void runROWEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src)
     using DynStridDim5 = pto::Stride<1, 1, 1, srcCols, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using TileData = Tile<TileType::Vec, T, rows, srcCols, BLayout::RowMajor, -1, -1>;
-    using TileData = Tile<TileType::Vec, T, rows, srcCols, BLayout::RowMajor, -1, -1>;
 
     using DstDynShapeDim5 = Shape<1, 1, 1, rows, dstCols>;
     using DstDynStridDim5 = pto::Stride<1, 1, 1, dstCols, 1>;
     using DstGlobalData = GlobalTensor<T, DstDynShapeDim5, DstDynStridDim5>;
-    using DstTileData = Tile<TileType::Vec, T, rows, dstCols, BLayout::RowMajor, -1, -1>;
     using DstTileData = Tile<TileType::Vec, T, rows, dstCols, BLayout::RowMajor, -1, -1>;
 
     TileData srcTile(rows, 1);
@@ -40,7 +38,7 @@ __global__ AICORE void runROWEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src)
     DstGlobalData dstGlobal(out + offset);
 
     TLOAD(dstTile, dstGlobal);
-    TLOAD(srcTile, srcGlobal);   // gm to ub
+    TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     TROWEXPAND(dstTile, srcTile);

@@ -16,16 +16,23 @@ using namespace pto;
 
 template <typename T, int Rows, int Cols, int ValidRows, int ValidCols>
 __global__ AICORE void runTSel( __gm__ T __out__ *out, __gm__ uint8_t __in__ *mask, __gm__ T __in__ *src0, __gm__ T __in__ *src1) {
-    using DynShapeDim5 = Shape<1, 1, 1, Rows, Cols>;
-    using DynStridDim5 = Stride<1, 1, 1, Cols, 1>;
-    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileData = Tile<TileType::Vec, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
-    using MaskGlobal = GlobalTensor<uint8_t, DynShapeDim5, DynStridDim5>;
-
     constexpr unsigned maskRow = Rows;
-    constexpr unsigned maskCol = (((Cols+7/8)+31)/32) * 32;
+    constexpr unsigned maskCol = ((((Cols+7)/8)+31)/32) * 32;
     constexpr unsigned maskVRow = ValidRows;
     constexpr unsigned maskVCol = (ValidCols+7)/8;
+
+    using DynShapeDim5 = Shape<1, 1, 1, ValidRows, ValidCols>;
+    using DynStridDim5 = Stride<1, 1, 1, ValidCols, 1>;
+
+    using DynShapeDim5m = Shape<1, 1, 1, maskVRow, maskVCol>;
+    using DynStridDim5m = Stride<1, 1, 1, maskVCol, 1>;
+    
+
+    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
+    using TileData = Tile<TileType::Vec, T, Rows, Cols, BLayout::RowMajor, -1, -1>;
+    using MaskGlobal = GlobalTensor<uint8_t, DynShapeDim5m, DynStridDim5m>;
+
+
     using MaskTile = Tile<TileType::Vec, uint8_t, maskRow, maskCol, BLayout::RowMajor, -1, -1>;
     TileData src0Tile(ValidRows, ValidCols);
     TileData src1Tile(ValidRows, ValidCols);

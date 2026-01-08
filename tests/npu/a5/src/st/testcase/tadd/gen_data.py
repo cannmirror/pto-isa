@@ -15,43 +15,39 @@ import numpy as np
 np.random.seed(19)
 
 
-def gen_golden_data_tadd(case_name, param):
+def gen_golden_data(case_name, param):
     dtype = param.dtype
 
-    h, w = [param.tile_row, param.tile_col]
-    h_valid, w_valid = [param.valid_row, param.valid_col]
+    dst_tile_row, dst_tile_col = param.dst_tile_row, param.dst_tile_col
+    src0_tile_row, src0_tile_col = param.src0_tile_row, param.src0_tile_col
+    src1_tile_row, src1_tile_col = param.src1_tile_row, param.src1_tile_col
+    h_valid, w_valid = param.valid_row, param.valid_col
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[h, w]).astype(dtype)
-    input2 = np.random.randint(1, 10, size=[h, w]).astype(dtype)
+    input1 = np.random.randint(1, 10, size=[src0_tile_row, src0_tile_col]).astype(dtype)
+    input2 = np.random.randint(1, 10, size=[src1_tile_row, src1_tile_col]).astype(dtype)
 
-    # Perform the addbtraction
-    golden = input1 + input2
-
-    # Apply valid region constraints
-    output = np.zeros([h, w]).astype(dtype)
-    for h in range(h):
-        for w in range(w):
-            if h >= h_valid or w >= w_valid:
-                golden[h][w] = output[h][w]
+    # Perform the operation
+    golden = np.zeros([dst_tile_row, dst_tile_col]).astype(dtype)
+    golden[0:h_valid, 0:w_valid] = input1[0:h_valid, 0:w_valid] + input2[0:h_valid, 0:w_valid]
 
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
     input2.tofile("input2.bin")
     golden.tofile("golden.bin")
 
-    return output, input1, input2, golden
-
 
 class TAddParams:
-    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
+    def __init__(self, dtype, dstH, dstW, src0H, src0W, src1H, src1W, vRow, vCol):
         self.dtype = dtype
-        self.global_row = global_row
-        self.global_col = global_col
-        self.tile_row = tile_row
-        self.tile_col = tile_col
-        self.valid_row = valid_row
-        self.valid_col = valid_col
+        self.dst_tile_row = dstH
+        self.dst_tile_col = dstW
+        self.src0_tile_row = src0H
+        self.src0_tile_col = src0W
+        self.src1_tile_row = src1H
+        self.src1_tile_col = src1W
+        self.valid_row = vRow
+        self.valid_col = vCol
 
 
 def generate_case_name(param):
@@ -62,8 +58,9 @@ def generate_case_name(param):
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TADDTest.case_{dtype_str}_{param.global_row}x{param.global_col}_\
-{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+    return f"TADDTest.case_{dtype_str}_{param.dst_tile_row}x{param.dst_tile_col}_\
+{param.src0_tile_row}x{param.src0_tile_col}_{param.src1_tile_row}x{param.src1_tile_col}_\
+{param.valid_row}x{param.valid_col}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -75,10 +72,18 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TAddParams(np.float32, 64, 64, 64, 64, 64, 64),
-        TAddParams(np.int32, 64, 64, 64, 64, 64, 64),
-        TAddParams(np.int16, 64, 64, 64, 64, 64, 64),
-        TAddParams(np.float16, 16, 256, 16, 256, 16, 256),
+        TAddParams(np.float32, 64, 64, 64, 64, 64, 64, 64, 64),
+        TAddParams(np.int32, 64, 64, 64, 64, 64, 64, 64, 64),
+        TAddParams(np.int16, 64, 64, 64, 64, 64, 64, 64, 64),
+        TAddParams(np.float16, 16, 256, 16, 256, 16, 256, 16, 256),
+        TAddParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 64),
+        TAddParams(np.float32, 16, 32, 16, 64, 16, 32, 16, 32),
+        TAddParams(np.int16, 32, 128, 32, 128, 32, 256, 32, 128),
+        TAddParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 32),
+        TAddParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 63),
+        TAddParams(np.float32, 16, 32, 16, 64, 16, 32, 16, 31),
+        TAddParams(np.int16, 32, 128, 32, 128, 32, 256, 32, 127),
+        TAddParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 31),
     ]
 
     for param in case_params_list:
@@ -87,5 +92,5 @@ if __name__ == "__main__":
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data_tadd(case_name, param)
+        gen_golden_data(case_name, param)
         os.chdir(original_dir)

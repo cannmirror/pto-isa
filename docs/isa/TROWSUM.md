@@ -36,7 +36,10 @@ Implementation checks (NPU):
 
 - A2A3:
   - Tile location: `dst` and `src` must be `TileType::Vec`.
-  - Tile layout: ND fractal (`isRowMajor` and `SLayout::NoneBox`).
+  - Tile layout of `src`: ND fractal (`isRowMajor` and `SLayout::NoneBox`).
+  - Tile layout of `dst`:
+    - **Recommended**: DN layout Tile of 1D, e.g., `Tile<TileType::Vec, T, ROWS, 1, BLayout::ColMajor, ValidRows, 1>`
+    - **To be removed**: ND layout Tile of 2D, e.g., `Tile<TileType::Vec, T, ROWS, COLS, BLayout::RowMajor, ValidRows, 1>`
   - Data types: `half` or `float`.
   - DType consistency: `dst.DType == src.DType`.
   - Runtime valid checks:
@@ -58,7 +61,7 @@ using namespace pto;
 
 void example_auto() {
   using SrcT = Tile<TileType::Vec, float, 16, 16>;
-  using DstT = Tile<TileType::Vec, float, 16, 1>;
+  using DstT = Tile<TileType::Vec, float, 16, 1, BLayout::ColMajor>;
   using TmpT = Tile<TileType::Vec, float, 16, 16>;
   SrcT src;
   DstT dst;
@@ -76,7 +79,7 @@ using namespace pto;
 
 void example_manual() {
   using SrcT = Tile<TileType::Vec, float, 16, 16>;
-  using DstT = Tile<TileType::Vec, float, 16, 1>;
+  using DstT = Tile<TileType::Vec, float, 16, 1, BLayout::ColMajor>;
   using TmpT = Tile<TileType::Vec, float, 16, 16>;
   SrcT src;
   DstT dst;

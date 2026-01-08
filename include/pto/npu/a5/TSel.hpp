@@ -142,6 +142,7 @@ __tf__ PTO_INTERNAL void TSel_b16_8(typename TileData::TileDType __out__ dst,
 
 template <typename TileData, typename MaskTile>
 PTO_INTERNAL void TSEL_IMPL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1) {
+    static_assert(TileData::isRowMajor, "Fix: TSEL has not supported layout type.");
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();

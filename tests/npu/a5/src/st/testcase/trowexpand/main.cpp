@@ -47,7 +47,7 @@ void test_trowexpand() {
 
     T *dstHost, *src0Host;
     T *dstDevice, *src0Device;
-    
+
     aclrtMallocHost((void **)(&dstHost), outputFileSize);
     aclrtMallocHost((void **)(&src0Host), inputFileSize);
 
@@ -74,8 +74,8 @@ void test_trowexpand() {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(outputFileSize);
-    std::vector<float> devFinal(outputFileSize);
+    std::vector<T> golden(outputFileSize);
+    std::vector<T> devFinal(outputFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", outputFileSize, golden.data(), outputFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", outputFileSize, devFinal.data(), outputFileSize);
     bool ret = ResultCmp(golden, devFinal, 0.001f);

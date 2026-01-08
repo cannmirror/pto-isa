@@ -148,11 +148,11 @@ PTO_INTERNAL void TRowReduceImpl(__ubuf__ typename TileDataOut::DType *dstPtr,
 }
 
 template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat>
-__tf__ PTO_INTERNAL void
-TRowMax(typename TileDataOut::TileDType __out__ dst,
-        typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
-        uint32_t srcValidCols, uint32_t dstValidRow,
-        unsigned version = VFImplKind::VFIMPL_DEFAULT) {
+__tf__ PTO_INTERNAL OP_NAME(TROWMAX) OP_TYPE(reduce) void TRowMax(
+    typename TileDataOut::TileDType __out__ dst,
+    typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
+    uint32_t srcValidCols, uint32_t dstValidRow,
+    unsigned version = VFImplKind::VFIMPL_DEFAULT) {
   TRowReduceCheck<TileDataOut, TileDataIn>(srcValidRows, srcValidCols,
                                            dstValidRow);
 
@@ -166,11 +166,11 @@ TRowMax(typename TileDataOut::TileDType __out__ dst,
 }
 
 template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat>
-__tf__ PTO_INTERNAL void
-TRowSum(typename TileDataOut::TileDType __out__ dst,
-        typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
-        uint32_t srcValidCols, uint32_t dstValidRow,
-        unsigned version = VFImplKind::VFIMPL_DEFAULT) {
+__tf__ PTO_INTERNAL OP_NAME(TROWSUM) OP_TYPE(reduce) void TRowSum(
+    typename TileDataOut::TileDType __out__ dst,
+    typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
+    uint32_t srcValidCols, uint32_t dstValidRow,
+    unsigned version = VFImplKind::VFIMPL_DEFAULT) {
   TRowReduceCheck<TileDataOut, TileDataIn>(srcValidRows, srcValidCols,
                                            dstValidRow);
 
@@ -184,11 +184,11 @@ TRowSum(typename TileDataOut::TileDType __out__ dst,
 }
 
 template <typename TileDataOut, typename TileDataIn, unsigned elementsPerRepeat>
-__tf__ PTO_INTERNAL void
-TRowMin(typename TileDataOut::TileDType __out__ dst,
-        typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
-        uint32_t srcValidCols, uint32_t dstValidRow,
-        unsigned version = VFImplKind::VFIMPL_DEFAULT) {
+__tf__ PTO_INTERNAL OP_NAME(TROWMIN) OP_TYPE(reduce) void TRowMin(
+    typename TileDataOut::TileDType __out__ dst,
+    typename TileDataIn::TileDType __in__ src, uint32_t srcValidRows,
+    uint32_t srcValidCols, uint32_t dstValidRow,
+    unsigned version = VFImplKind::VFIMPL_DEFAULT) {
   TRowReduceCheck<TileDataOut, TileDataIn>(srcValidRows, srcValidCols,
                                            dstValidRow);
 

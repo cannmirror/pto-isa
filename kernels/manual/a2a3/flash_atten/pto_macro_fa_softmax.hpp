@@ -60,7 +60,7 @@ AICORE inline void softmax_opt_fa_init_impl(TileDataD2 __out__ x_exp, TileDataS1
     // FA2.0 init mode
     TROWMAX(new_global_max, input_x, tmp_float);
     pipe_barrier(PIPE_V);
-    TROWEXPANDSUB_IMPL(tmp_float, input_x, new_global_max);
+    TROWEXPANDSUB(tmp_float, input_x, new_global_max);
     TMULS(tmp_float, tmp_float, scale);
     TEXP(p_tile_f32, tmp_float);
     pipe_barrier(PIPE_V);
@@ -102,9 +102,9 @@ AICORE inline void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDa
     TSUB(tmp_shw_exp_max, tmp_shw_new_global_max, tmp_shw_local_max);
     pipe_barrier(PIPE_V);
 
-    TMULS(new_global_max, local_max, 1.0f); // just copy
+    TMULS(tmp_shw_new_global_max, tmp_shw_local_max, 1.0f); // just copy
     pipe_barrier(PIPE_V);
-    TROWEXPANDSUB_IMPL(tmp_float, input_x, local_max);
+    TROWEXPANDSUB(tmp_float, input_x, local_max);
     TMULS(tmp_shw_exp_max, tmp_shw_exp_max, scale);
     TMULS(tmp_float, tmp_float, scale);
     TEXP(tmp_shw_exp_max, tmp_shw_exp_max);

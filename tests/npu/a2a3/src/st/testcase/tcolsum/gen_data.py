@@ -23,11 +23,11 @@ def gen_golden_data(case_name, param):
     src_row = param.src_row
     src_valid_row = param.src_valid_row
 
-    input_arr = np.random.rand(src_valid_row, cols) * 10
-    input_arr = input_arr.astype(data_type)
+    input = np.random.rand(src_valid_row, cols) * 10
+    input = input.astype(data_type)
     golden = np.zeros((1, cols), dtype=data_type)
-    golden[0] = np.sum(input_arr, axis=0)
-    input_arr.tofile('input.bin')
+    golden[0] = np.sum(input, axis=0)
+    input.tofile('input.bin')
     golden.tofile('golden.bin')
 
 

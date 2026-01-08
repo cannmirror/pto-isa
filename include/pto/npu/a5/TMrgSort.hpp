@@ -59,8 +59,7 @@ PTO_INTERNAL void GetExhaustedData(
     uint16_t &mrgSortList0, uint16_t &mrgSortList1, uint16_t &mrgSortList2, uint16_t &mrgSortList3)
 {
     if constexpr (exhausted) {
-        set_flag(PIPE_V, PIPE_S, EVENT_ID0);
-        wait_flag(PIPE_V, PIPE_S, EVENT_ID0);
+        PtoSetWaitFlag<PIPE_V, PIPE_S>();
         int64_t mrgSortResult = get_vms4_sr();
         constexpr uint64_t resMask = 0xFFFF;
         // VMS4_SR[15:0], number of finished region proposals in list0
@@ -167,14 +166,19 @@ template <typename DstTileData, typename TmpTileData, typename Src0TileData, typ
     typename Src2TileData, typename Src3TileData, unsigned listNum>
 PTO_INTERNAL void CheckOverMemory()
 {
-    constexpr int32_t src1Col = (listNum >= LIST_NUM_2 ? Src1TileData::Cols : EMPTY_LIST_SIZE);
-    constexpr int32_t src2Col = (listNum >= LIST_NUM_3 ? Src2TileData::Cols : EMPTY_LIST_SIZE);
-    constexpr int32_t src3Col = (listNum == LIST_NUM_4 ? Src3TileData::Cols : EMPTY_LIST_SIZE);
     constexpr size_t elemSize = sizeof(typename DstTileData::DType);
-    constexpr int32_t totalSrcCols = Src0TileData::Cols + src1Col + src2Col + src3Col;
-    constexpr size_t tmpSize = (listNum == LIST_NUM_1) ? EMPTY_LIST_SIZE : TmpTileData::Cols * elemSize;
-    constexpr size_t srcSize = totalSrcCols * elemSize;
-    static_assert(srcSize + tmpSize <= UB_SIZE, "ERROR: Total memory usage exceeds UB limit!");
+    constexpr size_t tmpSize = (listNum == LIST_NUM_1) ? DstTileData::Cols * elemSize : TmpTileData::Cols * elemSize;
+    if constexpr (listNum >= LIST_NUM_2) {
+        static_assert(Src1TileData::Cols * elemSize <= UB_SIZE, "ERROR: src1 memory usage exceeds UB limit!");
+    }
+    if constexpr (listNum >= LIST_NUM_3) {
+        static_assert(Src2TileData::Cols * elemSize <= UB_SIZE, "ERROR: src2 memory usage exceeds UB limit!");
+    }
+    if constexpr (listNum >= LIST_NUM_4) {
+        static_assert(Src3TileData::Cols * elemSize <= UB_SIZE, "ERROR: src3 memory usage exceeds UB limit!");
+    }
+    static_assert((tmpSize + Src0TileData::Cols * elemSize) <= UB_SIZE,
+        "ERROR: memory usage exceeds UB limit!");
 }
 
 template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
@@ -261,7 +265,6 @@ PTO_INTERNAL void TMRGSORT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t blo
 {
     CheckStatic<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData>();
     CheckOverMemory<DstTileData, DstTileData, SrcTileData, SrcTileData, SrcTileData, SrcTileData, LIST_NUM_1>();
-    uint32_t dstCol = dst.GetValidCol();
     uint32_t srcCol = src.GetValidCol();
     // 一个strcut是8字节
     uint32_t numStrcutures = blockLen * sizeof(typename SrcTileData::DType) >> STRUCT_SIZE_SHIFT;

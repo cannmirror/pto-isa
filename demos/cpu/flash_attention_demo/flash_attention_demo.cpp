@@ -9,9 +9,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 */
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <random>
@@ -35,6 +37,8 @@ constexpr int kHeadDim = 32;
 constexpr std::uint32_t kRngSeed = 20251220U;
 constexpr float kInitScale = 0.02f;
 constexpr float kRefEps = 2e-4f;
+constexpr int kWarmupIters = 2;
+constexpr int kIters = 20;
 
 inline std::size_t idx4(int b, int h, int s, int d, int heads, int seq_len, int head_dim)
 {
@@ -277,8 +281,22 @@ int main(int argc, char **argv)
     std::vector<float> out_fused(total, 0.0f);
     std::vector<float> out_ref(total, 0.0f);
 
-    flash_attention_pto(q, k, v, out_fused);
+    for (int i = 0; i < kWarmupIters; ++i) {
+        flash_attention_pto(q, k, v, out_fused);
+    }
+    const auto t0 = std::chrono::steady_clock::now();
+    for (int i = 0; i < kIters; ++i) {
+        flash_attention_pto(q, k, v, out_fused);
+    }
+    const auto t1 = std::chrono::steady_clock::now();
     flash_attention_reference(q, k, v, out_ref, kBatch, kHeads, kSeqLen, kHeadDim, causal);
+
+    const double elapsed_s =
+        std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0).count() / static_cast<double>(kIters);
+    const double matmul_flops =
+        4.0 * static_cast<double>(kBatch) * static_cast<double>(kHeads) * static_cast<double>(kSeqLen) *
+        static_cast<double>(kSeqLen) * static_cast<double>(kHeadDim);
+    const double gflops = (elapsed_s > 0.0) ? (matmul_flops / elapsed_s / 1e9) : 0.0;
 
     const float diff = max_abs_diff(out_fused, out_ref);
     std::cout << "max_abs_diff(pto, ref) = " << diff << "\n";
@@ -305,6 +323,15 @@ int main(int argc, char **argv)
         checksum += out_fused[i];
     }
     std::cout << "checksum(out) = " << checksum << "\n";
+    std::cout << "perf: avg_ms=" << (elapsed_s * 1e3) << " approx_matmul_flops=" << matmul_flops << " gflops=" << gflops;
+    if (const char *peak_env = std::getenv("PTO_CPU_PEAK_GFLOPS")) {
+        char *end = nullptr;
+        const double peak = std::strtod(peak_env, &end);
+        if (end != peak_env && peak > 0.0) {
+            std::cout << " peak_gflops=" << peak << " mfu=" << (gflops / peak);
+        }
+    }
+    std::cout << "\n";
     std::cout << "[PASS] flash_attention_demo\n";
     return kExitSuccess;
 }

@@ -97,7 +97,8 @@ This example overlaps data movement and compute using double buffering in L1 and
 - Reverse sync: `MTE1 -> MTE2`, `MMAD -> MTE1`
 
 Pipeline overview:
-Pipeline diagram: (to be added)
+
+![GEMM pipeline](../../../docs/figures/gemm_pipeline.png)
 
 ## Build and Run
 

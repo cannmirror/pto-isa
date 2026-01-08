@@ -12,87 +12,84 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/pto-inst.hpp>
 #include <gtest/gtest.h>
 
-
 using namespace std;
 using namespace PtoTestCommon;
 
 class MSCATTERTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
-    std::string fullPath = "../" + suiteName + "." + caseName;
-    return fullPath;
+    return "../" + suiteName + "." + caseName;
 }
 
+template <int kTileRows, int kTileCols, int kDstLen>
+void LaunchMScatter(float *out, float *srcTile, uint32_t *idx, void *stream);
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-void LaunchMSCATTER(T *src0, T *out, T *src1, void *stream);
-
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-void test_mscatter() {
-    size_t dstFileSize = kTRows_ * kTCols_ * sizeof(T);
-    size_t srcFileSize = kTRows_ * kTCols_ * sizeof(T);
+template <int kTileRows, int kTileCols, int kDstLen>
+void test_mscatter()
+{
+    const size_t dstBytes = kDstLen * sizeof(float);
+    const size_t srcBytes = kTileRows * kTileCols * sizeof(float);
+    const size_t idxBytes = kTileRows * kTileCols * sizeof(uint32_t);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    T *dstHost, *src0Host, *src1Host;
-    T *dstDevice, *src0Device, *src1Device;
+    float *dstHost, *srcHost;
+    uint32_t *idxHost;
+    float *dstDevice, *srcDevice;
+    uint32_t *idxDevice;
 
-    aclrtMallocHost((void **)(&dstHost), dstFileSize);
-    aclrtMallocHost((void **)(&src0Host), srcFileSize);
-    aclrtMallocHost((void **)(&src1Host), srcFileSize);
+    aclrtMallocHost((void **)(&dstHost), dstBytes);
+    aclrtMallocHost((void **)(&srcHost), srcBytes);
+    aclrtMallocHost((void **)(&idxHost), idxBytes);
 
-    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&dstDevice, dstBytes, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, srcBytes, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&idxDevice, idxBytes, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input1.bin", srcFileSize, src0Host, srcFileSize));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input2.bin", srcFileSize, src1Host, srcFileSize));
+    size_t dstSize = dstBytes;
+    size_t srcSize = srcBytes;
+    size_t idxSize = idxBytes;
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input1.bin", dstSize, dstHost, dstBytes));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input2.bin", srcSize, srcHost, srcBytes));
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/input3.bin", idxSize, idxHost, idxBytes));
 
-    aclrtMemcpy(src0Device, srcFileSize, src0Host, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, srcFileSize, src1Host, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchMSCATTER<T, kGRows_, kGCols_, kTRows_, kTCols_>(src0Device, dstDevice, src1Device, stream);
+    aclrtMemcpy(dstDevice, dstBytes, dstHost, dstBytes, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(srcDevice, srcBytes, srcHost, srcBytes, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(idxDevice, idxBytes, idxHost, idxBytes, ACL_MEMCPY_HOST_TO_DEVICE);
+
+    LaunchMScatter<kTileRows, kTileCols, kDstLen>(dstDevice, srcDevice, idxDevice, stream);
 
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
-
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
+    aclrtMemcpy(dstHost, dstBytes, dstDevice, dstBytes, ACL_MEMCPY_DEVICE_TO_HOST);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstBytes);
 
     aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
-
+    aclrtFree(srcDevice);
+    aclrtFree(idxDevice);
     aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
+    aclrtFreeHost(srcHost);
+    aclrtFreeHost(idxHost);
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(dstFileSize);
-    std::vector<T> devFinal(dstFileSize);
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize));
-    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, devFinal.data(), dstFileSize));
-
-    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
-
-    EXPECT_TRUE(ret);
+    std::vector<float> golden(dstBytes / sizeof(float));
+    std::vector<float> devFinal(dstBytes / sizeof(float));
+    dstSize = dstBytes;
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/golden.bin", dstSize, golden.data(), dstBytes));
+    dstSize = dstBytes;
+    CHECK_RESULT_GTEST(ReadFile(GetGoldenDir() + "/output.bin", dstSize, devFinal.data(), dstBytes));
+    EXPECT_TRUE(ResultCmp<float>(golden, devFinal, 0.001f));
 }
 
-TEST_F(MSCATTERTest, case_float_64x64_64x64_64x64) {
-    test_mscatter<float, 64, 64, 64, 64>();
-}
-TEST_F(MSCATTERTest, case_float_16x256_16x256_16x256) {
-    test_mscatter<float, 16, 256, 16, 256>();
-}
+TEST_F(MSCATTERTest, case_float_dst512_src16x16) { test_mscatter<16, 16, 512>(); }

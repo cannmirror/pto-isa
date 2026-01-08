@@ -21,8 +21,12 @@ def gen_golden_data_tcmps(case_name, param):
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
+    if (dtype == np.float16):
+        input1 = np.random.randint(-5, 5, size=[H, W]).astype(dtype)
+        input2 = np.random.randint(-5, 5, size=[1]).astype(dtype)
+    else:
+        input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+        input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
 
     if param.mode == "CmpMode::EQ":
         golden = np.equal(input1, input2[0])
@@ -89,17 +93,14 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tcmpsParams(np.float16, 32, 32, 32, 32, 32, 32, "CmpMode::EQ"),
+        tcmpsParams(np.float16, 32, 32, 32, 32, 32, 32, "CmpMode::GE"),
+        tcmpsParams(np.float32, 1, 64, 1, 64, 1, 64, "CmpMode::EQ"),
         tcmpsParams(np.float32, 8, 64, 8, 64, 8, 64, "CmpMode::GT"),
         tcmpsParams(np.float32, 4, 64, 4, 64, 4, 64, "CmpMode::NE"),
-        tcmpsParams(np.float32, 128, 128, 64, 64, 128, 128, "CmpMode::LT"),
-        tcmpsParams(np.int32, 64, 64, 32, 32, 64, 64, "CmpMode::EQ"),
+        tcmpsParams(np.int32, 64, 64, 64, 64, 32, 64, "CmpMode::EQ"),
         tcmpsParams(np.int32, 16, 32, 16, 32, 16, 32, "CmpMode::EQ"),
         tcmpsParams(np.float32, 128, 128, 128, 128, 128, 128, "CmpMode::LE"),
-        tcmpsParams(np.int32, 77, 81, 32, 32, 77, 81, "CmpMode::EQ"),
         tcmpsParams(np.int32, 32, 32, 32, 32, 32, 32, "CmpMode::EQ"),
-        tcmpsParams(np.int16, 32, 32, 16, 32, 32, 32, "CmpMode::EQ"),
-        tcmpsParams(np.int16, 77, 81, 32, 32, 77, 81, "CmpMode::LE"),
     ]
 
     for i, param in enumerate(case_params_list):

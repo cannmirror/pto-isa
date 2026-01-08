@@ -18,11 +18,11 @@ np.random.seed(2025)
 
 
 def gen_golden_data(case_name, param):
-    data_type = param.data_type
+    datatype = param.datatype
     m, k, n = param.row, param.src_col, param.dst_col
     dst_valid_col = param.dst_valid_col
-    input_arr = (np.random.rand(m, k) * 10).astype(data_type)
-    golden = np.zeros((m, n)).astype(data_type)
+    input_arr = (np.random.rand(m, k) * 10).astype(datatype)
+    golden = np.zeros((m, n)).astype(datatype)
     for i in range(m):
         for j in range(dst_valid_col):
             golden[i][j] = input_arr[i][0]
@@ -31,8 +31,8 @@ def gen_golden_data(case_name, param):
 
 
 class TRowExpandParam:
-    def __init__(self, data_type, row, src_col, dst_col, dst_valid_col):
-        self.data_type = data_type
+    def __init__(self, datatype, row, src_col, dst_col, dst_valid_col):
+        self.datatype = datatype
         self.row = row
         self.src_col = src_col
         self.dst_col = dst_col
@@ -46,7 +46,7 @@ def generate_case_name(idx, param):
         np.int8: 'int8',
         np.int16: 'int16',
         np.int32: 'int32'
-    }[param.data_type]
+    }[param.datatype]
     return f"TROWEXPANDTest.case{idx}_{dtype_str}_{param.row}_{param.src_col}_{param.row}_{param.dst_valid_col}"
 
 if __name__ == "__main__":

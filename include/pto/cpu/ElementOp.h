@@ -259,7 +259,7 @@ namespace pto {
             if (src != static_cast<DType>(0)) {
                 dst = 1 / src;
             } else {
-                PTO_ASSERT(, "illegal src is zero");
+                PTO_ASSERT(false, "illegal src is zero");
             }
         }
     };

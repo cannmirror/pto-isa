@@ -17,9 +17,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "utils.hpp"
 #include "TBinSOp.hpp"
 
-using namespace pto;
-using namespace std;
-
 namespace pto {
 
 template <typename T> struct ExpandSOp {
@@ -30,12 +27,12 @@ template <typename T> struct ExpandSOp {
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ PTO_INTERNAL
-void TExpandS(typename TileData::TileDType __out__ dst,
-           typename TileData::DType scalar,
-           unsigned kValidRows,
-           unsigned kValidCols,
-           BinSOpsImpl version = BinSOpsImpl::BinSOpsIMPL_DEFAULT) {
+__tf__ PTO_INTERNAL void TExpandS(
+        typename TileData::TileDType __out__ dst,
+        typename TileData::DType scalar,
+        unsigned kValidRows,
+        unsigned kValidCols,
+        BinSOpsImpl version = BinSOpsImpl::BinSOpsIMPL_DEFAULT) {
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     BinaryInstr<ExpandSOp<T>, TileData, T, elementsPerRepeat, blockSizeElem, rowStride>(
@@ -46,21 +43,21 @@ template <typename TileData>
 AICORE void TEXPANDS_IMPL(TileData &dst, typename TileData::DType scalar)
 {
     using T = typename TileData::DType;
-
     static_assert(
-                    std::is_same<typename TileData::DType, int32_t>::value ||
-                    std::is_same<typename TileData::DType, uint32_t>::value ||
-                    std::is_same<typename TileData::DType, int>::value ||
-                    std::is_same<typename TileData::DType, int16_t>::value ||
-                    std::is_same<typename TileData::DType, uint16_t>::value ||
-                    std::is_same<typename TileData::DType, int8_t>::value ||
-                    std::is_same<typename TileData::DType, uint8_t>::value ||
-                    std::is_same<typename TileData::DType, half>::value ||
-                    std::is_same<typename TileData::DType, float16_t>::value ||
-                    std::is_same<typename TileData::DType, float>::value ||
-                    std::is_same<typename TileData::DType, float32_t>::value,
-                      "TEXPANDS: Invalid data type");
+        std::is_same<typename TileData::DType, int32_t>::value ||
+        std::is_same<typename TileData::DType, uint32_t>::value ||
+        std::is_same<typename TileData::DType, int>::value ||
+        std::is_same<typename TileData::DType, int16_t>::value ||
+        std::is_same<typename TileData::DType, uint16_t>::value ||
+        std::is_same<typename TileData::DType, int8_t>::value ||
+        std::is_same<typename TileData::DType, uint8_t>::value ||
+        std::is_same<typename TileData::DType, half>::value ||
+        std::is_same<typename TileData::DType, float16_t>::value ||
+        std::is_same<typename TileData::DType, float>::value ||
+        std::is_same<typename TileData::DType, float32_t>::value,
+            "TEXPANDS: Invalid data type");
 
+    static_assert(TileData::isRowMajor, "TEXPANDS: not supported Layout type");
     static_assert(TileData::Loc == TileType::Vec, "Location of src and dst tiles must be Location::Vec.");
     static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
     static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");

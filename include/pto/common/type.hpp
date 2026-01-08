@@ -22,6 +22,75 @@ See LICENSE in the root of the software repository for the full text of the Lice
 // for pto internal implementation
 #define PTO_INTERNAL AICORE PTO_INLINE
 
+#define OP_NAME(Name) __attribute__((vf_name(#Name)))
+#define OP_TYPE(TypeName) __attribute__((vf_kind(#TypeName)))
+
+// -----------------------------------------------------------------------------
+// PTO assertion helpers
+//
+// Goals:
+// - Provide a consistent diagnostic prefix across compile-time and runtime checks.
+// - Always print/encode the violated condition when possible.
+// - Provide a stable “next step” for users: see docs/coding/debug.md.
+//
+// Note:
+// - `static_assert` diagnostics are compile-time only; we use a macro so we can
+//   include the condition string and a docs hint consistently.
+// - CPU simulator uses `PTO_CPU_ASSERT(...)` for runtime checks; it prints and
+//   aborts (always enabled).
+// -----------------------------------------------------------------------------
+
+#define PTO_DETAIL_STR_(x) #x
+#define PTO_DETAIL_STR(x) PTO_DETAIL_STR_(x)
+
+#define PTO_STATIC_ASSERT_1(cond)                                                                        \
+    static_assert((cond),                                                                                \
+        "[PTO][SA] Constraint violated. "                                                                \
+        "Condition: " #cond ". "                                                                         \
+        "Hint: see docs/coding/debug.md and search for " __FILE__ ":" PTO_DETAIL_STR(__LINE__))
+
+#define PTO_STATIC_ASSERT_2(cond, msg)                                                                   \
+    static_assert((cond),                                                                                \
+        "[PTO][SA] " msg " "                                                                             \
+        "Condition: " #cond ". "                                                                         \
+        "Hint: see docs/coding/debug.md and search for " __FILE__ ":" PTO_DETAIL_STR(__LINE__))
+
+#define PTO_DETAIL_GET_MACRO(_1, _2, NAME, ...) NAME
+#define PTO_STATIC_ASSERT(...)                                                                           \
+    PTO_DETAIL_GET_MACRO(__VA_ARGS__, PTO_STATIC_ASSERT_2, PTO_STATIC_ASSERT_1)(__VA_ARGS__)
+
+#if defined(__CPU_SIM)
+#include <cstdio>
+#include <cstdlib>
+
+#define PTO_CPU_ASSERT_1(cond)                                                                           \
+    do {                                                                                                 \
+        if (!(cond)) {                                                                                   \
+            std::fprintf(stderr,                                                                         \
+                "[PTO][CA] Constraint violated. Condition: %s. Hint: see docs/coding/debug.md and "      \
+                "search for %s:%d\n",                                                                    \
+                #cond, __FILE__, __LINE__);                                                              \
+            std::abort();                                                                                \
+        }                                                                                                \
+    } while (0)
+
+#define PTO_CPU_ASSERT_2(cond, msg)                                                                      \
+    do {                                                                                                 \
+        if (!(cond)) {                                                                                   \
+            std::fprintf(stderr,                                                                         \
+                "[PTO][CA] %s Condition: %s. Hint: see docs/coding/debug.md and search for %s:%d\n",     \
+                (msg), #cond, __FILE__, __LINE__);                                                       \
+            std::abort();                                                                                \
+        }                                                                                                \
+    } while (0)
+
+#define PTO_CPU_ASSERT(...)                                                                              \
+    PTO_DETAIL_GET_MACRO(__VA_ARGS__, PTO_CPU_ASSERT_2, PTO_CPU_ASSERT_1)(__VA_ARGS__)
+#else
+// Non-CPU builds should not depend on CPU-only assertion behavior.
+#define PTO_CPU_ASSERT(...) ((void)0)
+#endif
+
 namespace pto {
     // 01-bits patterns are read from right to left.
     // Right bits are low bits, corresponding to low index positions of data.

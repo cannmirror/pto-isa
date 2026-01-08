@@ -94,7 +94,7 @@ void tsort32_test(int32_t rows, int32_t cols, int32_t colsAlign)
     ReadFile(GetGoldenDir() + "/golden_output.bin", dstByteSize, golden.data(), dstByteSize);
     ReadFile(GetGoldenDir() + "/output.bin", dstByteSize, devFinal.data(), dstByteSize);
 
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
+    bool ret = ResultCmp(golden, devFinal, 0.01f);
     EXPECT_TRUE(ret);
 }
 

@@ -12,83 +12,30 @@
 
 import os
 import numpy as np
+
 np.random.seed(19)
 
-def gen_golden_data_mscatter(case_name, param):
-    dtype = param.dtype
 
-    row, col = [param.tile_row, param.tile_col]
-    h_valid, w_valid = [min(row, param.valid_row), min(col, param.valid_col)]
-    data_size = h_valid * w_valid
+def gen_case(case_dir: str, tile_rows: int, tile_cols: int, dst_len: int):
+    os.makedirs(case_dir, exist_ok=True)
+    os.chdir(case_dir)
 
-    # Generate random input array
-    input1 = np.random.uniform(low=-16, high=16, size=[row, col]).astype(dtype)
-    input2 = np.random.randint(low=0, high=data_size, size=[row, col]).astype(dtype)
+    dst_init = np.random.uniform(low=-2, high=2, size=[dst_len]).astype(np.float32)
+    src = np.random.uniform(low=-4, high=4, size=[tile_rows, tile_cols]).astype(np.float32)
+    idx = np.random.randint(0, dst_len, size=[tile_rows, tile_cols]).astype(np.uint32)
 
-    # Apply valid region constraints
-    golden = np.full(data_size, 0, dtype=dtype)
-    for i in range(row):
-        for j in range(col):
-            golden[int(input2[i][j])] = input1[i][j]
+    golden = dst_init.copy()
+    for i in range(tile_rows):
+        for j in range(tile_cols):
+            golden[idx[i, j]] = src[i, j]
 
-    # Save the input and golden data to binary files
-    input1.tofile("input1.bin")
-    input2.tofile("input2.bin")
+    dst_init.tofile("input1.bin")
+    src.tofile("input2.bin")
+    idx.tofile("input3.bin")
     golden.tofile("golden.bin")
-
-    return input1, golden
-
-
-class MScatterParams:
-    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
-        self.dtype = dtype
-        self.global_row = global_row
-        self.global_col = global_col
-        self.tile_row = tile_row
-        self.tile_col = tile_col
-        self.valid_row = valid_row
-        self.valid_col = valid_col
-
-
-def generate_case_name(param):
-    dtype_str = {
-        np.float32: 'float',
-        np.float16: 'half',
-        np.int8: 'int8',
-        np.int32: 'int32',
-        np.int16: 'int16'
-    }[param.dtype]
-
-    def substring(a, b) -> str:
-        return f"_{a}x{b}"
-        
-    name = f"MSCATTERTest.case_{dtype_str}" 
-    name += substring(param.global_row, param.global_col)
-    name += substring(param.tile_row, param.tile_col)
-    name += substring(param.valid_row, param.valid_col)
-    
-    return name
+    os.chdir("..")
 
 
 if __name__ == "__main__":
-    # Get the absolute path of the script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    testcases_dir = os.path.join(script_dir, "testcases")
+    gen_case("MSCATTERTest.case_float_dst512_src16x16", 16, 16, 512)
 
-    # Ensure the testcases directory exists
-    if not os.path.exists(testcases_dir):
-        os.makedirs(testcases_dir)
-
-    case_params_list = [
-        MScatterParams(np.float32, 64, 64, 64, 64, 64, 64),
-        MScatterParams(np.float32, 16, 256, 16, 256, 16, 256),
-    ]
-
-    for i, param in enumerate(case_params_list):
-        case_name = generate_case_name(param)
-        if not os.path.exists(case_name):
-            os.makedirs(case_name)
-        original_dir = os.getcwd()
-        os.chdir(case_name)
-        gen_golden_data_mscatter(case_name, param)
-        os.chdir(original_dir)

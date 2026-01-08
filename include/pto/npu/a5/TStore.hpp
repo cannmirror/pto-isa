@@ -41,6 +41,13 @@ PTO_INTERNAL constexpr QuantMode_t GetScalarPreQuantModeGm()
         } else if constexpr (std::is_same<DstType, __gm__ bfloat16_t>::value) {
             quantPre = QuantMode_t::QF322BF16_PRE;
         }
+#ifdef __CCE_AICORE__
+        else if constexpr (std::is_same<DstType, __gm__ float8_e4m3_t>::value) {
+            quantPre = QuantMode_t::QF322FP8_PRE;
+        } else if constexpr (std::is_same<DstType, __gm__ float>::value) {
+            quantPre = QuantMode_t::QF322F32_PRE;
+        }
+#endif
     } else if constexpr (std::is_same<SrcType, int32_t>::value) {
         if constexpr ((std::is_same<DstType, __gm__ int8_t>::value) || (std::is_same<DstType, __gm__ uint8_t>::value)) {
             quantPre = QuantMode_t::REQ8;
@@ -67,6 +74,13 @@ PTO_INTERNAL constexpr QuantMode_t GetVectorPreQuantModeGm()
         } else if constexpr (std::is_same<DstType, __gm__ bfloat16_t>::value) {
             quantPre = QuantMode_t::VQF322BF16_PRE;
         }
+#ifdef __CCE_AICORE__
+        else if constexpr (std::is_same<DstType, __gm__ float8_e4m3_t>::value) {
+            quantPre = QuantMode_t::VQF322FP8_PRE;
+        } else if constexpr (std::is_same<DstType, __gm__ float>::value) {
+            quantPre = QuantMode_t::VQF322F32_PRE;
+        }
+#endif
     } else if constexpr (std::is_same<SrcType, int32_t>::value) {
         if constexpr ((std::is_same<DstType, __gm__ int8_t>::value) || (std::is_same<DstType, __gm__ uint8_t>::value)) {
             quantPre = QuantMode_t::VREQ8;
@@ -84,23 +98,21 @@ PTO_INTERNAL void SetAtomicAdd()
 {
     static_assert((std::is_same_v<T, __gm__ half>) || (std::is_same_v<T, __gm__ float>) ||
                       (std::is_same_v<T, __gm__ int16_t>) || (std::is_same_v<T, __gm__ int32_t>) ||
-                      (std::is_same_v<T, __gm__ int8_t>) || (std::is_same_v<T, __gm__ bfloat16_t>),
-        "Dst and src must be half / float / int16_t / int32_t / int8_t / bfloat16_t");
+                      (std::is_same_v<T, __gm__ int8_t>),
+        "Dst and src must be half / float / int16_t / int32_t / int8_t.");
     atomic_type_t atomicType = atomic_type_t::ATOMIC_NONE;
     if constexpr (std::is_same_v<T, __gm__ float>) {
-        atomicType = atomic_type_t::ATOMIC_F32;
+        set_atomic_f32();
     } else if constexpr (std::is_same_v<T, __gm__ half>) {
-        atomicType = atomic_type_t::ATOMIC_F16;
+        set_atomic_f16();
     } else if constexpr (std::is_same_v<T, __gm__ int16_t>) {
-        atomicType = atomic_type_t::ATOMIC_S16;
+        set_atomic_s16();
     } else if constexpr (std::is_same_v<T, __gm__ int32_t>) {
-        atomicType = atomic_type_t::ATOMIC_S32;
+        set_atomic_s32();
     } else if constexpr (std::is_same_v<T, __gm__ int8_t>) {
-        atomicType = atomic_type_t::ATOMIC_S8;
-    } else if constexpr (std::is_same_v<T, __gm__ bfloat16_t>) {
-        atomicType = atomic_type_t::ATOMIC_BF16;
+        set_atomic_s8();
     }
-    set_st_atomic_cfg(atomicType | (atomic_op_t::ATOMIC_SUM << 3));
+    set_atomic_add();
 }
 
 template <typename TileData, typename GlobalData, bool isQuant>
@@ -123,6 +135,24 @@ PTO_INTERNAL void CheckStaticAcc()
                           std::is_same_v<typename GlobalData::DType, __gm__ half> ||
                           std::is_same_v<typename GlobalData::DType, __gm__ bfloat16_t>,
             "The output data type must be restricted to int32_t/float/half/bfloat16_t!");
+    } else if constexpr (isQuant) {
+        if constexpr (std::is_same_v<typename TileData::DType, float>) {
+            static_assert(std::is_same<typename GlobalData::DType, __gm__ int8_t>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ uint8_t>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ bfloat16_t>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ half>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ hifloat8_t>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ float8_e4m3_t>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ float>::value,
+                "The output data type must be restricted to int8_t/uint8_t/bfloat16_t/half/hifloat8_t/ \
+                    float8_e4m3_t/float.");
+        } else if constexpr (std::is_same_v<typename TileData::DType, __gm__ int32_t>) {
+            static_assert(std::is_same<typename GlobalData::DType, __gm__ int8_t>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ uint8_t>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ bfloat16_t>::value ||
+                              std::is_same<typename GlobalData::DType, __gm__ half>::value,
+                "The output data type must be restricted to half/bfloat16_t/int8_t/uint8_t.");
+        }
     }
 }
 
@@ -141,11 +171,12 @@ PTO_INTERNAL void CheckStaticVec()
             std::is_same_v<typename TileData::DType, float8_e4m3_t> ||
             std::is_same_v<typename TileData::DType, float8_e5m2_t> ||
             std::is_same_v<typename TileData::DType, hifloat8_t> ||
+            std::is_same_v<typename TileData::DType, float8_e8m0_t> ||
             std::is_same_v<typename TileData::DType, float4_e1m2x2_t> ||
             std::is_same_v<typename TileData::DType, float4_e2m1x2_t>,
         "Data type must be "
         "int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/int64_t/uint64_t/half/bfloat16_t/float/float8_e4m3_t/"
-        "float8_e5m2_t/hifloat8_t/float4_e1m2x2_t/float4_e2m1x2_t!");
+        "float8_e5m2_t/hifloat8_t/float8_e8m0_t/float4_e1m2x2_t/float4_e2m1x2_t!");
     static_assert(((GlobalData::layout == pto::Layout::ND) &&
                       (TileData::isRowMajor && (TileData::SFractal == SLayout::NoneBox))) ||
                       ((GlobalData::layout == pto::Layout::DN) &&
@@ -165,30 +196,40 @@ PTO_INTERNAL void CheckStaticVec()
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
-PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr,
-    __cc__ typename TileData::DType *srcTileAddr, int gShape3, int gShape4, int gStride2, int gStride3, int validRow,
-    int validCol)
+PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr, __cc__ typename TileData::DType *srcTileAddr,
+    int gShape3, int gShape4, int gStride2, int gStride3, int validRow, int validCol)
 {
     uint16_t mSize = validRow;
     uint16_t nSize = validCol;
-    constexpr uint16_t srcStride = TileData::Rows;
+
+    uint16_t srcStride = TileData::Rows;
     uint32_t dstD = gStride3;
 
     uint16_t ndNum = validCol / gShape4;
     constexpr uint16_t c0 = 16;
     uint16_t srcNdStride = TileData::Rows * gShape4 * c0;
-    uint16_t dstNdStride = gStride2;
+    if constexpr (TileData::Compact == CompactMode::Normal) {
+        srcStride = (validRow + FRACTAL_NZ_ROW - 1) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
+        srcNdStride = srcStride * gShape4 * c0;
+    }
     constexpr uint8_t unitFlagCtrl = 0;
     constexpr uint8_t nz2ndEn = 1;
+    uint16_t dstNdStride = gStride2;
 
     uint64_t xmReg = 0;
-    xmReg = ((nSize & 0xfff) << 4) | (static_cast<uint64_t>(mSize & 0xffff) << 16) |
-            (static_cast<uint64_t>(dstD & 0xffffffff) << 32);
+    xmReg = ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
+            (static_cast<uint64_t>(mSize & 0xffff) << 16) |   // Xm[31:16] the m-direction size of the matrix
+            (static_cast<uint64_t>(dstD & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
     uint64_t xtReg = 0;
-    xtReg = srcStride | (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
-            (static_cast<uint64_t>(quantPre & 0x1f) << 34) | (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);
-    uint64_t config = ndNum | (static_cast<uint64_t>(srcNdStride & 0xffff) << 16) |
-                      (static_cast<uint64_t>(dstNdStride & 0xffff) << 32);
+    xtReg = srcStride |                                         // Xt[15:0] the source stride between the start addr
+            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | // Xt[33:32] unit flag control bit
+            (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
+            (static_cast<uint64_t>(quantPre & 0x1f) << 34) | // Xt[29], Xt[38:34] pre-stage quantization mode
+            (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);    //  Xt[43] nz2nd control bit
+    uint64_t config =
+        ndNum |                                               // ND_PARA[15:0] the number of source nd
+        (static_cast<uint64_t>(srcNdStride & 0xffff) << 16) | // ND_PARA[31:16] the stride of source nd
+        (static_cast<uint64_t>(dstNdStride & 0xffff) << 32);  // ND_PARA[47:32] the stride of destination nd
     set_loop3_para(config);
     copy_matrix_cc_to_gm(dstGlobalAddr, srcTileAddr, xmReg, xtReg);
 }
@@ -198,13 +239,29 @@ PTO_INTERNAL void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typena
     typename GlobalData::DType *dstGlobalAddr, __cc__ typename TileData::DType *srcTileAddr, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gStride0, int validRow, int validCol)
 {
+    PTO_ASSERT(validRow == gShape2 * gShape3, "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
+    PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
+        "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
+    static_assert(GlobalData::staticShape[3] == FRACTAL_NZ_ROW,
+        "When GlobalData is NZ format, the second-to-last dimension shall be 16.");
+    static_assert((std::is_same_v<typename GlobalData::DType, __gm__ int32_t> && GlobalData::staticShape[4] == 16) ||
+                      (GlobalData::staticShape[4] == BLOCK_BYTE_SIZE / sizeof(typename GlobalData::DType)) ||
+                      (std::is_same_v<typename GlobalData::DType, __gm__ float> &&
+                          (GlobalData::staticShape[4] == 8 || GlobalData::staticShape[4] == 16)),
+        "When GlobalData is in NZ format: if DstType is float, the last dimension must be either 8 or 16, "
+        "and the dimension value is 8 if and only if Channel Split is enabled; if DstType is int32_t, the "
+        "last dimension must be exactly 16. In addition, the last dimension must be static and satisfy 32 / "
+        "sizeof(DstType).");
+
     uint16_t mSize = validRow;
     uint16_t nSize = validCol;
-    constexpr uint16_t srcStride = TileData::Rows;
+    uint16_t srcStride = TileData::Rows;
+    if constexpr (CompactMode::Normal == TileData::Compact) {
+        srcStride = (FRACTAL_NZ_ROW - 1 + validRow) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
+    }
     constexpr uint8_t unitFlagCtrl = 0;
     uint8_t channelSplitEn = 0;
 
-    constexpr uint16_t cubeBlock = 16;
     uint16_t c0Size = 16;
     if constexpr (sizeof(typename TileData::DType) == 1) {
         c0Size = 32;
@@ -215,21 +272,23 @@ PTO_INTERNAL void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typena
             channelSplitEn = 1;
         }
     }
-    uint32_t dstStride = (gShape2 * gShape3 + cubeBlock - 1) / cubeBlock * cubeBlock * c0Size;
-
-    uint64_t xtReg = 0;
-    xtReg = srcStride | (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
-            (static_cast<uint64_t>(quantPre & 0x1f) << 34) | (static_cast<uint64_t>(channelSplitEn & 0x1) << 42);
-    uint64_t xmReg = 0;
-    xmReg = ((static_cast<uint64_t>(nSize & 0xfff) << 4) | (static_cast<uint64_t>(mSize & 0xffff) << 16) |
-             (static_cast<uint64_t>(dstStride & 0xffffffff) << 32));
-
-    int64_t tileStride = gShape1 * TileData::Rows * gShape4;
-    for (uint32_t i = 0; i < gShape0; ++i) {
-        dstGlobalAddr = dstAddr + i * gStride0;
-        srcTileAddr = srcAddr + i * tileStride;
-        copy_matrix_cc_to_gm(dstGlobalAddr, srcTileAddr, xmReg, xtReg);
+    uint32_t dstStride = (gShape2 * gShape3 + FRACTAL_NZ_ROW - 1) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW * c0Size;
+    if constexpr (sizeof(typename GlobalData::DType) == 1) {
+        dstStride <<= 1;
     }
+    uint64_t xtReg = 0;
+    xtReg = srcStride |                                         // Xt[15:0] the source stride between the start addr
+            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | // Xt[33:32] unit flag control bit
+            (((quantPre >> SHIFT_BLOCK_BYTE) & 0x1) << 29) |
+            (static_cast<uint64_t>(quantPre & 0x1f) << 34) |     // Xt[29], Xt[38:34] pre-stage quantization mode
+            (static_cast<uint64_t>(channelSplitEn & 0x1) << 42); // Xt[42] channel split control bit
+    uint64_t xmReg = 0;
+    xmReg = ((static_cast<uint64_t>(nSize & 0xfff) << 4) |   // Xm[15:4] the n-direction size of the matrix
+             (static_cast<uint64_t>(mSize & 0xffff) << 16) | // Xm[31:16] the m-direction size of the matrix
+             (static_cast<uint64_t>(dstStride & 0xffffffff)
+                 << 32)); // Xm[63:32] destination stride between the start addr
+
+    copy_matrix_cc_to_gm(dstAddr, srcAddr, xmReg, xtReg);
 }
 
 template <typename GlobalData, typename TileData, typename FpTileData, QuantMode_t quantPre = QuantMode_t::NoQuant>
@@ -272,8 +331,8 @@ __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename T
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src,
-    uint16_t nBurst, uint32_t lenBurst, uint64_t burstDstStride, uint32_t burstSrcStride)
+PTO_INTERNAL void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src, uint16_t nBurst,
+    uint32_t lenBurst, uint64_t burstDstStride, uint32_t burstSrcStride)
 {
     copy_ubuf_to_gm_align_v2(dst, src, 0, nBurst, lenBurst, 0, burstDstStride, burstSrcStride);
 }
@@ -373,6 +432,22 @@ PTO_INTERNAL void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ubuf__ type
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
+    static_assert((std::is_same_v<typename GlobalData::DType, __gm__ int32_t> && GlobalData::staticShape[4] == 16) ||
+                      (GlobalData::staticShape[4] == BLOCK_BYTE_SIZE / sizeof(typename GlobalData::DType)) ||
+                      (std::is_same_v<typename GlobalData::DType, __gm__ float> &&
+                          (GlobalData::staticShape[4] == 8 || GlobalData::staticShape[4] == 16)) || 
+                      (std::is_same_v<typename GlobalData::DType, __gm__ float4_e1m2x2_t> && GlobalData::staticShape[4] == 64) ||
+                      (std::is_same_v<typename GlobalData::DType, __gm__ float4_e2m1x2_t> && GlobalData::staticShape[4] == 64),
+        "When GlobalData is in NZ format: if DstType is float, the last dimension must be either 8 or 16, \n"
+        "if DstType is float4, the last dimension must be 64, \n"
+        "and the dimension value is 8 if and only if Channel Split is enabled; if DstType is int32_t, the \n"
+        "last dimension must be exactly 16. In addition, the last dimension must be static and satisfy 32 / \n"
+        "sizeof(DstType).");
+    static_assert(GlobalData::staticShape[3] == FRACTAL_NZ_ROW,
+        "When GlobalData is NZ format, the second-to-last dimension shall be 16.");
+    PTO_ASSERT(validRow == gShape2 * gShape3, "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
+    PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
+        "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
     typename GlobalData::DType *dstGlobalAddr = dstAddr;
     __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
     uint16_t nBurst = gShape1;
@@ -392,9 +467,9 @@ PTO_INTERNAL void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ubuf__ type
     }
 }
 template <typename GlobalData, typename TileData>
-__tf__ AICORE void TStore(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
-    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
-    int gStride3, int gStride4, int validRow, int validCol)
+__tf__ AICORE OP_NAME(TSTORE) OP_TYPE(memory) void TStore(typename GlobalData::DType __out__ *dst,
+    typename TileData::TileDType __in__ src, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+    int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
 {
     __ubuf__ typename TileData::DType *srcAddr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src);
     typename GlobalData::DType *dstAddr = dst;
@@ -416,13 +491,7 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
     static_assert(TileData::Loc == pto::TileType::Vec || TileData::Loc == pto::TileType::Acc,
         "Source TileType only suport Vec/Acc!");
-    if constexpr (TileData::Loc == pto::TileType::Vec) {
-        CheckStaticVec<TileData, GlobalData>();
-
-        TStore<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
-            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
-            dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
-    } else if constexpr (TileData::Loc == pto::TileType::Acc) {
+    if constexpr (TileData::Loc == pto::TileType::Acc) {
         using L0cT = typename TileData::DType;
         using DstT = typename GlobalData::DType;
         CheckStaticAcc<TileData, GlobalData, false>();
@@ -431,12 +500,24 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
             SetAtomicAdd<DstT>();
         }
         constexpr QuantMode_t quantPre = GetCastPreQuantModeGm<L0cT, DstT>();
-        TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
-            dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2),
-            dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
+        TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+            dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+            dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+            dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+            dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
         if constexpr (atomicType == AtomicType::AtomicAdd) {
-            set_st_atomic_cfg(atomic_type_t::ATOMIC_NONE, atomic_op_t::ATOMIC_SUM);
+            set_atomic_none();
         }
+    } else if constexpr (TileData::Loc == pto::TileType::Vec) {
+        CheckStaticVec<TileData, GlobalData>();
+
+        TStore<GlobalData, TileData>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+            dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+            dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+            dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+            dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+            dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
     }
 }
 
@@ -446,36 +527,41 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantScalar)
     using L0cT = typename TileData::DType;
     using DstT = typename GlobalData::DType;
     CheckStaticAcc<TileData, GlobalData, true>();
-
     if constexpr (atomicType == AtomicType::AtomicAdd) {
         SetAtomicAdd<DstT>();
     }
     constexpr QuantMode_t quantPre = GetScalarPreQuantModeGm<L0cT, DstT>();
     set_quant_pre(preQuantScalar);
-    TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
-        dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
+    TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+        dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
+        dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
+        dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
+        dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
         dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
     if constexpr (atomicType == AtomicType::AtomicAdd) {
-        set_st_atomic_cfg(atomic_type_t::ATOMIC_NONE, atomic_op_t::ATOMIC_SUM);
+        set_atomic_none();
     }
 }
 
 template <typename TileData, typename GlobalData, typename FpTileData, AtomicType atomicType = AtomicType::AtomicNone>
 AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src, FpTileData &fp)
 {
-    using L0cT = typename TileData::DType;
     using DstT = typename GlobalData::DType;
+    using L0cT = typename TileData::DType;
     CheckStaticAcc<TileData, GlobalData, true>();
-
     if constexpr (atomicType == AtomicType::AtomicAdd) {
         SetAtomicAdd<DstT>();
     }
     constexpr QuantMode_t quantPre = GetVectorPreQuantModeGm<L0cT, DstT>();
-    TStoreAccFp<GlobalData, TileData, FpTileData, quantPre>(dst.data(), src.data(), fp.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
-        dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
-        dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
+    TStoreAccFp<GlobalData, TileData, FpTileData, quantPre>(dst.data(), src.data(), fp.data(),
+        dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
+        dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3),
+        dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0),
+        dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2),
+        dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(),
+        src.GetValidCol());
     if constexpr (atomicType == AtomicType::AtomicAdd) {
-        set_st_atomic_cfg(atomic_type_t::ATOMIC_NONE, atomic_op_t::ATOMIC_SUM);
+        set_atomic_none();
     }
 }
 } // namespace pto

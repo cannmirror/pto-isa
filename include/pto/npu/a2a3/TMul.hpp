@@ -46,13 +46,13 @@ template <typename TileData>
 AICORE void TMUL_IMPL(TileData &dst, TileData &src0, TileData &src1)
 {
     static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
-                std::is_same<typename TileData::DType, int>::value ||
-                std::is_same<typename TileData::DType, int16_t>::value ||
-                std::is_same<typename TileData::DType, half>::value ||
-                std::is_same<typename TileData::DType, float16_t>::value ||
-                std::is_same<typename TileData::DType, float>::value ||
-                std::is_same<typename TileData::DType, float32_t>::value,
-                "TMUL: Invalid data type.");
+        std::is_same<typename TileData::DType, int>::value ||
+        std::is_same<typename TileData::DType, int16_t>::value ||
+        std::is_same<typename TileData::DType, half>::value ||
+        std::is_same<typename TileData::DType, float16_t>::value ||
+        std::is_same<typename TileData::DType, float>::value ||
+        std::is_same<typename TileData::DType, float32_t>::value,
+            "TMUL: Invalid data type.");
     
     static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
     static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
@@ -61,6 +61,8 @@ AICORE void TMUL_IMPL(TileData &dst, TileData &src0, TileData &src1)
 
     PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
     PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
+    PTO_ASSERT(src0.GetValidCol() == src1.GetValidCol(), "Number of cols of src0 and src1 must be the same.");
+    PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow(), "Number of rows of src0 and src1 must be the same.");
 
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
@@ -79,7 +81,14 @@ __tf__ PTO_INTERNAL void TMul(typename TileDataDst::TileDType __out__ dstData,
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
     __ubuf__ T *src0 = (__ubuf__ T *)__cce_get_tile_ptr(src0Data);
     __ubuf__ T *src1 = (__ubuf__ T *)__cce_get_tile_ptr(src1Data);
-    BinaryPlusInstr<MulOp<T>, T, TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1, validRow, validCol);
+    if constexpr (std::is_same_v<TileDataDst, TileDataSrc0> && std::is_same_v<TileDataDst, TileDataSrc1>) {
+        constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
+        constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
+        constexpr unsigned rowStride = TileDataDst::RowStride;
+        BinaryInstr<MulOp<T>, T, TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>(dst, src0, src1, validRow, validCol);
+    } else {
+        BinaryPlusInstr<MulOp<T>, T, TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1, validRow, validCol);
+    }
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>

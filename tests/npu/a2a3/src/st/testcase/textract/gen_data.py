@@ -21,10 +21,10 @@ np.random.seed(19)
 
 def create_padded_tensors(padded_tensors_instance):
     m, n, k = padded_tensors_instance.m, padded_tensors_instance.n, padded_tensors_instance.k
-    target_m, target_n, target_k = (
-        padded_tensors_instance.target_m,
-        padded_tensors_instance.target_n,
-        padded_tensors_instance.target_k,
+    base_m, base_n, base_k = (
+        padded_tensors_instance.base_m,
+        padded_tensors_instance.base_n,
+        padded_tensors_instance.base_k,
     )
     x1_gm = padded_tensors_instance.x1_gm
     x2_gm = padded_tensors_instance.x2_gm
@@ -33,54 +33,53 @@ def create_padded_tensors(padded_tensors_instance):
     rand_range_corner = padded_tensors_instance.rand_range_corner
     src_type = padded_tensors_instance.src_type
 
-    #构造x1_gm_padded：target_m, target_k
-    x1_gm_padded = np.zeros((target_m, target_k), dtype=np.int32).astype(src_type)
-    #原始数据
+    #x1_gm_padded：base_m, base_k
+    x1_gm_padded = np.zeros((base_m, base_k), dtype=np.int32).astype(src_type)
+    #origin data
     x1_gm_padded[:m, :k] = x1_gm
-    #右侧补随机值（k方向扩展）
+    #k direction padding
     right_fill = np.random.randint(rand_range_right[0], rand_range_right[1],
-                                    size=(m, target_k - k), dtype=np.int32).astype(src_type)
-    x1_gm_padded[:m, k:target_k] = right_fill
-    #下方补0（m方向扩展）
-    x1_gm_padded[m:target_m, :k] = 0
+                                    size=(m, base_k - k), dtype=np.int32).astype(src_type)
+    x1_gm_padded[:m, k:base_k] = right_fill
+    #m direction padding
+    x1_gm_padded[m:base_m, :k] = 0
 
-    #右下角补随机值
+    #corner padding
     corner_fill = np.random.randint(rand_range_corner[0], rand_range_corner[1],
-                                    size=(target_m - m, target_k - k), dtype=np.int32).astype(src_type)
-    x1_gm_padded[m:target_m, k:target_k] = corner_fill
-    #构造x2_gm_padded：target_k, target_n
-    x2_gm_padded = np.zeros((target_k, target_n), dtype=np.int32).astype(src_type)
+                                    size=(base_m - m, base_k - k), dtype=np.int32).astype(src_type)
+    x1_gm_padded[m:base_m, k:base_k] = corner_fill
+    #x2_gm_padded：base_k, base_n
+    x2_gm_padded = np.zeros((base_k, base_n), dtype=np.int32).astype(src_type)
     x2_gm_padded[:k, :n] = x2_gm
     down_fill = np.random.randint(rand_range_down[0], rand_range_down[1],
-                                    size=(target_k - k, n), dtype=np.int32).astype(src_type)
-    x2_gm_padded[k:target_k, :n] = down_fill
-    x2_gm_padded[:k, n:target_n] = 0
+                                    size=(base_k - k, n), dtype=np.int32).astype(src_type)
+    x2_gm_padded[k:base_k, :n] = down_fill
+    x2_gm_padded[:k, n:base_n] = 0
     corner_fill2 = np.random.randint(rand_range_corner[0], rand_range_corner[1],
-                                     size=(target_k - k, target_n - n), dtype=np.int32).astype(src_type)
-    x2_gm_padded[k:target_k, n:target_n] = corner_fill2
+                                     size=(base_k - k, base_n - n), dtype=np.int32).astype(src_type)
+    x2_gm_padded[k:base_k, n:base_n] = corner_fill2
     return x1_gm_padded, x2_gm_padded
 
 def gen_golden_data(case_name, param):
     src_type = param.atype
     dst_type = param.ctype
 
-    m, n, k, start_m, start_n, start_k, is_atrans, is_btrans, target_m, target_n, target_k = \
+    m, n, k, start_m, start_n, start_k, is_atrans, is_btrans, base_m, base_n, base_k = \
     param.m, param.n, param.k, param.start_m, param.start_n, param.start_k, \
-    param.is_atrans, param.is_btrans, param.target_m, param.target_n, param.target_k
+    param.is_atrans, param.is_btrans, param.base_m, param.base_n, param.base_k
     
     x1_gm = np.random.randint(1, 5, [m, k]).astype(src_type)
     x2_gm = np.random.randint(1, 5, [k, n]).astype(src_type)
-    x1_slice = x1_gm[start_m:, start_k:]  # 从(rowIdx1, colIdx1)开始到结束
-    x2_slice = x2_gm[start_k:, start_n:]  # 从(rowIdx2, colIdx2)开始到结束
-    #计算真值
+    x1_slice = x1_gm[start_m:, start_k:]  # (rowIdx1, colIdx1)
+    x2_slice = x2_gm[start_k:, start_n:]  # (rowIdx2, colIdx2)
     golden = np.matmul(x1_slice.astype(dst_type), x2_slice.astype(dst_type)).astype(dst_type)
-    #填充、转置处理
-    if target_m > 0 or target_n > 0 or target_k > 0:
-        target_m = target_m if target_m > 0 else m
-        target_n = target_n if target_n > 0 else n
-        target_k = target_k if target_k > 0 else k
+
+    if base_m > 0 or base_n > 0 or base_k > 0:
+        base_m = base_m if base_m > 0 else m
+        base_n = base_n if base_n > 0 else n
+        base_k = base_k if base_k > 0 else k
         padded_tensors_param = PaddedGenerator(
-            m, n, k, target_m, target_n, target_k, x1_gm, x2_gm, 
+            m, n, k, base_m, base_n, base_k, x1_gm, x2_gm, 
             src_type, rand_range_right=(1, 5), rand_range_down=(1, 5), rand_range_corner=(1, 5))
         x1_gm, x2_gm = create_padded_tensors(padded_tensors_param)
     if is_atrans:
@@ -99,7 +98,7 @@ class PaddedGenerator:
     def __init__(
         self,
         m, n, k,
-        target_m, target_n, target_k,
+        base_m, base_n, base_k,
         x1_gm, x2_gm,
         src_type,
         rand_range_right,
@@ -108,9 +107,9 @@ class PaddedGenerator:
         self.m = m
         self.n = n
         self.k = k
-        self.target_m = target_m
-        self.target_n = target_n
-        self.target_k = target_k
+        self.base_m = base_m
+        self.base_n = base_n
+        self.base_k = base_k
         self.x1_gm = x1_gm
         self.x2_gm = x2_gm
         self.rand_range_right = rand_range_right
@@ -125,7 +124,7 @@ class TextractParams:
         atype, btype, ctype, 
         m, n, k, start_m, start_n, start_k, 
         is_atrans=0, is_btrans=0, 
-        target_m=0, target_n=0, target_k=0):
+        base_m=0, base_n=0, base_k=0):
         self.atype = atype
         self.btype = btype
         self.ctype = ctype
@@ -137,12 +136,12 @@ class TextractParams:
         self.start_k = start_k
         self.is_atrans = is_atrans
         self.is_btrans = is_btrans
-        self.target_m = target_m
-        self.target_n = target_n
-        self.target_k = target_k
+        self.base_m = base_m
+        self.base_n = base_n
+        self.base_k = base_k
 
 if __name__ == "__main__":
-    # 用例名称
+    # case name
     case_name_list = [
         "TMOVTest.case1_half_0_1_param", 
         "TMOVTest.case2_int8_0_1_param",
@@ -182,11 +181,27 @@ if __name__ == "__main__":
 
         "TEXTRACTTest.case41_dynamic_half_0_1_16_0_32_param",
         "TEXTRACTTest.case42_dynamic_int8_1_1_32_0_32_param",
+
+        "TEXTRACT_Compact_Test.case1_float_1_0_param",
+        "TEXTRACT_Compact_Test.case2_int8_1_0_param",
+        "TEXTRACT_Compact_Test.case3_bfloat16_1_0_param",
+
+        "TEXTRACT_Compact_Test.case11_float_0_1_param",
+        "TEXTRACT_Compact_Test.case12_int8_0_1_param",
+        "TEXTRACT_Compact_Test.case13_bfloat16_0_1_param",
+
+        "TEXTRACT_Compact_Test.case21_float_0_0_param",
+        "TEXTRACT_Compact_Test.case22_int8_0_0_param",
+        "TEXTRACT_Compact_Test.case23_bfloat16_0_0_param",
+
+        "TEXTRACT_Compact_Test.case31_float_1_1_param",
+        "TEXTRACT_Compact_Test.case32_int8_1_1_param",
+        "TEXTRACT_Compact_Test.case33_bfloat16_1_1_param",
     ]
 
     case_params_list = [
-        ### 对齐场景
-        ## A MK输入，B NK输入， 均需转置
+        ### Align case
+        ## A MK，B NK
         # TMOV
         TextractParams(np.float16, np.float16, np.float32, 64, 32, 80, 0, 0, 0, 0, 1),
         TextractParams(np.int8, np.int8, np.int32, 128, 64, 128, 0, 0, 0, 0, 1),
@@ -197,7 +212,7 @@ if __name__ == "__main__":
         TextractParams(np.int8, np.int8, np.int32, 128, 64, 128, 48, 32, 64, 0, 1),
         TextractParams(np.float32, np.float32, np.float32, 96, 48, 64, 32, 16, 48, 0, 1),
         TextractParams(bfloat16, bfloat16, np.float32, 64, 48, 96, 32, 32, 16, 0, 1),
-        ## A KM输入 B KN输入， 均不需转置
+        ## A KM B KN
         # TMOV
         TextractParams(np.float16, np.float16, np.float32, 128, 64, 128, 0, 0, 0, 1, 0),
         TextractParams(np.int8, np.int8, np.int32, 64, 64, 128, 0, 0, 0, 1, 0),
@@ -208,8 +223,8 @@ if __name__ == "__main__":
         TextractParams(np.int8, np.int8, np.int32, 64, 64, 128, 32, 32, 32, 1, 0),
         TextractParams(np.float32, np.float32, np.float32, 64, 32, 96, 32, 16, 16, 1, 0),
         TextractParams(bfloat16, bfloat16, np.float32, 96, 80, 96, 32, 64, 48, 1, 0),
-        ### 非对齐场景
-        ## A MK输入， B KN输入， B转置
+        ### Unalign case
+        ## A MK， B KN
         # TMOV
         TextractParams(np.float32, np.float32, np.float32, 29, 29, 44, 0, 0, 0, 0, 0, 32, 32, 48),
         TextractParams(np.float32, np.float32, np.float32, 29, 29, 36, 0, 0, 0, 0, 0, 32, 32, 48),
@@ -220,7 +235,7 @@ if __name__ == "__main__":
         TextractParams(np.float32, np.float32, np.float32, 29, 29, 36, 16, 16, 32, 0, 0, 32, 32, 48),
         TextractParams(np.int8, np.int8, np.int32, 65, 66, 40, 32, 64, 32, 0, 0, 80, 96, 64),
         TextractParams(bfloat16, bfloat16, np.float32, 44, 39, 39, 32, 16, 32, 0, 0, 48, 48, 48),
-        ## A KM输入， B NK输入， A转置
+        ## A KM， B NK
         # TMOV
         TextractParams(np.float32, np.float32, np.float32, 29, 29, 44, 0, 0, 0, 1, 1, 32, 32, 48),
         TextractParams(np.float32, np.float32, np.float32, 29, 29, 36, 0, 0, 0, 1, 1, 32, 32, 48),
@@ -231,9 +246,31 @@ if __name__ == "__main__":
         TextractParams(np.float32, np.float32, np.float32, 29, 29, 36, 16, 16, 32, 1, 1, 32, 32, 48),
         TextractParams(np.int8, np.int8, np.int32, 65, 66, 40, 32, 64, 32, 1, 1, 96, 80, 64),
         TextractParams(bfloat16, bfloat16, np.float32, 44, 39, 39, 32, 16, 32, 1, 1, 48, 48, 48),
-        ###动态输入
+        ### Dynamic case
         TextractParams(np.float16, np.float16, np.float32, 64, 32, 80, 16, 0, 32, 0, 1),
         TextractParams(np.int8, np.int8, np.int32, 64, 64, 128, 32, 0, 32, 1, 1),
+        ###Compact Case
+        ## A KM， B KN
+        # TEXTRACT
+        TextractParams(np.float32, np.float32, np.float32, 20, 215, 22, 0, 0, 0, 1, 0, 128, 256, 128),
+        TextractParams(np.int8, np.int8, np.int32, 46, 36, 203, 0, 0, 0, 1, 0, 128, 128, 256),
+        TextractParams(bfloat16, bfloat16, np.float32, 220, 25, 30, 0, 0, 0, 1, 0, 256, 128, 128),
+        ## A MK B NK
+        # # TEXTRACT
+        TextractParams(np.float32, np.float32, np.float32, 20, 215, 22, 0, 0, 0, 0, 1, 128, 256, 128),
+        TextractParams(np.int8, np.int8, np.int32, 46, 36, 203, 0, 0, 0, 0, 1, 128, 128, 256),
+        TextractParams(bfloat16, bfloat16, np.float32, 220, 25, 30, 0, 0, 0, 0, 1, 256, 128, 128),
+        ## A MK B KN
+        # TEXTRACT
+        TextractParams(np.float32, np.float32, np.float32, 20, 215, 22, 16, 16, 16, 0, 0, 128, 256, 128),
+        TextractParams(np.int8, np.int8, np.int32, 46, 36, 203, 32, 32, 32, 0, 0, 128, 128, 256),
+        TextractParams(bfloat16, bfloat16, np.float32, 220, 25, 30, 16, 16, 16, 0, 0, 256, 128, 128),
+        ## A KM， B NK
+        # # TEXTRACT
+        TextractParams(np.float32, np.float32, np.float32, 20, 215, 22, 16, 16, 16, 1, 1, 128, 256, 128),
+        TextractParams(np.int8, np.int8, np.int32, 46, 36, 203, 32, 32, 32, 1, 1, 128, 128, 256),
+        TextractParams(bfloat16, bfloat16, np.float32, 220, 25, 30, 16, 16, 16, 1, 1, 256, 128, 128),
+
     ]
 
     for i, case_name in enumerate(case_name_list):

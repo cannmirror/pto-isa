@@ -16,14 +16,18 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef PTO_DEBUG_H
 #define PTO_DEBUG_H
 
-#define DEBUG_CHECK(condition, message)                                        \
-  do {                                                                         \
-    if (!(condition)) {                                                        \
-      cce::printf("[DEBUG CHECK FAILED] %s (File: %s, Line: %d)\n", message,   \
-                  __FILE__, __LINE__);                                         \
-      trap();                                                                  \
-    }                                                                          \
-  } while (0)
+#define DEBUG_CHECK(condition, message)                                                              \
+    do {                                                                                             \
+        if (!(condition)) {                                                                          \
+            cce::printf(                                                                             \
+                "[PTO][ASSERT] %s\n"                                                                 \
+                "  Condition: %s\n"                                                                  \
+                "  Location: %s:%d\n"                                                                \
+                "  Hint: see docs/coding/debug.md (Fix recipes + assertion index)\n",                \
+                (message), #condition, __FILE__, __LINE__);                                          \
+            trap();                                                                                  \
+        }                                                                                            \
+    } while (0)
 
 #ifdef _DEBUG
 #define PTO_ASSERT(condition, message) DEBUG_CHECK(condition, message)

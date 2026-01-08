@@ -27,7 +27,7 @@ template <typename T> struct MulSOp {
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ PTO_INTERNAL
+__tf__ PTO_INTERNAL OP_NAME(TMULS) OP_TYPE(element_wise)
 void TMulS(typename TileData::TileDType __out__ dst, 
            typename TileData::TileDType __in__ src0, 
            typename TileData::DType src1,
@@ -42,7 +42,7 @@ void TMulS(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileData>
-PTO_INTERNAL void TMULS_IMPL(TileData &dst, TileData &src0, typename TileData::DType src1)
+AICORE void TMULS_IMPL(TileData &dst, TileData &src0, typename TileData::DType src1)
 {
     using T = typename TileData::DType;
     static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
@@ -51,20 +51,20 @@ PTO_INTERNAL void TMULS_IMPL(TileData &dst, TileData &src0, typename TileData::D
                       std::is_same<typename TileData::DType, half>::value ||
                       std::is_same<typename TileData::DType, float16_t>::value ||
                       std::is_same<typename TileData::DType, float>::value ||
-                      std::is_same<typename TileData::DType, float32_t>::value,
+                      std::is_same<typename TileData::DType, float32_t>::value ||
+                      std::is_same<typename TileData::DType, bfloat16_t>::value,
                       "TMULS: Invalid data type");
-    static_assert(TileData::Loc == TileType::Vec, "TileType of inputs must be TileType::Vec.");
-    static_assert(TileData::ValidCol <= TileData::Cols,
-                  "Number of valid columns must not be greater than number of tile columns.");
-    static_assert(TileData::ValidRow <= TileData::Rows,
-                  "Number of valid rows must not be greater than number of tile rows.");
+    static_assert(TileData::isRowMajor, "TMULS: not supported Layout type.");
+    static_assert(TileData::Loc == TileType::Vec, "TileType of input and output tiles must be TileType::Vec.");
+    static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
 
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
     constexpr unsigned rowStride = TileData::RowStride;
-
+    
     PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of input and output must be the same.");
     PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of input and output must be the same.");
 
@@ -75,14 +75,14 @@ template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TMULS_IMPL(TileDataDst &dst, TileDataSrc &src0, typename TileDataSrc::DType src1)
 {
     static_assert(std::is_same_v<TileDataDst, TileDataSrc>,
-                  "TMULS: Input tileshape must be consistent with the out tileshape.");
+                  "Fix: TMULS Input tileshape must be consistent with the out tileshape.");
 
     using T = typename TileDataDst::DType;
-    static_assert(TileDataDst::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+    static_assert(TileDataDst::Loc == TileType::Vec, "Fix: TileType of src and dst tiles must be TileType::Vec.");
     static_assert(TileDataDst::ValidCol <= TileDataDst::Cols,
-                  "Number of valid columns must not be greater than number of tile columns.");
+                  "Fix: Number of valid columns must not be greater than number of tile columns.");
     static_assert(TileDataDst::ValidRow <= TileDataDst::Rows,
-                  "Number of valid rows must not be greater than number of tile rows.");
+                  "Fix: Number of valid rows must not be greater than number of tile rows.");
 
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
@@ -90,7 +90,7 @@ PTO_INTERNAL void TMULS_IMPL(TileDataDst &dst, TileDataSrc &src0, typename TileD
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
+    PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Fix: Number of columns of src and dst must be the same.");
 
     TMulS<TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>
         (dst.data(), src0.data(), src1, validRow, validCol);

@@ -15,8 +15,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-template <typename T, int validRow, int validCol, int Row, int Col>
+template <typename T, int validRow, int validCol, int Row, int Col, bool src0eqdst>
 void launchTRowExpandDiv(T *out, T *src0, T *src1, void *stream);
+
+template <typename T, int validRow, int validCol, int Row, int Col, bool src0eqdst>
+void launchTRowExpandDiv2(T *out, T *src0, T *src1, void *stream);
 
 class TROWEXPANDDIVTest : public testing::Test {
 protected:
@@ -34,11 +37,14 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <typename T, int validRow, int validCol, int Row, int Col>
+template <typename T, int validRow, int validCol, int Row, int Col, bool src0eqdst, bool isRowMajor>
 void test_trowexpanddiv()
 {
     size_t dstFileSize = Row * Col * sizeof(T);
-    size_t src1FileSize = ((validRow*sizeof(T)+31)/32)*(32/sizeof(T)) * sizeof(T);
+    size_t src1FileSize = ((validRow * sizeof(T) + 31) / 32) * 32;
+    if (isRowMajor) {
+        src1FileSize = Row * 32;
+    }
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -61,7 +67,11 @@ void test_trowexpanddiv()
 
     aclrtMemcpy(src0Device, dstFileSize, src0Host, dstFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, src1FileSize, src1Host, src1FileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTRowExpandDiv<T, validRow, validCol, Row, Col>(dstDevice, src0Device, src1Device, stream);
+    if (isRowMajor) {
+        launchTRowExpandDiv2<T, validRow, validCol, Row, Col, src0eqdst>(dstDevice, src0Device, src1Device, stream);
+    } else {
+        launchTRowExpandDiv<T, validRow, validCol, Row, Col, src0eqdst>(dstDevice, src0Device, src1Device, stream);
+    }
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -91,28 +101,66 @@ void test_trowexpanddiv()
 
 TEST_F(TROWEXPANDDIVTest, case1)
 {
-    test_trowexpanddiv<float, 16, 16, 16, 16>();
+    test_trowexpanddiv<float, 16, 16, 16, 16, true, false>();
 }
 
 TEST_F(TROWEXPANDDIVTest, case2)
 {
-    test_trowexpanddiv<float, 16, 16, 32, 32>();
+    test_trowexpanddiv<float, 16, 16, 32, 32, true, false>();
 }
 TEST_F(TROWEXPANDDIVTest, case3)
 {
-    test_trowexpanddiv<aclFloat16, 16, 16, 16, 16>();
+    test_trowexpanddiv<aclFloat16, 16, 16, 16, 16, true, false>();
 }
 
 TEST_F(TROWEXPANDDIVTest, case4)
 {
-    test_trowexpanddiv<aclFloat16, 16, 16, 32, 32>();
+    test_trowexpanddiv<aclFloat16, 16, 16, 32, 32, true, false>();
 }
 TEST_F(TROWEXPANDDIVTest, case5)
 {
-    test_trowexpanddiv<float, 1, 16384, 1, 16384>();
+    test_trowexpanddiv<float, 1, 16384, 1, 16384, true, false>();
 }
 
 TEST_F(TROWEXPANDDIVTest, case6)
 {
-    test_trowexpanddiv<float, 2048, 1, 2048, 8>();
+    test_trowexpanddiv<float, 2048, 1, 2048, 8, true, false>();
+}
+
+TEST_F(TROWEXPANDDIVTest, case7)
+{
+    test_trowexpanddiv<float, 16, 16, 16, 16, true, true>();
+}
+
+TEST_F(TROWEXPANDDIVTest, case8)
+{
+    test_trowexpanddiv<float, 16, 16, 32, 32, true, true>();
+}
+TEST_F(TROWEXPANDDIVTest, case9)
+{
+    test_trowexpanddiv<aclFloat16, 16, 16, 16, 16, true, true>();
+}
+
+TEST_F(TROWEXPANDDIVTest, case10)
+{
+    test_trowexpanddiv<aclFloat16, 16, 16, 32, 32, true, true>();
+}
+TEST_F(TROWEXPANDDIVTest, case11)
+{
+    test_trowexpanddiv<float, 1, 16384, 1, 16384, true, true>();
+}
+
+TEST_F(TROWEXPANDDIVTest, case12)
+{
+    test_trowexpanddiv<float, 2048, 1, 2048, 8, true, true>();
+}
+
+TEST_F(TROWEXPANDDIVTest, case13)
+{
+    test_trowexpanddiv<float, 16, 16, 16, 16, false, false>();
+}
+
+TEST_F(TROWEXPANDDIVTest, case14)
+{
+    test_trowexpanddiv<float, 16, 16, 16, 16, false, true>();
 }

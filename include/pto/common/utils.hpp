@@ -29,7 +29,7 @@ PTO_INTERNAL void movemask(uint64_t mask) {
     } else if constexpr (index == 1) {
         asm volatile("MOVEMASK 	MASK[1],  %0\n" ::"l"(mask));
     } else {
-        static_assert((index <= 1), "movemask: error mask index.");
+        PTO_STATIC_ASSERT((index <= 1), "movemask: error mask index.");
     }
 }
 

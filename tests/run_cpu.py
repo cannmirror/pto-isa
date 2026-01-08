@@ -34,6 +34,7 @@ def run_command(
     *,
     title: Optional[str] = None,
     verbose: bool = False,
+    always_print_patterns: Optional[List[str]] = None,
 ) -> float:
     cwd_str = str(cwd) if cwd is not None else None
     start = time.perf_counter()
@@ -55,6 +56,14 @@ def run_command(
                 logging.info(completed.stdout.rstrip())
             if completed.stderr:
                 logging.info(completed.stderr.rstrip())
+        elif always_print_patterns:
+            patterns = [re.compile(p) for p in always_print_patterns]
+            for line in (completed.stdout or "").splitlines():
+                if any(p.search(line) for p in patterns):
+                    logging.info(line.rstrip())
+            for line in (completed.stderr or "").splitlines():
+                if any(p.search(line) for p in patterns):
+                    logging.info(line.rstrip())
         if completed.returncode != 0:
             raise subprocess.CalledProcessError(
                 completed.returncode,
@@ -216,6 +225,7 @@ def build_and_run_demo(demo_name: str, repo_root: Path, build_type: str, cxx: Op
     demo_map: dict[str, tuple[Path, str]] = {
         "gemm": (demos_root / "gemm_demo", "gemm_demo"),
         "flash_attn": (demos_root / "flash_attention_demo", "flash_attention_demo"),
+        "mla": (demos_root / "mla_attention_demo", "mla_attention_demo"),
     }
     if demo_name not in demo_map:
         raise RuntimeError(f"unknown demo: {demo_name}")
@@ -265,7 +275,9 @@ def build_and_run_demo(demo_name: str, repo_root: Path, build_type: str, cxx: Op
                 cwd=(exe.parent.parent
                     if (os.name == "nt" and exe.parent.name.lower() == build_type.lower())
                     else exe.parent),
-                title=f"[STEP] demo: run {exe_stem}", verbose=verbose)
+                title=f"[STEP] demo: run {exe_stem}",
+                verbose=verbose,
+                always_print_patterns=[r"^perf:"])
 
 
 def _format_seconds(seconds: float) -> str:
@@ -301,13 +313,14 @@ def _parse_duration_seconds(s: str) -> float:
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Build & run CPU simulator ST unit tests (tests/cpu/st)",
-        epilog=("Examples:\n  python3 tests/run_cpu.py --build-type Release\n"
-            "  python3 tests/run_cpu.py --testcase tadd --build-type Release\n"
-            "  python3 tests/run_cpu.py --no-build --gtest_filter TADDTest.*\n"
-            "  python3 tests/run_cpu.py --demo gemm\n"
-            "  python3 tests/run_cpu.py --demo flash_attn\n"
-            "  python3 tests/run_cpu.py --demo all\n"
-            ),
+        epilog=("Examples:\n  python run_cpu.py --build-type Release\n"
+            "  python run_cpu.py --testcase tadd --build-type Release\n"
+            "  python run_cpu.py --no-build --gtest_filter TADDTest.*\n"
+            "  python run_cpu.py --demo gemm\n"
+            "  python run_cpu.py --demo flash_attn\n"
+            "  python run_cpu.py --demo mla\n"
+            "  python run_cpu.py --demo all\n"
+        ),
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("--verbose", action="store_true", help="Show full output from cmake/msbuild/gtest (default: \
@@ -326,7 +339,7 @@ def parse_arguments():
     parser.add_argument("--no-gen", action="store_true", help="Skip running testcase gen_data.py.")
     parser.add_argument("--xml-dir", default=None, help="If set, write gtest xml reports under this directory")
     parser.add_argument("--no-install", action="store_true", help="Do not auto-install missing tools/deps (numpy).")
-    parser.add_argument("--demo", choices=["gemm", "flash_attn", "all"], default=None, help="Build & run demo program \
+    parser.add_argument("--demo", choices=["gemm", "flash_attn", "mla", "all"], default=None, help="Build & run demo program \
                         (e.g. 'gemm', 'flash_attn'). \
                         Note: demo runs alone (does not run CPU ST).")
     parser.add_argument("--demo-only", action="store_true", help="Same as --demo (demo runs without CPU ST).")
@@ -360,7 +373,7 @@ def run_demo_mode(args, repo_root, cxx, cc) -> int:
         pass
 
     logging.info("\n== DEMO ==")
-    demos = ["gemm", "flash_attn"] if demo_name == "all" else [demo_name]
+    demos = ["gemm", "flash_attn", "mla"] if demo_name == "all" else [demo_name]
     t0 = time.perf_counter()
     for name in demos:
         build_and_run_demo(
