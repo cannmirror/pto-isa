@@ -12,6 +12,43 @@ Some instructions take scalar values as plain C++ types:
 - `TMINS`: scalar is a template type `T` and must be convertible to the tile element type.
 - `TCI`: scalar `S` is a template type `T` and must match `TileData::DType` (enforced by `static_assert` in the implementation).
 
+## PTO ISA type mnemonics (reference)
+
+ISA documentation uses short type mnemonics (e.g., `fp16`, `s8`) when describing instruction semantics. Backends may support only a subset at any given time; see `include/README.md` for implementation status.
+
+### Integer types
+
+| Kind | Mnemonics |
+|---|---|
+| Signed | `s4`, `s8`, `s16`, `s32`, `s64` |
+| Unsigned | `u4`, `u8`, `u16`, `u32`, `u64` |
+
+### Floating-point types
+
+| Kind | Mnemonics |
+|---|---|
+| 4-bit float families | `fp4`, `hif4`, `mxfp4` |
+| 8-bit float families | `fp8`, `hif8`, `mxfp8` |
+| 16-bit float families | `bf16`, `fp16` |
+| 32-bit float families | `tf32`, `hf32`, `fp32` |
+| 64-bit float | `fp64` |
+
+### Bit-width (typeless) values
+
+| Kind | Mnemonics |
+|---|---|
+| Typeless bits | `b4`, `b8`, `b16`, `b32`, `b64` |
+
+#### Compatibility rules (ISA convention)
+
+Two mnemonics are considered compatible when they have the same bit-width, and either:
+
+- they are the same kind, or
+- they are signed vs unsigned integers of the same width, or
+- one side is a typeless bits type (`b*`) of the same width.
+
+These are documentation-level rules used to describe instruction legality. Individual instructions may further restrict types.
+
 ## Core enums
 
 All enums below are available via `#include <pto/pto-inst.hpp>`.
@@ -53,4 +90,3 @@ void example(Tile<TileType::Vec, float, 16, 16>& dst,
   TMINS(dst, src, 0.0f);
 }
 ```
-

@@ -45,7 +45,7 @@ PTO_INST RecordEvent TSEL(TileData& dst, MaskTile& selMask, TileData& src0, Tile
   - `sizeof(TileData::DType)` must be `2` or `4` bytes.
   - `TileData::DType` must be `int16_t` or `uint16_t` or `int32_t` or `uint32_t` or `half` or `bfloat16_t` or `float`.
   - No explicit `static_assert`/`PTO_ASSERT` checks are enforced by `TSEL_IMPL`.
-  - The implementation uses `dst.GetValidRow()` and `TileData::Cols` (static columns) for the selection domain (i.e., it does not consult `dst.GetValidCol()`).
+  - The implementation uses `dst.GetValidRow()` / `dst.GetValidCol()` for the selection domain.
 - **Mask encoding**:
   - The mask tile is interpreted as packed predicate bits in a target-defined layout.
 

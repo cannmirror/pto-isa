@@ -32,7 +32,6 @@ PTO_INST RecordEvent TMINS(TileData& dst, TileData& src, T scalar, WaitEvents&..
 
 - **Implementation checks (A2A3)**:
   - No additional `static_assert`/`PTO_ASSERT` checks are enforced by `TMINS_IMPL` beyond the generic Tile type invariants.
-  - `TileData::DType` must be one of: `int16_t`, `half`, `int32_t`, `float`.
 - **Implementation checks (A5)**:
   - `TileData::DType` must be one of: `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `int32_t`, `half`, `float`, `bfloat16_t`.
   - Tile location must be vector (`TileData::Loc == TileType::Vec`).

@@ -4,7 +4,7 @@ This folder contains longer, example-heavy walkthroughs that complement `docs/co
 
 ## Contents
 
-- Tiling: map `get_block_idx()` to tile views: `docs/coding/tutorials/tiling-by-block-id.md`
-- Vector add (tiled, with edge masks): (to be added)
-- Row softmax patterns (building block for attention): (to be added)
-- GEMM patterns and common tile layouts: (to be added)
+- Vector add, tiling, edge masks, and a ping-pong pipeline: `docs/coding/tutorials/vec-add.md`
+- Row softmax patterns (building block for attention): `docs/coding/tutorials/row-softmax.md`
+- GEMM patterns and common tile layouts: `docs/coding/tutorials/gemm.md`
+

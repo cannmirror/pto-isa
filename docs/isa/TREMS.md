@@ -2,35 +2,23 @@
 
 ## Introduction
 
-Elementwise remainder between a tile and a scalar: `fmod(src, scalar)` (or `%` for integers).
-
-Depending on the operand order, the scalar can act as the dividend (scalar/tile) or the divisor (tile/scalar).
+Elementwise remainder with a scalar: `fmod(src, scalar)` (or `%` for integers).
 
 ## Math Interpretation
 
 For each element `(i, j)` in the valid region:
 
-- Tile/scalar:
-  - Integer types: $$\mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \bmod \mathrm{scalar}$$
-  - Floating types: $$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{src}_{i,j}, \mathrm{scalar})$$
-- Scalar/tile:
-  - Integer types: $$\mathrm{dst}_{i,j} = \mathrm{scalar} \bmod \mathrm{src}_{i,j}$$
-  - Floating types: $$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{scalar}, \mathrm{src}_{i,j})$$
+- Integer types: $$\mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \bmod \mathrm{scalar}$$
+- Floating types: $$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{src}_{i,j}, \mathrm{scalar})$$
 
 ## Assembly Syntax
 
 PTO-AS form: see `docs/grammar/PTO-AS.md`.
 
-Tile/scalar form:
+Synchronous form:
 
 ```text
 %dst = trems %src, %scalar : !pto.tile<...>, f32
-```
-
-Scalar/tile form:
-
-```text
-%dst = trems %scalar, %src : f32, !pto.tile<...>
 ```
 ## C++ Intrinsic
 
@@ -40,8 +28,6 @@ Declared in `include/pto/common/pto_instr.hpp`:
 template <typename TileData, typename... WaitEvents>
 PTO_INST RecordEvent TREMS(TileData& dst, TileData& src0, typename TileData::DType scalar, WaitEvents&... events);
 ```
-
-Note: `include/pto/common/pto_instr.hpp` only exposes the tile/scalar form as a C++ overload today.
 
 ## Constraints
 
@@ -61,3 +47,4 @@ void example() {
   TREMS(out, x, 3.0f);
 }
 ```
+

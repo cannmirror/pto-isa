@@ -4,29 +4,13 @@
 
 Compare two tiles and write a packed predicate mask.
 
-The comparison operator is selected by `cmpMode` (`pto::CmpMode`). Conceptually, each element produces a predicate
-value where **true encodes as `1`** and **false encodes as `0`**; the implementation packs these predicate values
-into `dst` using a target-defined layout.
-
-## cmpMode
-
-`cmpMode` selects the per-element comparison:
-
-- `CmpMode::EQ`: equal (`==`)
-- `CmpMode::NE`: not equal (`!=`)
-- `CmpMode::LT`: less-than (`<`)
-- `CmpMode::LE`: less-or-equal (`<=`)
-- `CmpMode::GT`: greater-than (`>`)
-- `CmpMode::GE`: greater-or-equal (`>=`)
-
 ## Math Interpretation
 
 Conceptually, for each element `(i, j)` in the valid region, define a predicate:
 
 $$ p_{i,j} = \left(\mathrm{src0}_{i,j}\ \mathrm{cmpMode}\ \mathrm{src1}_{i,j}\right) $$
 
-`p_{i,j}` is `1` when the comparison is true and `0` otherwise. The predicate mask is stored in `dst` using an
-implementation-defined packed layout (typically one bit per element).
+The predicate mask is stored in `dst` using an implementation-defined packed layout.
 
 ## Assembly Syntax
 
@@ -50,14 +34,12 @@ PTO_INST RecordEvent TCMP(TileDataDst& dst, TileDataSrc& src0, TileDataSrc& src1
 ## Constraints
 
 - **Implementation checks (A2A3)**:
-  - `TileData::DType` must be one of: `int32_t`, `int16_t`, `half`, `float`.
   - `src0/src1/dst` tile location must be `TileType::Vec`.
   - Static valid bounds: `TileDataSrc::ValidRow <= TileDataSrc::Rows` and `TileDataSrc::ValidCol <= TileDataSrc::Cols`.
   - Runtime: `src0.GetValidRow() == dst.GetValidRow()` and `src0.GetValidCol() == dst.GetValidCol()`.
   - Note: `src1` shape/valid is not validated by explicit runtime assertions in this implementation.
   - For `TileDataSrc::DType == int32_t`, the implementation uses the `EQ` compare path regardless of `cmpMode`.
 - **Implementation checks (A5)**:
-  - `TileData::DType` must be one of: `int32_t`, `uint32_t`, `float`, `int16_t`, `uint16_t`, `half`, `bfloat16_t`, `uint8_t`, `int8_t`.
   - Implemented (see `include/pto/npu/a5/TCmp.hpp`).
   - The A5 implementation uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain and writes a packed predicate mask into `dst` (target-defined packing).
 - **Mask encoding**:
