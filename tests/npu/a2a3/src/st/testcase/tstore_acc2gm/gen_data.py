@@ -120,6 +120,7 @@ def gen_golden_data(case_name, g_info):
     format = g_info.format
     quant_mode = g_info.quant_mode
     quant_type = g_info.quant_type
+    relu_mode = g_info.relu_mode
     scalar = g_info.scalar
     if dst_data_type == np.int8:
         x1_gm = np.random.randint(-1, 2, [m, k]).astype(src_data_type)
@@ -150,6 +151,8 @@ def gen_golden_data(case_name, g_info):
         c0_size = 8
         golden = golden.reshape(int(m / 16), 16, int(n / c0_size), c0_size).transpose(2, 0, 1, 3).astype(dst_data_type)
     
+    if relu_mode == 1:
+        golden = np.maximum(golden, 0)
 
     x1_gm.tofile("./x1_gm.bin")
     x2_gm.tofile("./x2_gm.bin")
@@ -157,7 +160,7 @@ def gen_golden_data(case_name, g_info):
 
 
 class TStoreAcc2gmParams:
-    def __init__(self, dst_data_type, src_data_type, format, m, n, k, quant_mode=0, scalar=1, quant_type=None):
+    def __init__(self, dst_data_type, src_data_type, format, m, n, k, quant_mode=0, scalar=1, quant_type=None, relu_mode=0):
         self.src_data_type = src_data_type
         self.dst_data_type = dst_data_type
         self.format = format
@@ -167,6 +170,7 @@ class TStoreAcc2gmParams:
         self.quant_mode = quant_mode
         self.scalar = scalar
         self.quant_type = quant_type
+        self.relu_mode = relu_mode
 
 if __name__ == "__main__":
     # 用例名称
@@ -204,7 +208,13 @@ if __name__ == "__main__":
         "TStoreAcc2gmTest.case31",
         "TStoreAcc2gmTest.case32",
         "TStoreAcc2gmTest.case33",
-        "TStoreAcc2gmTest.case34"
+        "TStoreAcc2gmTest.case34",
+        "TStoreAcc2gmTest.case_relu_1",
+        "TStoreAcc2gmTest.case_relu_11",
+        "TStoreAcc2gmTest.case_relu_21",
+        "TStoreAcc2gmTest.case_relu_31",
+        "TStoreAcc2gmTest.case_relu_41",
+        "TStoreAcc2gmTest.case_relu_51"
     ]
 
     case_params_list = [
@@ -246,7 +256,16 @@ if __name__ == "__main__":
         TStoreAcc2gmParams(np.uint8, np.int8, 1, 33, 65, 15, 2, quant_type=np.uint64),
         TStoreAcc2gmParams(np.uint8, np.int8, 1, 19, 33, 23, 2, quant_type=np.uint64),
         TStoreAcc2gmParams(np.uint8, np.int8, 2, 48, 64, 25, 2, quant_type=np.uint64),
-        TStoreAcc2gmParams(np.uint8, np.int8, 2, 128, 96, 17, 2, quant_type=np.uint64)
+        TStoreAcc2gmParams(np.uint8, np.int8, 2, 128, 96, 17, 2, quant_type=np.uint64),
+
+        # relu        
+        TStoreAcc2gmParams(np.float32, np.float32, 1, 128, 96, 61, relu_mode=1),
+        TStoreAcc2gmParams(np.float32, np.float16, 2, 256, 64, 33, relu_mode=1),
+        TStoreAcc2gmParams(np.int8, np.float16, 1, 55, 27, 33, quant_mode=1, scalar=2, relu_mode=1),
+        TStoreAcc2gmParams(np.int8, np.int8, 2, 80, 96, 114, quant_mode=1, scalar=2, relu_mode=1),
+        TStoreAcc2gmParams(np.int8, np.float16, 1, 79, 63, 33, quant_mode=2, quant_type=np.uint64, relu_mode=1),
+        TStoreAcc2gmParams(np.int8, np.int8, 2, 80, 128, 90, quant_mode=2, quant_type=np.uint64, relu_mode=1)
+
     ]
 
     for i, case_name  in enumerate(case_name_list):

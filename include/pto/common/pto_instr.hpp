@@ -105,28 +105,47 @@ PTO_INST RecordEvent TCMP(TileDataDst &dst, TileDataSrc &src0, TileDataSrc &src1
   return {};
 }
 
-template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
-  typename... WaitEvents>
-PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents&... events) {
-  TSYNC(events...);
-  TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src);
-  return {};
+template <typename TileData, typename GlobalData, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...events)
+{
+    TSYNC(events...);
+    TSTORE_IMPL<TileData, GlobalData, AtomicType::AtomicNone>(dst, src);
+    return {};
+}
+
+template <typename TileData, typename GlobalData, AtomicType atomicType, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...events)
+{
+    TSYNC(events...);
+    TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src);
+    return {};
 }
 
 template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
-  typename... WaitEvents>
-PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, uint64_t preQuantScalar, WaitEvents&... events) {
-  TSYNC(events...);
-  TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src, preQuantScalar);
-  return {};
+    ReluPreMode reluPreMode, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...events)
+{
+    TSYNC(events...);
+    TSTORE_IMPL<TileData, GlobalData, atomicType, reluPreMode>(dst, src);
+    return {};
+}
+
+template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, uint64_t preQuantScalar, WaitEvents &...events)
+{
+    TSYNC(events...);
+    TSTORE_IMPL<TileData, GlobalData, atomicType, reluPreMode>(dst, src, preQuantScalar);
+    return {};
 }
 
 template <typename TileData, typename GlobalData, typename FpTileData, AtomicType atomicType = AtomicType::AtomicNone,
-  typename... WaitEvents>
-PTO_INST RecordEvent TSTORE_FP(GlobalData &dst, TileData &src, FpTileData &fp, WaitEvents&... events) {
-  TSYNC(events...);
-  TSTORE_IMPL<TileData, GlobalData, FpTileData, atomicType>(dst, src, fp);
-  return {};
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE_FP(GlobalData &dst, TileData &src, FpTileData &fp, WaitEvents &...events)
+{
+    TSYNC(events...);
+    TSTORE_IMPL<TileData, GlobalData, FpTileData, atomicType, reluPreMode>(dst, src, fp);
+    return {};
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>

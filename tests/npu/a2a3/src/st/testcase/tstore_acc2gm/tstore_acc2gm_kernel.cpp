@@ -18,7 +18,7 @@ constexpr uint16_t BLOCK_CUBE_M_N = 16;
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
 __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -72,7 +72,12 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile);
+    if constexpr (reluMode == 0) {
+        TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile);
+    } else if constexpr (reluMode == 1) {
+        constexpr ReluPreMode reluPreMode = ReluPreMode::NormalRelu;
+        TSTORE<AccTile, GlobalDataOut, atomicTypeEnum, reluPreMode>(dstGlobal, cTile);
+    }
     set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
@@ -80,7 +85,7 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
 __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -143,7 +148,12 @@ __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcData
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile);
+    if constexpr (reluMode == 0) {
+        TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile);
+    } else if constexpr (reluMode == 1) {
+        constexpr ReluPreMode reluPreMode = ReluPreMode::NormalRelu;
+        TSTORE<AccTile, GlobalDataOut, atomicTypeEnum, reluPreMode>(dstGlobal, cTile);
+    }
     set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
@@ -151,7 +161,7 @@ __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcData
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
 __global__ AICORE void TStoreAcc2gmScalarNz2nd(
     __gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1, float scalarQuant)
 {
@@ -214,7 +224,12 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
         preQuantScalar = (preQuantScalar & ~(static_cast<uint64_t>(1) << 46)) | (static_cast<uint64_t>(sign) << 46);
     }
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile, preQuantScalar);
+    if constexpr (reluMode == 0) {
+        TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile, preQuantScalar);
+    } else if constexpr (reluMode == 1) {
+        constexpr ReluPreMode reluPreMode = ReluPreMode::NormalRelu;
+        TSTORE<AccTile, GlobalDataOut, atomicTypeEnum, reluPreMode>(dstGlobal, cTile, preQuantScalar);
+    }
     set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
@@ -222,7 +237,7 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
 __global__ AICORE void TStoreAcc2gmScalarNz2nz(
     __gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1, float scalarQuant)
 {
@@ -290,7 +305,12 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
         preQuantScalar = (preQuantScalar & ~(static_cast<uint64_t>(1) << 46)) | (static_cast<uint64_t>(sign) << 46);
     }
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile, preQuantScalar);
+    if constexpr (reluMode == 0) {
+        TSTORE<AccTile, GlobalDataOut, atomicTypeEnum>(dstGlobal, cTile, preQuantScalar);
+    } else if constexpr (reluMode == 1) {
+        constexpr ReluPreMode reluPreMode = ReluPreMode::NormalRelu;
+        TSTORE<AccTile, GlobalDataOut, atomicTypeEnum, reluPreMode>(dstGlobal, cTile, preQuantScalar);
+    }
     set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
@@ -298,7 +318,7 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
 __global__ AICORE void TStoreAcc2gmVectorNz2nd(
     __gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1, __gm__ uint64_t *quantTensor)
 {
@@ -371,7 +391,12 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     TMOV(scalingTile, scalingMatTile);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
+    if constexpr (reluMode == 0) {
+        TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
+    } else if constexpr (reluMode == 1) {
+        constexpr ReluPreMode reluPreMode = ReluPreMode::NormalRelu;
+        TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum, reluPreMode>(dstGlobal, cTile, scalingTile);
+    }
     set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
@@ -379,7 +404,7 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
 __global__ AICORE void TStoreAcc2gmVectorNz2nz(
     __gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1, __gm__ uint64_t *quantTensor)
 {
@@ -454,7 +479,12 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nz(
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     TMOV(scalingTile, scalingMatTile);
     constexpr AtomicType atomicTypeEnum = atomicType == 1 ? AtomicType::AtomicAdd : AtomicType::AtomicNone;
-    TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
+    if constexpr (reluMode == 0) {
+        TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum>(dstGlobal, cTile, scalingTile);
+    } else if constexpr (reluMode == 1) {
+        constexpr ReluPreMode reluPreMode = ReluPreMode::NormalRelu;
+        TSTORE_FP<AccTile, GlobalDataOut, ScalingTile, atomicTypeEnum, reluPreMode>(dstGlobal, cTile, scalingTile);
+    }
     set_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     wait_flag(PIPE_FIX, PIPE_M, EVENT_ID0);
     out = dstGlobal.data();
@@ -490,6 +520,10 @@ void LaunchTStoreAcc2gmNz2nd(uint8_t *out, uint8_t *src0, uint8_t *src1, void *s
         TStoreAcc2gmNz2nd<1, int32_t, int32_t, int8_t, 1, 1, 1, 44, 128, 1, 1, 1, 44, 128, 44, 128, 27>
             <<<1, nullptr, stream>>>(
                 reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0), reinterpret_cast<int8_t *>(src1));
+    } else if constexpr (tilingKey == 21) {
+        TStoreAcc2gmNz2nd<0, float, float, float, 1, 1, 1, 128, 96, 1, 1, 1, 128, 96, 128, 96, 61, 1>
+            <<<1, nullptr, stream>>>(
+                reinterpret_cast<float *>(out), reinterpret_cast<float *>(src0), reinterpret_cast<float *>(src1));
     }
 }
 
@@ -523,6 +557,10 @@ void LaunchTStoreAcc2gmNz2nz(uint8_t *out, uint8_t *src0, uint8_t *src1, void *s
     } else if constexpr (tilingKey == 8) {
         TStoreAcc2gmNz2nz<0, float, float, float, 3, 8, 4, 16, 8, 3, 8, 4, 16, 8, 64, 192, 43><<<1, nullptr, stream>>>(
             reinterpret_cast<float *>(out), reinterpret_cast<float *>(src0), reinterpret_cast<float *>(src1));
+    } else if constexpr (tilingKey == 21) {
+        TStoreAcc2gmNz2nz<0, float, float, half, 4, 1, 16, 16, 16, 4, 1, 16, 16, 16, 256, 64, 33, 1>
+            <<<1, nullptr, stream>>>(
+                reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1));
     }
 }
 
@@ -549,6 +587,10 @@ void LaunchTStoreAcc2gmScalarNz2nd(uint8_t *out, uint8_t *src0, uint8_t *src1, v
         TStoreAcc2gmScalarNz2nd<0, float, uint8_t, float, 1, 1, 1, 16, 20, 1, 1, 1, 16, 20, 16, 20, 25>
             <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out), reinterpret_cast<float *>(src0),
                 reinterpret_cast<float *>(src1), scalarQuant);
+    } else if constexpr (tilingKey == 21) {
+        TStoreAcc2gmScalarNz2nd<0, float, int8_t, half, 1, 1, 1, 55, 27, 1, 1, 1, 55, 27, 55, 27, 33, 1>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<half *>(src0),
+                reinterpret_cast<half *>(src1), scalarQuant);
     }
 }
 
@@ -575,6 +617,10 @@ void LaunchTStoreAcc2gmScalarNz2nz(uint8_t *out, uint8_t *src0, uint8_t *src1, v
         TStoreAcc2gmScalarNz2nz<0, float, uint8_t, bfloat16_t, 1, 2, 2, 16, 32, 1, 2, 2, 16, 32, 32, 64, 16>
             <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out), reinterpret_cast<bfloat16_t *>(src0),
                 reinterpret_cast<bfloat16_t *>(src1), scalarQuant);
+    } else if constexpr (tilingKey == 21) {
+        TStoreAcc2gmScalarNz2nz<0, int32_t, int8_t, int8_t, 3, 1, 5, 16, 32, 3, 1, 5, 16, 32, 80, 96, 114, 1>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<int8_t *>(src0),
+                reinterpret_cast<int8_t *>(src1), scalarQuant);
     }
 }
 
@@ -601,6 +647,10 @@ void LaunchTStoreAcc2gmVectorNz2nd(uint8_t *out, uint8_t *src0, uint8_t *src1, u
         TStoreAcc2gmVectorNz2nd<0, float, uint8_t, half, 1, 1, 1, 19, 33, 1, 1, 1, 19, 33, 19, 33, 23>
             <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out), reinterpret_cast<half *>(src0),
                 reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
+    } else if constexpr (tilingKey == 21) {
+        TStoreAcc2gmVectorNz2nd<0, float, int8_t, half, 1, 1, 1, 79, 63, 1, 1, 1, 79, 63, 79, 63, 33, 1>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<half *>(src0),
+                reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
     }
 }
 
@@ -623,6 +673,10 @@ void LaunchTStoreAcc2gmVectorNz2nz(uint8_t *out, uint8_t *src0, uint8_t *src1, u
         TStoreAcc2gmVectorNz2nz<0, float, uint8_t, half, 3, 1, 8, 16, 32, 3, 1, 8, 16, 32, 128, 96, 17>
             <<<1, nullptr, stream>>>(reinterpret_cast<uint8_t *>(out), reinterpret_cast<half *>(src0),
                 reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
+    } else if constexpr (tilingKey == 21) {
+        TStoreAcc2gmVectorNz2nz<0, int32_t, int8_t, int8_t, 2, 2, 5, 16, 32, 2, 2, 5, 16, 32, 80, 128, 90, 1>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<int8_t *>(src0),
+                reinterpret_cast<int8_t *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
     }
 }
 
@@ -680,4 +734,18 @@ template void LaunchTStoreAcc2gmVectorNz2nz<2>(
 template void LaunchTStoreAcc2gmVectorNz2nz<3>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
 template void LaunchTStoreAcc2gmVectorNz2nz<4>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
+
+// relu
+template void LaunchTStoreAcc2gmNz2nd<21>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void LaunchTStoreAcc2gmNz2nz<21>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+
+template void LaunchTStoreAcc2gmScalarNz2nd<21>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream, float scalarQuant);
+template void LaunchTStoreAcc2gmScalarNz2nz<21>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream, float scalarQuant);
+
+template void LaunchTStoreAcc2gmVectorNz2nd<21>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
+template void LaunchTStoreAcc2gmVectorNz2nz<21>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);

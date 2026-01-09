@@ -584,3 +584,34 @@ TEST_F(TStoreAcc2gmTest, case34)
 {
     test_tstore_acc2gm_vector_nz2nz<4, uint8_t, uint16_t, 128, 96, 17>();
 }
+
+TEST_F(TStoreAcc2gmTest, case_relu_1)
+{
+    test_tstore_acc2gm_nz2nd<21, float, float, 128, 96, 61>();
+}
+
+TEST_F(TStoreAcc2gmTest, case_relu_11)
+{
+    test_tstore_acc2gm_nz2nz<21, float, uint16_t, 256, 64, 33>();
+}
+
+TEST_F(TStoreAcc2gmTest, case_relu_21)
+{
+    test_tstore_acc2gm_scalar_nz2nd<21, uint8_t, uint16_t, 55, 27, 33>(2);
+}
+
+TEST_F(TStoreAcc2gmTest, case_relu_31)
+{
+    test_tstore_acc2gm_scalar_nz2nz<21, uint8_t, uint8_t, 80, 96, 114>(2);
+}
+
+TEST_F(TStoreAcc2gmTest, case_relu_41)
+{
+    test_tstore_acc2gm_vector_nz2nd<21, uint8_t, uint16_t, 79, 63, 33>();
+}
+
+TEST_F(TStoreAcc2gmTest, case_relu_51)
+{
+    test_tstore_acc2gm_vector_nz2nz<21, uint8_t, uint8_t, 80, 128, 90>();
+}
+

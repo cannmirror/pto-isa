@@ -343,7 +343,8 @@ PTO_INTERNAL void SetAtomicNone()
     set_atomic_none();
 }
 
-template <typename GlobalData, typename TileData, QuantMode_t quantizationMode = QuantMode_t::NoQuant>
+template <typename GlobalData, typename TileData, QuantMode_t quantizationMode = QuantMode_t::NoQuant,
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
 PTO_INTERNAL void TStoreAccNz2nd(typename GlobalData::DType *dstAddr, __cc__ typename TileData::DType *srcAddr,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
@@ -371,15 +372,15 @@ PTO_INTERNAL void TStoreAccNz2nd(typename GlobalData::DType *dstAddr, __cc__ typ
     constexpr uint8_t nz2ndEn = 1;
     constexpr uint8_t unitFlagCtrl = 0;
 
-    uint64_t xmReg = 0;
-    xmReg = ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
-            (static_cast<uint64_t>(mSize & 0xffff) << 16) |   // Xm[31:16] the m-direction size of the matrix
-            (static_cast<uint64_t>(dstD & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
-    uint64_t xtReg = 0;
-    xtReg = srcStride |                                         // Xt[15:0] the source stride between the start addr
-            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | // Xt[33:32] unit flag control bit
-            (static_cast<uint64_t>(quantizationMode & 0x1f) << 34) | // Xt[38:34] pre-stage quantization mode
-            (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);            // Xt[43] nz2nd control bit
+    uint64_t xmReg =
+        ((nSize & 0xfff) << 4) |                          // Xm[15:4] the n-direction size of the matrix
+        (static_cast<uint64_t>(mSize & 0xffff) << 16) |   // Xm[31:16] the m-direction size of the matrix
+        (static_cast<uint64_t>(dstD & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
+    uint64_t xtReg = srcStride |                          // Xt[15:0] the source stride between the start addr
+                     (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) |      // Xt[33:32] unit flag control bit
+                     (static_cast<uint64_t>(quantizationMode & 0x1f) << 34) | // Xt[38:34] pre-stage quantization mode
+                     ((static_cast<uint64_t>(reluPreMode) & 0x7) << 39) |     //  Xt[41:39] relu pre mode
+                     (static_cast<uint64_t>(nz2ndEn & 0x1) << 43);            // Xt[43] nz2nd control bit
     uint64_t ndParaSPR = 0;
     ndParaSPR = ndNum |                                               // ND_PARA[15:0] the number of source nd
                 (static_cast<uint64_t>(srcNdStride & 0xffff) << 16) | // ND_PARA[31:16] the stride of source nd
@@ -388,7 +389,8 @@ PTO_INTERNAL void TStoreAccNz2nd(typename GlobalData::DType *dstAddr, __cc__ typ
     copy_matrix_cc_to_gm(dstAddr, srcAddr, xmReg, xtReg);
 }
 
-template <typename GlobalData, typename TileData, QuantMode_t quantizationMode = QuantMode_t::NoQuant>
+template <typename GlobalData, typename TileData, QuantMode_t quantizationMode = QuantMode_t::NoQuant,
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
 PTO_INTERNAL void TStoreAccNz2nz(typename GlobalData::DType *dstAddr, __cc__ typename TileData::DType *srcAddr,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
@@ -430,21 +432,23 @@ PTO_INTERNAL void TStoreAccNz2nz(typename GlobalData::DType *dstAddr, __cc__ typ
         }
     }
 
-    uint64_t xmReg = 0;
-    xmReg =
+    uint64_t xmReg =
+
         (static_cast<uint64_t>(nSize & 0xfff) << 4) |          // Xm[15:4] nSize
         (static_cast<uint64_t>(mSize & 0xffff) << 16) |        // Xm[31:16] mSize
         (static_cast<uint64_t>(dstStride & 0xffffffff) << 32); // Xm[63:32] destination stride between the start addr
-    uint64_t xtReg = 0;
-    xtReg = srcStride |                                         // Xt[15:0] the source stride between the start addr
-            (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) | // Xt[33:32] unit flag control bit
-            (static_cast<uint64_t>(quantizationMode & 0x1f) << 34) | // Xt[38:34] pre-stage quantization mode
-            (static_cast<uint64_t>(channelSplitEn & 0x1) << 42);     // Xt[42] channel split control bit
+
+    uint64_t xtReg = srcStride | // Xt[15:0] the source stride between the start addr
+                     (static_cast<uint64_t>(unitFlagCtrl & 0x3) << 32) |      // Xt[33:32] unit flag control bit
+                     (static_cast<uint64_t>(quantizationMode & 0x1f) << 34) | // Xt[38:34] pre-stage quantization mode
+                     ((static_cast<uint64_t>(reluPreMode) & 0x7) << 39) |     //  Xt[41:39] relu pre mode
+                     (static_cast<uint64_t>(channelSplitEn & 0x1) << 42);     // Xt[42] channel split control bit
 
     copy_matrix_cc_to_gm(dstAddr, srcAddr, xmReg, xtReg);
 }
 
-template <typename GlobalData, typename TileData, QuantMode_t quantizationMode = QuantMode_t::NoQuant>
+template <typename GlobalData, typename TileData, QuantMode_t quantizationMode = QuantMode_t::NoQuant,
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
 __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
@@ -453,16 +457,16 @@ __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename T
     typename GlobalData::DType *dstAddr = dst;
 
     if constexpr (GlobalData::layout == pto::Layout::ND) {
-        TStoreAccNz2nd<GlobalData, TileData, quantizationMode>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3,
-            gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        TStoreAccNz2nd<GlobalData, TileData, quantizationMode, reluPreMode>(dstAddr, srcAddr, gShape0, gShape1, gShape2,
+            gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::NZ) {
-        TStoreAccNz2nz<GlobalData, TileData, quantizationMode>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3,
-            gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        TStoreAccNz2nz<GlobalData, TileData, quantizationMode, reluPreMode>(dstAddr, srcAddr, gShape0, gShape1, gShape2,
+            gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
 }
 
 template <typename GlobalData, typename TileData, typename FpTileData,
-    QuantMode_t quantizationMode = QuantMode_t::NoQuant>
+    QuantMode_t quantizationMode = QuantMode_t::NoQuant, ReluPreMode reluPreMode = ReluPreMode::NoRelu>
 __tf__ AICORE void TStoreAccFp(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
     typename FpTileData::TileDType __in__ fp, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
     int gStride0, int gStride1, int gStride2, int gStride3, int gStride4, int validRow, int validCol)
@@ -472,11 +476,11 @@ __tf__ AICORE void TStoreAccFp(typename GlobalData::DType __out__ *dst, typename
     set_fpc(deqTensorAddr);
     pipe_barrier(PIPE_FIX);
     if constexpr (GlobalData::layout == pto::Layout::ND) {
-        TStoreAccNz2nd<GlobalData, TileData, quantizationMode>(dst, src, gShape0, gShape1, gShape2, gShape3, gShape4,
-            gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        TStoreAccNz2nd<GlobalData, TileData, quantizationMode, reluPreMode>(dst, src, gShape0, gShape1, gShape2,
+            gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::NZ) {
-        TStoreAccNz2nz<GlobalData, TileData, quantizationMode>(dst, src, gShape0, gShape1, gShape2, gShape3, gShape4,
-            gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        TStoreAccNz2nz<GlobalData, TileData, quantizationMode, reluPreMode>(dst, src, gShape0, gShape1, gShape2,
+            gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
 }
 
@@ -544,10 +548,14 @@ PTO_INTERNAL void CheckAcc2gm(GlobalData &dst, TileData &src)
         "When GlobalData is NZ format, the range of Rows is [1, 65535] and Cols "
         "must be an integer multiple of 16.");
     PTO_ASSERT(src.GetValidCol() >= 1 && src.GetValidCol() <= 4095, "The range of validCol is [1, 4095].");
+    PTO_ASSERT(dst.GetShape(pto::GlobalTensorDim::DIM_0) > 0 && dst.GetShape(pto::GlobalTensorDim::DIM_1) > 0 &&
+                   dst.GetShape(pto::GlobalTensorDim::DIM_2) > 0 && dst.GetShape(pto::GlobalTensorDim::DIM_3) > 0 &&
+                   dst.GetShape(pto::GlobalTensorDim::DIM_4) > 0 && src.GetValidRow() > 0 && src.GetValidCol() > 0,
+        "The shape of src and dst must be greater than 0!");
 }
 
 template <typename TileData, typename GlobalData, AtomicType currentAtomicType = AtomicType::AtomicNone>
-AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
+PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
     static_assert(TileData::Loc == pto::TileType::Vec || TileData::Loc == pto::TileType::Acc ||
                       TileData::Loc == pto::TileType::Mat,
@@ -590,36 +598,62 @@ AICORE void TSTORE_IMPL(GlobalData &dst, TileData &src)
     }
 }
 
-template <typename TileData, typename GlobalData, AtomicType currentAtomicType = AtomicType::AtomicNone>
+template <typename TileData, typename GlobalData, AtomicType currentAtomicType = AtomicType::AtomicNone,
+    ReluPreMode reluPreMode>
+PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
+{
+    static_assert(TileData::Loc == pto::TileType::Acc, "Source TileType only suport Acc!");
+    CheckAcc2gm<TileData, GlobalData, false>(dst, src);
+    if constexpr (currentAtomicType == AtomicType::AtomicAdd) {
+        SetAtomicAdd<typename GlobalData::DType>();
+    }
+    constexpr QuantMode_t quantMode = GetCastPreQuantMode<typename TileData::DType, typename GlobalData::DType>();
+    TStoreAcc<GlobalData, TileData, quantMode, reluPreMode>(dst.data(), src.data(),
+        dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
+        dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3),
+        dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0),
+        dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2),
+        dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4),
+        src.GetValidRow(), src.GetValidCol());
+    if constexpr (currentAtomicType == AtomicType::AtomicAdd) {
+        SetAtomicNone();
+    }
+}
+
+template <typename TileData, typename GlobalData, AtomicType currentAtomicType = AtomicType::AtomicNone,
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
 PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantScalar)
 {
+    static_assert(TileData::Loc == pto::TileType::Acc, "Source TileType only suport Acc!");
     CheckAcc2gm<TileData, GlobalData, true>(dst, src);
     if constexpr (currentAtomicType == AtomicType::AtomicAdd) {
         SetAtomicAdd<typename GlobalData::DType>();
     }
     set_quant_pre(preQuantScalar);
     constexpr QuantMode_t quantMode = GetScalarPreQuantMode<typename TileData::DType, typename GlobalData::DType>();
-    TStoreAcc<GlobalData, TileData, quantMode>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
-        dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
-        dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
-        dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
-        dst.GetStride(pto::GlobalTensorDim::DIM_2), dst.GetStride(pto::GlobalTensorDim::DIM_3),
-        dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(), src.GetValidCol());
-    if constexpr (currentAtomicType == AtomicType::AtomicAdd) {
+    TStoreAcc<GlobalData, TileData, quantMode, reluPreMode>(dst.data(), src.data(),
+        dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
+        dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3),
+        dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0),
+        dst.GetStride(pto::GlobalTensorDim::DIM_1), dst.GetStride(pto::GlobalTensorDim::DIM_2),
+        dst.GetStride(pto::GlobalTensorDim::DIM_3), dst.GetStride(pto::GlobalTensorDim::DIM_4), src.GetValidRow(),
+        src.GetValidCol());
+    if constexpr (AtomicType::AtomicAdd == currentAtomicType) {
         SetAtomicNone();
     }
 }
 
 template <typename TileData, typename GlobalData, typename FpTileData,
-    AtomicType currentAtomicType = AtomicType::AtomicNone>
+    AtomicType currentAtomicType = AtomicType::AtomicNone, ReluPreMode reluPreMode = ReluPreMode::NoRelu>
 PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src, FpTileData &fp)
 {
+    static_assert(TileData::Loc == pto::TileType::Acc, "Source TileType only suport Acc!");
     CheckAcc2gm<TileData, GlobalData, true>(dst, src);
-    if constexpr (currentAtomicType == AtomicType::AtomicAdd) {
+    if constexpr (AtomicType::AtomicAdd == currentAtomicType) {
         SetAtomicAdd<typename GlobalData::DType>();
     }
     constexpr QuantMode_t quantMode = GetVectorPreQuantMode<typename TileData::DType, typename GlobalData::DType>();
-    TStoreAccFp<GlobalData, TileData, FpTileData, quantMode>(dst.data(), src.data(), fp.data(),
+    TStoreAccFp<GlobalData, TileData, FpTileData, quantMode, reluPreMode>(dst.data(), src.data(), fp.data(),
         dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
         dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3),
         dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0),
