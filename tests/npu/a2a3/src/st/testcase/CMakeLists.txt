@@ -133,6 +133,7 @@ trowexpandsub
 tcvt
 tmul
 tadd
+taddplus
 tpartadd
 tpartmin
 tpartmax
