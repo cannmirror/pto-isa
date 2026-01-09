@@ -47,6 +47,7 @@ namespace pto
             std::is_same<typename TileData::DType, half>::value ||
             std::is_same<typename TileData::DType, float16_t>::value ||
             std::is_same<typename TileData::DType, float>::value ||
+            std::is_same<typename TileData::DType, bfloat16_t>::value ||
             std::is_same<typename TileData::DType, float32_t>::value,
                 "TEXPANDS: Invalid data type");
 
