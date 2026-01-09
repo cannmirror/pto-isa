@@ -240,6 +240,13 @@ PTO_INST RecordEvent TPRELU(TileData &dst, TileData &src0, TileData &src1, WaitE
 }
 
 template <typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TPRINT(TileData &src, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TPRINT, src);
+  return {};
+}
+
+template <typename TileData, typename... WaitEvents>
 PTO_INST RecordEvent TADDC(TileData &dst, TileData &src0, TileData &src1, TileData &src2, WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TADDC, dst, src0, src1, src2);

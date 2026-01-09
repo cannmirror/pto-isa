@@ -77,6 +77,9 @@ function(pto_mix_st NAME)
     target_compile_options(${NAME}_kernel_mix PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c220 -DMEMORY_BASE -std=c++17)
     target_include_directories(${NAME}_kernel_mix PRIVATE
         ${PROJECT_SOURCE_DIR}/../../../../../include
+        ${ASCEND_HOME_PATH}/pkg_inc/
+        ${ASCEND_HOME_PATH}/pkg_inc/profiling/
+        ${ASCEND_HOME_PATH}/pkg_inc/runtime/runtime
     )
     target_link_options(${NAME}_kernel_mix PRIVATE --cce-fatobj-link)
 

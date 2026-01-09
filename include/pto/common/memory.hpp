@@ -13,6 +13,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <stdint.h>
 #include <type_traits>
+#include <pto/common/type.hpp>
 
 namespace pto {
 enum class TileType {
@@ -93,6 +94,20 @@ template <typename DType> struct MemoryQualifier<TileType::Scaling, DType> {
   using type = __fbuf__ DType *;
 #endif
 };
+
+PTO_INTERNAL constexpr const __gm__ char *
+GetLayoutName(BLayout bType, SLayout sType) noexcept {
+  switch (sType) {
+  case SLayout::NoneBox:
+    return (bType == BLayout::RowMajor) ? "ND" : "DN";
+  case SLayout::RowMajor:
+    return (bType == BLayout::RowMajor) ? "Zz" : "Nz";
+  case SLayout::ColMajor:
+    return (bType == BLayout::RowMajor) ? "Zn" : "Nn";
+  default:
+    return "Unknown";
+  }
+}
 
 } // namespace pto
 

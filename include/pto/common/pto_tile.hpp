@@ -198,6 +198,7 @@ template <typename Element_, typename Shape_, typename Stride_, Layout Layout_ =
 struct GlobalTensor {
     using Shape = Shape_;
     using Stride = Stride_;
+    using RawDType = Element_;
     using DType = __gm__ Element_;
     static constexpr Layout layout = Layout_;
 
@@ -777,6 +778,7 @@ struct Tile {
     static_assert(Rows > 0 && ValidRow <= Rows && Cols > 0 && ValidCol <= Cols,
                   "Invalid Tile Layout.");
 
+    static constexpr BLayout BFractal = BFractal_;
     static constexpr SLayout SFractal = SFractal_;
     static constexpr int Numel = Rows * Cols;
     static constexpr bool isRowMajor = BFractal_ == BLayout::RowMajor;
@@ -961,8 +963,9 @@ template <typename T> struct is_tile : std::false_type {
     static constexpr SLayout layout_enum = SLayout::NoneBox;
 };
 
-template <typename Element_, typename Layout_, typename Stride_>
-struct is_global<GlobalTensor<Element_, Layout_, Stride_>> : std::true_type {};
+template <typename Element_, typename Shape_, typename Stride_, Layout Layout_>
+struct is_global<GlobalTensor<Element_, Shape_, Stride_, Layout_>>
+    : std::true_type {};
 
 template <TileType Loc_, typename Element_, const int Rows_, const int Cols_, const BLayout BFractal_,
     const int RowValid_, const int ColValid_, const SLayout SFractal_, const int SFractalSize_, const PadValue PadVal_,
@@ -989,11 +992,50 @@ template <typename tile_shape> struct is_Zn_layout {
                                 tile_shape::isInnerColMajor;
 };
 
+template <typename tile_shape> struct is_Zz_layout {
+  static constexpr bool value = tile_shape::isRowMajor &&
+                                tile_shape::isBoxedLayout &&
+                                tile_shape::isInnerRowMajor;
+};
+
 template <typename T> constexpr bool is_global_data_v = is_global<T>::value;
 
 template <typename T> constexpr bool is_tile_data_v = is_tile<T>::value;
 
 template <typename T> constexpr bool is_boxed_data_v = is_boxed_tile<T>;
+
+// Get the memory offset of a tile element from logical coordinates
+template <typename TileT> PTO_INTERNAL size_t GetTileOffset(int row, int col) {
+  static_assert(is_tile_data_v<TileT>, "tile_offset only accepts Tile types.");
+  if constexpr (!TileT::isBoxedLayout) {
+    return row * TileT::RowStride + col * TileT::ColStride;
+  } else {
+    // Compute block coordinates
+    int BlockRow = row / TileT::InnerRows;
+    int BlockCol = col / TileT::InnerCols;
+    // Compute intra-block offset
+    int InnerRow = row % TileT::InnerRows;
+    int InnerCol = col % TileT::InnerCols;
+    // Compute block numbers
+    static constexpr int BlockNumRow = TileT::Rows / TileT::InnerRows;
+    static constexpr int BlockNumCol = TileT::Cols / TileT::InnerCols;
+    if constexpr (is_Nz_layout<TileT>::value) {
+      return (BlockNumRow * BlockCol + BlockRow) * TileT::InnerNumel +
+             InnerRow * TileT::InnerCols + InnerCol;
+    } else if constexpr (is_Zn_layout<TileT>::value) {
+      return (BlockNumCol * BlockRow + BlockCol) * TileT::InnerNumel +
+             InnerCol * TileT::InnerRows + InnerRow;
+    } else if constexpr (is_Zz_layout<TileT>::value) {
+      return (BlockNumCol * BlockRow + BlockCol) * TileT::InnerNumel +
+             InnerRow * TileT::InnerCols + InnerCol;
+    } else {
+      // This branch should not be instantiated.
+      static_assert(sizeof(TileT) == 0,
+                    "Unsupported layout in Tile, fractal tiles should be "
+                    "Nz or Zn layout.");
+    }
+  }
+}
 
 } // namespace pto
 

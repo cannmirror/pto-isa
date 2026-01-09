@@ -53,6 +53,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a2a3/TPartAdd.hpp"
 #include "pto/npu/a2a3/TPartMax.hpp"
 #include "pto/npu/a2a3/TPartMin.hpp"
+#ifdef _DEBUG
+#include "pto/npu/a2a3/TPrint.hpp"
+#endif
 #include "pto/npu/a2a3/TRowExpand.hpp"
 #include "pto/npu/a2a3/TRowExpandAdd.hpp"
 #include "pto/npu/a2a3/TRowExpandDiv.hpp"
@@ -114,6 +117,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TPartAdd.hpp"
 #include "pto/npu/a5/TPartMax.hpp"
 #include "pto/npu/a5/TPartMin.hpp"
+#ifdef _DEBUG
+#include "pto/npu/a5/TPrint.hpp"
+#endif
 #include "pto/npu/a5/TGather.hpp"
 #include "pto/npu/a5/TUnaryOp.hpp"
 #include "pto/npu/a5/TGatherB.hpp"
