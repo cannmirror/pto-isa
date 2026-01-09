@@ -172,7 +172,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmatmul_mx -g TMATMULMXTest.case_e5m2_e5m2_128_64_64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmax -g TMAXTest.case_float_64x64_64x64_64x64_PAD_VALUE_NULL
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmin -g TMINTest.case_float_64x64_64x64_64x64_PAD_VALUE_NULL
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmins -g TMINSTest.case_float_60x60_64x64_60x60
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmins -g TMINSTest.case_float_60x128_64x64_60x60
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmins -g TMINSTest.case_float_16x200_20x512_16x200
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmins -g TMINSTest.case_float_1x3600_2x4096_1x3600
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov -g TMOVTest.case_bias1
