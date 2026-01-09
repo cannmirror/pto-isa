@@ -12,7 +12,12 @@
 
 import os
 import numpy as np
+import ml_dtypes
 
+bfloat16 = np.float16  # Using float16 to simulate bfloat16 for data generation
+fp8_e5m2 = ml_dtypes.float8_e5m2  # Using int8 to simulate fp8_e5m2 for data generation
+fp8_e4m3 = ml_dtypes.float8_e4m3fn  # Using int8 to simulate fp8_e4m3 for data generation
+hifloat8 = ml_dtypes.float8_e5m2  # Using int8 to simulate hifloat8 for data generation
 np.random.seed(19)
 
 def gen_golden(case_name, param):
@@ -21,11 +26,11 @@ def gen_golden(case_name, param):
     m, n = param.m, param.n
 
     # Generate input data with reasonable ranges
-    if srctype == np.float32 or srctype == np.float16:
+    if srctype == np.float32 or srctype == np.float16 or srctype == bfloat16:
         # Floating point: range [-100, 100]
         x1_gm = (np.random.random([m, n]) * 200 - 100).astype(srctype)
-    elif srctype == np.int8:
-        # int8: full range [-128, 127]
+    elif srctype == np.int8 or srctype == fp8_e5m2 or srctype == fp8_e4m3 or srctype == hifloat8:
+        # int8/fp8/hifloat8: full range [-128, 127]
         x1_gm = np.random.randint(-128, 128, [m, n]).astype(srctype)
     elif srctype == np.uint8:
         # uint8: full range [0, 255]
@@ -116,9 +121,13 @@ if __name__ == "__main__":
         # FP32 Source
         ("fp32_fp32", np.float32, np.float32),
         ("fp32_fp16", np.float32, np.float16),
+        ("fp32_bf16", np.float32, bfloat16),
         ("fp32_int32", np.float32, np.int32),
         ("fp32_int16", np.float32, np.int16),
         ("fp32_int64", np.float32, np.int64),
+        ("fp32_fp8_e4m3", np.float32, fp8_e4m3),
+        ("fp32_fp8_e5m2", np.float32, fp8_e5m2),
+        ("fp32_h8", np.float32, hifloat8),
         
         # FP16 Source
         ("fp16_fp32", np.float16, np.float32),
@@ -126,22 +135,40 @@ if __name__ == "__main__":
         ("fp16_int16", np.float16, np.int16),
         ("fp16_int8", np.float16, np.int8),
         ("fp16_uint8", np.float16, np.uint8),
+        ("fp16_fp8_e5m2", np.float16, fp8_e5m2),
+        ("fp16_fp8_e4m3", np.float16, fp8_e4m3),
+        ("fp16_h8", np.float16, hifloat8),
+
+        # BF16 Source
+        ("bf16_fp32", bfloat16, np.float32),
+        ("bf16_int32", bfloat16, np.int32),
+        ("bf16_fp16", bfloat16, np.float16),
+        ("bf16_fp8_e5m2", bfloat16, fp8_e5m2),
+        ("bf16_fp8_e4m3", bfloat16, fp8_e4m3),
 
         # INT32 Source
         ("int32_fp32", np.int32, np.float32),
         ("int32_int16", np.int32, np.int16),
         # ("int32_uint16", np.int32, np.uint16),
         ("int32_int64", np.int32, np.int64),
+        ("int32_uint8", np.int32, np.uint8),
+
+        # UINT32 Source
+        ("uint32_uint8", np.uint32, np.uint8),
+        ("uint32_uint16", np.uint32, np.uint16),
+        ("uint32_int16", np.uint32, np.int16),
 
         # INT16 Source
         ("int16_fp16", np.int16, np.float16),
         ("int16_fp32", np.int16, np.float32),
         ("int16_uint32", np.int16, np.uint32),
         ("int16_int32", np.int16, np.int32),
+        ("int16_uint8", np.int16, np.uint8),
 
         # INT8 Source
         ("int8_fp16", np.int8, np.float16),
         ("int8_int16", np.int8, np.int16),
+        ("int8_int32", np.int8, np.int32),
 
         # UINT8 Source
         ("uint8_fp16", np.uint8, np.float16),
@@ -150,6 +177,11 @@ if __name__ == "__main__":
         # INT64 Source
         ("int64_fp32", np.int64, np.float32),
         ("int64_int32", np.int64, np.int32),
+
+        # FP8 Source
+        ("fp8_e4m3_fp32", fp8_e4m3, np.float32),
+        ("fp8_e5m2_fp32", fp8_e5m2, np.float32),
+        ("h8_fp32", hifloat8, np.float32),
     ]
 
     # Different shape configurations (m, n)
