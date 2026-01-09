@@ -13,460 +13,249 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/constants.hpp>
 #include <pto/common/utils.hpp>
+#include <pto/common/type.hpp>
 #include "common.hpp"
 #include "utils.hpp"
 
 namespace pto {
-
-enum class UnaryOpsImpl : unsigned {
-  UnaryOpsIMPL_DEFAULT = 0,
-  UnaryOpsIMPL_1D_NO_POST_UPDATE = 1,
-  UnaryOpsIMPL_2D_NO_POST_UPDATE = 2,
-  UnaryOpsIMPL_1D_POST_UPDATE = 3,
-  UnaryOpsIMPL_2D_POST_UPDATE = 4,
-};
-
-template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-PTO_INTERNAL
-void TUnaryOps_1D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
-                    __ubuf__ typename TileData::DType *srcPtr,
-                    unsigned kValidRows,
-                    unsigned kValidCols) {
-    using T = typename TileData::DType;
-    uint16_t repeatTimes = CeilDivision(kValidRows * kValidCols, elementsPerRepeat);
+  template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+  PTO_INTERNAL void TUnaryOps_1D_NoPostUpdate(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol) {
+    uint16_t repeatTimes = CeilDivision(validRow * validCol, nRepeatElem);
     __VEC_SCOPE__
     {
-        RegTensor<T> vreg0;
-        RegTensor<T> vreg1;
-        MaskReg  preg;
-
-        constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-        unsigned sreg = kValidRows * kValidCols;
-        #pragma clang loop unroll(disable)
-        for (uint16_t i = 0; i < (uint16_t)repeatTimes; ++i) {
-            preg = CreatePredicate<T>(sreg);
-            vlds(vreg0, srcPtr, i*elementsPerRepeat, NORM);
-            Op::UnaryInstr(vreg1, vreg0, preg);
-            vsts(vreg1, dstPtr, i*elementsPerRepeat, distValue, preg);
-        }
+      RegTensor<T> srcReg;
+      RegTensor<T> dstReg;
+      unsigned sReg = validRow * validCol;
+      MaskReg pReg;
+      constexpr auto distValue =
+        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+      #pragma clang loop unroll(disable)
+      for (uint16_t i = 0; i < repeatTimes; ++i) {
+        pReg = CreatePredicate<T>(sReg);
+        vlds(srcReg, src, i * nRepeatElem, NORM);
+        Op::UnaryInstr(dstReg, srcReg, pReg);
+        vsts(dstReg, dst, i * nRepeatElem, distValue, pReg);
+      }
     }
-}
+  }
 
-template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-PTO_INTERNAL
-void TUnaryOps_1D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
-                    __ubuf__ typename TileData::DType *srcPtr,
-                    unsigned kValidRows,
-                    unsigned kValidCols) {
-    using T = typename TileData::DType;
-    uint16_t repeatTimes = CeilDivision(kValidRows * kValidCols, elementsPerRepeat);
+  template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+  PTO_INTERNAL void TUnaryOps_1D_PostUpdate(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol) {
+    uint16_t repeatTimes = CeilDivision(validRow * validCol, nRepeatElem);
     __VEC_SCOPE__
     {
-        RegTensor<T> vreg0_PU;
-        RegTensor<T> vreg1_PU;
-        MaskReg  preg;
-
-        constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-        unsigned sreg = kValidRows * kValidCols;
-        #pragma clang loop unroll(disable)
-        for (uint16_t i = 0; i < (uint16_t)repeatTimes; ++i) {
-            preg = CreatePredicate<T>(sreg);
-            vlds(vreg0_PU, srcPtr, elementsPerRepeat, NORM, POST_UPDATE);
-            Op::UnaryInstr(vreg1_PU, vreg0_PU, preg);
-            vsts(vreg1_PU, dstPtr, elementsPerRepeat, distValue, preg, POST_UPDATE);
-        }
-    } 
-}
-
-template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-PTO_INTERNAL
-void TUnaryOps_2D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
-                    __ubuf__ typename TileData::DType *srcPtr,
-                    unsigned kValidRows,
-                    unsigned kValidCols) {
-    using T = typename TileData::DType;
-    uint16_t repeatTimes = CeilDivision(kValidCols, elementsPerRepeat);
-
-    __VEC_SCOPE__
-    {
-        RegTensor<T> vreg0;
-        RegTensor<T> vreg1;
-        MaskReg preg;
-        constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-        for (uint16_t i = 0; i < (uint16_t)(kValidRows); ++i) {
-            uint32_t sreg = (uint32_t)(kValidCols);
-            for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
-                preg = CreatePredicate<T>(sreg);
-                vlds(vreg0, srcPtr, i * rowStride + j * elementsPerRepeat, NORM);
-                Op::UnaryInstr(vreg1, vreg0, preg);
-                vsts(vreg1, dstPtr, i * rowStride + j * elementsPerRepeat, distValue, preg);
-            }
-        }
+      RegTensor<T> srcReg;
+      RegTensor<T> dstReg;
+      MaskReg pReg;
+      unsigned sReg = validRow * validCol;
+      constexpr auto distValue =
+        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+      #pragma clang loop unroll(disable)
+      for (uint16_t i = 0; i < repeatTimes; ++i) {
+        pReg = CreatePredicate<T>(sReg);
+        vlds(srcReg, src, nRepeatElem, NORM, POST_UPDATE);
+        Op::UnaryInstr(dstReg, srcReg, pReg);
+        vsts(dstReg, dst, nRepeatElem, distValue, pReg, POST_UPDATE);
+      }
     }
-}
+  }
 
-template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-PTO_INTERNAL
-void TUnaryOps_2D_PostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
-                    __ubuf__ typename TileData::DType *srcPtr,
-                    unsigned kValidRows,
-                    unsigned kValidCols) {
-    using T = typename TileData::DType;
-    uint16_t repeatTimes = CeilDivision(kValidCols, elementsPerRepeat);
-
+  template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+  PTO_INTERNAL void TUnaryOps_2D(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol) {
+    uint16_t repeatTimes = CeilDivision(validCol, nRepeatElem);
     __VEC_SCOPE__
     {
-        RegTensor<T> vreg0_PU;
-        RegTensor<T> vreg1_PU;
-        MaskReg preg;
-        constexpr auto distValue = std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-        for (uint16_t i = 0; i < (uint16_t)(kValidRows); ++i) {
-            for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
-                vlds(vreg0_PU, srcPtr, i * rowStride + j * elementsPerRepeat, NORM);
-                uint32_t count = ((j + 1) * elementsPerRepeat >= kValidCols ? kValidCols - j * elementsPerRepeat : elementsPerRepeat);
-                preg = CreatePredicate<T>(count);
-                Op::UnaryInstr(vreg1_PU, vreg0_PU, preg);
-                vsts(vreg1_PU, dstPtr, i * rowStride + j * elementsPerRepeat, distValue, preg);
-            }
+      RegTensor<T> srcReg;
+      RegTensor<T> dstReg;
+      MaskReg pReg;
+      unsigned sReg;
+      constexpr auto distValue =
+        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+      for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
+        sReg = validCol;
+        for (uint16_t j = 0; j < repeatTimes; ++j) {
+          pReg = CreatePredicate<T>(sReg);
+          vlds(srcReg, src, i * SrcTile::RowStride + j * nRepeatElem, NORM);
+          Op::UnaryInstr(dstReg, srcReg, pReg);
+          vsts(dstReg, dst, i * DstTile::RowStride + j * nRepeatElem, distValue, pReg);
         }
+      }
     }
-}
+  }
 
-template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-PTO_INTERNAL
-void TUnaryOps_1D_Switch(__ubuf__ typename TileData::DType *dstPtr,
-                    __ubuf__ typename TileData::DType *srcPtr,
-                    unsigned kValidRows,
-                    unsigned kValidCols,
-                    UnaryOpsImpl version) {
+  template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+  PTO_INTERNAL void TUnaryOps_1D_Switch(__ubuf__ T *dst, __ubuf__ T *src,
+    unsigned validRow, unsigned validCol, VFImplKind version) {
     switch (version) {
-    case UnaryOpsImpl::UnaryOpsIMPL_1D_NO_POST_UPDATE:
-        TUnaryOps_1D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, srcPtr, kValidRows, kValidCols);
+      case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
+      case VFImplKind::VFIMPL_2D_NO_POST_UPDATE: {
+        TUnaryOps_1D_NoPostUpdate<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
         break;
-    case UnaryOpsImpl::UnaryOpsIMPL_2D_NO_POST_UPDATE:
-        TUnaryOps_2D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, srcPtr, kValidRows, kValidCols);
+      }
+      default: {
+        TUnaryOps_1D_PostUpdate<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
         break;
-    case UnaryOpsImpl::UnaryOpsIMPL_1D_POST_UPDATE:
-        TUnaryOps_1D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, srcPtr, kValidRows, kValidCols);
-        break;
-    case UnaryOpsImpl::UnaryOpsIMPL_2D_POST_UPDATE:
-    case UnaryOpsImpl::UnaryOpsIMPL_DEFAULT:
-    default:
-        TUnaryOps_2D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, srcPtr, kValidRows, kValidCols);
-        break;
+      }
     }
-}
+  }
 
-template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-PTO_INTERNAL
-void UnaryInstr(__ubuf__ typename TileData::DType *dstPtr,
-                __ubuf__ typename TileData::DType *srcPtr,
-                unsigned kValidRows,
-                unsigned kValidCols,
-                UnaryOpsImpl version) {
-    if constexpr (TileData::ValidCol == TileData::Cols) {
-        TUnaryOps_1D_Switch<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, srcPtr, kValidRows, kValidCols, version);
+  template <typename DstTile, typename SrcTile, typename Op>
+  __tf__ PTO_INTERNAL void TUnaryOp(typename DstTile::TileDType __out__ dstData, 
+    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename DstTile::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+    constexpr unsigned nRepeatElem = CCE_VL / sizeof(T);
+    if constexpr ((DstTile::ValidCol == DstTile::Cols) && (SrcTile::ValidCol == SrcTile::Cols)) {
+      TUnaryOps_1D_Switch<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol, version);
     } else {
-        switch (version) {
-        case UnaryOpsImpl::UnaryOpsIMPL_1D_NO_POST_UPDATE:
-        case UnaryOpsImpl::UnaryOpsIMPL_2D_NO_POST_UPDATE:
-            TUnaryOps_2D_NoPostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, srcPtr, kValidRows, kValidCols);
-            break;
-        case UnaryOpsImpl::UnaryOpsIMPL_1D_POST_UPDATE:
-        case UnaryOpsImpl::UnaryOpsIMPL_2D_POST_UPDATE:
-        case UnaryOpsImpl::UnaryOpsIMPL_DEFAULT:
-        default:
-            TUnaryOps_2D_PostUpdate<Op, TileData, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, srcPtr, kValidRows, kValidCols);
-            break;
-        }
+      if ((validCol == DstTile::Cols) && (validCol == SrcTile::Cols)) {
+        TUnaryOps_1D_Switch<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol, version);
+      } else {
+        TUnaryOps_2D<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
+      }
     }
-}
+  }
 
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TUnaryCheck() {
+    static_assert(DstTile::isRowMajor || SrcTile::isRowMajor,
+      "TUnaryOp: Not supported Layout type");
+    static_assert(DstTile::Loc == TileType::Vec,
+      "TUnaryOp: TileType of src and dst tiles must be TileType::Vec.");
+    static_assert(DstTile::ValidCol <= DstTile::Cols,
+      "TUnaryOp: Number of valid columns must not be greater than number of tile columns.");
+    static_assert(DstTile::ValidRow <= DstTile::Rows,
+      "TUnaryOp: Number of valid rows must not be greater than number of tile rows.");
+    using T = typename DstTile::DType;
+    using U = typename SrcTile::DType;
+    static_assert(std::is_same_v<typename DstTile::DType, typename SrcTile::DType>,
+      "TUnaryOp: The data type of dst must be consistent with of src");
+    static_assert(std::is_same_v<typename DstTile::DType, float32_t> ||
+      std::is_same_v<typename DstTile::DType, float> ||
+      std::is_same_v<typename DstTile::DType, float16_t> ||
+      std::is_same_v<typename DstTile::DType, half>,
+      "TUnaryOp: Invalid data type.");
+  }
 
-template<typename T> using unaryFuncPtr = void (*)(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg);
-
-template <typename T, unaryFuncPtr<T> funcPtr> struct UnaryOperation {
-    PTO_INTERNAL static void UnaryInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg)
-    {
-        funcPtr(reg_dst, reg_src, preg);
-    }
-};
-
-template <typename TileData, unaryFuncPtr<typename TileData::DType> funcPtr, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ PTO_INTERNAL
-void TUnaryOp(typename TileData::TileDType __out__ dst, 
-                            typename TileData::TileDType __in__ src,
-                            unsigned kValidRows,
-                            unsigned kValidCols,
-                            UnaryOpsImpl version = UnaryOpsImpl::UnaryOpsIMPL_DEFAULT) {
-    using T = typename TileData::DType;
-    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-    __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
-    UnaryInstr<UnaryOperation<T, funcPtr>, TileData, elementsPerRepeat, blockSizeElem, rowStride>(
-                dstPtr, srcPtr, kValidRows, kValidCols, version);
-}
-
-template <typename T, typename TileData>
-__tf__ PTO_INTERNAL
-void TUnaryCheck(TileData &dst, TileData &src) {
-    static_assert(std::is_same_v<T, float32_t> || std::is_same_v<T, float> ||
-                  std::is_same_v<T, float16_t> || std::is_same_v<T, half>,
-                  "TUnaryOp: Invalid data type.");
-    static_assert(TileData::isRowMajor, "TUnaryOp: Not supported Layout type");
-    static_assert(TileData::Loc == TileType::Vec, "TUnaryOp: TileType of src and dst tiles must be TileType::Vec.");
-    static_assert(TileData::ValidCol <= TileData::Cols, "TUnaryOp: Number of valid columns must not be greater than number of tile columns.");
-    static_assert(TileData::ValidRow <= TileData::Rows, "TUnaryOp: Number of valid rows must not be greater than number of tile rows.");
-}
-
-/* TEXP */
-template<typename T> AICORE void _vexp(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
-    vexp(reg_dst, reg_src, preg, MODE_ZEROING);
-}
-
-template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ PTO_INTERNAL OP_NAME(TEXP) OP_TYPE(element_wise)
-void TExp(typename TileData::TileDType __out__ dst, 
-                            typename TileData::TileDType __in__ src,
-                            unsigned kValidRows,
-                            unsigned kValidCols,
-                            UnaryOpsImpl version = UnaryOpsImpl::UnaryOpsIMPL_DEFAULT) {
-    using T = typename TileData::DType;
-    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-    __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
-    UnaryInstr<UnaryOperation<T, _vexp>, TileData, elementsPerRepeat, blockSizeElem, rowStride>(
-                dstPtr, srcPtr, kValidRows, kValidCols, version);
-}
-
-template <typename TileData>
-AICORE void TEXP_IMPL(TileData &dst, TileData &src) {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-    constexpr unsigned rowStride = TileData::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
-
-    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TEXP: Number of columns of src and dst must be the same.");
-    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TEXP: Number of rows of src and dst must be the same.");
-
-    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
-
-    TExp<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
-}
-
-template <typename TileDataDst, typename TileDataSrc>
-PTO_INTERNAL void TEXP_IMPL(TileDataDst &dst, TileDataSrc &src) {
-    static_assert(std::is_same_v<TileDataDst, TileDataSrc>,
-                  "TEXP: Input tileshape must be consistent with the out tileshape.");
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
-    constexpr unsigned rowStride = TileDataDst::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
-
-    static_assert(TileDataDst::isRowMajor, "TEXP: not supported Layout type");
-    static_assert(std::is_same_v<typename TileDataDst::DType, float> ||
-                  std::is_same_v<typename TileDataDst::DType, half>, "TEXP: not supported Layout type");
-
-    TUnaryOp<TileDataDst, _vexp, elementsPerRepeat, blockSizeElem, rowStride>
-        (dst.data(), src.data(), validRow, validCol);
-}
-
-/* TSQRT */
-template<typename T> AICORE void _vsqrt(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
-    vsqrt(reg_dst, reg_src, preg, MODE_ZEROING);
-}
-
-template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ PTO_INTERNAL OP_NAME(TSQRT) OP_TYPE(element_wise)
-void TSqrt(typename TileData::TileDType __out__ dst, 
-                            typename TileData::TileDType __in__ src,
-                            unsigned kValidRows,
-                            unsigned kValidCols,
-                            UnaryOpsImpl version = UnaryOpsImpl::UnaryOpsIMPL_DEFAULT) {
-    using T = typename TileData::DType;
-    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-    __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
-    UnaryInstr<UnaryOperation<T, _vsqrt>, TileData, elementsPerRepeat, blockSizeElem, rowStride>(
-                dstPtr, srcPtr, kValidRows, kValidCols, version);
-}
-
-template <typename TileData>
-AICORE void TSQRT_IMPL(TileData &dst, TileData &src) {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-    constexpr unsigned rowStride = TileData::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
-
-    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TSQRT: Number of columns of src and dst must be the same.");
-    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TSQRT: Number of rows of src and dst must be the same.");
-
-    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
-
-    TSqrt<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
-}
-
-template <typename TileDataDst, typename TileDataSrc>
-PTO_INTERNAL void TSQRT_IMPL(TileDataDst &dst, TileDataSrc &src) {
-    static_assert(std::is_same_v<TileDataDst, TileDataSrc>,
-                  "TSQRT: Input tileshape must be consistent with the out tileshape.");
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
-    constexpr unsigned rowStride = TileDataDst::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
-
-    static_assert(TileDataDst::isRowMajor, "TSQRT: not supported Layout type");
-    static_assert(std::is_same_v<typename TileDataDst::DType, float> ||
-                  std::is_same_v<typename TileDataDst::DType, half>, "TSQRT: not supported Layout type");
-
-    TUnaryOp<TileDataDst, _vsqrt, elementsPerRepeat, blockSizeElem, rowStride>
-        (dst.data(), src.data(), validRow, validCol);
-}
-
-/* TRSQRT */
-template <typename TileData>
-__tf__ PTO_INTERNAL OP_NAME(TRSQRT) OP_TYPE(element_wise)
-void TRsqrtCustom(typename TileData::TileDType __out__ dst,
-                                    typename TileData::TileDType __in__ src,
-                                    unsigned validRow, unsigned validCol,
-                                    UnaryOpsImpl version = UnaryOpsImpl::UnaryOpsIMPL_DEFAULT) {
-    using T = typename TileData::DType;
-    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-    __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
+  /* TRSQRT */
+  template <typename DstTile, typename SrcTile>
+  __tf__ PTO_INTERNAL void TRsqrt(typename DstTile::TileDType __out__ dstData,
+    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol) {
+    using T = typename DstTile::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
 
     __VEC_SCOPE__
     {
-        RegTensor<T> vreg0;
-        RegTensor<T> vreg1;
-        RegTensor<T> vreg2;
-        RegTensor<T> vreg3;
-        uint16_t batch_size = 256 / static_cast<uint16_t>(sizeof(typename TileData::DType));
-        uint16_t loop_num = CEIL(validCol, batch_size);
-        uint32_t count = (batch_size >= validCol ? validCol : batch_size);
-        MaskReg preg = CreatePredicate<T>(count);
-        vdup(vreg2, (T)1.0, preg, MODE_MERGING);
-        for (uint16_t i = 0; i < (uint16_t) validRow; ++i) {
-            for(uint16_t j = 0; j < loop_num; ++j) {
-                vlds(vreg0, srcPtr, (i * TileData::Cols + j * batch_size), NORM);
-                count = ((j + 1) * batch_size >= validCol ? validCol - j * batch_size : batch_size);
-                preg = CreatePredicate<T>(count);
-                vsqrt(vreg1, vreg0, preg, MODE_ZEROING);
-                vdiv(vreg3, vreg2, vreg1, preg);
-                
-                vsts(vreg3, dstPtr, (i * TileData::Cols + j * batch_size), NORM_B32, preg);
-            }
+      constexpr unsigned nRepeatElem = CCE_VL / sizeof(T);
+      uint16_t repeatTimes = CeilDivision(validCol, nRepeatElem);
+      uint32_t sReg = (uint32_t)validCol;
+
+      RegTensor<T> vreg0;
+      RegTensor<T> vreg1;
+      RegTensor<T> vreg2;
+      RegTensor<T> vreg3;
+      constexpr auto distValue =
+        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+      MaskReg pReg = CreatePredicate<T>(sReg);
+      vdup(vreg2, (T)1.0, pReg, MODE_MERGING);
+      for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
+        sReg = (uint32_t)validCol;
+        for(uint16_t j = 0; j < repeatTimes; ++j) {
+          pReg = CreatePredicate<T>(sReg);
+          vlds(vreg0, src, (i * SrcTile::RowStride + j * nRepeatElem), NORM);
+          vsqrt(vreg1, vreg0, pReg, MODE_ZEROING);
+          vdiv(vreg3, vreg2, vreg1, pReg);
+          vsts(vreg3, dst, (i * DstTile::RowStride + j * nRepeatElem), distValue, pReg);
         }
+      }
     }
-}
+  }
 
-template <typename TileData>
-AICORE void TRSQRT_IMPL(TileData &dst, TileData &src) {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-    constexpr unsigned rowStride = TileData::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TRSQRT_IMPL(DstTile &dst, SrcTile &src) {
+    TUnaryCheck<DstTile, SrcTile>();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    if ((dstValidRow == src.GetValidRow()) && (dstValidCol == src.GetValidCol())) {
+      TRsqrt<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    } else {
+      PTO_ASSERT(false, "TRSQRT: dstTile validRow/validCol must be consistent with of src.");
+    }
+  }
 
-    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TRSQRT: Number of columns of src and dst must be the same.");
-    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TRSQRT: Number of rows of src and dst must be the same.");
+  template <typename DstTile, typename SrcTile, typename Op>
+  PTO_INTERNAL void TUNARY_IMPL(DstTile &dst, SrcTile &src) {
+    TUnaryCheck<DstTile, SrcTile>();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    if ((dstValidRow == src.GetValidRow()) && (dstValidCol == src.GetValidCol())) {
+      TUnaryOp<DstTile, SrcTile, Op>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    } else {
+      PTO_ASSERT(false, "TUNARY: dstTile validRow/validCol must be consistent with of src.");
+    }
+  }
 
-    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
+  /* TEXP */
+  template <typename T>
+  struct ExpOp {
+    PTO_INTERNAL static void UnaryInstr(RegTensor<T> &dstReg, RegTensor<T> &srcReg, MaskReg &pReg) {
+      vexp(dstReg, srcReg, pReg, MODE_ZEROING);
+    }
+  };
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TEXP_IMPL(DstTile &dst, SrcTile &src) {
+    TUNARY_IMPL<DstTile, SrcTile, ExpOp<typename DstTile::DType>>(dst, src);
+  }
 
-    TRsqrtCustom<TileData>(dst.data(), src.data(), validRow, validCol);
-}
+  /* TSQRT */
+  template <typename T>
+  struct SqrtOp {
+    PTO_INTERNAL static void UnaryInstr(RegTensor<T> &dstReg, RegTensor<T> &srcReg, MaskReg &pReg) {
+      vsqrt(dstReg, srcReg, pReg, MODE_ZEROING);
+    }
+  };
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TSQRT_IMPL(DstTile &dst, SrcTile &src) {
+    TUNARY_IMPL<DstTile, SrcTile, SqrtOp<typename DstTile::DType>>(dst, src);
+  }
 
-template <typename TileDataDst, typename TileDataSrc>
-PTO_INTERNAL void TRSQRT_IMPL(TileDataDst &dst, TileDataSrc &src) {
-    static_assert(std::is_same_v<TileDataDst, TileDataSrc>,
-                  "TRSQRT: Input tileshape must be consistent with the out tileshape.");
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
-    constexpr unsigned rowStride = TileDataDst::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
+  /* TABS */
+  template <typename T>
+  struct AbsOp {
+    PTO_INTERNAL static void UnaryInstr(RegTensor<T> &dstReg, RegTensor<T> &srcReg, MaskReg &pReg) {
+      vabs(dstReg, srcReg, pReg, MODE_ZEROING);
+    }
+  };
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TABS_IMPL(DstTile &dst, SrcTile &src) {
+    TUNARY_IMPL<DstTile, SrcTile, AbsOp<typename DstTile::DType>>(dst, src);
+  }
 
-    static_assert(TileDataDst::isRowMajor, "TRSQRT: not supported Layout type");
-    static_assert(std::is_same_v<typename TileDataDst::DType, float> ||
-                  std::is_same_v<typename TileDataDst::DType, half>, "TRSQRT: not supported Layout type");
+  /* TLOG */
+  template <typename T>
+  struct LogOp {
+    PTO_INTERNAL static void UnaryInstr(RegTensor<T> &dstReg, RegTensor<T> &srcReg, MaskReg &pReg) {
+      vln(dstReg, srcReg, pReg, MODE_ZEROING);
+    }
+  };
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TLOG_IMPL(DstTile &dst, SrcTile &src) {
+    TUNARY_IMPL<DstTile, SrcTile, LogOp<typename DstTile::DType>>(dst, src);
+  }
 
-    TRsqrtCustom<TileDataDst>(dst.data(), src.data(), validRow, validCol);
-}
-
-/* TABS */
-template<typename T> AICORE void _vabs(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
-    vabs(reg_dst, reg_src, preg, MODE_ZEROING);
-}
-
-template <typename TileData>
-AICORE void TABS_IMPL(TileData &dst, TileData &src) {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-    constexpr unsigned rowStride = TileData::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
-
-    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TABS: Number of columns of src and dst must be the same.");
-    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TABS: Number of rows of src and dst must be the same.");
-
-    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
-
-    TUnaryOp<TileData, _vabs, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
-}
-
-/* TLOG */
-template<typename T> AICORE void _vlog(RegTensor<T> &reg_dst, RegTensor<T> &reg_src, MaskReg &preg) {
-    vln(reg_dst, reg_src, preg, MODE_ZEROING);
-}
-
-template <typename TileData>
-AICORE void TLOG_IMPL(TileData &dst, TileData &src) {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-    constexpr unsigned rowStride = TileData::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
-
-    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TLOG: Number of columns of src and dst must be the same.");
-    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TLOGT: Number of rows of src and dst must be the same.");
-
-    TUnaryCheck<typename TileData::DType, TileData>(dst, src);
-
-    TUnaryOp<TileData, _vlog, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
-}
-
-/* TRECIP */
-template <typename TileDataDst, typename TileDataSrc>
-PTO_INTERNAL void TRECIP_IMPL(TileDataDst &dst, TileDataSrc &src0)
-{
+  /* TRECIP */
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TRECIP_IMPL(DstTile &dst, SrcTile &src0) {
     TDIVS_IMPL(dst, 1, src0);
-}
+  }
 
-/* TNEG */
-template <typename TileData>
-AICORE void TNEG_IMPL(TileData &dst, TileData &src) {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-    constexpr unsigned rowStride = TileData::RowStride;
-    unsigned validRow = dst.GetValidRow();
-    unsigned validCol = dst.GetValidCol();
-
-    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TNEG: Number of columns of src and dst must be the same.");
-    PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TNEG: Number of rows of src and dst must be the same.");
-
-    static_assert(std::is_same_v<typename TileData::DType, int32_t> || std::is_same_v<typename TileData::DType, int> ||
-                  std::is_same_v<typename TileData::DType, float32_t> || std::is_same_v<typename TileData::DType, float> ||
-                  std::is_same_v<typename TileData::DType, int16_t> ||
-                  std::is_same_v<typename TileData::DType, float16_t> || std::is_same_v<typename TileData::DType, half> ||
-                  std::is_same_v<typename TileData::DType, bfloat16_t>,
-                  "TNEG: Invalid data type.");
-    static_assert(TileData::isRowMajor, "TNEG: Not supported Layout type");
-    static_assert(TileData::Loc == TileType::Vec, "TNEG: TileType of src and dst tiles must be TileType::Vec.");
-    static_assert(TileData::ValidCol <= TileData::Cols, "TNEG: Number of valid columns must not be greater than number of tile columns.");
-    static_assert(TileData::ValidRow <= TileData::Rows, "TNEG: Number of valid rows must not be greater than number of tile rows.");
-
+  /* TNEG */
+  template <typename DstTile, typename SrcTile>
+  AICORE void TNEG_IMPL(DstTile &dst, SrcTile &src) {
     TMULS_IMPL(dst, src, -1);
-}
-
+  }
 }
 #endif

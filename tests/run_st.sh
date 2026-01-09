@@ -83,7 +83,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tload_gm2mat -g TLoadGM2L1Test.ND2NZ_bfloat16_t_1_1_1_1_1_1_1_1_1_1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t texp -g TEXPTest.case_float_64x64_64x64_64x64_inPlace_False
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t texp -g TEXPTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tabs -g TABSTest.case_float_64x64_64x64_64x64_inPlace_False
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tlog -g TLOGTest.case_float_64x64_64x64_64x64_inPlace_False
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trecip -g TRECIPTest.case_float_64x64_64x64_64x64_inPlace_False
@@ -189,11 +189,11 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowmax -g TROWMAXTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowmin -g TROWMINTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trowsum -g TROWSUMTest.test1
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trsqrt -g TRSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trsqrt -g TRSQRTTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsel -g TSELTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsort32 -g TSort32Test.case1
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsqrt -g TSQRTTest.case_float_64x64_64x64_64x64_inPlace_False
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsqrt -g TSQRTTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tstore -g TStoreTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tstore_acc2gm -g TStoreAcc2gmTest.case7
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttrans -g TTRANSTest.case1

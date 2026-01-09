@@ -12,8 +12,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "acl/acl.h"
 #include <gtest/gtest.h>
 
-#include "acl/acl.h"
-
 using namespace std;
 using namespace PtoTestCommon;
 
@@ -34,12 +32,13 @@ std::string GetGoldenDir() {
 }
 
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, bool isInPlace = false>
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol, bool isInPlace = false>
 void LaunchTSqrt(T *out, T *src, void *stream);
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, bool isInPlace = false>
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol, bool isInPlace = false>
 void test_tsqrt() {
-    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
+    size_t srcFileSize = srcRow * srcCol * sizeof(T);
+    size_t dstFileSize = dstRow * dstCol * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -49,21 +48,19 @@ void test_tsqrt() {
     T *dstHost, *srcHost;
     T *dstDevice, *srcDevice;
 
-    aclrtMallocHost((void **)(&dstHost), fileSize);
-    aclrtMallocHost((void **)(&srcHost), fileSize);
+    aclrtMallocHost((void **)(&dstHost), dstFileSize);
+    aclrtMallocHost((void **)(&srcHost), srcFileSize);
+    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    aclrtMalloc((void **)&dstDevice, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&srcDevice, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-
-    ReadFile(GetGoldenDir() + "/input1.bin", fileSize, srcHost, fileSize);
-
-    aclrtMemcpy(srcDevice, fileSize, srcHost, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTSqrt<T, kGRows_, kGCols_, kTRows_, kTCols_, isInPlace>(dstDevice, srcDevice, stream);
+    ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
+    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    LaunchTSqrt<T, dstRow, dstCol, srcRow, srcCol, validRow, validCol, isInPlace>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, fileSize);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
 
     aclrtFree(dstDevice);
     aclrtFree(srcDevice);
@@ -74,31 +71,41 @@ void test_tsqrt() {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(fileSize);
-    std::vector<T> devFinal(fileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize);
- 
-    float eps = 0.0f;
+    std::vector<T> golden(dstFileSize);
+    std::vector<T> devFinal(dstFileSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
+    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, devFinal.data(), dstFileSize);
+
+    float eps = 0.0005f;
     if constexpr (std::is_same_v<T, float>) {
-        eps = 0.0001f;
-    } else if constexpr (std::is_same_v<T, aclFloat16>) {
-        eps = 0.001f;
+        eps = 0.00005f;
     }
-    bool ret = ResultCmp<T>(golden, devFinal, eps);
+    bool ret = ResultCmp(golden, devFinal, eps);
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TSQRTTest, case_float_64x64_64x64_64x64_inPlace_True) {
-    test_tsqrt<float, 64, 64, 64, 64, true>();
+TEST_F(TSQRTTest, case1) {
+    test_tsqrt<float, 64, 64, 64, 64, 64, 64, true>();
 }
-TEST_F(TSQRTTest, case_float_64x64_64x64_64x64_inPlace_False) {
-    test_tsqrt<float, 64, 64, 64, 64, false>();
+TEST_F(TSQRTTest, case2) {
+    test_tsqrt<float, 64, 64, 64, 64, 64, 64, false>();
 }
-TEST_F(TSQRTTest, case_half_64x64_64x64_64x64_inPlace_True) {
-    test_tsqrt<aclFloat16, 64, 64, 64, 64, true>();
+TEST_F(TSQRTTest, case3) {
+    test_tsqrt<aclFloat16, 64, 64, 64, 64, 64, 64, true>();
 }
-TEST_F(TSQRTTest, case_half_64x64_64x64_64x64_inPlace_False) {
-    test_tsqrt<aclFloat16, 64, 64, 64, 64, false>();
+TEST_F(TSQRTTest, case4) {
+    test_tsqrt<aclFloat16, 64, 64, 64, 64, 64, 64, false>();
+}
+TEST_F(TSQRTTest, case5) {
+    test_tsqrt<float, 128, 128, 64, 64, 64, 64>();
+}
+TEST_F(TSQRTTest, case6) {
+    test_tsqrt<float, 64, 64, 128, 128, 32, 32>();
+}
+TEST_F(TSQRTTest, case7) {
+    test_tsqrt<aclFloat16, 128, 256, 64, 64, 64, 64>();
+}
+TEST_F(TSQRTTest, case8) {
+    test_tsqrt<aclFloat16, 64, 64, 128, 256, 32, 32>();
 }
