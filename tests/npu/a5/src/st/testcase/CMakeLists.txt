@@ -125,7 +125,10 @@ set(ALL_TESTCASES
     tcolmin
     tsort32
     trowexpand
+    trowexpandadd
     trowexpanddiv
+    trowexpandmax
+    trowexpandmin
     trowexpandmul
     trowexpandsub
     tgather
@@ -173,6 +176,9 @@ set(ALL_TESTCASES
     trowexpand_tdiv
     tscatter
     tneg
+    tcolexpanddiv
+    tcolexpandmul
+    tcolexpandsub
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

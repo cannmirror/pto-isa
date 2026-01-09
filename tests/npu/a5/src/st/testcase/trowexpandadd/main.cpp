@@ -15,14 +15,14 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-namespace TRowExpandSubTest{
+namespace TRowExpandAddTest{
 template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst>
-void launchTRowExpandSub(T *out, T *src0, T *src1, void *stream);
+void launchTRowExpandAdd(T *out, T *src0, T *src1, void *stream);
 
 template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst>
-void launchTRowExpandSub2(T *out, T *src0, T *src1, void *stream);
+void launchTRowExpandAdd2(T *out, T *src0, T *src1, void *stream);
 
-class TRowExpandSubTest : public testing::Test {
+class TRowExpandAddTest : public testing::Test {
 protected:
     void SetUp() override
     {}
@@ -39,7 +39,7 @@ std::string GetGoldenDir() {
 }
 
 template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst, bool isRowMajor>
-void test_trowexpandsub() {
+void test_trowexpandadd() {
     size_t inputFileSize = src1Row * src1Col * sizeof(T);
     size_t outputFileSize = dstRow * dstCol * sizeof(T);
 
@@ -65,9 +65,9 @@ void test_trowexpandsub() {
     aclrtMemcpy(src0Device, outputFileSize, src0Host, outputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     if (isRowMajor) {
-        launchTRowExpandSub2<T, dstRow, dstCol, src1Row, src1Col, src0eqdst>(dstDevice, src0Device, src1Device, stream);
+        launchTRowExpandAdd2<T, dstRow, dstCol, src1Row, src1Col, src0eqdst>(dstDevice, src0Device, src1Device, stream);
     } else {
-        launchTRowExpandSub<T, dstRow, dstCol, src1Row, src1Col, src0eqdst>(dstDevice, src0Device, src1Device, stream);
+        launchTRowExpandAdd<T, dstRow, dstCol, src1Row, src1Col, src0eqdst>(dstDevice, src0Device, src1Device, stream);
     }
 
     aclrtSynchronizeStream(stream);
@@ -96,32 +96,32 @@ void test_trowexpandsub() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TRowExpandSubTest, case_fp32_8_128)
+TEST_F(TRowExpandAddTest, case_fp32_16_32)
 {
-    test_trowexpandsub<float, 8, 128, 8, 1, true, false>();
+    test_trowexpandadd<float, 16, 32, 16, 1, true, false>();
 }
-TEST_F(TRowExpandSubTest, case_fp32_24_32)
+TEST_F(TRowExpandAddTest, case_fp32_56_128)
 {
-    test_trowexpandsub<float, 24, 32, 24, 1, true, false>();
+    test_trowexpandadd<float, 56, 128, 56, 1, true, false>();
 }
-TEST_F(TRowExpandSubTest, case_fp16_16_256)
+TEST_F(TRowExpandAddTest, case_fp16_48_64)
 {
-    test_trowexpandsub<aclFloat16, 16, 256, 16, 1, true, false>();
+    test_trowexpandadd<aclFloat16, 48, 64, 48, 1, true, false>();
 }
-TEST_F(TRowExpandSubTest, case_fp16_32_64)
+TEST_F(TRowExpandAddTest, case_fp16_16_128)
 {
-    test_trowexpandsub<aclFloat16, 32, 64, 32, 1, true, false>();
+    test_trowexpandadd<aclFloat16, 16, 128, 16, 1, true, false>();
 }
-TEST_F(TRowExpandSubTest, case_fp32_24_64)
+TEST_F(TRowExpandAddTest, case_fp32_24_64)
 {
-    test_trowexpandsub<float, 24, 64, 24, 8, true, true>();
+    test_trowexpandadd<float, 24, 64, 24, 8, true, true>();
 }
-TEST_F(TRowExpandSubTest, case_fp32_16_128)
+TEST_F(TRowExpandAddTest, case_fp16_32_64)
 {
-    test_trowexpandsub<float, 16, 128, 16, 1, false, false>();
+    test_trowexpandadd<aclFloat16, 32, 64, 32, 1, false, false>();
 }
-TEST_F(TRowExpandSubTest, case_fp16_16_64)
+TEST_F(TRowExpandAddTest, case_fp32_20_64)
 {
-    test_trowexpandsub<aclFloat16, 16, 64, 16, 16, false, true>();
+    test_trowexpandadd<float, 20, 64, 20, 8, false, true>();
 }
 }

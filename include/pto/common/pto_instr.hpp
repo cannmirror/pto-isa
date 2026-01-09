@@ -768,7 +768,28 @@ PTO_INST RecordEvent MSCATTER(GlobalData &dst, TileSrc &src, TileInd &indexes, W
 template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
 PTO_INST RecordEvent TNEG(TileDataDst &dst, TileDataSrc &src, WaitEvents&... events) {
   TSYNC(events...);
-  MAP_INSTR_IMPL(TEXP, dst, src);
+  MAP_INSTR_IMPL(TNEG, dst, src);
+  return {};
+}
+
+template <typename TileDataDst, typename TileDataSrc1, typename... WaitEvents>
+PTO_INST RecordEvent TCOLEXPANDDIV(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TCOLEXPANDDIV, dst, src0, src1);
+  return {};
+}
+
+template <typename TileDataDst, typename TileDataSrc1, typename... WaitEvents>
+PTO_INST RecordEvent TCOLEXPANDMUL(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TCOLEXPANDMUL, dst, src0, src1);
+  return {};
+}
+
+template <typename TileDataDst, typename TileDataSrc1, typename... WaitEvents>
+PTO_INST RecordEvent TCOLEXPANDSUB(TileDataDst &dst, TileDataDst &src0, TileDataSrc1 &src1, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TCOLEXPANDSUB, dst, src0, src1);
   return {};
 }
 

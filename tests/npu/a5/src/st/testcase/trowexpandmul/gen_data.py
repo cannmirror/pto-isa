@@ -20,16 +20,28 @@ np.random.seed(2025)
 def gen_golden_data(params):
     dtype = param.dtype
     [dst_row, dst_col] = [param.dst_row, param.dst_col]
+    [src0_row, src0_col] = [param.src0_row, param.src0_col]
     [src1_row, src1_col] = [param.src1_row, param.src1_col]
     
-    src0 = np.random.uniform(low=-10, high=10, size=(dst_row, dst_col)).astype(dtype)
-    src0.tofile("input0.bin")
-    src1 = np.random.uniform(low=-10, high=10, size=(src1_row, src1_col)).astype(dtype)
-    src1.tofile("input1.bin")
-    
-    reps = (dst_col + src1_col - 1) // src1_col
-    src1_expand = np.tile(src1, (1, reps))[:, :dst_col]
-    golden = src0 * src1_expand
+    if param.src0eqdst:
+        src0 = np.random.uniform(low=-10, high=10, size=(src0_row, src0_col)).astype(dtype)
+        src0.tofile("input0.bin")
+        src1 = np.random.uniform(low=-10, high=10, size=(src1_row, src1_col)).astype(dtype)
+        src1.tofile("input1.bin")
+        
+        reps = (dst_col + src1_col - 1) // src1_col
+        src1_expand = np.tile(src1, (1, reps))[:, :dst_col]
+        golden = src0 * src1_expand
+    else:
+        src0 = np.random.uniform(low=-10, high=10, size=(src1_row, src1_col)).astype(dtype)
+        src0.tofile("input0.bin")
+        src1 = np.random.uniform(low=-10, high=10, size=(src0_row, src0_col)).astype(dtype)
+        src1.tofile("input1.bin")
+        
+        reps = (dst_col + src0_col - 1) // src0_col
+        src1_expand = np.tile(src1, (1, reps))[:, :dst_col]
+        golden = src0 * src1_expand
+
     golden.tofile("golden.bin")
 
     output = np.zeros((dst_row, dst_col)).astype(dtype)
@@ -37,7 +49,7 @@ def gen_golden_data(params):
 
 
 class TrowexpandParams:
-    def __init__(self, dtype, dst_row, dst_col, src0_row, src0_col, src1_row, src1_col):
+    def __init__(self, dtype, dst_row, dst_col, src0_row, src0_col, src1_row, src1_col, src0eqdst, is_rowmajor):
         self.dtype = dtype
         self.dst_row = dst_row
         self.dst_col = dst_col
@@ -45,6 +57,8 @@ class TrowexpandParams:
         self.src0_col = src0_col
         self.src1_row = src1_row
         self.src1_col = src1_col
+        self.src0eqdst = src0eqdst
+        self.is_rowmajor = is_rowmajor
 
 
 def generate_case_name(param):
@@ -52,7 +66,7 @@ def generate_case_name(param):
         np.float32: 'fp32',
         np.float16: 'fp16',
     }[param.dtype]
-    return f"TRowExpandMulTest.case_{dtype_str}_{param.dst_row}_{param.dst_col}_{param.src1_row}_{param.src1_col}"
+    return f"TRowExpandMulTest.case_{dtype_str}_{param.dst_row}_{param.dst_col}"
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -62,10 +76,13 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TrowexpandParams(np.float32, 16, 32, 16, 32, 16, 1),
-        TrowexpandParams(np.float32, 56, 128, 56, 128, 56, 1),
-        TrowexpandParams(np.float16, 48, 64, 48, 64, 48, 1),
-        TrowexpandParams(np.float16, 16, 128, 16, 128, 16, 1),
+        TrowexpandParams(np.float32, 16, 32, 16, 32, 16, 1, True, False),
+        TrowexpandParams(np.float32, 56, 128, 56, 128, 56, 1, True, False),
+        TrowexpandParams(np.float16, 48, 64, 48, 64, 48, 1, True, False),
+        TrowexpandParams(np.float16, 16, 128, 16, 128, 16, 1, True, False),
+        TrowexpandParams(np.float32, 24, 64, 24, 64, 24, 8, True, True),
+        TrowexpandParams(np.float16, 32, 64, 32, 1, 32, 64, False, False),
+        TrowexpandParams(np.float32, 20, 64, 20, 8, 20, 64, False, True),
     ]
 
     for _, param in enumerate(case_params_list):

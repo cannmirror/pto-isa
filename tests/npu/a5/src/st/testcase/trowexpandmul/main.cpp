@@ -16,8 +16,11 @@ using namespace std;
 using namespace PtoTestCommon;
 
 namespace TRowExpandMulTest{
-template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col>
+template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst>
 void launchTRowExpandMul(T *out, T *src0, T *src1, void *stream);
+
+template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst>
+void launchTRowExpandMul2(T *out, T *src0, T *src1, void *stream);
 
 class TRowExpandMulTest : public testing::Test {
 protected:
@@ -35,7 +38,7 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col>
+template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst, bool isRowMajor>
 void test_trowexpandmul() {
     size_t inputFileSize = src1Row * src1Col * sizeof(T);
     size_t outputFileSize = dstRow * dstCol * sizeof(T);
@@ -61,7 +64,11 @@ void test_trowexpandmul() {
 
     aclrtMemcpy(src0Device, outputFileSize, src0Host, outputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTRowExpandMul<T, dstRow, dstCol, src1Row, src1Col>(dstDevice, src0Device, src1Device, stream);
+    if (isRowMajor) {
+        launchTRowExpandMul2<T, dstRow, dstCol, src1Row, src1Col, src0eqdst>(dstDevice, src0Device, src1Device, stream);
+    } else {
+        launchTRowExpandMul<T, dstRow, dstCol, src1Row, src1Col, src0eqdst>(dstDevice, src0Device, src1Device, stream);
+    }
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, outputFileSize, dstDevice, outputFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -89,20 +96,32 @@ void test_trowexpandmul() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TRowExpandMulTest, case_fp32_16_32_16_1)
+TEST_F(TRowExpandMulTest, case_fp32_16_32)
 {
-    test_trowexpandmul<float, 16, 32, 16, 1>();
+    test_trowexpandmul<float, 16, 32, 16, 1, true, false>();
 }
-TEST_F(TRowExpandMulTest, case_fp32_56_128_56_1)
+TEST_F(TRowExpandMulTest, case_fp32_56_128)
 {
-    test_trowexpandmul<float, 56, 128, 56, 1>();
+    test_trowexpandmul<float, 56, 128, 56, 1, true, false>();
 }
-TEST_F(TRowExpandMulTest, case_fp16_48_64_48_1)
+TEST_F(TRowExpandMulTest, case_fp16_48_64)
 {
-    test_trowexpandmul<aclFloat16, 48, 64, 48, 1>();
+    test_trowexpandmul<aclFloat16, 48, 64, 48, 1, true, false>();
 }
-TEST_F(TRowExpandMulTest, case_fp16_16_128_16_1)
+TEST_F(TRowExpandMulTest, case_fp16_16_128)
 {
-    test_trowexpandmul<aclFloat16, 16, 128, 16, 1>();
+    test_trowexpandmul<aclFloat16, 16, 128, 16, 1, true, false>();
+}
+TEST_F(TRowExpandMulTest, case_fp32_24_64)
+{
+    test_trowexpandmul<float, 24, 64, 24, 8, true, true>();
+}
+TEST_F(TRowExpandMulTest, case_fp16_32_64)
+{
+    test_trowexpandmul<aclFloat16, 32, 64, 32, 1, false, false>();
+}
+TEST_F(TRowExpandMulTest, case_fp32_20_64)
+{
+    test_trowexpandmul<float, 20, 64, 20, 8, false, true>();
 }
 }

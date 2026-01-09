@@ -105,7 +105,10 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TMins.hpp"
 #include "pto/npu/a5/TMov.hpp"
 #include "pto/npu/a5/TRowExpand.hpp"
+#include "pto/npu/a5/TRowExpandAdd.hpp"
 #include "pto/npu/a5/TRowExpandDiv.hpp"
+#include "pto/npu/a5/TRowExpandMax.hpp"
+#include "pto/npu/a5/TRowExpandMin.hpp"
 #include "pto/npu/a5/TRowExpandMul.hpp"
 #include "pto/npu/a5/TRowExpandSub.hpp"
 #include "pto/npu/a5/TPartAdd.hpp"
@@ -118,6 +121,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TDiv.hpp"
 #include "pto/npu/a5/TMul.hpp"
 #include "pto/npu/a5/TScatter.hpp"
+#include "pto/npu/a5/TColExpandDiv.hpp"
+#include "pto/npu/a5/TColExpandMul.hpp"
+#include "pto/npu/a5/TColExpandSub.hpp"
 #endif
 
 #ifdef __CPU_SIM
