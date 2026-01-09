@@ -141,6 +141,7 @@ __tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typen
     constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
 
     if constexpr (enableNz2Nz) {
+        validRow = SrcTileData::Rows;
         if constexpr (std::is_same_v<typename DstTileData::DType, float>) {
             constexpr int32_t align = channelSplitEnable ? c0Size : FRACTAL_NZ_ROW;
             validCol = CeilDivision(validCol, align) * align;
@@ -159,7 +160,7 @@ __tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typen
     __cbuf__ dstType *dstAddr = (__cbuf__ dstType *)__cce_get_tile_ptr(dst);
     __cc__ srcType *srcData = (__cc__ srcType *)(src);
 
-    copy_matrix_cc_to_cbuf(dstAddr, srcData, 0, validCol, SrcTileData::Rows, dstStride, SrcTileData::Rows, 
+    copy_matrix_cc_to_cbuf(dstAddr, srcData, 0, validCol, validRow, dstStride, SrcTileData::Rows, 
         0, 0, 0, QuantPre, reluMode, channelSplitEnable, enableNz2Nd, 0, 0, false, false, 0, false, false,
         false, false, false, enableNz2Dn);
 }
@@ -182,6 +183,7 @@ __tf__ AICORE void TMovCcToUb(typename DstTileData::TileDType __out__ dst, typen
     constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
 
     if constexpr (enableNz2Nz) {
+        validRow = SrcTileData::Rows;
         if constexpr ((mode == AccToVecMode::SingleModeVec0 || mode == AccToVecMode::SingleModeVec1)) {
             if constexpr (std::is_same_v<typename DstTileData::DType, float>) {
                 constexpr int32_t align = channelSplitEnable ? c0Size : FRACTAL_NZ_ROW;
@@ -205,7 +207,7 @@ __tf__ AICORE void TMovCcToUb(typename DstTileData::TileDType __out__ dst, typen
 
     __ubuf__ dstType *dstAddr = (__ubuf__ dstType *)__cce_get_tile_ptr(dst);
     __cc__ srcType *srcData = (__cc__ srcType *)(src);
-    copy_matrix_cc_to_ub(dstAddr, srcData, 0, validCol, SrcTileData::Rows, dstStride, SrcTileData::Rows,
+    copy_matrix_cc_to_ub(dstAddr, srcData, 0, validCol, validRow, dstStride, SrcTileData::Rows,
         dualDstCtl, subBlockId, 0, 0, quantPre, reluMode, channelSplitEnable, enableNz2Nd, 0, 0, false, false,
         0, false, false, false, false, false, enableNz2Dn);
 }

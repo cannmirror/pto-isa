@@ -334,7 +334,7 @@ __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename T
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src, uint16_t nBurst,
+PTO_INTERNAL void TStoreInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src, uint32_t nBurst,
     uint32_t lenBurst, uint64_t burstDstStride, uint32_t burstSrcStride)
 {
     copy_ubuf_to_gm_align_v2(dst, src, 0, nBurst, lenBurst, 0, burstDstStride, burstSrcStride);
@@ -373,7 +373,7 @@ PTO_INTERNAL void TStoreVecND(typename GlobalData::DType *dstAddr, __ubuf__ type
         srcStride0 = srcStride0 >> 1; // fp4 srcAddr offset need divide 2 as use b8 to move
         gStride0 = gStride0 >> 1;     // fp4 dstAddr offset need divide 2 as use b8 to move
     }
-    uint16_t nBurst = gShape3;
+    uint32_t nBurst = gShape3;
 
     uint32_t lenBurst = GetByteSize<typename TileData::DType>(validCol);
     uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride3);
@@ -413,7 +413,7 @@ PTO_INTERNAL void TStoreVecDN(typename GlobalData::DType *dstAddr, __ubuf__ type
     set_loop_size_ubtoout(loopSizeConfig);
 
     uint64_t srcStride0 = gShape1 * gShape2 * gShape4 * TileData::Rows;
-    uint16_t nBurst = gShape4;
+    uint32_t nBurst = gShape4;
     uint32_t lenBurst = GetByteSize<typename TileData::DType>(validRow);
     uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride4);
     uint32_t burstSrcStride = GetByteSize<typename TileData::DType>(TileData::Rows);
@@ -453,7 +453,7 @@ PTO_INTERNAL void TStoreVecNZ(typename GlobalData::DType *dstAddr, __ubuf__ type
         "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
     typename GlobalData::DType *dstGlobalAddr = dstAddr;
     __ubuf__ typename TileData::DType *srcTileAddr = srcAddr;
-    uint16_t nBurst = gShape1;
+    uint32_t nBurst = gShape1;
     uint32_t lenBurst = validRow * C0_SIZE_BYTE;
     uint64_t burstDstStride = GetByteSize<typename TileData::DType>(gStride1);
     uint32_t burstSrcStride = TileData::Rows * C0_SIZE_BYTE;

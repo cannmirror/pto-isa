@@ -33,6 +33,7 @@ PTO_INTERNAL void TStoreUb2gmNd2nd(typename GlobalData::DType *dstAddr, __ubuf__
     PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
     PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
         "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
+    PTO_ASSERT(gShape3 < 4096, "The gshape3 (which equals nBurst) must be less than 4096 for A2/A3");
     uint16_t nBurst = gShape3;
     uint32_t lenBurst = validCol * sizeof(typename TileData::DType);
     uint32_t gmGap = (gStride3 - gShape4) * sizeof(typename TileData::DType);
@@ -66,6 +67,7 @@ PTO_INTERNAL void TStoreUb2gmDn2dn(typename GlobalData::DType *dstAddr, __ubuf__
     PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
     PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
         "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
+    PTO_ASSERT(gShape4 < 4096, "The gshape4 (which equals nBurst) must be less than 4096 for A2/A3");
     uint16_t nBurst = gShape4;
     uint32_t lenBurst = validRow * sizeof(typename TileData::DType);
     uint32_t gmGap = (gStride4 - gShape3) * sizeof(typename TileData::DType);
@@ -96,9 +98,13 @@ PTO_INTERNAL void TStoreUb2gmNz2nz(typename GlobalData::DType *dstAddr, __ubuf__
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
 {
+     static_assert(GlobalData::staticShape[3] == FRACTAL_NZ_ROW &&
+ 	                       GlobalData::staticShape[4] == BLOCK_BYTE_SIZE / sizeof(typename TileData::DType),
+ 	         "When TileData is NZ format, the last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
     PTO_ASSERT(validRow == gShape2 * gShape3, "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
     PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
         "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
+    PTO_ASSERT(gShape1 < 4096, "The gshape1 (which equals nBurst) must be less than 4096 for A2/A3");
     uint16_t nBurst = gShape1;
     uint32_t lenBurst = validRow * C0_SIZE_BYTE;
     uint32_t gmGap = (gStride1 - gShape2 * gShape3 * gShape4) * sizeof(typename TileData::DType);
@@ -170,6 +176,7 @@ PTO_INTERNAL void TStoreMat2GmNd2Nd(typename GlobalData::DType *dstAddr, __cbuf_
     PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
     PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
         "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
+    PTO_ASSERT(gShape3 < 4096, "The gshape3 (which equals nBurst) must be less than 4096 for A2/A3");
     uint16_t nBurst = gShape3;
     uint16_t lenBurst = (validCol * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
     uint16_t dstStride = ((gStride3 - gShape4) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
@@ -190,6 +197,7 @@ PTO_INTERNAL void TStoreMat2GmDn2Dn(typename GlobalData::DType *dstAddr, __cbuf_
     PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
     PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
         "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
+    PTO_ASSERT(gShape4 < 4096, "The gshape4 (which equals nBurst) must be less than 4096 for A2/A3");
     uint16_t nBurst = gShape4;
     uint16_t lenBurst = (validRow * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
     uint16_t dstStride = ((gStride4 - gShape3) * sizeof(typename TileData::DType)) >> SHIFT_BLOCK_BYTE;
@@ -208,6 +216,7 @@ PTO_INTERNAL void TStoreMat2GmNz2Nz(typename GlobalData::DType *dstAddr, __cbuf_
     static_assert(GlobalData::staticShape[3] == FRACTAL_NZ_ROW &&
                       GlobalData::staticShape[4] == BLOCK_BYTE_SIZE / sizeof(typename TileData::DType),
         "When TileData is NZ format, the last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
+    PTO_ASSERT(gShape1 < 4096, "The gshape1 (which equals nBurst) must be less than 4096 for A2/A3");
     PTO_ASSERT(validRow == gShape2 * gShape3, "The validRow of TileData must be equal to Shape2 * Shape3 of NZ shape!");
     PTO_ASSERT(validCol == gShape0 * gShape1 * gShape4,
         "The validCol of TileData must be equal to Shape0 * Shape1 * Shape4 of NZ shape!");
