@@ -246,12 +246,6 @@ namespace pto {
     TUNARY_IMPL<DstTile, SrcTile, LogOp<typename DstTile::DType>>(dst, src);
   }
 
-  /* TRECIP */
-  template <typename DstTile, typename SrcTile>
-  PTO_INTERNAL void TRECIP_IMPL(DstTile &dst, SrcTile &src0) {
-    TDIVS_IMPL(dst, 1, src0);
-  }
-
   /* TNEG */
   template <typename DstTile, typename SrcTile>
   AICORE void TNEG_IMPL(DstTile &dst, SrcTile &src) {

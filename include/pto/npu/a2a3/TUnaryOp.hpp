@@ -415,68 +415,6 @@ namespace pto {
         constexpr unsigned rowStride = TileData::RowStride;
         TUnaryOp<TileData, _vlog, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
     }
-
-    /* RECIP */
-
-    template <typename TileData>
-    __tf__ AICORE void TRecipCustom(typename TileData::TileDType __out__ dst,
-                                        typename TileData::TileDType __in__ src,
-                                        unsigned validRow,
-                                        unsigned validCol) {
-        __ubuf__ typename TileData::DType *dstPtr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
-        __ubuf__ typename TileData::DType *srcPtr = (__ubuf__ typename TileData::DType *)__cce_get_tile_ptr(src);
-
-        unsigned TShape0 = TileData::Rows;
-        unsigned TShape1 = TileData::Cols;
-
-        __ubuf__ typename TileData::DType *ones = reinterpret_cast<__ubuf__ typename TileData::DType*>(static_cast<std::uintptr_t>(0x2fc00));
-        vector_dup(ones, (typename TileData::DType)(1.0), 1, 1, 1, 8, 8);
-        pipe_barrier(PIPE_V);
-
-        set_mask_count();
-        set_vector_mask(0, validCol);
-        for (uint32_t i = 0; i < validRow; ++i) {
-            vdiv((dstPtr + i * TShape1), (ones), (srcPtr + i * TShape1), 1, 1, 1, 1, 8, 0, 8); 
-        }
-        pipe_barrier(PIPE_V);
-
-        set_mask_norm();
-        set_vector_mask(-1, -1);
-    }
-
-    template<typename DataType>
-    AICORE void _vrecip(__ubuf__ DataType* dst, __ubuf__ DataType* src, 
-                          uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride,
-                          uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
-        vrec(dst, src, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-    }
-
-    template <typename TileData>
-    AICORE void TRECIP_IMPL(TileData &dst, TileData &src) {
-        static_assert(std::is_same<typename TileData::DType, float32_t>::value ||
-                      std::is_same<typename TileData::DType, float>::value ||
-                      std::is_same<typename TileData::DType, half>::value ||
-                      std::is_same<typename TileData::DType, float16_t>::value,
-                      "TRECIP: Invalid data type");
-        static_assert(TileData::Loc == TileType::Vec, "TRECIP: TileType of src and dst tiles must be TileType::Vec.");
-        static_assert(TileData::ValidCol <= TileData::Cols, "TRECIP: Number of valid columns must not be greater than number of tile columns.");
-        static_assert(TileData::ValidRow <= TileData::Rows, "TRECIP: Number of valid rows must not be greater than number of tile rows.");
-        static_assert(TileData::isRowMajor, "TRECIP: Not supported Layout type");
-
-        PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TRECIP: Number of columns of src and dst must be the same.");
-        PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TRECIP: Number of rows of src and dst must be the same.");
-
-        unsigned validCol = dst.GetValidCol();
-        unsigned validRow = dst.GetValidRow();
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-        constexpr unsigned rowStride = TileData::RowStride;
-#ifdef ACCURATE_RECIP
-        TRecipCustom<TileData>(dst.data(), src.data(), validRow, validCol);
-#else
-        TUnaryOp<TileData, _vrecip, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
-#endif
-    }
 }
 
 #endif

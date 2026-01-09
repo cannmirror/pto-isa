@@ -20,8 +20,8 @@ __global__ AICORE void runTRecip( __gm__ T __out__ *out, __gm__ T __in__ *src) {
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
     using TileData = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1>;
-    TileData srcTile(kTRows_, kTCols_);
-    TileData dstTile(kTRows_, kTCols_);
+    TileData srcTile(kGRows_, kGCols_);
+    TileData dstTile(kGRows_, kGCols_);
     TASSIGN(srcTile, 0x0);
     if constexpr(isInPlace) {
         TASSIGN(dstTile, 0x0);
