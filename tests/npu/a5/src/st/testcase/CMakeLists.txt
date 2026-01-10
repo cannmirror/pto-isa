@@ -184,6 +184,7 @@ set(ALL_TESTCASES
     tcolexpandmul
     tcolexpandsub
     trowexpandbrcb
+    ttril
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
