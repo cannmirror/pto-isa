@@ -88,7 +88,7 @@ inline AICORE void cast32to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dst
     uint32_t len32 = ELE_CNT_B32;
     vector_bool preg_b32 = plt_b32(len32, POST_UPDATE);
     
-    FOR_ELEMENTS(ELE_CNT_B32)
+    FOR_ELEMENTS(ELE_CNT_B16)
         SRC_VEC v_input_0, v_input_1;
         DST_VEC v_output_odd, v_output_even, v_output;
         vector_bool preg_b16 = plt_b16(len, POST_UPDATE);

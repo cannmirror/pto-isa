@@ -32,7 +32,7 @@ struct hifloat8_wrapper {
     operator float() const { return static_cast<float>(value); }
 };
 
-template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kValidRows_ = kTRows_, int kValidCols_ = kTCols_>
 void launchTCVT(D *dst, S *src, void *stream);
 
 class TCVTTest : public testing::Test {
@@ -51,7 +51,7 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kValidRows_ = kTRows_, int kValidCols_ = kTCols_>
 void test_tcvt()
 {
     uint32_t M = kGRows_;
@@ -77,7 +77,7 @@ void test_tcvt()
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, srcDevice, stream);
+    launchTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_, kValidRows_, kValidCols_>(dstDevice, srcDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -108,8 +108,8 @@ void test_tcvt()
 #define GENERATE_TCVT_TESTS(dst_type, src_type, type_name) \
     TEST_F(TCVTTest, case_##type_name##_2x128) { test_tcvt<dst_type, src_type, 2, 128, 2, 128>(); } \
     TEST_F(TCVTTest, case_##type_name##_2x32) { test_tcvt<dst_type, src_type, 2, 32, 2, 32>(); } \
-    TEST_F(TCVTTest, case_##type_name##_1x64) { test_tcvt<dst_type, src_type, 1, 64, 1, 64>(); } \
-    TEST_F(TCVTTest, case_##type_name##_4x64) { test_tcvt<dst_type, src_type, 4, 64, 4, 64>(); }
+    TEST_F(TCVTTest, case_##type_name##_3x64) { test_tcvt<dst_type, src_type, 3, 64, 3, 64>(); } \
+    TEST_F(TCVTTest, case_##type_name##_2x256_2x129) { test_tcvt<dst_type, src_type, 2, 256, 2, 256, 2, 129>(); }
 
 
 // FP32 Source

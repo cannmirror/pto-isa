@@ -24,6 +24,7 @@ def gen_golden(case_name, param):
     srctype = param.srctype
     dsttype = param.dsttype
     m, n = param.m, param.n
+    valid_m, valid_n = param.valid_m, param.valid_n
 
     # Generate input data with reasonable ranges
     if srctype == np.float32 or srctype == np.float16 or srctype == bfloat16:
@@ -103,17 +104,25 @@ def gen_golden(case_name, param):
         golden = np.clip(converted_golden, info.min, info.max).astype(dsttype)
     else:
         golden = converted_golden.astype(dsttype)
+    
+    # Apply valid region constraints (zero out data outside valid region)
+    if valid_m < m or valid_n < n:
+        output = np.zeros([m, n]).astype(dsttype)
+        output[:valid_m, :valid_n] = golden[:valid_m, :valid_n]
+        golden = output
             
     x1_gm.tofile("./x1_gm.bin")
     golden.tofile("./golden.bin")
                 
 class tcvtParams:
-    def __init__(self, srctype, dsttype, m, n, mode):
+    def __init__(self, srctype, dsttype, m, n, mode, valid_m=None, valid_n=None):
         self.srctype = srctype
         self.dsttype = dsttype
         self.m = m
         self.n = n
         self.mode = mode
+        self.valid_m = valid_m if valid_m is not None else m
+        self.valid_n = valid_n if valid_n is not None else n
 
 if __name__ == "__main__":
     # Type conversion pairs: (name_suffix, source_type, destination_type)
@@ -188,8 +197,12 @@ if __name__ == "__main__":
     shapes = [
         (2, 128),
         (2, 32),
-        (1, 64),
-        (4, 64),
+        (3, 64),
+    ]
+    
+    # Partial tile configurations (m, n, valid_m, valid_n)
+    partial_shapes = [
+        (2, 256, 2, 129),
     ]
 
     case_name_list = []
@@ -197,10 +210,17 @@ if __name__ == "__main__":
 
     # Generate test cases for each type pair and shape combination
     for type_name, src, dst in type_pairs:
+        # Regular full tile shapes
         for m, n in shapes:
             case_name = f"case_{type_name}_{m}x{n}"
             case_name_list.append(f"TCVTTest.{case_name}")
             case_params_list.append(tcvtParams(src, dst, m, n, "RoundMode::CAST_RINT"))
+        
+        # Partial tile shapes
+        for m, n, valid_m, valid_n in partial_shapes:
+            case_name = f"case_{type_name}_{m}x{n}_{valid_m}x{valid_n}"
+            case_name_list.append(f"TCVTTest.{case_name}")
+            case_params_list.append(tcvtParams(src, dst, m, n, "RoundMode::CAST_RINT", valid_m, valid_n))
 
     for i, case_name in enumerate(case_name_list):
         if not os.path.exists(case_name):
