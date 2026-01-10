@@ -20,15 +20,6 @@ using namespace pto;
 using namespace std;
 
 namespace pto {
-
-enum class BinSOpsImpl : unsigned {
-  BinSOpsIMPL_DEFAULT = 0,
-  BinSOpsIMPL_1D_NO_POST_UPDATE = 1,
-  BinSOpsIMPL_2D_NO_POST_UPDATE = 2,
-  BinSOpsIMPL_1D_POST_UPDATE = 3,
-  BinSOpsIMPL_2D_POST_UPDATE = 4,
-};
-
 template <typename Op, typename TileData, typename ScalarType, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
 PTO_INTERNAL
 void TBinSOps_1D_NoPostUpdate(__ubuf__ typename TileData::DType *dstPtr, 
@@ -144,17 +135,17 @@ PTO_INTERNAL void TBinSOps_1D_selector(__ubuf__ typename TileData::DType *dstPtr
                             ScalarType src1,
                             unsigned kValidRows,
                             unsigned kValidCols,
-                            BinSOpsImpl version) {
+                            VFImplKind version) {
         switch (version) {
-        case BinSOpsImpl::BinSOpsIMPL_1D_NO_POST_UPDATE:
+        case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
             TBinSOps_1D_NoPostUpdate<Op, TileData, ScalarType, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, src1, kValidRows, kValidCols);
             break;
-        case BinSOpsImpl::BinSOpsIMPL_2D_NO_POST_UPDATE:
+        case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
             break;
-        case BinSOpsImpl::BinSOpsIMPL_2D_POST_UPDATE:
+        case VFImplKind::VFIMPL_2D_POST_UPDATE:
             break;
-        case BinSOpsImpl::BinSOpsIMPL_DEFAULT:
-        case BinSOpsImpl::BinSOpsIMPL_1D_POST_UPDATE:
+        case VFImplKind::VFIMPL_DEFAULT:
+        case VFImplKind::VFIMPL_1D_POST_UPDATE:
         default:
             TBinSOps_1D_PostUpdate<Op, TileData, ScalarType, elementsPerRepeat, blockSizeElem, rowStride>(dstPtr, src0Ptr, src1, kValidRows, kValidCols);
             break;
@@ -167,7 +158,7 @@ PTO_INTERNAL void BinaryInstr(typename TileDataDst::TileDType __out__ dst,
                             ScalarType src1,
                             unsigned kValidRows,
                             unsigned kValidCols,
-                            BinSOpsImpl version) {
+                            VFImplKind version) {
     using T = typename TileDataDst::DType;
     static_assert(std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> || std::is_same_v<T, uint16_t> || 
         std::is_same_v<T, int16_t> || std::is_same_v<T, uint32_t> ||
@@ -176,22 +167,14 @@ PTO_INTERNAL void BinaryInstr(typename TileDataDst::TileDType __out__ dst,
         if constexpr ((TileDataDst::ValidCol == TileDataDst::Cols) && (TileDataSrc::ValidCol == TileDataSrc::Cols)) {
             TBinSOps_1D_selector<Op, TileDataDst, ScalarType, elementsPerRepeat, blockSizeElem, dstRowStride>(dst, src0, src1, kValidRows, kValidCols, version);
         } else {
-            if ((kValidCols == TileDataDst::Cols) && (kValidCols == TileDataSrc::Cols)) {
-                TBinSOps_1D_selector<Op, TileDataDst, ScalarType, elementsPerRepeat, blockSizeElem, dstRowStride>(dst, src0, src1, kValidRows, kValidCols, version);  
-            }
-            else {
-                switch (version) {
-                case BinSOpsImpl::BinSOpsIMPL_1D_NO_POST_UPDATE:
-                case BinSOpsImpl::BinSOpsIMPL_2D_NO_POST_UPDATE:
-                    TBinSOps_2D_NoPostUpdate<Op, TileDataDst, TileDataSrc, ScalarType, elementsPerRepeat, blockSizeElem, dstRowStride, srcRowStride>(dst, src0, src1, kValidRows, kValidCols);
-                    break;
-                case BinSOpsImpl::BinSOpsIMPL_DEFAULT:
-                case BinSOpsImpl::BinSOpsIMPL_1D_POST_UPDATE:
-                case BinSOpsImpl::BinSOpsIMPL_2D_POST_UPDATE:
-                default:
-                    TBinSOps_2D_PostUpdate<Op, TileDataDst, TileDataSrc, ScalarType, elementsPerRepeat, blockSizeElem, dstRowStride, srcRowStride>(dst, src0, src1, kValidRows, kValidCols);
-                    break;
-                }
+            switch (version) {
+            case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
+            case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
+                TBinSOps_2D_NoPostUpdate<Op, TileDataDst, TileDataSrc, ScalarType, elementsPerRepeat, blockSizeElem, dstRowStride, srcRowStride>(dst, src0, src1, kValidRows, kValidCols);
+                break;
+            default:
+                TBinSOps_2D_PostUpdate<Op, TileDataDst, TileDataSrc, ScalarType, elementsPerRepeat, blockSizeElem, dstRowStride, srcRowStride>(dst, src0, src1, kValidRows, kValidCols);
+                break;
             }
         }
     }

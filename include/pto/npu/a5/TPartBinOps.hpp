@@ -180,7 +180,7 @@ __tf__ PTO_INTERNAL void TCopyPadOp(typename TileData::TileDType __out__ dst,
 
 template <typename Op, typename DstTileData, typename Src0TileData, typename Src1TileData> 
 PTO_INTERNAL void TPartMasterImpl(DstTileData &dst, Src0TileData& src0, Src1TileData& src1,
-    BinOpsImpl version)
+    VFImplKind version)
 {
     using T  = typename DstTileData::DType;
     using S0 = typename Src0TileData::DType;

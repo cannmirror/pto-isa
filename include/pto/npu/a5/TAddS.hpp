@@ -33,7 +33,7 @@ void TAddS(typename TileDataDst::TileDType __out__ dst,
            typename TileDataSrc::DType src1,
            unsigned kValidRows,
            unsigned kValidCols,
-           BinSOpsImpl version = BinSOpsImpl::BinSOpsIMPL_DEFAULT) {
+           VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
     using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);

@@ -32,7 +32,7 @@ __tf__ PTO_INTERNAL void TExpandS(
         typename TileDataDst::DType scalar,
         unsigned kValidRows,
         unsigned kValidCols,
-        BinSOpsImpl version = BinSOpsImpl::BinSOpsIMPL_DEFAULT) {
+        VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
     using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     BinaryInstr<ExpandSOp<T>, TileDataDst, TileDataDst, T, elementsPerRepeat, blockSizeElem, rowStride, rowStride>(

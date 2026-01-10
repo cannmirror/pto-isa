@@ -119,7 +119,7 @@ namespace pto {
                                 typename TileDataSrc::DType __in__ src1, 
                                 unsigned validRow,
                                 unsigned validCol,
-                                BinSOpsImpl version = BinSOpsImpl::BinSOpsIMPL_DEFAULT) {
+                                VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
         using T = typename TileDataDst::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
@@ -138,7 +138,7 @@ namespace pto {
                                 typename TileDataSrc::TileDType __in__ src0, 
                                 unsigned validRow,
                                 unsigned validCol,
-                                BinSOpsImpl version = BinSOpsImpl::BinSOpsIMPL_DEFAULT) {
+                                VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
         using T = typename TileDataDst::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);

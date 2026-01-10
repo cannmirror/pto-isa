@@ -20,15 +20,6 @@ using namespace pto;
 using namespace std;
 
 namespace pto {
-
-enum class BinOpsImpl : uint8_t {
-    BinOpsIMPL_DEFAULT = 0,
-    BinOpsIMPL_1D_NO_POST_UPDATE = 1,
-    BinOpsIMPL_2D_NO_POST_UPDATE = 2,
-    BinOpsIMPL_1D_POST_UPDATE = 3,
-    BinOpsIMPL_2D_POST_UPDATE = 4,
-};
-
 template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
 PTO_INTERNAL void TBinOps_1D_NoPostUpdate(
     __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRows, unsigned validCols) {
@@ -125,57 +116,38 @@ PTO_INTERNAL void TBinOps_2D_PostUpdate(
 // implement the template for tileshape of src0, src1 and dst are same
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
 PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
-    typename TileData::TileDType __in__ src1, unsigned validRows, unsigned validCols, BinOpsImpl version) {
+    typename TileData::TileDType __in__ src1, unsigned validRows, unsigned validCols, VFImplKind version) {
     using T = typename TileData::DType;
     if constexpr (TileData::ValidCol == TileData::Cols) {
         switch (version) {
-            case BinOpsImpl::BinOpsIMPL_DEFAULT:
+            case VFImplKind::VFIMPL_DEFAULT:
                 TBinOps_1D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
                     dst, src0, src1, validRows, validCols);
                 break;
-            case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
-            case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
+            case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
+            case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
                 TBinOps_1D_NoPostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
                     dst, src0, src1, validRows, validCols);
                 break;
-            case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-            case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
+            case VFImplKind::VFIMPL_1D_POST_UPDATE:
+            case VFImplKind::VFIMPL_2D_POST_UPDATE:
             default:
                 TBinOps_1D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
                     dst, src0, src1, validRows, validCols);
                 break;
         }
     } else {
-        if (TileData::Cols == validCols) {
-            switch (version) {
-                case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
-                case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
-                    TBinOps_1D_NoPostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
-                        dst, src0, src1, validRows, validCols);
-                    break;
-                case BinOpsImpl::BinOpsIMPL_DEFAULT:
-                case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-                case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
-                default:
-                    TBinOps_1D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
-                        dst, src0, src1, validRows, validCols);
-                    break;
-            }
-        } else {
-            switch (version) {
-                case BinOpsImpl::BinOpsIMPL_DEFAULT:
-                case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
-                case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
-                    TBinOps_2D_NoPostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
-                        dst, src0, src1, validRows, validCols);
-                    break;
-                case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-                case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
-                default:
-                    TBinOps_2D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
-                        dst, src0, src1, validRows, validCols);
-                    break;
-            }
+        switch (version) {
+            case VFImplKind::VFIMPL_DEFAULT:
+            case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
+            case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
+                TBinOps_2D_NoPostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
+                    dst, src0, src1, validRows, validCols);
+                break;
+            default:
+                TBinOps_2D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
+                    dst, src0, src1, validRows, validCols);
+                break;
         }
     }
 }
@@ -184,17 +156,17 @@ PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride,
     unsigned src0RowStride, unsigned src1RowStride>
 PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
-    typename TileData::TileDType __in__ src1, unsigned validRows, unsigned validCols, BinOpsImpl version) {
+    typename TileData::TileDType __in__ src1, unsigned validRows, unsigned validCols, VFImplKind version) {
     using T = typename TileData::DType;
     switch (version) {
-        case BinOpsImpl::BinOpsIMPL_DEFAULT:
-        case BinOpsImpl::BinOpsIMPL_1D_NO_POST_UPDATE:
-        case BinOpsImpl::BinOpsIMPL_2D_NO_POST_UPDATE:
+        case VFImplKind::VFIMPL_DEFAULT:
+        case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
+        case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
             TBinOps_2D_NoPostUpdate<Op, T, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride,
                 src1RowStride>(dst, src0, src1, validRows, validCols);
             break;
-        case BinOpsImpl::BinOpsIMPL_1D_POST_UPDATE:
-        case BinOpsImpl::BinOpsIMPL_2D_POST_UPDATE:
+        case VFImplKind::VFIMPL_1D_POST_UPDATE:
+        case VFImplKind::VFIMPL_2D_POST_UPDATE:
         default:
             TBinOps_2D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
                 dst, src0, src1, validRows, validCols);

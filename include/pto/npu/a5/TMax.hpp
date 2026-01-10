@@ -35,7 +35,7 @@ template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem,
     unsigned src0RowStride = dstRowStride, unsigned src1RowStride = dstRowStride>
 __tf__ PTO_INTERNAL OP_NAME(TMAX) OP_TYPE(element_wise) void TMax(typename TileData::TileDType __out__ dst,
     typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1, unsigned validRows,
-    unsigned validCols, BinOpsImpl version = BinOpsImpl::BinOpsIMPL_DEFAULT) {
+    unsigned validCols, VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);

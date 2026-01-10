@@ -110,11 +110,7 @@ namespace pto {
     if constexpr ((DstTile::ValidCol == DstTile::Cols) && (SrcTile::ValidCol == SrcTile::Cols)) {
       TUnaryOps_1D_Switch<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol, version);
     } else {
-      if ((validCol == DstTile::Cols) && (validCol == SrcTile::Cols)) {
-        TUnaryOps_1D_Switch<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol, version);
-      } else {
-        TUnaryOps_2D<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
-      }
+      TUnaryOps_2D<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
     }
   }
 
