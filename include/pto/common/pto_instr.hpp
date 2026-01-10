@@ -419,6 +419,13 @@ PTO_INST RecordEvent TCI(TileData &dst, T start, WaitEvents&... events) {
   return {};
 }
 
+template <typename TileData, int isUpperOrLower, int diagonal, typename... WaitEvents>
+PTO_INST RecordEvent TTRI(TileData &dst, WaitEvents&... events) {
+  TSYNC(events...);
+  TTRI_IMPL<TileData, isUpperOrLower, diagonal>(dst);
+  return {};
+}
+
 template <typename DstTileData, typename SrcTileData, MaskPattern maskPattern, typename... WaitEvents>
 PTO_INST RecordEvent TGATHER(DstTileData &dst, SrcTileData &src, WaitEvents&... events) {
   TSYNC(events...);

@@ -165,6 +165,7 @@ tstore_mat2gm
 tscatter
 tfa
 tcolexpand
+ttri
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
