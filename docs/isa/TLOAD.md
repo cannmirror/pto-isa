@@ -48,6 +48,12 @@ PTO_INST RecordEvent TLOAD(TileData& dst, GlobalData& src, WaitEvents&... events
     - NZ with `SLayout::RowMajor` (NZ->NZ).
   - For row-major ND->ND with compile-time-known shapes, `TileData::ValidCol` must equal `GlobalData::staticShape[4]`, and `TileData::ValidRow` must equal the product of `GlobalData::staticShape[0..3]`.
   - `TileType::Mat` loads are additionally constrained by `TLoadCubeCheck` (e.g., only specific ND/DN/NZ conversions and L1-size limits).
+  - `TileType::Mat` loads also handle loads for mx format, which include `MX_A_ZZ/MX_A_ND/MX_A_DN` to ZZ for scalarA and `MX_B_NN/MX_B_ND/MX_B_DN` to NN for scalarB.
+    - for `MX_A_ZZ/MX_B_NN`: `GlobalData::staticShape[3] == 16` and `GlobalData::staticShape[4] == 2`.
+    - for `MX_A_ND/MX_ADN/MX_B_ND/MX_B_DN`: `GlobalData::staticShape[0] == 1` and `GlobalData::staticShape[1] == 1` and `GlobalData::staticShape[4] == 2`.
+    - for scaleA, `dst.GetValidCol() % 2 == 0`.
+    - for scaleB, `dst.GetValidRow() % 2 == 0`
+
 - **Valid region**:
   - The implementation uses `dst.GetValidRow()` / `dst.GetValidCol()` as the transfer size.
 

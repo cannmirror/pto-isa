@@ -64,7 +64,7 @@ constexpr int cols = GT::GetShape<pto::GlobalTensorDim::DIM_4>();
 
 ## Layout hints (`pto::Layout`)
 
-`GlobalTensor` includes a layout enum (`ND`, `DN`, `NZ`, `SCALE`, ...). This is a *hint* that can enable target-specific fast paths.
+`GlobalTensor` includes a layout enum (`ND`, `DN`, `NZ`, `SCALE`,  `MX_A_ZZ`, `MX_A_ND`, `MX_ADN`, `MX_B_NN`, `MX_B_ND`, `MX_B_DN`...). This is a *hint* that can enable target-specific fast paths.
 
 Why this is not identical to Tile layout:
 
@@ -79,6 +79,7 @@ Two helper families are commonly used for 2-D tensors:
 
 - `pto::TileShape2D<T, rows, cols, layout>`: produces a `pto::Shape<1,1,1,rows,cols>` (or an `NZ`-specific shape when `layout == Layout::NZ`).
 - `pto::BaseShape2D<T, rows, cols, layout>`: produces a `pto::Stride<...>` suitable for a base 2-D view (or an `NZ`-specific stride when `layout == Layout::NZ`).
+  - layout in `pto::TileShape2D`、`pto::BaseShape2D` also supports `MX_A_ZZ`, `MX_A_ND`, `MX_ADN`, `MX_B_NN`, `MX_B_ND`, `MX_B_DN`.
 
 Despite its name, `BaseShape2D` is a **stride** helper (it derives from `pto::Stride`).
 

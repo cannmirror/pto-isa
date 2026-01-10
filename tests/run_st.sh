@@ -167,6 +167,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mx_NZ -g TLOADSCALETest.4_3_3_16_2_4_10_5_16_2_192_10_scale_ZZ2ZZ
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mx_NZ -g TLOADSCALETest.7_5_3_16_2_7_7_11_16_2_12_560_scale_NN2NN
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mx_ND_DN -g TLOADMXTest.1_1_1_64_128_uint8_AND2ZZ
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mx_gmtensor -g TLOADMXTest.1_1_1_64_128_uint8_ADN2ZZ
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_shape2d -g TLOADSHAPE2DTest.1_1_1_59_119_1_1_1_64_128_64_128_int8_t_ND2NZ
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmatmul -g TMATMULTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmatmul_mx -g TMATMULMXTest.case_e5m2_e5m2_128_64_64
@@ -230,6 +231,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mix
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mx_NZ
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mx_ND_DN
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mx_gmtensor
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_shape2d
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmatmul
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmatmul_mx
