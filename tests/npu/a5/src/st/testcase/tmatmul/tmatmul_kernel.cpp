@@ -30,7 +30,7 @@ template <typename OutType, typename AType, typename BType, typename BiasType, i
 __global__ AICORE void RunTMATMUL(__gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ BiasType *src2)
 {
     constexpr int blockAlign = (sizeof(AType) == 1) ? 32 : 16;
-    constexpr int M = CeilAlign<int>(validM, blockAlign);
+    constexpr int M = CeilAlign<int>(validM, 16);
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, blockAlign);
 

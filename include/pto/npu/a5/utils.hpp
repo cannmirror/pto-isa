@@ -16,6 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto{
     const uint32_t VECTOR_REG_WIDTH = 256;
     const uint32_t VECTOR_REG_WIDTH_2XVL = 512;
+    constexpr uint32_t SHIFT_MX_ADDR = 4;
 
     enum class DistVST {
         DIST_NORM_B8,
@@ -75,6 +76,14 @@ namespace pto{
             return pset_b8(dist);
         }
     }
+    
+    template<typename T>
+    PTO_INTERNAL uint64_t GetScaleAddr(T* dst)
+    {
+        uintptr_t addr = reinterpret_cast<uintptr_t>(dst);
+        return addr >> SHIFT_MX_ADDR;
+    }
+
 } // end pto
 
 #endif

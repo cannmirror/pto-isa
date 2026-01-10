@@ -86,12 +86,13 @@ void TmatmulMXTest(uint32_t M, uint32_t K, uint32_t N, uint32_t validM, uint32_t
     aclrtMemcpy(src3Device, bScaleFileSize, src3Host, bScaleFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
     size_t biasFileSize = isBias ? (1 * N * sizeof(T)) : 0;
-    uint8_t *src4Host;
-    uint8_t *src4Device;
-    aclrtMallocHost((void **)(&src4Host), biasFileSize);
-    aclrtMalloc((void **)&src4Device, biasFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    uint8_t *src4Host = nullptr;
+    uint8_t *src4Device = nullptr;
 
     if (isBias) {
+        aclrtMallocHost((void **)(&src4Host), biasFileSize);
+        aclrtMalloc((void **)&src4Device, biasFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
         ReadFile(GetGoldenDir() + "/bias_gm.bin", biasFileSize, src4Host, biasFileSize);
         aclrtMemcpy(src4Device, biasFileSize, src4Host, biasFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
         LaunchTMATMUL_MX_BIAS<key>(dstDevice, src0Device, src1Device, src2Device, src3Device, src4Device, stream);
@@ -116,15 +117,17 @@ void TmatmulMXTest(uint32_t M, uint32_t K, uint32_t N, uint32_t validM, uint32_t
     aclrtFreeHost(src2Host);
     aclrtFreeHost(src3Host);
 
-    aclrtFree(src4Device);
-    aclrtFreeHost(src4Host);
+    if (isBias) {
+        aclrtFree(src4Device);
+        aclrtFreeHost(src4Host);
+    }
 
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
+    std::vector<T> golden(cFileSize);
+    std::vector<T> devFinal(cFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 

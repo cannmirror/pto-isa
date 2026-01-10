@@ -948,6 +948,30 @@ using TileRightCompact =
 
 template <typename Element_, const int Rows_, const int Cols_,
           const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileLeftScale =
+  Tile<TileType::ScaleLeft, Element_, Rows_, Cols_, BLayout::RowMajor, RowValid_,
+       ColValid_, SLayout::RowMajor, TileConfig::fractalMxSize>;
+
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileLeftScaleCompact =
+  Tile<TileType::ScaleLeft, Element_, Rows_, Cols_, BLayout::RowMajor, RowValid_,
+       ColValid_, SLayout::RowMajor, TileConfig::fractalMxSize, PadValue::Null, CompactMode::Normal>;
+
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileRightScale =
+  Tile<TileType::ScaleRight, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
+       ColValid_, SLayout::ColMajor, TileConfig::fractalMxSize>;
+
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
+using TileRightScaleCompact =
+  Tile<TileType::ScaleRight, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
+       ColValid_, SLayout::ColMajor, TileConfig::fractalMxSize, PadValue::Null, CompactMode::Normal>;
+
+template <typename Element_, const int Rows_, const int Cols_,
+          const int RowValid_ = Rows_, const int ColValid_ = Cols_>
 using TileAcc =
     Tile<TileType::Acc, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
          ColValid_, SLayout::RowMajor, TileConfig::fractalCSize>;

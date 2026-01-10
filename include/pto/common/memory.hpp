@@ -95,6 +95,24 @@ template <typename DType> struct MemoryQualifier<TileType::Scaling, DType> {
 #endif
 };
 
+template <typename DType>
+struct MemoryQualifier<TileType::ScaleLeft, DType> {
+#ifdef __PTO_AUTO__
+    using type = __ca__ DType;
+#else
+    using type = __ca__ DType *;
+#endif
+};
+
+template <typename DType>
+struct MemoryQualifier<TileType::ScaleRight, DType> {
+#ifdef __PTO_AUTO__
+    using type = __cb__ DType;
+#else
+    using type = __cb__ DType *;
+#endif
+};
+
 PTO_INTERNAL constexpr const __gm__ char *
 GetLayoutName(BLayout bType, SLayout sType) noexcept {
   switch (sType) {

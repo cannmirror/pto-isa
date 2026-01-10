@@ -226,6 +226,15 @@ PTO_INTERNAL constexpr void CommonCheck()
         "TMov: SrcTile Invalid Fractal.");
 }
 
+template <typename DstTileData, typename SrcTileData>
+PTO_INTERNAL constexpr void CommonCheckMX()
+{
+    static_assert(is_textract_supported_type<typename DstTileData::DType>,
+        "TMov: Unsupported data type! Supported types: float8_e8m0_t");
+    static_assert(std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value,
+        "TMov: Destination and Source tile data types must be the same.");
+}
+
 template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isQuant = false>
 PTO_INTERNAL void CheckTMovAccValid()
 {
@@ -334,6 +343,32 @@ __tf__ PTO_INTERNAL void TMovToVec(DstTileData &dst, SrcTileData &src) {
 }
 
 template <typename DstTileData, typename SrcTileData>
+AICORE void TMovToLeft(DstTileData &dst, SrcTileData &src)
+{
+    CommonCheck<DstTileData, SrcTileData>();
+    static_assert(
+        DstTileData::SFractal == SLayout::RowMajor && !DstTileData::isRowMajor, "TMov: DstTile Invalid Fractal.");
+    if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+        TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
+    } else {
+        TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
+    }
+}
+
+template <typename DstTileData, typename SrcTileData>
+AICORE void TMovToRight(DstTileData &dst, SrcTileData &src)
+{
+    CommonCheck<DstTileData, SrcTileData>();
+    static_assert(
+        DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor, "TMov: DstTile Invalid Fractal.");
+    if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+        TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
+    } else {
+        TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
+    }
+}
+
+template <typename DstTileData, typename SrcTileData>
 AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     if constexpr (SrcTileData::Loc == TileType::Mat) {
@@ -344,23 +379,15 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
         } else if constexpr (DstTileData::Loc == TileType::Scaling) {
             TMovToFb<DstTileData, SrcTileData>(dst.data(), src.data());
         } else if constexpr (DstTileData::Loc == TileType::Left) {
-            CommonCheck<DstTileData, SrcTileData>();
-            static_assert(DstTileData::SFractal == SLayout::RowMajor && !DstTileData::isRowMajor,
-                "TMov: DstTile Invalid Fractal.");
-            if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-                TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
-            } else {
-                TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
-            }
+            TMovToLeft(dst, src);
         } else if constexpr (DstTileData::Loc == TileType::Right) {
-            CommonCheck<DstTileData, SrcTileData>();
-            static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
-                "TMov: DstTile Invalid Fractal.");
-            if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-                TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
-            } else {
-                TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
-            }
+            TMovToRight(dst, src);
+        } else if constexpr (DstTileData::Loc == TileType::ScaleLeft) {
+            CommonCheckMX<DstTileData, SrcTileData>();
+            TExtractToAmx<DstTileData, SrcTileData>(dst.data(), src.data(), 0, 0);
+        } else if constexpr (DstTileData::Loc == TileType::ScaleRight) {
+            CommonCheckMX<DstTileData, SrcTileData>();
+            TExtractToBmx<DstTileData, SrcTileData>(dst.data(), src.data(), 0, 0);
         }
     } else if constexpr (SrcTileData::Loc == TileType::Acc) {
         CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();

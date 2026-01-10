@@ -144,6 +144,7 @@ set(ALL_TESTCASES
     tmax
     tmins
     tmov
+    tmov_mx
     tmul
     tdiv
     tcmps
