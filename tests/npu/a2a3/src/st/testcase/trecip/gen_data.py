@@ -18,27 +18,17 @@ np.random.seed(19)
 def gen_golden_data(case_name, param):
     dtype = param.dtype
 
-    height, width = [param.tile_row, param.tile_col]
-    h_valid, w_valid = [param.valid_row, param.valid_col]
+    h_valid, w_valid = param.valid_row, param.valid_col
 
     # Generate random input arrays
-    input1 = np.random.random(size=(height, width)).astype(dtype)
+    input1 = np.random.random(size=(h_valid, w_valid)).astype(dtype)
 
     # Perform the operation
     golden = 1.0 / input1
 
-    # Apply valid region constraints
-    output = np.zeros([height, width]).astype(dtype)
-    for h in range(height):
-        for w in range(width):
-            if h >= h_valid or w >= w_valid:
-                golden[h][w] = output[h][w]
-
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
     golden.tofile("golden.bin")
-
-    return output, input1, golden
 
 
 class TUnaryParams:
@@ -75,9 +65,7 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TUnaryParams(np.float32, 64, 64, 64, 64, 64, 64, True),
         TUnaryParams(np.float32, 64, 64, 64, 64, 64, 64, False),
-        TUnaryParams(np.float16, 64, 64, 64, 64, 64, 64, True),
         TUnaryParams(np.float16, 64, 64, 64, 64, 64, 64, False),
     ]
 

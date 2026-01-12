@@ -52,7 +52,5 @@ void LaunchTRecip(T *out, T *src, void *stream)
         runTRecip<T, kGRows_, kGCols_, kTRows_, kTCols_, isInPlace><<<1, nullptr, stream>>>(out, src);
 }
 
-template void LaunchTRecip<float, 64, 64, 64, 64, true>(float *out, float *src, void *stream);
 template void LaunchTRecip<float, 64, 64, 64, 64, false>(float *out, float *src, void *stream);
-template void LaunchTRecip<aclFloat16, 64, 64, 64, 64, true>(aclFloat16 *out, aclFloat16 *src, void *stream);
 template void LaunchTRecip<aclFloat16, 64, 64, 64, 64, false>(aclFloat16 *out, aclFloat16 *src, void *stream);

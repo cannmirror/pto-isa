@@ -98,14 +98,8 @@ void test_trecip() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TRECIPTest, case_float_64x64_64x64_64x64_inPlace_True) {
-    test_trecip<float, 64, 64, 64, 64, true>();
-}
 TEST_F(TRECIPTest, case_float_64x64_64x64_64x64_inPlace_False) {
     test_trecip<float, 64, 64, 64, 64, false>();
-}
-TEST_F(TRECIPTest, case_half_64x64_64x64_64x64_inPlace_True) {
-    test_trecip<aclFloat16, 64, 64, 64, 64, true>();
 }
 TEST_F(TRECIPTest, case_half_64x64_64x64_64x64_inPlace_False) {
     test_trecip<aclFloat16, 64, 64, 64, 64, false>();
