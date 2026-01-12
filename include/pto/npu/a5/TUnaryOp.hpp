@@ -107,7 +107,8 @@ namespace pto {
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
     __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
     constexpr unsigned nRepeatElem = CCE_VL / sizeof(T);
-    if constexpr ((DstTile::ValidCol == DstTile::Cols) && (SrcTile::ValidCol == SrcTile::Cols)) {
+    if constexpr (((DstTile::ValidCol == DstTile::Cols) && (SrcTile::ValidCol == SrcTile::Cols)) ||
+      ((DstTile::Rows == 1) && (SrcTile::Rows == 1))) {
       TUnaryOps_1D_Switch<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol, version);
     } else {
       TUnaryOps_2D<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
@@ -116,16 +117,18 @@ namespace pto {
 
   template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TUnaryCheck() {
-    static_assert(DstTile::isRowMajor || SrcTile::isRowMajor,
+    static_assert(DstTile::isRowMajor && SrcTile::isRowMajor,
       "TUnaryOp: Not supported Layout type");
-    static_assert(DstTile::Loc == TileType::Vec,
+    static_assert(DstTile::Loc == TileType::Vec && SrcTile::Loc == TileType::Vec,
       "TUnaryOp: TileType of src and dst tiles must be TileType::Vec.");
     static_assert(DstTile::ValidCol <= DstTile::Cols,
-      "TUnaryOp: Number of valid columns must not be greater than number of tile columns.");
+      "TUnaryOp: Number of dst's valid columns must not be greater than number of tile columns.");
     static_assert(DstTile::ValidRow <= DstTile::Rows,
-      "TUnaryOp: Number of valid rows must not be greater than number of tile rows.");
-    using T = typename DstTile::DType;
-    using U = typename SrcTile::DType;
+      "TUnaryOp: Number of dst's valid rows must not be greater than number of tile rows.");
+    static_assert(SrcTile::ValidCol <= SrcTile::Cols,
+      "TUnaryOp: Number of src's valid columns must not be greater than number of tile columns.");
+    static_assert(SrcTile::ValidRow <= SrcTile::Rows,
+      "TUnaryOp: Number of src's valid rows must not be greater than number of tile rows.");
     static_assert(std::is_same_v<typename DstTile::DType, typename SrcTile::DType>,
       "TUnaryOp: The data type of dst must be consistent with of src");
     static_assert(std::is_same_v<typename DstTile::DType, float32_t> ||
@@ -175,11 +178,11 @@ namespace pto {
     TUnaryCheck<DstTile, SrcTile>();
     unsigned dstValidRow = dst.GetValidRow();
     unsigned dstValidCol = dst.GetValidCol();
-    if ((dstValidRow == src.GetValidRow()) && (dstValidCol == src.GetValidCol())) {
-      TRsqrt<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
-    } else {
-      PTO_ASSERT(false, "TRSQRT: dstTile validRow/validCol must be consistent with of src.");
-    }
+    PTO_ASSERT(dstValidCol == src.GetValidCol(),
+      "TRSQRT: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(dstValidRow == src.GetValidRow(),
+      "TRSQRT: Number of rows of src and dst must be the same.");
+    TRsqrt<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
   template <typename DstTile, typename SrcTile, typename Op>
@@ -187,11 +190,11 @@ namespace pto {
     TUnaryCheck<DstTile, SrcTile>();
     unsigned dstValidRow = dst.GetValidRow();
     unsigned dstValidCol = dst.GetValidCol();
-    if ((dstValidRow == src.GetValidRow()) && (dstValidCol == src.GetValidCol())) {
-      TUnaryOp<DstTile, SrcTile, Op>(dst.data(), src.data(), dstValidRow, dstValidCol);
-    } else {
-      PTO_ASSERT(false, "TUNARY: dstTile validRow/validCol must be consistent with of src.");
-    }
+    PTO_ASSERT(dstValidCol == src.GetValidCol(),
+      "TUNARY: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(dstValidRow == src.GetValidRow(),
+      "TUNARY: Number of rows of src and dst must be the same.");
+    TUnaryOp<DstTile, SrcTile, Op>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
   /* TEXP */

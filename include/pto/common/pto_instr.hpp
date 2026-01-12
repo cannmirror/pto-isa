@@ -197,17 +197,10 @@ PTO_INST RecordEvent TXOR(TileData &dst, TileData &src0, TileData &src1, WaitEve
   return {};
 }
 
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TLOG(TileData &dst, TileData &src, WaitEvents&... events) {
+template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
+PTO_INST RecordEvent TLOG(TileDataDst &dst, TileDataSrc &src, WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TLOG, dst, src);
-  return {};
-}
-
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TNEG(TileData &dst, TileData &src, WaitEvents&... events) {
-  TSYNC(events...);
-  MAP_INSTR_IMPL(TNEG, dst, src);
   return {};
 }
 

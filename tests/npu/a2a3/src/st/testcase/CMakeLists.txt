@@ -152,6 +152,7 @@ tlog
 trecip
 tdivs
 tmuls
+tneg
 tadds
 tgatherb
 tci

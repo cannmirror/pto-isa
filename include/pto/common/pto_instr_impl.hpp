@@ -66,7 +66,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a2a3/TCI.hpp"
 #include "pto/npu/a2a3/TColSum.hpp"
 #include "pto/npu/a2a3/TUnaryOp.hpp"
-#include "pto/npu/a2a3/TUnaryPlusOp.hpp"
 #include "pto/npu/a2a3/TGatherB.hpp"
 #include "pto/npu/a2a3/TColMin.hpp"
 #include "pto/npu/a2a3/TScatter.hpp"
