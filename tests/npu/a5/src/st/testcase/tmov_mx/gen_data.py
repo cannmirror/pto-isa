@@ -86,75 +86,53 @@ def align_to_multiple(k, alignment=64):
 
 
 def gen_golden_data(case_name, param):
-
-    a_type = param.atype
-    b_type = param.btype
-    dst_type = param.ctype
-    src_format = param.src_format
-
+    a_type, b_type, dst_type, src_format = param.atype, param.btype, param.ctype, param.src_format
     m, k, n, is_atrans, is_btrans = param.m, param.k, param.n, False, False
     start_m, start_k, start_n = param.start_m, param.start_k, param.start_n
+    base_m, base_k, base_n = param.base_m, param.base_k, param.base_n
 
     original_k = k
-    if k % 64 != 0:
-        k_aligned = align_to_multiple(k, 64)
-    else:
-        k_aligned = original_k
+    k_aligned = align_to_multiple(k, 64)
 
     if a_type == fp4_e2m1x2:
-        if original_k % 64 != 0:
-            x1_gm_original = np.random.randint(-7, 7, [m, original_k]).astype(a_type)
-            x1_gm = np.zeros([m, k_aligned], dtype=a_type)
-            x1_gm[:, :original_k] = x1_gm_original
-
-        else:
-            x1_gm = np.random.randint(-7, 7, [m, original_k]).astype(a_type)
-
-        x1_gm_bin = pack_two_fp4(x1_gm)
-        x1_gm_bin.tofile("./x1_gm.bin")
+        x1_gm = np.random.randint(-7, 7, [m, k_aligned]).astype(a_type)
     elif a_type == fp4_e1m2x2:
-        if original_k % 64 != 0:
-
-            x1_gm_original = np.random.randint(-2, 2, [m, original_k]).astype(a_type)
-            x1_gm = np.zeros([m, k_aligned], dtype=a_type)
-            x1_gm[:, :original_k] = x1_gm_original
-
-        else:
-            x1_gm = np.random.randint(-2, 2, [m, original_k]).astype(a_type)
-
-        x1_gm_bin = pack_two_fp4(x1_gm)
-        x1_gm_bin.tofile("./x1_gm.bin")
+        x1_gm = np.random.randint(-2, 2, [m, k_aligned]).astype(a_type)
     else:
-        if k % 64 != 0:
-            x1_gm_original = np.random.randint(1, 2, [m, original_k]).astype(a_type)
-            x1_gm = np.zeros([m, k_aligned], dtype=a_type)
-            x1_gm[:, :original_k] = x1_gm_original
-
-        else:
-            x1_gm = np.random.randint(1, 2, [m, original_k]).astype(a_type)
-
-        x1_gm.tofile("./x1_gm.bin")
+        x1_gm = np.random.randint(1, 2, [m, k_aligned]).astype(a_type)
 
     if b_type == fp4_e2m1x2:
         x2_gm = np.random.randint(-7, 7, [k_aligned, n]).astype(b_type)
-        if original_k % 64 != 0:
-            x2_gm[original_k:, :] = 0
-
-        x2_gm_bin = pack_two_fp4(x2_gm)
-        x2_gm_bin.tofile("./x2_gm.bin")
     elif b_type == fp4_e1m2x2:
         x2_gm = np.random.randint(-2, 2, [k_aligned, n]).astype(b_type)
-        if original_k % 64 != 0:
-            x2_gm[original_k:, :] = 0
-        x2_gm_bin = pack_two_fp4(x2_gm)
-        x2_gm_bin.tofile("./x2_gm.bin")
     else:
         x2_gm = np.random.randint(1, 2, [k_aligned, n]).astype(b_type)
-        if original_k % 64 != 0:
-            x2_gm[original_k:, :] = 0
-        x2_gm.tofile("./x2_gm.bin")
-    
-    k_mx = int(math.ceil(k_aligned / 32))
+
+    x1_gm[:, original_k:] = 0
+    x2_gm[original_k:, :] = 0
+
+    if base_m != 0:
+        x1_pad = np.random.randint(0, 2, [base_m, base_k]).astype(a_type)
+        x1_pad[:m, :k_aligned] = x1_gm
+        if a_type == fp4_e2m1x2 or a_type == fp4_e1m2x2:
+            x1_pad = pack_two_fp4(x1_pad)
+        x2_pad = np.random.randint(0, 2, [base_k, base_n]).astype(b_type)
+        x2_pad[:k_aligned, :n] = x2_gm
+        if b_type == fp4_e2m1x2 or b_type == fp4_e1m2x2:
+            x2_pad = pack_two_fp4(x2_pad)
+        x1_pad.tofile("./x1_gm.bin")
+        x2_pad.tofile("./x2_gm.bin")
+    else:
+        if a_type == fp4_e2m1x2 or a_type == fp4_e1m2x2:
+            x1_gm_bin = pack_two_fp4(x1_gm)
+            x2_gm_bin = pack_two_fp4(x2_gm)
+            x1_gm_bin.tofile("./x1_gm.bin")
+            x2_gm_bin.tofile("./x2_gm.bin")
+        else:
+            x1_gm.tofile("./x1_gm.bin")
+            x2_gm.tofile("./x2_gm.bin")
+
+    k_mx = k_aligned // 32
     x1_mx_gm = np.random.randint(127, 128, [m, k_mx]).astype(np.uint8)
     x2_mx_gm = np.random.randint(127, 128, [k_mx, n]).astype(np.uint8)
 
@@ -177,6 +155,14 @@ def gen_golden_data(case_name, param):
     golden = np.matmul(x1_chunk.astype(np.float64), x2_chunk.astype(np.float64)).astype(dst_type)
     golden.tofile("./golden.bin")
 
+    if base_m != 0:
+        x1_mx_pad = np.random.randint(127, 130, [base_m, base_k // 32]).astype(np.uint8)
+        x2_mx_pad = np.random.randint(127, 130, [base_k // 32, base_n]).astype(np.uint8)
+        x1_mx_pad[:m, :k_mx] = x1_mx_gm
+        x2_mx_pad[:k_mx, :n] = x2_mx_gm
+        x1_mx_gm = x1_mx_pad
+        x2_mx_gm = x2_mx_pad
+
     if src_format == 'zznn':
         # x1_scale_gm, convert to zZ format
         x1_scale_gm = convert_x1_scale_format(x1_mx_gm, 16, 2)
@@ -184,24 +170,20 @@ def gen_golden_data(case_name, param):
         x2_scale_gm = convert_x2_scale_format(x2_mx_gm, 16, 2)
     elif src_format == 'dndn':
         # x1_scale_gm, convert to dn format
-        x1_scale_gm = x1_mx_gm.reshape((m, k_mx // 2, 2)).transpose(1, 0, 2)
+        x1_scale_gm = x1_mx_gm.reshape((x1_mx_gm.shape[0], x1_mx_gm.shape[1] // 2, 2)).transpose(1, 0, 2)
         x2_scale_gm = x2_mx_gm.transpose()
     else:
         x1_scale_gm = x1_mx_gm
         # x2_scale_gm, convert to nd format
-        x2_scale_gm = x2_mx_gm.reshape((k_mx // 2, 2, n)).transpose(0, 2, 1)
+        x2_scale_gm = x2_mx_gm.reshape((x2_mx_gm.shape[0] // 2, 2, x2_mx_gm.shape[1])).transpose(0, 2, 1)
         
-
     x1_scale_gm.tofile("./x1_mx_gm.bin")
     x2_scale_gm.tofile("./x2_mx_gm.bin")
 
-    x1_mx_golden = convert_x1_scale_format(x1_mx_gm, 16, 2)
-    x2_mx_golden = convert_x2_scale_format(x2_mx_gm, 16, 2)
-    x1_mx_golden.tofile("./x1_mx_golden.bin")
-    x2_mx_golden.tofile("./x2_mx_golden.bin")
 
 class TMovmxParams:
-    def __init__(self, atype, btype, ctype, m, k, n, src_format='zznn', start_m = 0, start_k = 0, start_n = 0):
+    def __init__(self, atype, btype, ctype, m, k, n, src_format='zznn', start_m=0, start_k=0, start_n=0, 
+        base_m=0, base_k=0, base_n=0):
         self.atype = atype
         self.btype = btype
         self.ctype = ctype
@@ -212,6 +194,9 @@ class TMovmxParams:
         self.start_m = start_m
         self.start_k = start_k
         self.start_n = start_n
+        self.base_m = base_m
+        self.base_k = base_k
+        self.base_n = base_n
 
 if __name__ == "__main__":
     case_name_list = [
@@ -232,6 +217,16 @@ if __name__ == "__main__":
         "TMOVMXTest.case13",
         "TMOVMXTest.case14",
         "TMOVMXTest.case15",
+        # TExtractCompact
+        "TMOVMXTest.case16",
+        "TMOVMXTest.case17",
+        "TMOVMXTest.case18",
+        "TMOVMXTest.case19",
+        "TMOVMXTest.case20",
+        "TMOVMXTest.case21",
+        "TMOVMXTest.case22",
+        "TMOVMXTest.case23",
+        "TMOVMXTest.case24",
     ]
 
     case_params_list = [
@@ -257,7 +252,17 @@ if __name__ == "__main__":
 
         TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 95, 120, 89, 'dndn', 16, 64, 32),
         TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 48, 192, 96, 'dndn', 16, 0, 64),
-        
+
+        # TExtractCompact
+        TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 46, 66, 45, 'zznn', 0, 0, 0, 128, 256, 128),
+        TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 68, 130, 80, 'zznn', 16, 64, 32, 128, 256, 128),
+        TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 127, 126, 129, 'zznn', 32, 64, 16, 256, 128, 256),
+        TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 80, 96, 192, 'ndnd', 48, 0, 64, 128, 256, 256),
+        TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 98, 126, 108, 'ndnd', 32, 64, 16, 128, 256, 128),
+        TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 68, 96, 80, 'ndnd', 0, 0, 0, 128, 256, 128),
+        TMovmxParams(fp8_e5m2, fp8_e4m3fn, np.float32, 32, 64, 108, 'dndn', 16, 0, 32, 128, 256, 128),
+        TMovmxParams(fp8_e5m2, fp8_e4m3fn, np.float32, 196, 146, 96, 'dndn', 64, 64, 48, 256, 256, 128),
+        TMovmxParams(fp8_e4m3fn, fp8_e5m2, np.float32, 97, 96, 122, 'dndn', 32, 0, 16, 128, 256, 128),
     ]
 
 

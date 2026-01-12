@@ -348,10 +348,22 @@ AICORE void TMovToLeft(DstTileData &dst, SrcTileData &src)
     CommonCheck<DstTileData, SrcTileData>();
     static_assert(
         DstTileData::SFractal == SLayout::RowMajor && !DstTileData::isRowMajor, "TMov: DstTile Invalid Fractal.");
+    constexpr bool isFp4Type = std::is_same<typename SrcTileData::DType, float4_e2m1x2_t>::value ||
+        std::is_same<typename SrcTileData::DType, float4_e1m2x2_t>::value;
     if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-        TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
+        if constexpr (DstTileData::Compact == CompactMode::Normal) {
+            TExtractToACompact<DstTileData, SrcTileData, isFp4Type>(dst.data(), src.data(), 0, 0,
+                dst.GetValidRow(), dst.GetValidCol());
+        } else {
+            TExtractToA<DstTileData, SrcTileData, false, isFp4Type>(dst.data(), src.data(), 0, 0);
+        }
     } else {
-        TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
+        if constexpr (DstTileData::Compact == CompactMode::Normal || sizeof(typename SrcTileData::DType) == 1) {
+            TExtractToATransCompact<DstTileData, SrcTileData, isFp4Type>(dst.data(), src.data(), 0, 0,
+                dst.GetValidRow(), dst.GetValidCol());
+        } else {
+            TExtractToA<DstTileData, SrcTileData, true, isFp4Type>(dst.data(), src.data(), 0, 0);
+        }
     }
 }
 
@@ -361,10 +373,22 @@ AICORE void TMovToRight(DstTileData &dst, SrcTileData &src)
     CommonCheck<DstTileData, SrcTileData>();
     static_assert(
         DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor, "TMov: DstTile Invalid Fractal.");
+    constexpr bool isFp4Type = std::is_same<typename SrcTileData::DType, float4_e2m1x2_t>::value ||
+        std::is_same<typename SrcTileData::DType, float4_e1m2x2_t>::value;
     if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-        TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
+        if constexpr (DstTileData::Compact == CompactMode::Normal) {
+            TExtractToBCompact<DstTileData, SrcTileData, isFp4Type>(dst.data(), src.data(), 0, 0,
+                dst.GetValidRow(), dst.GetValidCol());
+        } else {
+            TExtractToB<DstTileData, SrcTileData, false, isFp4Type>(dst.data(), src.data(), 0, 0);
+        }
     } else {
-        TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
+        if constexpr (DstTileData::Compact == CompactMode::Normal || sizeof(typename SrcTileData::DType) == 1) {
+            TExtractToBTransCompact<DstTileData, SrcTileData, isFp4Type>(dst.data(), src.data(), 0, 0,
+                dst.GetValidRow(), dst.GetValidCol());
+        } else {
+            TExtractToB<DstTileData, SrcTileData, true, isFp4Type>(dst.data(), src.data(), 0, 0);
+        }
     }
 }
 
@@ -384,10 +408,10 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
             TMovToRight(dst, src);
         } else if constexpr (DstTileData::Loc == TileType::ScaleLeft) {
             CommonCheckMX<DstTileData, SrcTileData>();
-            TExtractToAmx<DstTileData, SrcTileData>(dst.data(), src.data(), 0, 0);
+            TExtractToAmx<DstTileData, SrcTileData>(dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol());
         } else if constexpr (DstTileData::Loc == TileType::ScaleRight) {
             CommonCheckMX<DstTileData, SrcTileData>();
-            TExtractToBmx<DstTileData, SrcTileData>(dst.data(), src.data(), 0, 0);
+            TExtractToBmx<DstTileData, SrcTileData>(dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol());
         }
     } else if constexpr (SrcTileData::Loc == TileType::Acc) {
         CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();

@@ -52,7 +52,8 @@ const T CeilAlign(T num_1, T num_2)
 }
 
 template <typename T, typename U, typename S, bool isFp4, int32_t key, int format>
-void TmovMXTest(uint32_t validM, uint32_t validK, uint32_t validN, uint16_t indexM, uint16_t indexK, uint16_t indexN)
+void TmovMXTest(uint32_t validM, uint32_t validK, uint32_t validN, uint16_t indexM, uint16_t indexK, uint16_t indexN,
+    uint16_t baseM = 0, uint16_t baseK = 0, uint16_t baseN = 0)
 {
     constexpr int blockAlign = isFp4 ? 64 : 32;
     int M = CeilAlign<int>(validM, 16);
@@ -64,9 +65,13 @@ void TmovMXTest(uint32_t validM, uint32_t validK, uint32_t validN, uint16_t inde
     size_t aScaleFileSize = M * CeilDiv<uint32_t>(kAlign, 32);
     size_t bScaleFileSize = N * CeilDiv<uint32_t>(kAlign, 32);
 
-    uint32_t outM = validM - indexM;
-    uint32_t outN = validN - indexN;
-    size_t cFileSize = outM * outN * sizeof(T);
+    if(baseM != 0) {
+        aFileSize = isFp4 ? CeilDiv<uint32_t>(baseM * baseK, 2) : baseM * baseK * sizeof(U);
+        bFileSize = isFp4 ? CeilDiv<uint32_t>(baseK * baseN, 2) : baseK * baseN * sizeof(S);
+        aScaleFileSize = baseM * CeilDiv<uint32_t>(baseK, 32);
+        bScaleFileSize = baseN * CeilDiv<uint32_t>(baseK, 32);
+    }
+    size_t cFileSize = (validM - indexM) * (validN - indexN) * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -264,4 +269,49 @@ TEST_F(TMOVMXTest, case15)
     uint32_t N = 96;
 
     TmovMXTest<float, uint8_t, uint8_t, false, 15, 2>(M, K, N, 16, 0, 64);
+}
+
+TEST_F(TMOVMXTest, case16)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 16, 0>(46, 66, 45, 0, 0, 0, 128, 256, 128);
+}
+
+TEST_F(TMOVMXTest, case17)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 17, 0>(68, 130, 80, 16, 64, 32, 128, 256, 128);
+}
+
+TEST_F(TMOVMXTest, case18)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 18, 0>(127, 126, 129, 32, 64, 16, 256, 128, 256);
+}
+
+TEST_F(TMOVMXTest, case19)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 19, 1>(80, 96, 192, 48, 0, 64, 128, 256, 256);
+}
+
+TEST_F(TMOVMXTest, case20)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 20, 1>(98, 126, 108, 32, 64, 16, 128, 256, 128);
+}
+
+TEST_F(TMOVMXTest, case21)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 21, 1>(68, 96, 80, 0, 0, 0, 128, 256, 128);
+}
+
+TEST_F(TMOVMXTest, case22)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 22, 2>(32, 64, 108, 16, 0, 32, 128, 256, 128);
+}
+
+TEST_F(TMOVMXTest, case23)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 23, 2>(196, 146, 96, 64, 64, 48, 256, 256, 128);
+}
+
+TEST_F(TMOVMXTest, case24)
+{
+    TmovMXTest<float, uint8_t, uint8_t, false, 24, 2>(97, 96, 122, 32, 0, 16, 128, 256, 128);
 }
