@@ -210,6 +210,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_ub2l1 -g TMovUb2l1Test.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tscatter -g TSCATTERTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tneg -g TNEGTest.case_float_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolexpand -g TCOLEXPANDTest.case_float_1_8_128_63
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd
@@ -272,5 +273,6 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_ub2l1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tscatter
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tneg
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolexpand
   fi
 fi
