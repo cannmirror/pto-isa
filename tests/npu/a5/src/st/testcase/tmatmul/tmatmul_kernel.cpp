@@ -14,32 +14,47 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 using namespace pto;
 
-template <typename outType, typename aType, typename bType, typename biasType, int M, int K, int N, int validM,
-    int validK, int validN, bool isBias>
-__global__ AICORE void RunTMATMUL(
-    __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ biasType *src2)
+constexpr uint16_t BLOCK_CUBE_M_N = 16;
+
+template <typename T>
+AICORE constexpr inline T CeilAlign(T num_1, T num_2)
 {
-    using GlobalDataSrc0 = GlobalTensor<aType, pto::Shape<1, 1, 1, validM, validK>,
+    if (num_2 == 0) {
+        return 0;
+    }
+    return (num_1 + num_2 - 1) / num_2 * num_2;
+}
+
+template <typename OutType, typename AType, typename BType, typename BiasType, int validM, int validK, int validN,
+    bool isBias>
+__global__ AICORE void RunTMATMUL(__gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ BiasType *src2)
+{
+    constexpr int blockAlign = (sizeof(AType) == 1) ? 32 : 16;
+    constexpr int M = CeilAlign<int>(validM, 16);
+    constexpr int N = CeilAlign<int>(validN, blockAlign);
+    constexpr int K = CeilAlign<int>(validK, blockAlign);
+
+    using GlobalDataSrc0 = GlobalTensor<AType, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<bType, pto::Shape<1, 1, 1, validK, validN>,
+    using GlobalDataSrc1 = GlobalTensor<BType, pto::Shape<1, 1, 1, validK, validN>,
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
-    using GlobalDataSrc2 = GlobalTensor<biasType, pto::Shape<1, 1, 1, 1, validN>,
+    using GlobalDataSrc2 = GlobalTensor<BiasType, pto::Shape<1, 1, 1, 1, validN>,
         pto::Stride<1 * validN, 1 * validN, 1 * validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<outType, pto::Shape<1, 1, 1, validM, validN>,
+    using GlobalDataOut = GlobalTensor<OutType, pto::Shape<1, 1, 1, validM, validN>,
         pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<TileType::Mat, aType, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<TileType::Mat, bType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<TileType::Mat, biasType, 1, N, BLayout::RowMajor, 1, N>;
+    using TileMatAData = Tile<TileType::Mat, AType, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, BType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
+    using TileBiasData = Tile<TileType::Mat, BiasType, 1, N, BLayout::RowMajor, 1, N>;
 
-    using LeftTile = TileLeft<aType, M, K, validM, validK>;
-    using RightTile = TileRight<bType, K, N, validK, validN>;
-    using AccTile = TileAcc<outType, M, N, validM, validN>;
-    using BiasTile = Tile<TileType::Bias, outType, 1, N, BLayout::RowMajor, 1, N>;
+    using LeftTile = TileLeft<AType, M, K, validM, validK>;
+    using RightTile = TileRight<BType, K, N, validK, validN>;
+    using AccTile = TileAcc<OutType, M, N, validM, validN>;
+    using BiasTile = Tile<TileType::Bias, OutType, 1, N, BLayout::RowMajor, 1, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -68,6 +83,7 @@ __global__ AICORE void RunTMATMUL(
     wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
     /**********************************TMOV && TEXTRACT**********************************/
+
     TMOV(aTile, aMatTile);
     TMOV(bTile, bMatTile);
     if constexpr (isBias) {
@@ -93,31 +109,31 @@ __global__ AICORE void RunTMATMUL(
     out = dstGlobal.data();
 }
 
-template <typename outType, typename aType, typename bType, typename biasType, int M, int K, int N, bool isBias>
+template <typename OutType, typename AType, typename BType, typename BiasType, int M, int K, int N, bool isBias>
 __global__ AICORE void RunTMATMUL_SPLIT_K(
-    __gm__ outType *out, __gm__ aType *src0, __gm__ bType *src1, __gm__ biasType *src2)
+    __gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ BiasType *src2)
 {
     constexpr int BASEM = 128;
     constexpr int BASEK = 64;
     constexpr int BASEN = 64;
     using GlobalDataSrc0 =
-        GlobalTensor<aType, pto::Shape<1, 1, 1, M, BASEK>, pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>>;
+        GlobalTensor<AType, pto::Shape<1, 1, 1, M, BASEK>, pto::Stride<1 * M * K, 1 * M * K, M * K, K, 1>>;
     using GlobalDataSrc1 =
-        GlobalTensor<bType, pto::Shape<1, 1, 1, BASEK, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>>;
-    using GlobalDataSrc2 = GlobalTensor<biasType, pto::Shape<1, 1, 1, 1, N>, pto::Stride<1 * N, 1 * N, 1 * N, N, 1>>;
+        GlobalTensor<BType, pto::Shape<1, 1, 1, BASEK, N>, pto::Stride<1 * K * N, 1 * K * N, K * N, N, 1>>;
+    using GlobalDataSrc2 = GlobalTensor<BiasType, pto::Shape<1, 1, 1, 1, N>, pto::Stride<1 * N, 1 * N, 1 * N, N, 1>>;
     using GlobalDataOut =
-        GlobalTensor<outType, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
+        GlobalTensor<OutType, pto::Shape<1, 1, 1, M, N>, pto::Stride<1 * M * N, 1 * M * N, M * N, N, 1>>;
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
-    using TileMatAData = Tile<TileType::Mat, aType, BASEM, BASEK, BLayout::ColMajor, M, BASEK, SLayout::RowMajor, 512>;
-    using TileMatBData = Tile<TileType::Mat, bType, BASEK, BASEN, BLayout::ColMajor, BASEK, N, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<TileType::Mat, biasType, 1, BASEN, BLayout::RowMajor, 1, BASEN>;
+    using TileMatAData = Tile<TileType::Mat, AType, BASEM, BASEK, BLayout::ColMajor, M, BASEK, SLayout::RowMajor, 512>;
+    using TileMatBData = Tile<TileType::Mat, BType, BASEK, BASEN, BLayout::ColMajor, BASEK, N, SLayout::RowMajor, 512>;
+    using TileBiasData = Tile<TileType::Mat, BiasType, 1, BASEN, BLayout::RowMajor, 1, BASEN>;
 
-    using LeftTile = TileLeft<aType, BASEM, BASEK, M, BASEK>;
-    using RightTile = TileRight<bType, BASEK, BASEN, BASEK, N>;
-    using AccTile = TileAcc<outType, BASEM, BASEN, M, N>;
-    using BiasTile = Tile<TileType::Bias, outType, 1, BASEN, BLayout::RowMajor, 1, N>;
+    using LeftTile = TileLeft<AType, BASEM, BASEK, M, BASEK>;
+    using RightTile = TileRight<BType, BASEK, BASEN, BASEK, N>;
+    using AccTile = TileAcc<OutType, BASEM, BASEN, M, N>;
+    using BiasTile = Tile<TileType::Bias, OutType, 1, BASEN, BLayout::RowMajor, 1, N>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -136,6 +152,7 @@ __global__ AICORE void RunTMATMUL_SPLIT_K(
     TASSIGN(biasTile, 0x0);
 
     constexpr int iter = K / BASEK;
+
     for (int i = 0; i < iter; i++) { // baseK = 64
         /*************************************TLOAD****************************************/
         GlobalDataSrc0 src0Global(src0 + i * BASEK);
@@ -183,40 +200,40 @@ template <int32_t tilingKey>
 void LaunchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
 {
     if constexpr (tilingKey == 1) {
-        RunTMATMUL<float, half, half, float, 128, 128, 64, 127, 128, 64, false><<<1, nullptr, stream>>>(
+        RunTMATMUL<float, half, half, float, 40, 50, 60, false><<<1, nullptr, stream>>>(
             reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1), nullptr);
     } else if constexpr (tilingKey == 2) {
-        RunTMATMUL<int32_t, int8_t, int8_t, int8_t, 128, 128, 64, 128, 127, 64, false>
+        RunTMATMUL<int32_t, int8_t, int8_t, int8_t, 6, 7, 8, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1), nullptr);
     } else if constexpr (tilingKey == 3) {
         RunTMATMUL_SPLIT_K<float, half, half, float, 127, 128, 61, false><<<1, nullptr, stream>>>(
             reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1), nullptr);
     } else if constexpr (tilingKey == 4) {
-        RunTMATMUL<float, float, float, float, 128, 128, 64, 127, 127, 63, false><<<1, nullptr, stream>>>(
+        RunTMATMUL<float, float, float, float, 120, 110, 50, false><<<1, nullptr, stream>>>(
             reinterpret_cast<float *>(out), reinterpret_cast<float *>(src0), reinterpret_cast<float *>(src1), nullptr);
     } else if constexpr (tilingKey == 5) {
-        RunTMATMUL<float, bfloat16_t, bfloat16_t, float, 128, 128, 64, 128, 128, 64, false>
+        RunTMATMUL<float, bfloat16_t, bfloat16_t, float, 144, 80, 48, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<bfloat16_t *>(src0),
                 reinterpret_cast<bfloat16_t *>(src1), nullptr);
     } else if constexpr (tilingKey == 6) {
-        RunTMATMUL<float, float8_e4m3_t, float8_e4m3_t, float, 128, 128, 64, 128, 128, 64, false>
+        RunTMATMUL<float, float8_e4m3_t, float8_e4m3_t, float, 32, 64, 96, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
                 reinterpret_cast<float8_e4m3_t *>(src1), nullptr);
     } else if constexpr (tilingKey == 7) {
-        RunTMATMUL<float, float8_e4m3_t, float8_e5m2_t, float, 128, 128, 64, 128, 128, 64, false>
+        RunTMATMUL<float, float8_e4m3_t, float8_e5m2_t, float, 128, 96, 64, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
                 reinterpret_cast<float8_e5m2_t *>(src1), nullptr);
     } else if constexpr (tilingKey == 8) {
-        RunTMATMUL<float, float8_e5m2_t, float8_e4m3_t, float, 128, 128, 64, 128, 128, 64, false>
+        RunTMATMUL<float, float8_e5m2_t, float8_e4m3_t, float, 145, 115, 85, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e5m2_t *>(src0),
                 reinterpret_cast<float8_e4m3_t *>(src1), nullptr);
     } else if constexpr (tilingKey == 9) {
-        RunTMATMUL<float, float8_e5m2_t, float8_e5m2_t, float, 128, 128, 64, 128, 128, 64, false>
+        RunTMATMUL<float, float8_e5m2_t, float8_e5m2_t, float, 120, 90, 160, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e5m2_t *>(src0),
                 reinterpret_cast<float8_e5m2_t *>(src1), nullptr);
     } else if constexpr (tilingKey == 10) {
-        RunTMATMUL<float, hifloat8_t, hifloat8_t, float, 128, 128, 64, 128, 128, 64, false>
+        RunTMATMUL<float, hifloat8_t, hifloat8_t, float, 30, 90, 60, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<hifloat8_t *>(src0),
                 reinterpret_cast<hifloat8_t *>(src1), nullptr);
     }
@@ -237,47 +254,41 @@ template <int32_t tilingKey>
 void LaunchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream)
 {
     if constexpr (tilingKey == 1) {
-        RunTMATMUL<int32_t, int8_t, int8_t, int32_t, 128, 128, 64, 128, 128, 64, true>
+        RunTMATMUL<int32_t, int8_t, int8_t, int32_t, 8, 7, 6, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
     } else if constexpr (tilingKey == 2) {
-        RunTMATMUL<float, half, half, half, 128, 128, 64, 128, 128, 64, true>
-            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0),
-                reinterpret_cast<half *>(src1), reinterpret_cast<half *>(src2));
+        RunTMATMUL<float, half, half, half, 16, 15, 16, true><<<1, nullptr, stream>>>(reinterpret_cast<float *>(out),
+            reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1), reinterpret_cast<half *>(src2));
     } else if constexpr (tilingKey == 3) {
-        RunTMATMUL<float, half, half, bfloat16_t, 128, 128, 64, 128, 127, 64, true>
+        RunTMATMUL<float, half, half, bfloat16_t, 112, 127, 80, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0),
                 reinterpret_cast<half *>(src1), reinterpret_cast<bfloat16_t *>(src2));
     } else if constexpr (tilingKey == 4) {
-        RunTMATMUL<float, bfloat16_t, bfloat16_t, bfloat16_t, 128, 128, 64, 128, 128, 63, true>
+        RunTMATMUL<float, bfloat16_t, bfloat16_t, bfloat16_t, 80, 112, 63, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<bfloat16_t *>(src0),
                 reinterpret_cast<bfloat16_t *>(src1), reinterpret_cast<bfloat16_t *>(src2));
     } else if constexpr (tilingKey == 5) {
-        RunTMATMUL_SPLIT_K<float, half, half, float, 127, 128, 63, true>
-            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0),
-                reinterpret_cast<half *>(src1), reinterpret_cast<float *>(src2));
+        RunTMATMUL_SPLIT_K<float, float, float, float, 127, 128, 63, true><<<1, nullptr, stream>>>(
+            reinterpret_cast<float *>(out), reinterpret_cast<float *>(src0), reinterpret_cast<float *>(src1), reinterpret_cast<float *>(src2));
     } else if constexpr (tilingKey == 6) {
-        RunTMATMUL<float, float, float, float, 128, 128, 64, 127, 128, 63, true>
-            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float *>(src0),
-                reinterpret_cast<float *>(src1), reinterpret_cast<float *>(src2));
+        RunTMATMUL<float, float8_e4m3_t, float8_e4m3_t, float, 120, 90, 160, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
+                reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float *>(src2));
     } else if constexpr (tilingKey == 7) {
-        RunTMATMUL<float, float8_e4m3_t, float8_e4m3_t, float, 128, 128, 64, 128, 128, 64, true>
+        RunTMATMUL<float, float8_e4m3_t, float8_e5m2_t, float, 32, 64, 96, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
-                reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float *>(src2));
+                reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float *>(src2));
     } else if constexpr (tilingKey == 8) {
-        RunTMATMUL<float, float8_e4m3_t, float8_e5m2_t, float, 128, 128, 64, 128, 128, 64, true>
-            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
-                reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float *>(src2));
-    } else if constexpr (tilingKey == 9) {
-        RunTMATMUL<float, float8_e5m2_t, float8_e4m3_t, float, 128, 128, 64, 128, 128, 64, true>
+        RunTMATMUL<float, float8_e5m2_t, float8_e4m3_t, float, 128, 96, 64, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e5m2_t *>(src0),
                 reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float *>(src2));
-    } else if constexpr (tilingKey == 10) {
-        RunTMATMUL<float, float8_e5m2_t, float8_e5m2_t, float, 128, 128, 64, 128, 128, 64, true>
+    } else if constexpr (tilingKey == 9) {
+        RunTMATMUL<float, float8_e5m2_t, float8_e5m2_t, float, 30, 90, 60, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e5m2_t *>(src0),
                 reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float *>(src2));
-    } else if constexpr (tilingKey == 11) {
-        RunTMATMUL<float, hifloat8_t, hifloat8_t, float, 128, 128, 64, 128, 128, 64, true>
+    } else if constexpr (tilingKey == 10) {
+        RunTMATMUL<float, hifloat8_t, hifloat8_t, float, 145, 115, 85, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<hifloat8_t *>(src0),
                 reinterpret_cast<hifloat8_t *>(src1), reinterpret_cast<float *>(src2));
     }

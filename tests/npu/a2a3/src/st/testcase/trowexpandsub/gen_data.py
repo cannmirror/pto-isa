@@ -21,27 +21,36 @@ def gen_golden_data(case_name, param):
     dtype = param.datatype
 
     vr, vc = param.valid_row, param.valid_col
+    src1vc = 1
+    if param.is_rowmajor:
+        src1vc = 32 // np.dtype(dtype).itemsize
 
     input1 = np.random.random(vr * vc).astype(dtype)
-    input2 = np.random.random(vr).astype(dtype)
+    input2 = np.random.random(vr * src1vc).astype(dtype)
     golden = np.zeros(vr * vc).astype(dtype)
 
-    for i in range(vr):
-        for j in range(vc):
-            golden[i * vc + j] = input1[i * vc + j] - input2[i]
-
+    if param.src0eqdst:
+        for i in range(vr):
+            for j in range(vc):
+                golden[i * vc + j] = input1[i * vc + j] - input2[i * src1vc + j % src1vc]
+    else:
+        for i in range(vr):
+            for j in range(vc):
+                golden[i * vc + j] = input2[i * src1vc + j % src1vc] - input1[i * vc + j]
     input1.tofile("input1.bin")
     input2.tofile("input2.bin")
     golden.tofile("golden.bin")
 
 
 class TRowExpandSub:
-    def __init__(self, datatype, valid_row, valid_col, row, col):
+    def __init__(self, datatype, valid_row, valid_col, row, col, src0eqdst, is_rowmajor):
         self.datatype = datatype
         self.valid_row = valid_row
         self.valid_col = valid_col
         self.row = row
         self.col = col
+        self.src0eqdst = src0eqdst
+        self.is_rowmajor = is_rowmajor
 
 
 if __name__ == "__main__":
@@ -53,15 +62,31 @@ if __name__ == "__main__":
         "TROWEXPANDSUBTest.case4",
         "TROWEXPANDSUBTest.case5",
         "TROWEXPANDSUBTest.case6",
+        "TROWEXPANDSUBTest.case7",
+        "TROWEXPANDSUBTest.case8",
+        "TROWEXPANDSUBTest.case9",
+        "TROWEXPANDSUBTest.case10",
+        "TROWEXPANDSUBTest.case11",
+        "TROWEXPANDSUBTest.case12",
+        "TROWEXPANDSUBTest.case13",
+        "TROWEXPANDSUBTest.case14",
     ]
 
     case_params_list = [
-        TRowExpandSub(np.float32, 16, 16, 16, 16),
-        TRowExpandSub(np.float32, 16, 16, 32, 32),
-        TRowExpandSub(np.float16, 16, 16, 16, 16),
-        TRowExpandSub(np.float16, 16, 16, 32, 32),
-        TRowExpandSub(np.float32, 1, 16384, 1, 16384),
-        TRowExpandSub(np.float32, 2048, 1, 2048, 8),
+        TRowExpandSub(np.float32, 16, 16, 16, 16, True, False),
+        TRowExpandSub(np.float32, 16, 16, 32, 32, True, False),
+        TRowExpandSub(np.float16, 16, 16, 16, 16, True, False),
+        TRowExpandSub(np.float16, 16, 16, 32, 32, True, False),
+        TRowExpandSub(np.float32, 1, 16384, 1, 16384, True, False),
+        TRowExpandSub(np.float32, 2048, 1, 2048, 8, True, False),
+        TRowExpandSub(np.float32, 16, 16, 16, 16, True, True),
+        TRowExpandSub(np.float32, 16, 16, 32, 32, True, True),
+        TRowExpandSub(np.float16, 16, 16, 16, 16, True, True),
+        TRowExpandSub(np.float16, 16, 16, 32, 32, True, True),
+        TRowExpandSub(np.float32, 1, 16384, 1, 16384, True, True),
+        TRowExpandSub(np.float32, 2048, 1, 2048, 8, True, True),
+        TRowExpandSub(np.float32, 16, 16, 16, 16, False, False),
+        TRowExpandSub(np.float32, 16, 16, 16, 16, False, True),
     ]
 
     for i, case_name in enumerate(case_name_list):

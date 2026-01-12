@@ -39,18 +39,15 @@ PTO_INST RecordEvent TSELS(TileData& dst, TileData& src0, TileData& src1, uint8_
 ## Constraints
 
 - **Implementation checks (A2A3)**:
-  - `TileData::DType` must be one of: `half`, `float`;
-  - Tile location must be vector (`TileData::Loc == TileType::Vec`);
-  - Tile layout must be row-major (`TileData::isRowMajor`);
-  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`;
+  - `TileData::DType` must be one of: `half`, `float16_t`, `float`, `float32_t`.
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`).
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
   - Runtime: the implementation expects `src0/src1/dst` to have matching valid rows/cols.
 - **Implementation checks (A5)**:
-  - `TileData::DType` must be one of: `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `half`, `int32_t`, `uint32_t`, `float`;
-  - `sizeof(TileData::DType)` must be `1`, `2`, or `4` bytes;
-  - Tile location must be vector (`TileData::Loc == TileType::Vec`);
-  - Tile layout must be row-major (`TileData::isRowMajor`);
-  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`;
-  - Runtime: the implementation expects `src0/src1/dst` to have matching valid rows/cols;
+  - `sizeof(TileData::DType)` must be `1`, `2`, or `4` bytes.
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`).
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+  - Runtime: the implementation expects `src0/src1/dst` to have matching valid rows/cols.
   - Padding behavior depends on `TileData::PadVal` (`Null`/`Zero` vs `-INF/+INF` modes).
 - **Valid region**:
   - The implementation uses `dst.GetValidRow()` / `dst.GetValidCol()` as the selection domain.

@@ -6,9 +6,9 @@ Row-wise broadcast divide: divide each row of `src0` by a per-row scalar vector 
 
 ## Math Interpretation
 
-Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. For each element in `0 <= i < R` and `0 <= j < C`:
+For each element `(i, j)` in the valid region:
 
-$$ \mathrm{dst}_{i,j} = \frac{\mathrm{src0}_{i,j}}{\mathrm{src1}_{0,j}} $$
+$$ \mathrm{dst}_{i,j} = \frac{\mathrm{src0}_{i,j}}{\mathrm{src1}_{0,i}} $$
 
 ## Assembly Syntax
 
@@ -74,3 +74,4 @@ void example_manual() {
   TROWEXPANDDIV(dst, src0, src1);
 }
 ```
+

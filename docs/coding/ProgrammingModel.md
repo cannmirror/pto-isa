@@ -14,7 +14,6 @@ For the abstract execution model (core/device/host), see `docs/machine/abstract-
 - **GlobalTensor**: a lightweight view of global memory (GM) as a 5-D tensor with shape/stride/layout metadata, used by memory instructions such as `TLOAD` and `TSTORE`. See `docs/coding/GlobalTensor.md`.
 - **Scalar**: immediate values and enumerations that parameterize instructions (rounding modes, comparison modes, atomic modes, etc.). See `docs/coding/Scalar.md`.
 - **Event**: explicit dependency tokens between pipeline classes, used to order operations without introducing a full barrier everywhere. See `docs/coding/Event.md`.
-- **Block**: the multicore execution unit (SPMD-style). All cores run the same kernel, and each core’s `block_idx` (and optional sub-block id) determines which data region it owns. See `docs/coding/Block.md`.
 
 ## Two development styles
 

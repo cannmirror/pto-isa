@@ -17,9 +17,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "utils.hpp"
 #include "TBinSOp.hpp"
 
-using namespace pto;
-using namespace std;
-
 namespace pto {
 
 template <typename T> struct ExpandSOp {
@@ -29,49 +26,42 @@ template <typename T> struct ExpandSOp {
     }
 };
 
-template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-__tf__ PTO_INTERNAL
-void TExpandS(typename TileData::TileDType __out__ dst,
-           typename TileData::DType scalar,
-           unsigned kValidRows,
-           unsigned kValidCols,
-           BinSOpsImpl version = BinSOpsImpl::BinSOpsIMPL_DEFAULT) {
-    using T = typename TileData::DType;
+template <typename TileDataDst, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
+__tf__ PTO_INTERNAL void TExpandS(
+        typename TileDataDst::TileDType __out__ dst,
+        typename TileDataDst::DType scalar,
+        unsigned kValidRows,
+        unsigned kValidCols,
+        VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-    BinaryInstr<ExpandSOp<T>, TileData, T, elementsPerRepeat, blockSizeElem, rowStride>(
+    BinaryInstr<ExpandSOp<T>, TileDataDst, TileDataDst, T, elementsPerRepeat, blockSizeElem, rowStride, rowStride>(
                 dstPtr, nullptr, scalar, kValidRows, kValidCols, version);
 }
 
-template <typename TileData>
-AICORE void TEXPANDS_IMPL(TileData &dst, typename TileData::DType scalar)
+template <typename TileDataDst>
+AICORE void TEXPANDS_IMPL(TileDataDst &dst, typename TileDataDst::DType scalar)
 {
-    using T = typename TileData::DType;
-
-    static_assert(
-                    std::is_same<typename TileData::DType, int32_t>::value ||
-                    std::is_same<typename TileData::DType, uint32_t>::value ||
-                    std::is_same<typename TileData::DType, int>::value ||
-                    std::is_same<typename TileData::DType, int16_t>::value ||
-                    std::is_same<typename TileData::DType, uint16_t>::value ||
-                    std::is_same<typename TileData::DType, int8_t>::value ||
-                    std::is_same<typename TileData::DType, uint8_t>::value ||
-                    std::is_same<typename TileData::DType, half>::value ||
-                    std::is_same<typename TileData::DType, float16_t>::value ||
-                    std::is_same<typename TileData::DType, float>::value ||
-                    std::is_same<typename TileData::DType, float32_t>::value,
-                      "TEXPANDS: Invalid data type");
-
-    static_assert(TileData::Loc == TileType::Vec, "Location of src and dst tiles must be Location::Vec.");
-    static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
-    static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+    using T = typename TileDataDst::DType;
+    static_assert(std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value || std::is_same<T, int>::value ||
+                      std::is_same<T, int16_t>::value || std::is_same<T, uint16_t>::value ||
+                      std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value ||
+                      std::is_same<T, half>::value || std::is_same<T, float16_t>::value ||
+                      std::is_same<T, float>::value || std::is_same<T, float32_t>::value,
+        "TEXPANDS: Invalid data type");
+    static_assert(TileDataDst::Loc == TileType::Vec, "Location of src and dst tiles must be Location::Vec.");
+    static_assert(TileDataDst::ValidCol <= TileDataDst::Cols,
+        "Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileDataDst::ValidRow <= TileDataDst::Rows,
+        "Number of valid rows must not be greater than number of tile rows.");
 
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
-    constexpr unsigned rowStride = TileData::RowStride;
+    constexpr unsigned rowStride = TileDataDst::RowStride;
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    TExpandS<TileData, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), scalar, validRow, validCol);
+    TExpandS<TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), scalar, validRow, validCol);
 }
 }  // namespace pto
 #endif

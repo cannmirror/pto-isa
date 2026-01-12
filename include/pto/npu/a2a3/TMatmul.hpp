@@ -12,24 +12,24 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TMATMUL_HPP
 
 namespace pto {
-template <typename TileLeft>
-PTO_INTERNAL constexpr bool GetKDirectionAlign()
+
+template <typename TileLeft, typename TileRight>
+PTO_INTERNAL bool GetKDirectionAlign(TileLeft &aMatrix, TileRight &bMatrix)
 {
     // only for f322f32
-    if constexpr (std::is_same<typename TileLeft::DType, float>::value) {
-        if constexpr (TileLeft::isRowMajor && TileLeft::SFractal == SLayout::ColMajor) {
+    if constexpr (std::is_same<typename TileLeft::DType, float>::value &&
+                  std::is_same<typename TileRight::DType, float>::value) {
+        if (aMatrix.GetKAligned() || bMatrix.GetKAligned()) {
             return true;
         }
+        return false;
     }
     return false;
 }
-
 template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
 __tf__ AICORE void TMatmul(typename TileRes::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
-    typename TileRight::TileDType __in__ bMatrix, uint16_t m, uint16_t k, uint16_t n)
+    typename TileRight::TileDType __in__ bMatrix, uint16_t m, uint16_t k, uint16_t n, bool kDirectionAlign)
 {
-    constexpr bool kDirectionAlign = GetKDirectionAlign<TileLeft>();
-
     __cc__ typename TileRes::DType *c = (__cc__ typename TileRes::DType *)__cce_get_tile_ptr(cMatrix);
     __ca__ typename TileLeft::DType *a = (__ca__ typename TileLeft::DType *)__cce_get_tile_ptr(aMatrix);
     __cb__ typename TileRight::DType *b = (__cb__ typename TileRight::DType *)__cce_get_tile_ptr(bMatrix);
@@ -40,10 +40,8 @@ __tf__ AICORE void TMatmul(typename TileRes::TileDType __out__ cMatrix, typename
 template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
 __tf__ AICORE void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
     typename TileLeft::TileDType __in__ aMatrix, typename TileRight::TileDType __in__ bMatrix, uint64_t bias,
-    uint16_t m, uint16_t k, uint16_t n)
+    uint16_t m, uint16_t k, uint16_t n, bool kDirectionAlign)
 {
-    constexpr bool kDirectionAlign = GetKDirectionAlign<TileLeft>();
-
     __cc__ typename TileRes::DType *c = (__cc__ typename TileRes::DType *)__cce_get_tile_ptr(cMatrix);
     __ca__ typename TileLeft::DType *a = (__ca__ typename TileLeft::DType *)__cce_get_tile_ptr(aMatrix);
     __cb__ typename TileRight::DType *b = (__cb__ typename TileRight::DType *)__cce_get_tile_ptr(bMatrix);
@@ -93,8 +91,9 @@ PTO_INTERNAL void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &b
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
     CheckDynamicMad(m, k, n);
-    TMatmul<TileRes, TileLeft, TileRight, false, true>(cMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
+    TMatmul<TileRes, TileLeft, TileRight, false, true>(cMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n, kDirectionAlign);
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight>
@@ -105,8 +104,9 @@ PTO_INTERNAL void TMATMUL_ACC_IMPL(
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
     CheckDynamicMad(m, k, n);
-    TMatmul<TileRes, TileLeft, TileRight, false, false>(cOutMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
+    TMatmul<TileRes, TileLeft, TileRight, false, false>(cOutMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n, kDirectionAlign);
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias>
@@ -119,10 +119,11 @@ PTO_INTERNAL void TMATMUL_BIAS_IMPL(
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
     CheckDynamicMad(m, k, n);
 
     TMatmulBias<TileRes, TileLeft, TileRight, true, false>(
-        cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n);
+        cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n, kDirectionAlign);
 }
 } // namespace pto
 #endif

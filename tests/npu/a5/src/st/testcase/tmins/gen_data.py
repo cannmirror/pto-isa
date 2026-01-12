@@ -20,11 +20,8 @@ PAD_VALUE_MAX = "PAD_VAL_MAX"
 
 def gen_golden_data_tmins(case_name, param):
     dtype = param.dtype
-
-    if param.pad_value == PAD_VALUE_MAX:
-        height, width = [param.global_row, param.global_col]
-    else:
-        height, width = [param.tile_row, param.tile_col]
+    dst_row, dst_col = [param.dst_row, param.dst_col]
+    height, width = [param.tile_row, param.tile_col]
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
@@ -35,30 +32,25 @@ def gen_golden_data_tmins(case_name, param):
         input1 = np.random.uniform(low=-13.013, high=130.013, size=[height, width]).astype(dtype)
         input2 = np.random.uniform(low=-13.013, high=130.013, size=[1]).astype(dtype)
 
-    golden = np.minimum(input1, input2)
-
-    # Apply valid region constraints
-    output = np.zeros([height, width]).astype(dtype)
-    for h in range(height):
-        for w in range(width):
-            if h >= h_valid or w >= w_valid:
-                golden[h][w] = output[h][w]
-
+    golden = np.zeros([dst_row, dst_col]).astype(dtype)
+    for h in range(min(h_valid, dst_row)):
+        for w in range(min(w_valid, dst_col)):
+            golden[h][w] = min(input1[h][w], input2[0])
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
     input2.tofile("input_scalar.bin")
     golden.tofile("golden.bin")
 
-    return output, input1, input2, golden
+    return input1, input2, golden
 
 
 class TestParams:
-    def __init__(self, dtype, global_row, global_col,
+    def __init__(self, dtype, dst_row, dst_col,
                  tile_row, tile_col, valid_row, valid_col,
                  pad_value=PAD_VALUE_NULL):
         self.dtype = dtype
-        self.global_row = global_row
-        self.global_col = global_col
+        self.dst_row = dst_row
+        self.dst_col = dst_col
         self.tile_row = tile_row
         self.tile_col = tile_col
         self.valid_row = valid_row
@@ -76,7 +68,7 @@ def generate_case_name(param):
         np.int8: 'int8',
         np.uint8: 'uint8',
     }[param.dtype]
-    return f"TMINSTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}"\
+    return f"TMINSTest.case_{dtype_str}_{param.dst_row}x{param.dst_col}_{param.tile_row}x{param.tile_col}"\
         f"_{param.valid_row}x{param.valid_col}"
 
 if __name__ == "__main__":
@@ -89,12 +81,12 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TestParams(np.float32, 64, 64, 32, 32, 64, 64),
-        TestParams(np.float32, 128, 128, 64, 64, 128, 128),
-        TestParams(np.float32, 60, 60, 64, 64, 60, 60, PAD_VALUE_MAX),
+        TestParams(np.float32, 64, 64, 32, 32, 32, 32),
+        TestParams(np.float32, 128, 128, 64, 64, 64, 64),
+        TestParams(np.float32, 60, 128, 64, 64, 60, 60, PAD_VALUE_MAX),
         TestParams(np.float32, 16, 200, 20, 512, 16, 200, PAD_VALUE_MAX),
         TestParams(np.float32, 1, 3600, 2, 4096, 1, 3600, PAD_VALUE_MAX),
-        TestParams(np.float16, 16, 200, 20, 224, 16, 200, PAD_VALUE_MAX),
+        TestParams(np.float16, 16, 256, 20, 224, 16, 200, PAD_VALUE_MAX),
 
         TestParams(np.int32, 32, 32, 32, 32, 32, 32),
         TestParams(np.uint32, 32, 32, 32, 32, 32, 32),
@@ -104,7 +96,7 @@ if __name__ == "__main__":
         TestParams(np.uint8, 32, 128, 32, 128, 32, 128),
     ]
 
-    for i, param in enumerate(case_params_list):
+    for _, param in enumerate(case_params_list):
         case_name = generate_case_name(param)
         if not os.path.exists(case_name):
             os.makedirs(case_name)

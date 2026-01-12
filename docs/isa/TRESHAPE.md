@@ -29,10 +29,6 @@ Enforced by `TRESHAPE_IMPL`:
 
 - **Tile type must match**: `TileDataIn::Loc == TileDataOut::Loc`.
 - **Total byte size must match**: `sizeof(InElem) * InNumel == sizeof(OutElem) * OutNumel`.
-- **Element types must be compatible**:
-  - same type, or
-  - both floating-point, or
-  - both integral.
 - **No boxed/non-boxed conversion**:
   - cannot reshape between `SLayout::NoneBox` and boxed layouts.
 

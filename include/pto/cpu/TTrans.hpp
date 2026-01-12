@@ -11,7 +11,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TTRANS_HPP
 
 #include <pto/common/pto_tile.hpp>
-#include "pto/cpu/parallel.hpp"
 #include "pto/cpu/tile_offsets.hpp"
 namespace pto
 {
@@ -50,7 +49,6 @@ namespace pto
 
     template <typename DstTileData, typename SrcTileData, typename TmpTileData>
     PTO_INTERNAL void TTRANS_IMPL(DstTileData &dst, SrcTileData &src, TmpTileData &tmp) {
-        (void)tmp;
         static_assert (SrcTileData::ValidRow == DstTileData::ValidCol && SrcTileData::ValidCol == DstTileData::ValidRow);
         unsigned validRow = src.GetValidRow();
         unsigned validCol = src.GetValidCol();

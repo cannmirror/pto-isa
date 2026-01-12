@@ -14,7 +14,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 using namespace pto;
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int kTRows_, int kTCols_, int kGRows_, int kGCols_>
 __global__ AICORE void runTAdd( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
     using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
@@ -43,18 +43,84 @@ __global__ AICORE void runTAdd( __gm__ T __out__ *out, __gm__ T __in__ *src0,  _
     out = dstGlobal.data();
 }
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-void LaunchTAdd(T *out, T *src0, T *src1, void *stream)
-{
-    if constexpr ( std::is_same_v<T, aclFloat16> )
-        runTAdd<half, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>((half*)(out),
-                                                                                  (half*)(src0),
-                                                                                  (half*)(src1));
-    else 
-        runTAdd<T, kGRows_, kGCols_, kTRows_, kTCols_><<<1, nullptr, stream>>>(out, src0, src1);
+template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH,
+    int src1TileW, int vRows, int vCols>
+__global__ AICORE void runTAdd( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
+    using DynShape = pto::Shape<-1, -1, -1, -1, -1>;
+    using DynStride = pto::Stride<-1, -1, -1, -1, -1>;
+    using GlobalData = GlobalTensor<T, DynShape, DynStride>;
+    GlobalData dstGlobal(out, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride(1, 1, 1, dstTileW, 1));
+    GlobalData src0Global(src0, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride(1, 1, 1, src0TileW, 1));
+    GlobalData src1Global(src1, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride(1, 1, 1, src1TileW, 1));
+
+    using TileDataDst = Tile<TileType::Vec, T, dstTileH, dstTileW, BLayout::RowMajor, -1, -1>;
+    using TileDataSrc0 = Tile<TileType::Vec, T, src0TileH, src0TileW, BLayout::RowMajor, -1, -1>;
+    using TileDataSrc1 = Tile<TileType::Vec, T, src1TileH, src1TileW, BLayout::RowMajor, -1, -1>;
+    TileDataDst dstTile(vRows, vCols);
+    TileDataSrc0 src0Tile(vRows, vCols);
+    TileDataSrc1 src1Tile(vRows, vCols);
+    TASSIGN(src0Tile, 0x0);
+    TASSIGN(src1Tile, 0x10000);
+    TASSIGN(dstTile, 0x20000);
+
+    TLOAD(src0Tile, src0Global);
+    TLOAD(src1Tile, src1Global);
+    set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+    TADD<TileDataDst, TileDataSrc0, TileDataSrc1>(dstTile, src0Tile, src1Tile);
+    set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
+    TSTORE(dstGlobal, dstTile);
+    out = dstGlobal.data();
 }
 
-template void LaunchTAdd<float, 64, 64, 64, 64>(float *out, float *src0, float *src1, void *stream);
-template void LaunchTAdd<int32_t, 64, 64, 64, 64>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
-template void LaunchTAdd<int16_t, 64, 64, 64, 64>(int16_t *out, int16_t *src0, int16_t *src1, void *stream);
-template void LaunchTAdd<aclFloat16, 16, 256, 16, 256>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH,
+    int src1TileW, int vRows, int vCols, bool sameTile>
+void LaunchTAdd(T *out, T *src0, T *src1, void *stream)
+{
+    if constexpr (sameTile) {
+        runTAdd<T, dstTileH, dstTileW, vRows, vCols><<<1, nullptr, stream>>>(out, src0, src1);
+    } else {
+        runTAdd<T, dstTileH, dstTileW, src0TileH, src0TileW, src1TileH,
+            src1TileW, vRows, vCols><<<1, nullptr, stream>>>(out, src0, src1);
+    }
+}
+
+template <int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH,
+    int src1TileW, int vRows, int vCols, bool sameTile>
+void LaunchTAddHalf(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream)
+{
+    if constexpr (sameTile) {
+        runTAdd<half, dstTileH, dstTileW, vRows, vCols><<<1, nullptr, stream>>>
+            ((half*)(out), (half*)(src0), (half*)(src1));
+    } else {
+        runTAdd<half, dstTileH, dstTileW, src0TileH, src0TileW, src1TileH,
+            src1TileW, vRows, vCols><<<1, nullptr, stream>>>
+            ((half*)(out), (half*)(src0), (half*)(src1));
+    }
+}
+
+template void LaunchTAdd<float, 64, 64, 64, 64, 64, 64, 64, 64, true>
+    (float *out, float *src0, float *src1, void *stream);
+template void LaunchTAdd<int32_t, 64, 64, 64, 64, 64, 64, 64, 64, true>
+    (int32_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTAdd<int16_t, 64, 64, 64, 64, 64, 64, 64, 64, true>
+    (int16_t *out, int16_t *src0, int16_t *src1, void *stream);
+template void LaunchTAddHalf<16, 256, 16, 256, 16, 256, 16, 256, true>
+    (aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTAddHalf<16, 64, 16, 128, 16, 128, 16, 64, false>
+    (aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTAdd<float, 16, 32, 16, 64, 16, 32, 16, 32, false>
+    (float *out, float *src0, float *src1, void *stream);
+template void LaunchTAdd<int16_t, 32, 128, 32, 128, 32, 256, 32, 128, false>
+    (int16_t *out, int16_t *src0, int16_t *src1, void *stream);
+template void LaunchTAdd<int32_t, 16, 32, 16, 64, 16, 32, 16, 32, false>
+    (int32_t *out, int32_t *src0, int32_t *src1, void *stream);
+template void LaunchTAddHalf<16, 64, 16, 128, 16, 128, 16, 63, false>
+    (aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTAdd<float, 16, 32, 16, 64, 16, 32, 16, 31, false>
+    (float *out, float *src0, float *src1, void *stream);
+template void LaunchTAdd<int16_t, 32, 128, 32, 128, 32, 256, 32, 127, false>
+    (int16_t *out, int16_t *src0, int16_t *src1, void *stream);
+template void LaunchTAdd<int32_t, 16, 32, 16, 64, 16, 32, 16, 31, false>
+    (int32_t *out, int32_t *src0, int32_t *src1, void *stream);

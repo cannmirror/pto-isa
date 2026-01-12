@@ -307,7 +307,7 @@ namespace pto {
         static_assert(TileData::Loc == TileType::Vec, "TSQRT: TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "TSQRT: Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "TSQRT: Number of valid rows must not be greater than number of tile rows.");
-        static_assert(TileData::isRowMajor, "TRSQRT: Not supported Layout type");
+        static_assert(TileData::isRowMajor, "TSQRT: Not supported Layout type");
 
         PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TSQRT: Number of columns of src and dst must be the same.");
         PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TSQRT: Number of rows of src and dst must be the same.");
@@ -339,7 +339,7 @@ namespace pto {
         static_assert(TileData::Loc == TileType::Vec, "TEXP: TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "TEXP: Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "TEXP: Number of valid rows must not be greater than number of tile rows.");
-        static_assert(TileData::isRowMajor, "TRSQRT: Not supported Layout type");
+        static_assert(TileData::isRowMajor, "TEXP: Not supported Layout type");
 
         PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TEXP: Number of columns of src and dst must be the same.");
         PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TEXP: Number of rows of src and dst must be the same.");
@@ -350,6 +350,70 @@ namespace pto {
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
         constexpr unsigned rowStride = TileData::RowStride;
         TUnaryOp<TileData, _vexp, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
+    }
+
+    /* ABS */
+
+    template<typename DataType>
+    AICORE void _vabs(__ubuf__ DataType* dst, __ubuf__ DataType* src, 
+                          uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride,
+                          uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
+        vabs(dst, src, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+    }
+
+    template <typename TileData>
+    AICORE void TABS_IMPL(TileData &dst, TileData &src) {
+        static_assert(std::is_same<typename TileData::DType, float32_t>::value ||
+                      std::is_same<typename TileData::DType, float>::value ||
+                      std::is_same<typename TileData::DType, half>::value ||
+                      std::is_same<typename TileData::DType, float16_t>::value,
+                      "TABS: Invalid data type");
+        static_assert(TileData::Loc == TileType::Vec, "TABS: TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileData::ValidCol <= TileData::Cols, "TABS: Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileData::ValidRow <= TileData::Rows, "TABS: Number of valid rows must not be greater than number of tile rows.");
+        static_assert(TileData::isRowMajor, "TABS: Not supported Layout type");
+
+        PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TABS: Number of columns of src and dst must be the same.");
+        PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TABS: Number of rows of src and dst must be the same.");
+
+        unsigned validCol = dst.GetValidCol();
+        unsigned validRow = dst.GetValidRow();
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
+        constexpr unsigned rowStride = TileData::RowStride;
+        TUnaryOp<TileData, _vabs, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
+    }
+
+    /* LOG */
+
+    template<typename DataType>
+    AICORE void _vlog(__ubuf__ DataType* dst, __ubuf__ DataType* src, 
+                          uint8_t repeat, uint16_t dstBlockStride, uint16_t srcBlockStride,
+                          uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
+        vln(dst, src, repeat, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+    }
+
+    template <typename TileData>
+    AICORE void TLOG_IMPL(TileData &dst, TileData &src) {
+        static_assert(std::is_same<typename TileData::DType, float32_t>::value ||
+                      std::is_same<typename TileData::DType, float>::value ||
+                      std::is_same<typename TileData::DType, half>::value ||
+                      std::is_same<typename TileData::DType, float16_t>::value,
+                      "TLOG: Invalid data type");
+        static_assert(TileData::Loc == TileType::Vec, "TLOG: TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileData::ValidCol <= TileData::Cols, "TLOG: Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileData::ValidRow <= TileData::Rows, "TLOG: Number of valid rows must not be greater than number of tile rows.");
+        static_assert(TileData::isRowMajor, "TLOG: Not supported Layout type");
+
+        PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "TLOG: Number of columns of src and dst must be the same.");
+        PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "TLOG: Number of rows of src and dst must be the same.");
+
+        unsigned validCol = dst.GetValidCol();
+        unsigned validRow = dst.GetValidRow();
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
+        constexpr unsigned rowStride = TileData::RowStride;
+        TUnaryOp<TileData, _vlog, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), validRow, validCol);
     }
 }
 

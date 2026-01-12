@@ -26,7 +26,7 @@ template <typename T> struct TPartMaxOp {
 
 template <typename DstTileData, typename Src0TileData, typename Src1TileData> 
 PTO_INTERNAL void TPARTMAX_IMPL(DstTileData &dst, Src0TileData& src0, Src1TileData& src1,
-    BinOpsImpl version = BinOpsImpl::BinOpsIMPL_DEFAULT)
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT)
 {
     TPartMasterImpl<TPartMaxOp<typename DstTileData::DType>, DstTileData, Src0TileData, Src1TileData>
         (dst, src0, src1, version);

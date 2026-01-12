@@ -128,6 +128,9 @@ namespace pto {
     static_assert(std::is_same_v<T, typename TileDataSrc::DType>,
                   "TUnaryPlusStaticCheck: The data type of dst must be consistent with src.");
 
+    static_assert(TileDataDst::isRowMajor && TileDataSrc::isRowMajor,
+                  "TUnaryPlusStaticCheck: The src and dst Tile only support row major layout.");
+
     static_assert(std::is_same_v<T, float32_t> || std::is_same_v<T, float> ||
                   std::is_same_v<T, half> || std::is_same_v<T, float16_t>,
                   "TUnaryPlusStaticCheck: Invalid data type");
@@ -149,7 +152,18 @@ namespace pto {
     unsigned dstValidCol = dst.GetValidCol();
     PTO_ASSERT(dstValidRow == src.GetValidRow(), "TRSQRT: Number of rows of src and dst must be the same.");
     PTO_ASSERT(dstValidCol == src.GetValidCol(), "TRSQRT: Number of columns of src and dst must be the same.");
-    TUnaryPlusOp<TileDataDst, TileDataSrc, _vrsqrt>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+        constexpr unsigned rowStride = TileDataDst::RowStride;
+#ifdef ACCURATE_RSQRT
+        TRsqrtCustom<TileDataDst>(dst.data(), src.data(), dstValidRow, dstValidCol);
+#else
+        TUnaryOp<TileDataDst, _vrsqrt, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), dstValidRow, dstValidCol);
+#endif
+    } else {
+        TUnaryPlusOp<TileDataDst, TileDataSrc, _vrsqrt>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    }
   }
 
   /* SQRT */
@@ -160,7 +174,32 @@ namespace pto {
     unsigned dstValidCol = dst.GetValidCol();
     PTO_ASSERT(dstValidRow == src.GetValidRow(), "TSQRT: Number of rows of src and dst must be the same.");
     PTO_ASSERT(dstValidCol == src.GetValidCol(), "TSQRT: Number of columns of src and dst must be the same.");
-    TUnaryPlusOp<TileDataDst, TileDataSrc, _vsqrt>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+        constexpr unsigned rowStride = TileDataDst::RowStride;
+        TUnaryOp<TileDataDst, _vsqrt, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    } else {
+        TUnaryPlusOp<TileDataDst, TileDataSrc, _vsqrt>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    }
+  }
+
+  /* ABS */
+  template <typename TileDataDst, typename TileDataSrc>
+  AICORE void TABS_IMPL(TileDataDst &dst, TileDataSrc &src) {
+    TUnaryPlusStaticCheck<TileDataDst, TileDataSrc>();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    PTO_ASSERT(dstValidRow == src.GetValidRow(), "TABS: Number of rows of src and dst must be the same.");
+    PTO_ASSERT(dstValidCol == src.GetValidCol(), "TABS: Number of columns of src and dst must be the same.");
+    if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
+      constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+      constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+      constexpr unsigned rowStride = TileDataDst::RowStride;
+      TUnaryOp<TileDataDst, _vabs, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    } else {
+      TUnaryPlusOp<TileDataDst, TileDataSrc, _vabs>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    }
   }
 
   /* EXP */
@@ -171,7 +210,14 @@ namespace pto {
     unsigned dstValidCol = dst.GetValidCol();
     PTO_ASSERT(dstValidRow == src.GetValidRow(), "TEXP: Number of rows of src and dst must be the same.");
     PTO_ASSERT(dstValidCol == src.GetValidCol(), "TEXP: Number of columns of src and dst must be the same.");
-    TUnaryPlusOp<TileDataDst, TileDataSrc, _vexp>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType);
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
+        constexpr unsigned rowStride = TileDataDst::RowStride;
+        TUnaryOp<TileDataDst, _vexp, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    } else {
+        TUnaryPlusOp<TileDataDst, TileDataSrc, _vexp>(dst.data(), src.data(), dstValidRow, dstValidCol);
+    }
   }
 }
 

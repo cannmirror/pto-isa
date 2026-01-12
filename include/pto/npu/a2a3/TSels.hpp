@@ -184,6 +184,7 @@ namespace pto {
             std::is_same<T, float32_t>::value,
             "TSELS: Invalid data type");
         static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
+        static_assert(TileData::isRowMajor, "TSELS: not supported Layout type");
         static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
         

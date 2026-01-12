@@ -16,8 +16,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-template <int32_t tilingKey>
-void launchTGATHER_demo(uint8_t *out, uint8_t *src, void *stream);
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, pto::MaskPattern maskPattern>
+void LaunchTGATHER(T *out, T *src, void *stream);
 
 constexpr int HALF_SIZE = 2;
 constexpr int QUARTER_SIZE = 4;
@@ -37,7 +37,7 @@ std::string GetGoldenDir()
     return fullPath;
 }
 
-template <typename T, uint8_t PATTERN, uint32_t ROW, uint32_t COL>
+template <typename T, pto::MaskPattern PATTERN, uint32_t ROW, uint32_t COL>
 void test_gather()
 {
     aclInit(nullptr);
@@ -47,16 +47,15 @@ void test_gather()
 
     size_t size = ROW * COL * sizeof(T);
     size_t dstSize = 0;
-    if constexpr (PATTERN == HP1111 || PATTERN == FP1111 || PATTERN == I32P1111) {
+    if constexpr (PATTERN == pto::MaskPattern::P1111) {
         dstSize = size;
-    } else if constexpr (PATTERN == HP0101 || PATTERN == HP1010 || PATTERN == FP0101 || PATTERN == FP1010 ||
-                         PATTERN == U16P0101 || PATTERN == U16P1010) {
+    } else if constexpr (PATTERN == pto::MaskPattern::P0101 || PATTERN == pto::MaskPattern::P1010) {
         dstSize = size / HALF_SIZE;
     } else {
         dstSize = size / QUARTER_SIZE;
     }
-    uint8_t *dstHost, *src0Host;
-    uint8_t *dstDevice, *src0Device;
+    T *dstHost, *src0Host;
+    T *dstDevice, *src0Device;
 
     aclrtMallocHost((void **)(&dstHost), dstSize);
     aclrtMallocHost((void **)(&src0Host), size);
@@ -66,7 +65,7 @@ void test_gather()
     ReadFile(GetGoldenDir() + "/x1_gm.bin", size, src0Host, size);
 
     aclrtMemcpy(src0Device, size, src0Host, size, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTGATHER_demo<PATTERN>(dstDevice, src0Device, stream);
+    LaunchTGATHER<T, ROW, COL, ROW, COL, PATTERN>(dstDevice, src0Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstSize, dstDevice, dstSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -81,8 +80,8 @@ void test_gather()
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(dstSize);
-    std::vector<float> devFinal(dstSize);
+    std::vector<T> golden(dstSize);
+    std::vector<T> devFinal(dstSize);
     ReadFile(GetGoldenDir() + "/golden.bin", dstSize, golden.data(), dstSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", dstSize, devFinal.data(), dstSize);
 
@@ -93,107 +92,107 @@ void test_gather()
 
 TEST_F(TGATHERTest, case1_float_P0101)
 {
-    test_gather<float, FP0101, FLOAT_P0101_ROW, FLOAT_P0101_COL>();
+    test_gather<float, pto::MaskPattern::P0101, FLOAT_P0101_ROW, FLOAT_P0101_COL>();
 }
 
 TEST_F(TGATHERTest, case1_float_P1010)
 {
-    test_gather<float, FP1010, FLOAT_P1010_ROW, FLOAT_P1010_COL>();
+    test_gather<float, pto::MaskPattern::P1010, FLOAT_P1010_ROW, FLOAT_P1010_COL>();
 }
 
 TEST_F(TGATHERTest, case1_float_P0001)
 {
-    test_gather<float, FP0001, FLOAT_P0001_ROW, FLOAT_P0001_COL>();
+    test_gather<float, pto::MaskPattern::P0001, FLOAT_P0001_ROW, FLOAT_P0001_COL>();
 }
 
 TEST_F(TGATHERTest, case1_float_P0010)
 {
-    test_gather<float, FP0010, FLOAT_P0010_ROW, FLOAT_P0010_COL>();
+    test_gather<float, pto::MaskPattern::P0010, FLOAT_P0010_ROW, FLOAT_P0010_COL>();
 }
 
 TEST_F(TGATHERTest, case1_float_P0100)
 {
-    test_gather<float, FP0100, FLOAT_P0100_ROW, FLOAT_P0100_COL>();
+    test_gather<float, pto::MaskPattern::P0100, FLOAT_P0100_ROW, FLOAT_P0100_COL>();
 }
 
 TEST_F(TGATHERTest, case1_float_P1000)
 {
-    test_gather<float, FP1000, FLOAT_P1000_ROW, FLOAT_P1000_COL>();
+    test_gather<float, pto::MaskPattern::P1000, FLOAT_P1000_ROW, FLOAT_P1000_COL>();
 }
 
 TEST_F(TGATHERTest, case1_float_P1111)
 {
-    test_gather<float, FP1111, FLOAT_P1111_ROW, FLOAT_P1111_COL>();
+    test_gather<float, pto::MaskPattern::P1111, FLOAT_P1111_ROW, FLOAT_P1111_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P0101)
 {
-    test_gather<uint16_t, HP0101, HALF_P0101_ROW, HALF_P0101_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P0101, HALF_P0101_ROW, HALF_P0101_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P1010)
 {
-    test_gather<uint16_t, HP1010, HALF_P1010_ROW, HALF_P1010_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P1010, HALF_P1010_ROW, HALF_P1010_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P0001)
 {
-    test_gather<uint16_t, HP0001, HALF_P0001_ROW, HALF_P0001_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P0001, HALF_P0001_ROW, HALF_P0001_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P0010)
 {
-    test_gather<uint16_t, HP0010, HALF_P0010_ROW, HALF_P0010_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P0010, HALF_P0010_ROW, HALF_P0010_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P0100)
 {
-    test_gather<uint16_t, HP0100, HALF_P0100_ROW, HALF_P0100_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P0100, HALF_P0100_ROW, HALF_P0100_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P1000)
 {
-    test_gather<uint16_t, HP1000, HALF_P1000_ROW, HALF_P1000_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P1000, HALF_P1000_ROW, HALF_P1000_COL>();
 }
 
 TEST_F(TGATHERTest, case1_half_P1111)
 {
-    test_gather<uint16_t, HP1111, HALF_P1111_ROW, HALF_P1111_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P1111, HALF_P1111_ROW, HALF_P1111_COL>();
 }
 
 TEST_F(TGATHERTest, case1_U16_P0101)
 {
-    test_gather<uint16_t, U16P0101, HALF_P0101_ROW, HALF_P0101_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P0101, HALF_P0101_ROW, HALF_P0101_COL>();
 }
 
 TEST_F(TGATHERTest, case1_U16_P1010)
 {
-    test_gather<uint16_t, U16P1010, HALF_P1010_ROW, HALF_P1010_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P1010, HALF_P1010_ROW, HALF_P1010_COL>();
 }
 
 TEST_F(TGATHERTest, case1_I16_P0001)
 {
-    test_gather<uint16_t, I16P0001, HALF_P0001_ROW, HALF_P0001_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P0001, HALF_P0001_ROW, HALF_P0001_COL>();
 }
 
 TEST_F(TGATHERTest, case1_I16_P0010)
 {
-    test_gather<uint16_t, I16P0010, HALF_P0010_ROW, HALF_P0010_COL>();
+    test_gather<uint16_t, pto::MaskPattern::P0010, HALF_P0010_ROW, HALF_P0010_COL>();
 }
 
 TEST_F(TGATHERTest, case1_U32_P0100)
 {
-    test_gather<uint32_t, U32P0100, FLOAT_P0100_ROW, FLOAT_P0100_COL>();
+    test_gather<uint32_t, pto::MaskPattern::P0100, FLOAT_P0100_ROW, FLOAT_P0100_COL>();
 }
 
 TEST_F(TGATHERTest, case1_I32_P1000)
 {
-    test_gather<int32_t, I32P1000, FLOAT_P1000_ROW, FLOAT_P1000_COL>();
+    test_gather<int32_t, pto::MaskPattern::P1000, FLOAT_P1000_ROW, FLOAT_P1000_COL>();
 }
 
 TEST_F(TGATHERTest, case1_I32_P1111)
 {
-    test_gather<int32_t, I32P1111, FLOAT_P1111_ROW, FLOAT_P1111_COL>();
+    test_gather<int32_t, pto::MaskPattern::P1111, FLOAT_P1111_ROW, FLOAT_P1111_COL>();
 }
 
 // Gather 1D tests

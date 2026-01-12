@@ -15,25 +15,22 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace pto;
 
-template<typename T, int row, int validRow, int col, int validCol>
-PTO_INTERNAL void runTMulS(__gm__ T *out, __gm__  T *src, T scalar) {
+template<typename T, int dstTileRow, int dstTileCol, int row, int validRow, int col, int validCol>
+PTO_INTERNAL void runTMuls(__gm__ T *out, __gm__  T *src, T scalar) {
     using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
+    GlobalData dstGlobal(out, DynDim2Shape(validRow, validCol), DynDim2Stride(dstTileRow, dstTileCol));
     GlobalData srcGlobal(src, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
-    GlobalData dstGlobal(out, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
 
+    using dstTileData = Tile<TileType::Vec, T, dstTileRow, dstTileCol, BLayout::RowMajor, -1, -1>;
     using srcTileData = Tile<TileType::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
-    using dstTileData = Tile<TileType::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
     srcTileData srcTile(validRow, validCol);
     dstTileData dstTile(validRow, validCol);
     TASSIGN(srcTile, 0x0);
-    TASSIGN(dstTile, 0x28000);
-
+    TASSIGN(dstTile, 0x26000);
     TLOAD(dstTile, dstGlobal);
-
     TLOAD(srcTile, srcGlobal);
-
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     TMULS(dstTile, srcTile, scalar);
@@ -45,27 +42,27 @@ PTO_INTERNAL void runTMulS(__gm__ T *out, __gm__  T *src, T scalar) {
 
 extern "C" __global__ AICORE void launchTMULSCase1(__gm__ float *out, __gm__ float *src, float scalar)
 {
-    runTMulS<float, 32, 32, 64, 64>(out, src, scalar);
+    runTMuls<float, 32, 128, 32, 32, 64, 64>(out, src, scalar);
 }
 extern "C" __global__ AICORE void launchTMULSCase2(__gm__ aclFloat16 *out, __gm__ aclFloat16 *src, float scalar)
 {
-    runTMulS<half, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, scalar);
+    runTMuls<half, 63, 128, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, (half)scalar);
 }
-extern "C" __global__ AICORE void launchTMULSCase3(__gm__ int32_t *out, __gm__ int32_t *src, float scalar)
+extern "C" __global__ AICORE void launchTMULSCase3(__gm__ int32_t *out, __gm__ int32_t *src, int32_t scalar)
 {
-    runTMulS<int32_t, 31, 31, 128, 128>(out, src, scalar);
+    runTMuls<int32_t, 31, 256, 31, 31, 128, 128>(out, src, scalar);
 }
-extern "C" __global__ AICORE void launchTMULSCase4(__gm__ int16_t *out, __gm__ int16_t *src, float scalar)
+extern "C" __global__ AICORE void launchTMULSCase4(__gm__ int16_t *out, __gm__ int16_t *src, int16_t scalar)
 {
-    runTMulS<int16_t, 15, 15, 192, 192>(out, src, scalar);
+    runTMuls<int16_t, 15, 192, 15, 15, 192, 192>(out, src, scalar);
 }
 extern "C" __global__ AICORE void launchTMULSCase5(__gm__ float *out, __gm__ float *src, float scalar)
 {
-    runTMulS<float, 7, 7, 448, 448>(out, src, scalar);
+    runTMuls<float, 7, 512, 7, 7, 448, 448>(out, src, scalar);
 }
 extern "C" __global__ AICORE void launchTMULSCase6(__gm__ float *out, __gm__ float *src, float scalar)
 {
-    runTMulS<float, 256, 256, 16, 16>(out, src, scalar);
+    runTMuls<float, 256, 32, 256, 256, 16, 16>(out, src, scalar);
 }
 
 template <uint32_t caseId>
@@ -99,7 +96,6 @@ void launchTMULSTestCase(void *out, void *src, float scalar, aclrtStream stream)
         }
     }
 }
-
 
 template void launchTMULSTestCase<1>(void *out, void *src, float scalar, aclrtStream stream);
 template void launchTMULSTestCase<2>(void *out, void *src, float scalar, aclrtStream stream);

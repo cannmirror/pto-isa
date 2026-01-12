@@ -13,9 +13,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/pto_tile.hpp>
 #include <pto/common/type.hpp>
+#include <pto/common/event.hpp>
 
 #ifdef MEMORY_BASE
 #include "pto/npu/a2a3/TAssign.hpp"
+#include "pto/npu/a2a3/TSync.hpp"
 #include "pto/npu/a2a3/TAdd.hpp"
 #include "pto/npu/a2a3/TMins.hpp"
 #include "pto/npu/a2a3/TAddS.hpp"
@@ -24,6 +26,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a2a3/TSub.hpp"
 #include "pto/npu/a2a3/TSels.hpp"
 #include "pto/npu/a2a3/TMin.hpp"
+#include "pto/npu/a2a3/TCmp.hpp"
 #include "pto/npu/a2a3/TExpandS.hpp"
 #include "pto/npu/a2a3/TMax.hpp"
 #include "pto/npu/a2a3/TLoad.hpp"
@@ -47,12 +50,17 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a2a3/TGather.hpp"
 #include "pto/npu/a2a3/TCvt.hpp"
 #include "pto/npu/a2a3/TDiv.hpp"
-#include "pto/npu/a2a3/TCopy.hpp"
 #include "pto/npu/a2a3/TPartAdd.hpp"
 #include "pto/npu/a2a3/TPartMax.hpp"
 #include "pto/npu/a2a3/TPartMin.hpp"
+#ifdef _DEBUG
+#include "pto/npu/a2a3/TPrint.hpp"
+#endif
 #include "pto/npu/a2a3/TRowExpand.hpp"
+#include "pto/npu/a2a3/TRowExpandAdd.hpp"
 #include "pto/npu/a2a3/TRowExpandDiv.hpp"
+#include "pto/npu/a2a3/TRowExpandMax.hpp"
+#include "pto/npu/a2a3/TRowExpandMin.hpp"
 #include "pto/npu/a2a3/TRowExpandMul.hpp"
 #include "pto/npu/a2a3/TRowExpandSub.hpp"
 #include "pto/npu/a2a3/TCI.hpp"
@@ -61,10 +69,14 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a2a3/TUnaryPlusOp.hpp"
 #include "pto/npu/a2a3/TGatherB.hpp"
 #include "pto/npu/a2a3/TColMin.hpp"
+#include "pto/npu/a2a3/TScatter.hpp"
+#include "pto/npu/a2a3/TColExpand.hpp"
+#include "pto/npu/a2a3/TTri.hpp"
 #endif
 
 #ifdef REGISTER_BASE
 #include "pto/npu/a5/TAssign.hpp"
+#include "pto/npu/a5/TSync.hpp"
 #include "pto/npu/a5/TAdd.hpp"
 #include "pto/npu/a5/TAddS.hpp"
 #include "pto/npu/a5/TDivS.hpp"
@@ -80,6 +92,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TMrgSort.hpp"
 #include "pto/npu/a5/TMatmul.hpp"
 #include "pto/npu/a5/TCmps.hpp"
+#include "pto/npu/a5/TCmp.hpp"
 #include "pto/npu/a5/TColSum.hpp"
 #include "pto/npu/a5/TColMax.hpp"
 #include "pto/npu/a5/TColMin.hpp"
@@ -96,21 +109,35 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TMins.hpp"
 #include "pto/npu/a5/TMov.hpp"
 #include "pto/npu/a5/TRowExpand.hpp"
+#include "pto/npu/a5/TRowExpandAdd.hpp"
+#include "pto/npu/a5/TRowExpandDiv.hpp"
+#include "pto/npu/a5/TRowExpandMax.hpp"
+#include "pto/npu/a5/TRowExpandMin.hpp"
+#include "pto/npu/a5/TRowExpandMul.hpp"
+#include "pto/npu/a5/TRowExpandSub.hpp"
 #include "pto/npu/a5/TPartAdd.hpp"
 #include "pto/npu/a5/TPartMax.hpp"
 #include "pto/npu/a5/TPartMin.hpp"
+#ifdef _DEBUG
+#include "pto/npu/a5/TPrint.hpp"
+#endif
 #include "pto/npu/a5/TGather.hpp"
 #include "pto/npu/a5/TUnaryOp.hpp"
 #include "pto/npu/a5/TGatherB.hpp"
 #include "pto/npu/a5/TBinSOp.hpp"
 #include "pto/npu/a5/TDiv.hpp"
 #include "pto/npu/a5/TMul.hpp"
+#include "pto/npu/a5/TScatter.hpp"
+#include "pto/npu/a5/TColExpandDiv.hpp"
+#include "pto/npu/a5/TColExpandMul.hpp"
+#include "pto/npu/a5/TColExpandSub.hpp"
+#include "pto/npu/a5/TTril.hpp"
 #endif
 
 #ifdef __CPU_SIM
     #include "pto/cpu/ElementTileOp.h"
     #include "pto/cpu/ElementTileScalarOp.h"
-    #include "pto/cpu/TBinSOps.hpp"    
+    #include "pto/cpu/TBinSOps.hpp"
     #include "pto/cpu/TSub.hpp"
     #include "pto/cpu/TMul.hpp"
     #include "pto/cpu/TDiv.hpp"
@@ -136,12 +163,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
     #include "pto/cpu/TMax.hpp"
     #include "pto/cpu/TExtract.hpp"
     #include "pto/cpu/TFillPad.hpp"
+    #include "pto/cpu/TTrans.hpp"
     #include "pto/cpu/TSelS.hpp"
     #include "pto/cpu/TColSum.hpp"
     #include "pto/cpu/TColMax.hpp"
     #include "pto/cpu/TSel.hpp"
     #include "pto/cpu/TCmps.hpp"
-    #include "pto/cpu/TCI.hpp"
     #include "pto/cpu/TGatherB.hpp"
     #include "pto/cpu/TSort32.hpp"
     #include "pto/cpu/TPartAdd.hpp"
@@ -153,10 +180,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
     #include "pto/cpu/TColMin.hpp"
     #include "pto/cpu/TColExpand.hpp"
     #include "pto/cpu/TScatter.hpp"
-    #include "pto/cpu/TTrans.hpp"
-    #include "pto/cpu/MGather.hpp"
     #include "pto/cpu/TSort32.hpp"
-    #include "pto/cpu/MScatter.hpp"
+    #include "pto/cpu/MGatherScatter.hpp"
 #endif
 
 #endif

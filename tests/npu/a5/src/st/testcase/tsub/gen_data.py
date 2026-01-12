@@ -14,42 +14,41 @@ import os
 import numpy as np
 np.random.seed(19)
 
-def gen_golden_data_tsub(case_name, param):
+
+def gen_golden_data(case_name, param):
     dtype = param.dtype
 
-    H, W = [param.tile_row, param.tile_col]
-    h_valid, w_valid = [param.valid_row, param.valid_col]
+    dst_tile_row, dst_tile_col = param.dst_tile_row, param.dst_tile_col
+    src0_tile_row, src0_tile_col = param.src0_tile_row, param.src0_tile_col
+    src1_tile_row, src1_tile_col = param.src1_tile_row, param.src1_tile_col
+    h_valid, w_valid = param.valid_row, param.valid_col
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
-    input2 = np.random.randint(1, 10, size=[H, W]).astype(dtype)
+    input1 = np.random.randint(1, 10, size=[src0_tile_row, src0_tile_col]).astype(dtype)
+    input2 = np.random.randint(1, 10, size=[src1_tile_row, src1_tile_col]).astype(dtype)
 
-    # Perform the subtraction
-    golden = input1 - input2
+    # Perform the operation
+    golden = np.zeros([dst_tile_row, dst_tile_col]).astype(dtype)
+    golden[0:h_valid, 0:w_valid] = input1[0:h_valid, 0:w_valid] - input2[0:h_valid, 0:w_valid]
 
-    # Apply valid region constraints
-    output = np.zeros([H, W]).astype(dtype)
-    for h in range(H):
-        for w in range(W):
-            if h >= h_valid or w >= w_valid:
-                golden[h][w] = output[h][w]
-    
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
     input2.tofile("input2.bin")
     golden.tofile("golden.bin")
 
-    return output, input1, input2, golden
 
-class tsubParams:
-    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
+class TSubParams:
+    def __init__(self, dtype, dstH, dstW, src0H, src0W, src1H, src1W, vRow, vCol):
         self.dtype = dtype
-        self.global_row = global_row
-        self.global_col = global_col
-        self.tile_row = tile_row
-        self.tile_col = tile_col
-        self.valid_row = valid_row
-        self.valid_col = valid_col
+        self.dst_tile_row = dstH
+        self.dst_tile_col = dstW
+        self.src0_tile_row = src0H
+        self.src0_tile_col = src0W
+        self.src1_tile_row = src1H
+        self.src1_tile_col = src1W
+        self.valid_row = vRow
+        self.valid_col = vCol
+
 
 def generate_case_name(param):
     dtype_str = {
@@ -59,7 +58,9 @@ def generate_case_name(param):
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TSUBTest.case_{dtype_str}_{param.global_row}x{param.global_col}_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+    return f"TSUBTest.case_{dtype_str}_{param.dst_tile_row}x{param.dst_tile_col}_\
+{param.src0_tile_row}x{param.src0_tile_col}_{param.src1_tile_row}x{param.src1_tile_col}_\
+{param.valid_row}x{param.valid_col}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -71,18 +72,25 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tsubParams(np.float32, 64, 64, 64, 64, 64, 64),
-        tsubParams(np.int32, 32, 32, 32, 32, 32, 32),
-        tsubParams(np.float16, 16, 256, 16, 256, 16, 256),
-        tsubParams(np.int16, 128, 32, 128, 32, 128, 32)
+        TSubParams(np.float32, 64, 64, 64, 64, 64, 64, 64, 64),
+        TSubParams(np.int32, 64, 64, 64, 64, 64, 64, 64, 64),
+        TSubParams(np.int16, 64, 64, 64, 64, 64, 64, 64, 64),
+        TSubParams(np.float16, 16, 256, 16, 256, 16, 256, 16, 256),
+        TSubParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 64),
+        TSubParams(np.float32, 16, 32, 16, 64, 16, 32, 16, 32),
+        TSubParams(np.int16, 32, 128, 32, 128, 32, 256, 32, 128),
+        TSubParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 32),
+        TSubParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 63),
+        TSubParams(np.float32, 16, 32, 16, 64, 16, 32, 16, 31),
+        TSubParams(np.int16, 32, 128, 32, 128, 32, 256, 32, 127),
+        TSubParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 31),
     ]
 
-    for i, param in enumerate(case_params_list):
+    for param in case_params_list:
         case_name = generate_case_name(param)
         if not os.path.exists(case_name):
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data_tsub(case_name, param)
+        gen_golden_data(case_name, param)
         os.chdir(original_dir)
-        

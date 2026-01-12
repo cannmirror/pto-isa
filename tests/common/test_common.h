@@ -202,7 +202,7 @@ void PrintData(const void *data, size_t count, printDataType dataType, size_t el
     std::cout << std::endl;
 }
 
-template <typename T = float>
+template <typename T>
 bool ResultCmp(const std::vector<T> &outDataValExp, const T *outDataValAct, float eps, size_t threshold = 0,
     size_t zeroCountThreshold = 1000, bool printAll = false, bool printErr = false, size_t testNum = 0)
 {
@@ -214,7 +214,7 @@ bool ResultCmp(const std::vector<T> &outDataValExp, const T *outDataValAct, floa
     size_t errCount = 0;
 
     bool rst = true;
-    size_t eSize = outDataValExp.size();
+    size_t eSize = outDataValExp.size() / sizeof(T);
     for (size_t eIdx = 0; eIdx < eSize; eIdx++) {
         auto expVal = static_cast<float>(outDataValExp[eIdx]);
         auto actVal = static_cast<float>(outDataValAct[eIdx]);
@@ -279,17 +279,17 @@ bool ResultCmp(const std::vector<T> &outDataValExp, const T *outDataValAct, floa
     }
     return false;
 }
-template <typename T = float>
+template <typename T>
 bool ResultCmp(const std::vector<T> &outDataValExp, const std::vector<T> &outDataValAct, float eps,
     size_t threshold = 0, size_t zeroCountThreshold = 1000, bool printAll = false, bool printErr = false,
-    size_t testNum = 0)
-{
+    size_t testNum = 0) {
     if (outDataValExp.size() != outDataValAct.size()) {
         std::cout << "out size is not eq, golden: " << outDataValExp.size() << ", act: " << outDataValAct.size()
                   << std::endl;
         return false;
     }
-    return ResultCmp(
-        outDataValExp, outDataValAct.data(), eps, threshold, zeroCountThreshold, printAll, printErr, testNum);
+    return ResultCmp(outDataValExp, outDataValAct.data(), eps, threshold,
+        zeroCountThreshold, printAll, printErr, testNum);
 }
+
 }

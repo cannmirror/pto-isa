@@ -24,12 +24,11 @@ template <typename DstTileData, typename Src0TileData, typename Src1TileData>
 PTO_INTERNAL void CheckValid()
 {
     static_assert((sizeof(typename DstTileData::DType) == 1) || (sizeof(typename DstTileData::DType) == 2) ||
-                      (sizeof(typename DstTileData::DType) == 4),
-        "expect b8/b16/b32");
-    static_assert(
-        (sizeof(typename Src1TileData::DType) == 2) || (sizeof(typename Src1TileData::DType) == 4), "expect b16/b32");
+        (sizeof(typename DstTileData::DType) == 4), "Fix: TGATHER expect b8/b16/b32");
+    static_assert((sizeof(typename Src1TileData::DType) == 2) || (sizeof(typename Src1TileData::DType) == 4),
+        "Fix: TGATHER expect b16/b32");
     static_assert((std::is_same<typename DstTileData::DType, typename Src0TileData::DType>::value),
-        "expect same size for indice and dst");
+        "Fix: TGATHER expect same size for indice and dst");
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
@@ -303,23 +302,21 @@ PTO_INTERNAL void TGATHER_IMPL(DstTileData &dst, SrcTileData &src)
     using T = typename SrcTileData::DType;
     using U = typename DstTileData::DType;
     static_assert(std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t> || std::is_same_v<T, int16_t> ||
-                      std::is_same_v<T, uint16_t> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> ||
-                      std::is_same_v<T, half> || std::is_same_v<T, bfloat16_t> || std::is_same_v<T, float> ||
-                      std::is_same_v<T, float8_e4m3_t> || std::is_same_v<T, float8_e5m2_t> ||
-                      std::is_same_v<T, hifloat8_t>,
-        "TGATHER: Src data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/"
+        std::is_same_v<T, uint16_t> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> ||
+        std::is_same_v<T, half> || std::is_same_v<T, bfloat16_t> || std::is_same_v<T, float> ||
+        std::is_same_v<T, float8_e4m3_t> || std::is_same_v<T, float8_e5m2_t> || std::is_same_v<T, hifloat8_t>,
+        "Fix: TGATHER Src data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/"
         "half/bfloat16_t/float/float8_e4m3_t/float8_e5m2_t/hifloat8_t.");
     static_assert(std::is_same_v<U, int8_t> || std::is_same_v<U, uint8_t> || std::is_same_v<U, int16_t> ||
-                      std::is_same_v<U, uint16_t> || std::is_same_v<U, int32_t> || std::is_same_v<U, uint32_t> ||
-                      std::is_same_v<U, half> || std::is_same_v<U, bfloat16_t> || std::is_same_v<U, float> ||
-                      std::is_same_v<U, float8_e4m3_t> || std::is_same_v<U, float8_e5m2_t> ||
-                      std::is_same_v<U, hifloat8_t>,
-        "TGATHER: Dst data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/"
+        std::is_same_v<U, uint16_t> || std::is_same_v<U, int32_t> || std::is_same_v<U, uint32_t> ||
+        std::is_same_v<U, half> || std::is_same_v<U, bfloat16_t> || std::is_same_v<U, float> ||
+        std::is_same_v<U, float8_e4m3_t> || std::is_same_v<U, float8_e5m2_t> || std::is_same_v<U, hifloat8_t>,
+        "Fix: TGATHER Dst data type must be int8_t/uint8_t/int16_t/uint16_t/int32_t/uint32_t/"
         "half/bfloat16_t/float/float8_e4m3_t/float8_e5m2_t/hifloat8_t.");
-    static_assert((sizeof(U) == sizeof(T)), "TGATHER: expect same type size for dst and src");
-    static_assert(
-        (DstTileData::Loc == TileType::Vec) && (SrcTileData::Loc == TileType::Vec), "TGATHER: expect vec TileType");
-    static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor), "TGATHER: expect row major");
+    static_assert((sizeof(U) == sizeof(T)), "Fix: TGATHER expect same type size for dst and src");
+    static_assert((DstTileData::Loc == TileType::Vec) && (SrcTileData::Loc == TileType::Vec),
+        "Fix: TGATHER expect vec TileType");
+    static_assert((DstTileData::isRowMajor && SrcTileData::isRowMajor), "Fix: TGATHER expect row major");
     uint16_t rows = src.GetValidRow();
     uint16_t cols = src.GetValidCol();
     TGather<DstTileData, SrcTileData, maskPattern>(dst.data(), src.data(), rows, cols);

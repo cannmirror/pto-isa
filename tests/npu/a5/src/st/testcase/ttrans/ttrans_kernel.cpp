@@ -9,79 +9,75 @@ See LICENSE in the root of the software repository for the full text of the Lice
 */
 
 #include <pto/pto-inst.hpp>
-#include <pto/common/pto_tile.hpp>
 #include <pto/common/constants.hpp>
+#include <pto/common/debug.h>
+#include "acl/acl.h"
 
-using namespace std;
 using namespace pto;
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-inline AICORE void runTTRANS( __gm__ T __out__ *out, __gm__ T __in__ *src) {
+template <typename T, int dstTRows, int dstTCols, int srcTRows, int srcTCols>
+__global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols) {
+    using DynShapeSrc = pto::Shape<-1, -1, -1, -1, -1>;
+    using DynStrideSrc = pto::Stride<-1, -1, -1, -1, -1>;
+    using GlobalDataSrc = GlobalTensor<T, DynShapeSrc, DynStrideSrc>;
 
-    if (block_idx > 0) return;
+    using DynShapeDst = pto::Shape<-1, -1, -1, -1, -1>;
+    using DynStrideDst = pto::Stride<-1, -1, -1, -1, -1>;
+    using GlobalDataDst = GlobalTensor<T, DynShapeDst, DynStrideDst>;
 
-    using DynShapeDim4 = pto::Shape<-1, -1, -1, -1, -1>;
-    using DynStridDim4 = pto::Stride<-1, -1, -1, -1, -1>;
-    using GlobalData = GlobalTensor<T, DynShapeDim4, DynStridDim4>;
+    using TileDataSrc = Tile<TileType::Vec, T, srcTRows, srcTCols, BLayout::RowMajor, -1, -1>;
+    using TileDataDst = Tile<TileType::Vec, T, dstTRows, dstTCols, BLayout::RowMajor, -1, -1>;
+    using TileDataTmp = Tile<TileType::Vec, T, dstTRows, dstTCols, BLayout::RowMajor, dstTRows, dstTCols>;
 
+    TileDataSrc srcTile(vRows, vCols);
+    TileDataDst dstTile(vCols, vRows);
+    TileDataTmp tmpTile;
 
+    TASSIGN(srcTile, 0);
+    TASSIGN(dstTile, srcTRows * srcTCols * sizeof(T));
+    TASSIGN(tmpTile, 0);
 
-    constexpr uint16_t aligned_Rows = ( (kTRows_ * sizeof(T) + 31) / 32 ) * (32 / sizeof(T));
-    constexpr uint16_t aligned_Cols = ( (kTCols_ * sizeof(T) + 31) / 32 ) * (32 / sizeof(T));
-
-    using TileDataSrc = Tile<TileType::Vec, T, kTRows_, aligned_Cols, BLayout::RowMajor>;
-    using TileDataDst = Tile<TileType::Vec, T, kTCols_, aligned_Rows, BLayout::RowMajor>;
-    using TileDataTmp = Tile<TileType::Vec, T, kTCols_, aligned_Rows, BLayout::RowMajor>;
-
-    TileDataSrc srcTile;
-    TileDataDst dstTile;
-    TileDataDst tmpTile;
-
-    TASSIGN(srcTile, 0x0);
-    TASSIGN(dstTile, 0x20000);
-    TASSIGN(tmpTile, 0x30000);
-
-    int offset = 0;
-
-    GlobalData srcGlobal(src + offset,
-                         pto::Shape(1, 1, 1, kGRows_, kGCols_),
-                         pto::Stride(1, 1, 1, kGCols_, 1));
-
-    GlobalData dstGlobal(out + offset,
-                         pto::Shape(1, 1, 1, kGCols_, kGRows_),
-                         pto::Stride(1, 1, 1, kGRows_, 1));
+    GlobalDataSrc srcGlobal(src, pto::Shape(1, 1, 1, vRows, vCols), pto::Stride(1, 1, 1, srcTCols, 1));
+    GlobalDataDst dstGlobal(out, pto::Shape(1, 1, 1, vCols, vRows), pto::Stride(1, 1, 1, dstTCols, 1));
 
     TLOAD(srcTile, srcGlobal);
-
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-
     TTRANS(dstTile, srcTile, tmpTile);
-
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-
     TSTORE(dstGlobal, dstTile);
-
-    out = dstGlobal.data();
 }
 
-
-extern "C" __global__ AICORE void launchTTRANS_1(__gm__ uint8_t *out, __gm__ uint8_t *src) {
-    constexpr uint32_t M = 128;
-    constexpr uint32_t N = 128;
-    constexpr uint32_t K = 128;
-    constexpr uint32_t L = 128;
-    runTTRANS<float, M, N, K, L>(reinterpret_cast<__gm__ float *>(out), reinterpret_cast<__gm__ float *>(src)); 
-}
-
-
-template <int32_t tilingKey>
-void launchTTRANS(uint8_t *out, uint8_t *src, void *stream)
+template <typename T, int dstTRows, int dstTCols, int srcTRows, int srcTCols, int vRows, int vCols>
+void LaunchTTRANS(T *out, T *src, void *stream)
 {
-    if constexpr (tilingKey == 1) {
-        launchTTRANS_1<<<1, nullptr, stream>>>(out, src);
-    }
+    runTTRANS<T, dstTRows, dstTCols, srcTRows, srcTCols><<<1, nullptr, stream>>>(out, src, vRows, vCols);
 }
 
-template void launchTTRANS<1>(uint8_t *out, uint8_t *src, void *stream);
+template <int dstTRows, int dstTCols, int srcTRows, int srcTCols, int vRows, int vCols>
+void LaunchTTRANSHalf(aclFloat16 *out, aclFloat16 *src, void *stream)
+{
+    runTTRANS<half, dstTRows, dstTCols, srcTRows, srcTCols><<<1, nullptr, stream>>>
+        ((half *)(out), (half *)(src), vRows, vCols);
+}
+
+template void LaunchTTRANS<float, 8, 16, 16, 8, 16, 8>(float *out, float *src, void *stream);
+template void LaunchTTRANSHalf<16, 16, 16, 16, 16, 16>(aclFloat16 *out, aclFloat16 *src, void *stream);
+template void LaunchTTRANS<float, 16, 32, 32, 16, 31, 15>(float *out, float *src, void *stream);
+template void LaunchTTRANSHalf<32, 32, 32, 32, 31, 31>(aclFloat16 *out, aclFloat16 *src, void *stream);
+template void LaunchTTRANS<float, 512, 8, 2, 512, 2, 512>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 512, 16, 9, 512, 9, 512>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 66, 88, 9, 16, 7, 15>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 16, 32, 32, 16, 23, 15>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 128, 64, 64, 128, 27, 77>(float *out, float *src, void *stream);
+template void LaunchTTRANSHalf<64, 112, 100, 64, 64, 64>(aclFloat16 *out, aclFloat16 *src, void *stream);
+template void LaunchTTRANSHalf<64, 128, 128, 64, 64, 64>(aclFloat16 *out, aclFloat16 *src, void *stream);
+template void LaunchTTRANSHalf<64, 128, 128, 64, 100, 64>(aclFloat16 *out, aclFloat16 *src, void *stream);
+template void LaunchTTRANS<float, 32, 512, 512, 32, 512, 2>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 64, 64, 64, 64, 64, 64>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 32, 64, 64, 32, 64, 32>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 64, 64, 64, 64, 36, 64>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 16, 8, 2, 16, 2, 16>(float *out, float *src, void *stream);
+template void LaunchTTRANS<uint8_t, 32, 32, 32, 32, 32, 32>(uint8_t *out, uint8_t *src, void *stream);
+template void LaunchTTRANS<uint8_t, 64, 64, 64, 64, 22, 63>(uint8_t *out, uint8_t *src, void *stream);

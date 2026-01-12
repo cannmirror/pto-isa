@@ -25,7 +25,6 @@ def gen_golden_data_tcolsum(case_name, param):
     input1 = np.random.randint(low=-16, high=16, size=[srcRow, srcCols]).astype(dtype)
 
     # Perform the addbtraction
-    # golden = np.zeros([row_valid, col_valid]).astype(dtype)
     golden = np.full((row_valid, col_valid), np.finfo(dtype).min, dtype=dtype)
     golden[0, :] = np.sum(input1, axis=0)
 
@@ -36,7 +35,7 @@ def gen_golden_data_tcolsum(case_name, param):
 
     return input1, golden
 
-class tcolsumParams:
+class TColsumParams:
     def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
         self.dtype = dtype
         self.global_row = global_row
@@ -72,8 +71,8 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        tcolsumParams(np.float32, 64, 64, 64, 64, 64, 64),
-        tcolsumParams(np.float16, 16, 256, 16, 256, 16, 256),
+        TColsumParams(np.float32, 64, 64, 64, 64, 64, 64),
+        TColsumParams(np.float16, 16, 256, 16, 256, 16, 256),
     ]
 
     for i, param in enumerate(case_params_list):

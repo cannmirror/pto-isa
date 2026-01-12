@@ -17,60 +17,67 @@ import numpy as np
 np.random.seed(2025)
 
 
-def gen_golden_data(case_name, param):
+def gen_golden_data(param):
     data_type = param.data_type
-    m, k, n, p, q = param.row, param.src_col, param.src_validcol, param.dst_col, param.dst_validcol
-    input_arr = np.random.rand(m, k) * 10
-    input_arr = input_arr.astype(data_type)
-    golden = np.zeros((m, p))
-    for i in range(m):
-        for j in range(q):
-            golden[i][j] = input_arr[i][0]
+    row = param.row
+    src_col = param.src_col
+    dst_col = param.dst_col
+    dst_valid_col = param.dst_valid_col
+
+    if param.is_brcb:
+        input_arr = np.random.uniform(low=0, high=100, size=(row * src_col)).astype(data_type)
+        golden = np.zeros((row * src_col, dst_col))
+        for i in range(row * src_col):
+            for j in range(dst_col):
+                golden[i][j] = input_arr[i]
+    else:
+        input_arr = np.random.rand(row, src_col) * 100
+        input_arr = input_arr.astype(data_type)
+        golden = np.zeros((row, dst_col))
+        for i in range(row):
+            for j in range(dst_valid_col):
+                golden[i][j] = input_arr[i][0]
     golden = golden.astype(data_type)
     input_arr.tofile("./input.bin")
     golden.tofile("./golden.bin")
 
 
 class TRowExpand:
-    def __init__(self, data_type, row, src_col, src_validcol, dst_col, dst_validcol):
+    def __init__(self, name, data_type, row, src_col, src_validcol, dst_col, dst_valid_col, is_brcb = False):
+        self.name = name
         self.data_type = data_type
         self.row = row
         self.src_col = src_col
         self.src_validcol = src_validcol
         self.dst_col = dst_col
-        self.dst_validcol = dst_validcol
+        self.dst_valid_col = dst_valid_col
+        self.is_brcb = is_brcb
 
 
 if __name__ == "__main__":
     # 用例名称
-    case_name_list = [
-        "TROWEXPANDTest.case0",
-        "TROWEXPANDTest.case1",
-        "TROWEXPANDTest.case2",
-        "TROWEXPANDTest.case3",
-        "TROWEXPANDTest.case4",
-        "TROWEXPANDTest.case5",
-        "TROWEXPANDTest.case6",
-        "TROWEXPANDTest.case7",
-        "TROWEXPANDTest.case8",
-    ]
-
     case_params_list = [
-        TRowExpand(np.uint16, 16, 16, 16, 512, 512),
-        TRowExpand(np.uint8, 16, 32, 32, 256, 256),
-        TRowExpand(np.uint32, 16, 8, 8, 128, 128),
-        TRowExpand(np.float32, 16, 32, 32, 512, 512),
-        TRowExpand(np.uint16, 16, 16, 1, 256, 255),
-        TRowExpand(np.uint8, 16, 32, 1, 512, 511),
-        TRowExpand(np.uint32, 16, 8, 1, 128, 127),
-        TRowExpand(np.uint16, 16, 8, 1, 128, 127),
-        TRowExpand(np.uint8, 2, 32, 1, 64, 63),
+        TRowExpand("TROWEXPANDTest.case0", np.uint16, 16, 16, 16, 512, 512),
+        TRowExpand("TROWEXPANDTest.case1", np.uint8, 16, 32, 32, 256, 256),
+        TRowExpand("TROWEXPANDTest.case2", np.uint32, 16, 8, 8, 128, 128),
+        TRowExpand("TROWEXPANDTest.case3", np.float32, 16, 32, 32, 512, 512),
+        TRowExpand("TROWEXPANDTest.case4", np.uint16, 16, 16, 1, 256, 255),
+        TRowExpand("TROWEXPANDTest.case5", np.uint8, 16, 32, 1, 512, 511),
+        TRowExpand("TROWEXPANDTest.case6", np.uint32, 16, 8, 1, 128, 127),
+        TRowExpand("TROWEXPANDTest.case7", np.uint16, 16, 8, 1, 128, 127),
+        TRowExpand("TROWEXPANDTest.case8", np.uint8, 2, 32, 1, 64, 63),
+        TRowExpand("TROWEXPANDTest.case9", np.uint16, 4080, 1, 1, 16, 16, True),
+        TRowExpand("TROWEXPANDTest.case10", np.uint16, 16, 1, 1, 16, 16, True),
+        TRowExpand("TROWEXPANDTest.case11", np.uint32, 4080, 1, 1, 8, 8, True),
+        TRowExpand("TROWEXPANDTest.case12", np.uint32, 16, 1, 1, 8, 8, True),
+        TRowExpand("TROWEXPANDTest.case13", np.float32, 4080, 1, 1, 8, 8, True),
+        TRowExpand("TROWEXPANDTest.case14", np.float32, 16, 1, 1, 8, 8, True),
     ]
 
-    for i, case_name in enumerate(case_name_list):
-        if not os.path.exists(case_name):
-            os.makedirs(case_name)
+    for _, param in enumerate(case_params_list):
+        if not os.path.exists(param.name):
+            os.makedirs(param.name)
         original_dir = os.getcwd()
-        os.chdir(case_name)
-        gen_golden_data(case_name, case_params_list[i])
+        os.chdir(param.name)
+        gen_golden_data(param)
         os.chdir(original_dir)

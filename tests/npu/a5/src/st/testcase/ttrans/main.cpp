@@ -15,15 +15,16 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-template <int32_t tilingKey>
-void launchTTRANS(uint8_t *out, uint8_t *src, void *stream);
+template <typename T, int dstTRows, int dstTCols, int srcTRows, int srcTCols, int vRows, int vCols>
+void LaunchTTRANS(T *out, T *src, void *stream);
+
+template <int dstTRows, int dstTCols, int srcTRows, int srcTCols, int vRows, int vCols>
+void LaunchTTRANSHalf(aclFloat16 *out, aclFloat16 *src, void *stream);
 
 class TTRANSTest : public testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 std::string GetGoldenDir() {
@@ -34,21 +35,19 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-TEST_F(TTRANSTest, case1)
-{
-    uint32_t M = 128;
-    uint32_t N = 128;
-
-    size_t srcFileSize = M * N * sizeof(float);
-    size_t dstFileSize = M * N * sizeof(float);
+template <typename T, int dstTRows, int dstTCols, int srcTRows, int srcTCols, int vRows, int vCols,
+    bool isHalf = false>
+void test_ttrans() {
+    size_t srcFileSize = srcTRows * srcTCols * sizeof(T);
+    size_t dstFileSize = dstTRows * dstTCols * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    uint8_t *dstHost, *srcHost;
-    uint8_t *dstDevice, *srcDevice;
+    T *dstHost, *srcHost;
+    T *dstDevice, *srcDevice;
 
     aclrtMallocHost((void **)(&dstHost), dstFileSize);
     aclrtMallocHost((void **)(&srcHost), srcFileSize);
@@ -56,38 +55,93 @@ TEST_F(TTRANSTest, case1)
     aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
+    ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
 
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTTRANS<1>(dstDevice, srcDevice, stream);
+    if constexpr (isHalf) {
+        LaunchTTRANSHalf<dstTRows, dstTCols, srcTRows, srcTCols, vRows, vCols>(dstDevice, srcDevice, stream);
+    } else {
+        LaunchTTRANS<T, dstTRows, dstTCols, srcTRows, srcTCols, vRows, vCols>(dstDevice, srcDevice, stream);
+    }
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    //PrintData(srcHost, M*N, FLOAT, 64);
-    //PrintData(dstHost,  M*N, FLOAT, 64);
-
-    // PrintData(srcHost, M*N, INT8_T, 64);
-    // PrintData(dstHost,  K * L, INT32_T, 64);
-
-    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, dstFileSize);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
 
     aclrtFree(dstDevice);
     aclrtFree(srcDevice);
 
     aclrtFreeHost(dstHost);
     aclrtFreeHost(srcHost);
-
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(dstFileSize);
-    std::vector<float> devFinal(dstFileSize);
+    std::vector<T> golden(dstFileSize / sizeof(T));
+    std::vector<T> result(dstFileSize / sizeof(T));
     ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
-    ReadFile(GetGoldenDir() + "/output_z.bin", dstFileSize, devFinal.data(), dstFileSize);
+    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, result.data(), dstFileSize);
 
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
+    bool ret = ResultCmp(golden, result, 0.001f);
 
     EXPECT_TRUE(ret);
+}
+
+TEST_F(TTRANSTest, case_float_8x16_16x8_16x8) {
+    test_ttrans<float, 8, 16, 16, 8, 16, 8>();
+}
+TEST_F(TTRANSTest, case_half_16x16_16x16_16x16) {
+    test_ttrans<aclFloat16, 16, 16, 16, 16, 16, 16, true>();
+}
+TEST_F(TTRANSTest, case_float_16x32_32x16_31x15) {
+    test_ttrans<float, 16, 32, 32, 16, 31, 15>();
+}
+TEST_F(TTRANSTest, case_half_32x32_32x32_31x31) {
+    test_ttrans<aclFloat16, 32, 32, 32, 32, 31, 31, true>();
+}
+TEST_F(TTRANSTest, case_float_512x8_2x512_2x512) {
+    test_ttrans<float, 512, 8, 2, 512, 2, 512>();
+}
+TEST_F(TTRANSTest, case_float_512x16_9x512_9x512) {
+    test_ttrans<float, 512, 16, 9, 512, 9, 512>();
+}
+TEST_F(TTRANSTest, case_float_66x88_9x16_7x15) {
+    test_ttrans<float, 66, 88, 9, 16, 7, 15>();
+}
+TEST_F(TTRANSTest, case_float_16x32_32x16_23x15) {
+    test_ttrans<float, 16, 32, 32, 16, 23, 15>();
+}
+TEST_F(TTRANSTest, case_float_128x64_64x128_27x77) {
+    test_ttrans<float, 128, 64, 64, 128, 27, 77>();
+}
+TEST_F(TTRANSTest, case_half_64x112_100x64_64x64) {
+    test_ttrans<aclFloat16, 64, 112, 100, 64, 64, 64, true>();
+}
+TEST_F(TTRANSTest, case_half_64x128_128x64_64x64) {
+    test_ttrans<aclFloat16, 64, 128, 128, 64, 64, 64, true>();
+}
+TEST_F(TTRANSTest, case_half_64x128_128x64_100x64) {
+    test_ttrans<aclFloat16, 64, 128, 128, 64, 100, 64, true>();
+}
+TEST_F(TTRANSTest, case_float_32x512_512x32_512x2) {
+    test_ttrans<float, 32, 512, 512, 32, 512, 2>();
+}
+TEST_F(TTRANSTest, case_float_64x64_64x64_64x64) {
+    test_ttrans<float, 64, 64, 64, 64, 64, 64>();
+}
+TEST_F(TTRANSTest, case_float_32x64_64x32_64x32) {
+    test_ttrans<float, 32, 64, 64, 32, 64, 32>();
+}
+TEST_F(TTRANSTest, case_float_64x64_64x64_36x64) {
+    test_ttrans<float, 64, 64, 64, 64, 36, 64>();
+}
+TEST_F(TTRANSTest, case_float_16x8_2x16_2x16) {
+    test_ttrans<float, 16, 8, 2, 16, 2, 16>();
+}
+TEST_F(TTRANSTest, case_uint8_32x32_32x32_32x32) {
+    test_ttrans<uint8_t, 32, 32, 32, 32, 32, 32>();
+}
+TEST_F(TTRANSTest, case_uint8_64x64_64x64_22x63) {
+    test_ttrans<uint8_t, 64, 64, 64, 64, 22, 63>();
 }

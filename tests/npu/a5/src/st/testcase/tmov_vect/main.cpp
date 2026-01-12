@@ -27,7 +27,6 @@ class TMOVTest : public testing::Test {
     void TearDown() override {}
 };
 
-
 std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
@@ -123,7 +122,6 @@ TEST_F(TMOVTest, vect_copy_case9) {
 TEST_F(TMOVTest, vect_copy_case10) {
     test_tmov<aclFloat16, 128, 64, 128, 64>();
 }
-
 
 TEST_F(TMOVTest, vect_copy_case11) {
     test_tmov<uint8_t, 64, 64, 64, 64>();

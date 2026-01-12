@@ -39,7 +39,7 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <uint32_t caseId, typename T, int row, int vaildRow, int col, int srcVaildCol>
+template <uint32_t caseId, typename T, int dstTileRow, int dstTileCol, int row, int vaildRow, int col, int srcVaildCol>
 bool TMulSTestFramework()
 {
     aclInit(nullptr);
@@ -48,7 +48,7 @@ bool TMulSTestFramework()
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    size_t dstByteSize = row * col * sizeof(T);
+    size_t dstByteSize = dstTileRow * dstTileCol * sizeof(T);
     size_t srcByteSize = row * col * sizeof(T);
     T *dstHost;
     T *srcHost;
@@ -95,37 +95,36 @@ bool TMulSTestFramework()
 
 TEST_F(TMULSTest, case1)
 {
-    bool ret = TMulSTestFramework<1, float, 32, 32, 64, 64>();
+    bool ret = TMulSTestFramework<1, float, 32, 128, 32, 32, 64, 64>();
     EXPECT_TRUE(ret);
 }
 
 TEST_F(TMULSTest, case2)
 {
-    bool ret = TMulSTestFramework<2, aclFloat16, 63, 63, 64, 64>();
+    bool ret = TMulSTestFramework<2, aclFloat16, 63, 128, 63, 63, 64, 64>();
     EXPECT_TRUE(ret);
 }
 
 TEST_F(TMULSTest, case3)
 {
-    bool ret = TMulSTestFramework<3, int32_t, 31, 31, 128, 128>();
+    bool ret = TMulSTestFramework<3, int32_t, 31, 256, 31, 31, 128, 128>();
     EXPECT_TRUE(ret);
 }
 
 TEST_F(TMULSTest, case4)
 {
-    bool ret = TMulSTestFramework<4, int16_t, 15, 15, 192, 192>();
+    bool ret = TMulSTestFramework<4, int16_t, 15, 192, 15, 15, 192, 192>();
     EXPECT_TRUE(ret);
 }
 
 TEST_F(TMULSTest, case5)
 {
-    bool ret = TMulSTestFramework<5, float, 7, 7, 448, 448>();
+    bool ret = TMulSTestFramework<5, float, 7, 512, 7, 7, 448, 448>();
     EXPECT_TRUE(ret);
 }
 
 TEST_F(TMULSTest, case6)
 {
-    bool ret = TMulSTestFramework<6, float, 256, 256, 16, 16>();
+    bool ret = TMulSTestFramework<6, float, 256, 32, 256, 256, 16, 16>();
     EXPECT_TRUE(ret);
 }
-

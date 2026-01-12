@@ -12,79 +12,79 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TMIN_HPP
 
 #include <pto/common/constants.hpp>
-#include "common.hpp"
-#include "utils.hpp"
+#include <pto/common/utils.hpp>
+#include <pto/npu/a5/common.hpp>
+#include <pto/npu/a5/utils.hpp>
+#include <pto/npu/a5/TBinOp.hpp>
+#include <pto/common/debug.h>
 
 using namespace pto;
 using namespace std;
 
 namespace pto {
 
-    template <typename T> struct MinOp {
-        PTO_INTERNAL static void BinInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1, MaskReg &preg)
-        {
-            vmin(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
-        }
-    };
-
-    template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
-    __tf__ PTO_INTERNAL
-    void TMin(typename TileData::TileDType __out__ dst, 
-                                typename TileData::TileDType __in__ src0, 
-                                typename TileData::TileDType __in__ src1,
-                                unsigned kValidRows,
-                                unsigned kValidCols,
-                                BinOpsImpl version = BinOpsImpl::BinOpsIMPL_DEFAULT) {
-        using T = typename TileData::DType;
-        __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-        __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-        __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
-        BinaryInstr<MinOp<T>, TileData, elementsPerRepeat, blockSizeElem, rowStride>(
-                    dstPtr, src0Ptr, src1Ptr, kValidRows, kValidCols, version);
+template <typename T>
+struct MinOp {
+    PTO_INTERNAL static void BinInstr(
+        RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1, MaskReg &preg) {
+        vmin(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
     }
+};
 
-    template <typename T, typename TileData>
-    __tf__ PTO_INTERNAL
-    void TMinCheck() {
-        static_assert(std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, float> ||
+template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride,
+    unsigned src0RowStride = dstRowStride, unsigned src1RowStride = dstRowStride>
+__tf__ PTO_INTERNAL OP_NAME(TMIN) OP_TYPE(element_wise) void TMin(typename TileData::TileDType __out__ dst,
+    typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1, unsigned validRows,
+    unsigned validCols, VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename TileData::DType;
+    __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
+    __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
+    __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
+    if constexpr (dstRowStride == src0RowStride && dstRowStride == src1RowStride) {
+        BinaryInstr<MinOp<T>, TileData, elementsPerRepeat, blockSizeElem, dstRowStride>(
+            dstPtr, src0Ptr, src1Ptr, validRows, validCols, version);
+    } else {
+        BinaryInstr<MinOp<T>, TileData, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
+            dstPtr, src0Ptr, src1Ptr, validRows, validCols, version);
+    }
+    return;
+}
+
+template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+PTO_INTERNAL void TMinCheck(const TileDataDst &dst, const TileDataSrc0 &src0, const TileDataSrc1 &src1) {
+    static_assert(std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, float> ||
                       std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, half> ||
-                      std::is_same_v<T, bfloat16_t> ||std::is_same_v<T, uint8_t> ||std::is_same_v<T, int8_t>,
-                      "TMin: Invalid data type.");
-        static_assert(TileData::isRowMajor, "TMin: not supported Layout type");
-    }
+                      std::is_same_v<T, bfloat16_t> || std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t>,
+        "Fix: TMin has invalid data type.");
+    static_assert(TileDataDst::isRowMajor || TileDataSrc0::isRowMajor || TileDataSrc1::isRowMajor,
+        "Fix: TMin only support row major layout.");
+    unsigned validRows = dst.GetValidRow();
+    unsigned validCols = dst.GetValidCol();
+    PTO_ASSERT(src0.GetValidRow() == validRows && src0.GetValidCol() == validCols,
+        "Fix: TMIN input tile src0 valid shape mismatch with output tile dst shape.");
+    PTO_ASSERT(src1.GetValidRow() == validRows && src1.GetValidCol() == validCols,
+        "Fix: TMIN input tile src1 valid shape mismatch with output tile dst shape.");
+}
 
-    template <typename TileData>
-    PTO_INTERNAL void TMIN_IMPL(TileData &dst, TileData &src0, TileData &src1) {
-        using T = typename TileData::DType;
-        TMinCheck<T, TileData>();
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T); 
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T); 
-        constexpr unsigned rowStride = TileData::RowStride;
-        unsigned validRow = dst.GetValidRow();
-        unsigned validCol = dst.GetValidCol();
-
-        TMin<TileData, elementsPerRepeat, blockSizeElem, rowStride>
-            (dst.data(), src0.data(), src1.data(), validRow, validCol);
-    }
-
-    template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-    PTO_INTERNAL void TMIN_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
-        static_assert(std::is_same_v<TileDataDst, TileDataSrc0> && std::is_same_v<TileDataDst, TileDataSrc1>,
-                      "TMIN: Input tileshape must be consistent with the out tileshape.");
-
-        using T = typename TileDataDst::DType;
-        TMinCheck<T, TileDataDst>();
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T); 
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T); 
-        constexpr unsigned rowStride = TileDataDst::RowStride;
-        unsigned validRow = dst.GetValidRow();
-        unsigned validCol = dst.GetValidCol();
-        if (validRow == 0 || validCol == 0) {
-            return;
-        }
-
-        TMin<TileDataDst, elementsPerRepeat, blockSizeElem, rowStride>
-            (dst.data(), src0.data(), src1.data(), validRow, validCol);
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+PTO_INTERNAL void TMIN_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
+    using T = typename TileDataDst::DType;
+    TMinCheck<T, TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1);
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
+    // when tileshape of src0, src1 and dst are the same, validRows and validCols are also the same
+    if constexpr (std::is_same_v<TileDataDst, TileDataSrc0> && std::is_same_v<TileDataDst, TileDataSrc1>) {
+        constexpr unsigned dstRowStride = TileDataDst::RowStride;
+        TMin<TileDataDst, elementsPerRepeat, blockSizeElem, dstRowStride>(
+            dst.data(), src0.data(), src1.data(), dst.GetValidRow(), dst.GetValidCol());
+    } else {
+        // when tileshape of src0, src1 and dst are different, validRows and validCols are also the same
+        constexpr unsigned dstRowStride = TileDataDst::RowStride;
+        constexpr unsigned src0RowStride = TileDataSrc0::RowStride;
+        constexpr unsigned src1RowStride = TileDataSrc1::RowStride;
+        TMin<TileDataDst, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
+            dst.data(), src0.data(), src1.data(), dst.GetValidRow(), dst.GetValidCol());
     }
 }
+} // namespace pto
 #endif

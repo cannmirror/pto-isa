@@ -17,6 +17,7 @@ namespace pto {
 constexpr int REPEAT_BYTE = 256;
 constexpr int REPEAT_MAX = 255;
 constexpr const int BLOCK_BYTE_SIZE = 32;
+constexpr const uint32_t SHIFT_BLOCK_LEN = 4;
 constexpr const uint32_t SHIFT_BLOCK_BYTE = 5;
 constexpr const int REPEAT_STRIDE_MAX = 255;
 constexpr const uint64_t BLOCK_MAX_PER_REPEAT = 8;
@@ -75,9 +76,14 @@ enum class PadValue {
     Min,
 };
 
+enum class CompactMode {
+    Null,
+    Normal,
+};
+
 template <typename DType, PadValue PadVal>
 struct PadValueMap {
-    static_assert(sizeof(DType) < 0, "TLOAD: Unsupported DType for PadValue!");
+    PTO_STATIC_ASSERT(sizeof(DType) < 0, "TLOAD: Unsupported DType for PadValue!");
 };
 
 template <PadValue PadVal>
@@ -140,9 +146,7 @@ struct PadValueMap<uint32_t, PadValue::Max> {
     static constexpr auto value = uint32_t(0xffffffffUL);
 };
 
-
 #ifndef __CPU_SIM
-// This section should not be included into CPU_SIM as i does not support blfloat16
 template <>
 struct PadValueMap<bfloat16_t, PadValue::Null> {
     static constexpr auto value = uint16_t(0);
@@ -161,7 +165,6 @@ struct PadValueMap<bfloat16_t, PadValue::Max> {
     static constexpr auto value = uint16_t(0x7f80);
 };
 #endif
-
 template <>
 struct PadValueMap<half, PadValue::Null> {
     static constexpr auto value = uint16_t(0);

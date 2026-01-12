@@ -19,7 +19,7 @@ This guide covers prerequisites and setup on **macOS / Linux / Windows**, and sh
   - Windows: Visual Studio 2022 Build Tools (MSVC)
 - Python packages: `numpy` (the CPU test data generators use it)
 
-`tests/run_cpu.py` can install `numpy` automatically (unless you pass `--no-install`).
+`run_cpu.py` can install `numpy` automatically (unless you pass `--no-install`).
 
 ### Optional (faster builds)
 
@@ -149,7 +149,7 @@ Common options:
   ```
 
   ```bash
-  # print detailed logs
+  # print detail logs
   python3 tests/run_cpu.py --verbose
   ```
 
@@ -159,11 +159,11 @@ Common options:
   ```
 
   ```bash
-  # on Windows, you may need to specify the generator and cmake_prefix_path
+  # on Windows, maybe need specify generator and cmake_perfix_path
   python3 tests/run_cpu.py --clean --generator "MinGW Makefiles" --cmake_prefix_path D:\gtest\
   ```
 
-- set environment variables:
+- set environment:
   ```bash
   export LD_LIBRARY_PATH=/path_to_compiler/lib64:$LD_LIBRARY_PATH
   ```
@@ -250,7 +250,7 @@ Before using this project, make sure the following basic dependencies and the NP
       > 
       > Python needs to download packages such as os, numpy, ctypes, struct, copy, math, enum, ml_dtypes, en_dtypes, etc.
       > 
-      > If you have already installed googletest by other means, you need to make the corresponding changes to the CMakeLists.txt. For example, you used `cmake .. -DCMAKE_CXX_FLAGS="-fPIC -D_GLIBCXX_USE_CXX11_ABI=0"` when installing googletest, you need to add `add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)` in tests/npu/[a2a3 | a5]/src/st/CMakeLists.txt
+      > If you have already installed googletest by other means, you need to make the corresponding changes to the CMakeLists.txt. For examle, you used `cmake .. -DCMAKE_CXX_FLAGS="-fPIC -D_GLIBCXX_USE_CXX11_ABI=0"` when installing googletest, you need to add `add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)` in tests/npu/[a2a3 | a5]/src/st/CMakeLists.txt
 
 2. **Install driver and firmware (runtime dependency)**
 

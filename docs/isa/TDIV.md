@@ -29,14 +29,21 @@ PTO_INST RecordEvent TDIV(TileData& dst, TileData& src0, TileData& src1, WaitEve
 ```
 
 ## Constraints
-- **Implementation checks (NPU)**:
-  - `TileData::DType` must be one of: `half`, `float`;
-  - Tile location must be vector (`TileData::Loc == TileType::Vec`);
-  - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`;
-  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`;
+
+- **Implementation checks (A2A3)**:
+  - `TileData::DType` must be one of: `half`, `float`.
   - Tile layout must be row-major (`TileData::isRowMajor`).
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`).
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+  - Runtime: `src0`, `src1` and `dst` tiles should have the same `validRow/validCol`.
+- **Implementation checks (A5)**:
+  - `TileData::DType` must be one of: `int32_t`, `uint32_t`, `float`, `int16_t`, `uint16_t`, `half`.
+  - Tile layout must be row-major (`TileData::isRowMajor`).
+  - Tile location must be vector (`TileData::Loc == TileType::Vec`).
+  - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
+  - Runtime: `src0`, `src1` and `dst` tiles should have the same `validRow/validCol`.
 - **Valid region**:
-  - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain; `src0/src1` are assumed to be compatible (not validated by explicit runtime checks in this op).
+  - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain;.
 - **Division-by-zero**:
   - Behavior is target-defined.
 

@@ -52,6 +52,7 @@ namespace pto
                       std::is_same<typename TileData::DType, float32_t>::value,
                       "TADDS: Invalid data type");
 
+        static_assert(TileData::isRowMajor, "TADDS: not supported Layout type.");
         static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
@@ -74,7 +75,14 @@ namespace pto
         typename TileDataDst::TileDType __in__ srcData, T __in__ scalar, unsigned validRow, unsigned validCol) {
         __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
         __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
-        TBinSPlusInstr<AddSOp<T>, T, TileDataDst, TileDataSrc>(dst, src, scalar, validRow, validCol);
+        if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
+            constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
+            constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
+            constexpr unsigned stride = TileDataDst::RowStride;
+            TBinSInstr<AddSOp<T>, T, TileDataDst, elementsPerRepeat, blockSizeElem, stride>(dst, src, scalar, validRow, validCol);
+        } else {
+            TBinSPlusInstr<AddSOp<T>, T, TileDataDst, TileDataSrc>(dst, src, scalar, validRow, validCol);
+        }
     }
 
     template <typename TileDataDst, typename TileDataSrc>

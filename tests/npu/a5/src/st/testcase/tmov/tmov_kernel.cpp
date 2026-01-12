@@ -61,27 +61,25 @@ __global__ AICORE void runTMovL12Bias(__gm__ cType *out, __gm__ aType *src0, __g
     TASSIGN(cTile, 0x0);
     TASSIGN(biasTile, 0x0);
 
+    Event<Op::TLOAD, Op::TMOV_M2L> evtLoad_Mov;
+    Event<Op::TMOV_M2B, Op::TMATMUL> evtTmov_Matmul;
+    Event<Op::TMATMUL, Op::TSTORE_ACC> evtMatmul_StoreAcc;
+
     /******************************TLOAD*****************************/
     TLOAD(aMatTile, src0Global);
     TLOAD(bMatTile, src1Global);
-    TLOAD(biasMatTile, src2Global);
-    set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-    wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    evtLoad_Mov = TLOAD(biasMatTile, src2Global);
 
     /**************************TMOV**************************/
-    TMOV(aTile, aMatTile);
+    TMOV(aTile, aMatTile, evtLoad_Mov);
     TMOV(bTile, bMatTile);
-    TMOV(biasTile, biasMatTile);
-    set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    evtTmov_Matmul = TMOV(biasTile, biasMatTile);
 
     /****************************TMATMUL********************************/
-    TMATMUL_BIAS(cTile, aTile, bTile, biasTile);
-    set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-    wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    evtMatmul_StoreAcc = TMATMUL_BIAS(cTile, aTile, bTile, biasTile, evtTmov_Matmul);
 
     /********************************TSTORE****************************/
-    TSTORE(dstGlobal, cTile);
+    TSTORE(dstGlobal, cTile, evtMatmul_StoreAcc);
     out = dstGlobal.data();
 }
 
@@ -132,27 +130,25 @@ __global__ AICORE void runTMovL12BiasDynamic(
     TASSIGN(cTile, 0x0);
     TASSIGN(biasTile, 0x0);
 
+    Event<Op::TLOAD, Op::TMOV_M2L> evtLoad_Mov;
+    Event<Op::TMOV_M2B, Op::TMATMUL> evtTmov_Matmul;
+    Event<Op::TMATMUL, Op::TSTORE_ACC> evtMatmul_StoreAcc;
+
     /******************************TLOAD*****************************/
     TLOAD(aMatTile, src0Global);
     TLOAD(bMatTile, src1Global);
-    TLOAD(biasMatTile, src2Global);
-    set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-    wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    evtLoad_Mov = TLOAD(biasMatTile, src2Global);
 
     /**************************TMOV**************************/
-    TMOV(aTile, aMatTile);
+    TMOV(aTile, aMatTile, evtLoad_Mov);
     TMOV(bTile, bMatTile);
-    TMOV(biasTile, biasMatTile);
-    set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
+    evtTmov_Matmul = TMOV(biasTile, biasMatTile);
 
     /****************************TMATMUL********************************/
-    TMATMUL_BIAS(cTile, aTile, bTile, biasTile);
-    set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-    wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    evtMatmul_StoreAcc = TMATMUL_BIAS(cTile, aTile, bTile, biasTile, evtTmov_Matmul);
 
     /********************************TSTORE****************************/
-    TSTORE(dstGlobal, cTile);
+    TSTORE(dstGlobal, cTile, evtMatmul_StoreAcc);
     out = dstGlobal.data();
 }
 
@@ -200,27 +196,22 @@ __global__ AICORE void runTMovL12Fb(__gm__ cType *out, __gm__ aType *src0, __gm_
     TASSIGN(cTile, 0x0);
     TASSIGN(fbTile, 0x0);
 
-    /******************************TLOAD*****************************/
+    Event<Op::TLOAD, Op::TMOV_M2L> evtLoad_Mov;
+    Event<Op::TMOV_M2B, Op::TMATMUL> evtMov_Matmul;
+    Event<Op::TMATMUL, Op::TMOV_M2S> evtMatmul_MovM2s;
+
     TLOAD(aMatTile, src0Global);
     TLOAD(bMatTile, src1Global);
-    TLOAD(fbMatTile, src2Global);
-    set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
-    wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
+    evtLoad_Mov = TLOAD(fbMatTile, src2Global);
 
     /**************************TMOV & TMATMUL**************************/
-    TMOV(aTile, aMatTile);
-    TMOV(bTile, bMatTile);
-    set_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-    wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
-
-    TMATMUL(cTile, aTile, bTile);
-    set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-    wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-
-    TMOV(fbTile, fbMatTile);
+    TMOV(aTile, aMatTile, evtLoad_Mov);
+    evtMov_Matmul = TMOV(bTile, bMatTile);
+    evtMatmul_MovM2s = TMATMUL(cTile, aTile, bTile, evtMov_Matmul);
+    TMOV(fbTile, fbMatTile, evtMatmul_MovM2s);
 
     /********************************TSTORE****************************/
-    TSTORE<AccTile, GlobalDataOut, FbTile>(dstGlobal, cTile, fbTile);
+    TSTORE_FP<AccTile, GlobalDataOut, FbTile>(dstGlobal, cTile, fbTile);
     out = dstGlobal.data();
 }
 

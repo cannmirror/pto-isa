@@ -17,40 +17,46 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 using namespace pto;
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int kPadValue_>
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows_, int kVCols_, int kPadValue_>
 struct GenericDataSelector{};
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_>
-struct GenericDataSelector<T, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, PAD_VALUE_NULL> {
-    using DynShapeDim5 = Shape<1, 1, 1, kTRows_, kTCols_>;
-    using DynStridDim5 = pto::Stride<1, 1, 1, kTCols_, 1>;
-    using GlobalType = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileType = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, kTRows_, kTCols_, SLayout::NoneBox, 512, PadValue::Null>;
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows_, int kVCols_>
+struct GenericDataSelector<T, dstRow, dstCol, srcRow, srcCol, kVRows_, kVCols_, PAD_VALUE_NULL> {
+    using srcTileType = Tile<TileType::Vec, T, srcRow, srcCol, BLayout::RowMajor, kVRows_, kVCols_, SLayout::NoneBox, 512, PadValue::Null>;
+    using dstTileType = Tile<TileType::Vec, T, dstRow, dstCol, BLayout::RowMajor, kVRows_, kVCols_, SLayout::NoneBox, 512, PadValue::Null>;
 };
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_>
-struct GenericDataSelector<T, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, PAD_VALUE_MAX> {
-    using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
-    using DynStridDim5 = pto::Stride<1, 1, 1, kGCols_, 1>;
-    using GlobalType = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-    using TileType = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, kVRows_, kVCols_, SLayout::NoneBox, 512, PadValue::Max>;
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows_, int kVCols_>
+struct GenericDataSelector<T, dstRow, dstCol, srcRow, srcCol, kVRows_, kVCols_, PAD_VALUE_MAX> {
+    using srcTileType = Tile<TileType::Vec, T, srcRow, srcCol, BLayout::RowMajor, kVRows_, kVCols_, SLayout::NoneBox, 512, PadValue::Max>;
+    using dstTileType = Tile<TileType::Vec, T, dstRow, dstCol, BLayout::RowMajor, kVRows_, kVCols_, SLayout::NoneBox, 512, PadValue::Max>;
 };
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int kPadValue_>
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows_, int kVCols_, int kPadValue_>
 __global__ AICORE void runTMINS(__gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *scalar) {
-    using GDS = GenericDataSelector<T, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, kPadValue_>;
-    using GlobalData = typename GDS::GlobalType;
-    using TileData = typename GDS::TileType;
-    TileData src0Tile;
-    TileData dstTile;
+    using GDS = GenericDataSelector<T, dstRow, dstCol, srcRow, srcCol, kVRows_, kVCols_, kPadValue_>;
+
+    using srcDynShapeDim5 = Shape<1, 1, 1, kVRows_, kVCols_>;
+    using srcDynStridDim5 = pto::Stride<1, 1, 1, srcCol, 1>;
+    using srcGlobalType = GlobalTensor<T, srcDynShapeDim5, srcDynStridDim5>;
+    
+    using dstDynShapeDim5 = Shape<1, 1, 1, kVRows_, kVCols_>;
+    using dstDynStridDim5 = pto::Stride<1, 1, 1, dstCol, 1>;
+    using dstGlobalType = GlobalTensor<T, dstDynShapeDim5, dstDynStridDim5>;
+
+    using dstTileData = typename GDS::dstTileType;
+    using srcTileData = typename GDS::srcTileType;
+    srcTileData src0Tile;
+    dstTileData dstTile;
     TASSIGN(src0Tile, 0x0 + 0x400 * block_idx);
     TASSIGN(dstTile, 0x8000 + 0x400 * block_idx);
 
     int offset = 0;
-    GlobalData src0Global(src0 + offset);
-    GlobalData dstGlobal(out + offset);
+    srcGlobalType src0Global(src0 + offset);
+    dstGlobalType dstGlobal(out + offset);
 
     TLOAD(src0Tile, src0Global);
+    TLOAD(dstTile, dstGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     TMINS(dstTile, src0Tile, scalar[0]);
@@ -60,25 +66,25 @@ __global__ AICORE void runTMINS(__gm__ T __out__ *out, __gm__ T __in__ *src0, __
     out = dstGlobal.data();
 }
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int kPadValue_>
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows_, int kVCols_, int kPadValue_>
 void LaunchTMins(T *out, T *src0, T *scalar, void *stream)
 {
     if constexpr ( std::is_same_v<T, aclFloat16> && kPadValue_ == PAD_VALUE_MAX) {
-        runTMINS<half, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, kPadValue_><<<1, nullptr, stream>>>(
+        runTMINS<half, dstRow, dstCol, srcRow, srcCol, kVRows_, kVCols_, kPadValue_><<<1, nullptr, stream>>>(
             (half*)(out), (half*)(src0), (half*)(scalar));
     } else { 
-        runTMINS<T, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, kPadValue_><<<1, nullptr, stream>>>(
+        runTMINS<T, dstRow, dstCol, srcRow, srcCol, kVRows_, kVCols_, kPadValue_><<<1, nullptr, stream>>>(
             out, src0, scalar);
     }
 }
 
-template void LaunchTMins<float, 64, 64, 32, 32, 64, 64, PAD_VALUE_NULL>(float *out, float *src0, float *scalar, void *stream);
-template void LaunchTMins<float, 128, 128, 64, 64, 128, 128, PAD_VALUE_NULL>(float *out, float *src0, float *scalar, void *stream);
+template void LaunchTMins<float, 64, 64, 32, 32, 32, 32, PAD_VALUE_NULL>(float *out, float *src0, float *scalar, void *stream);
+template void LaunchTMins<float, 128, 128, 64, 64, 64, 64, PAD_VALUE_NULL>(float *out, float *src0, float *scalar, void *stream);
 
-template void LaunchTMins<float, 60, 60, 64, 64, 60, 60, PAD_VALUE_MAX>(float *out, float *src0, float *scalar, void *stream);
+template void LaunchTMins<float, 60, 128, 64, 64, 60, 60, PAD_VALUE_MAX>(float *out, float *src0, float *scalar, void *stream);
 template void LaunchTMins<float, 16, 200, 20, 512, 16, 200, PAD_VALUE_MAX>(float *out, float *src0, float *scalar, void *stream);
 template void LaunchTMins<float, 1, 3600, 2, 4096, 1, 3600, PAD_VALUE_MAX>(float *out, float *src0, float *scalar, void *stream);
-template void LaunchTMins<aclFloat16, 16, 200, 20, 224, 16, 200, PAD_VALUE_MAX>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *scalar, void *stream);
+template void LaunchTMins<aclFloat16, 16, 256, 20, 224, 16, 200, PAD_VALUE_MAX>(aclFloat16 *out, aclFloat16 *src0, aclFloat16 *scalar, void *stream);
 
 template void LaunchTMins<int32_t, 32, 32, 32, 32, 32, 32, PAD_VALUE_NULL>(int32_t *out, int32_t *src0, int32_t *scalar, void *stream);
 template void LaunchTMins<uint32_t, 32, 32, 32, 32, 32, 32, PAD_VALUE_NULL>(uint32_t *out, uint32_t *src0, uint32_t *scalar, void *stream);

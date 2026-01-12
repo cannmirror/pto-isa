@@ -45,16 +45,7 @@ PTO_INTERNAL void TRESHAPE_IMPL(TileDataOut &dst, TileDataIn &src) {
   static_assert(sizeof(DType) * Numel == sizeof(NewElement) * NewNumel,
                 "TRESHAPE: Total byte size must match.");
 
-  // 3. Element types must be compatible.
-  static_assert(
-      std::is_same_v<std::remove_const_t<DType>,
-                     std::remove_const_t<NewElement>> ||
-          (std::is_floating_point_v<DType> &&
-           std::is_floating_point_v<NewElement>) ||
-          (std::is_integral_v<DType> && std::is_integral_v<NewElement>),
-      "TRESHAPE: Element types must be compatible.");
-
-  // 4. reshape between non-boxed and boxed tile is not allowed.
+  // 3. reshape between non-boxed and boxed tile is not allowed.
   static_assert(
       (SFractal == SLayout::NoneBox && NewSFractal == SLayout::NoneBox) ||
           (SFractal != SLayout::NoneBox && NewSFractal != SLayout::NoneBox),

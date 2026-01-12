@@ -28,7 +28,6 @@ constexpr bool is_float_like_v =
 
 inline double applyRoundingToIntegral(double v, RoundMode mode)
 {
-    constexpr double NUM_HALF = 0.5;
     switch (mode) {
         case RoundMode::CAST_RINT:
             return std::rint(v);
@@ -61,6 +60,7 @@ inline double applyRoundingToIntegral(double v, RoundMode mode)
             return v;
     }
 }
+
 template <typename TileDataD, typename TileDataS>
 PTO_INTERNAL void TCvt_Impl(typename TileDataD::TileDType dst,
                             typename TileDataS::TileDType src, unsigned validRow, unsigned validCol, RoundMode mode
@@ -68,7 +68,7 @@ PTO_INTERNAL void TCvt_Impl(typename TileDataD::TileDType dst,
         for (int i = 0; i < validRow; ++i) {
             for (int j = 0; j < validCol; ++j) {
                 size_t dstIdx = GetTileElementOffset<TileDataD>(i,j);
-                size_t srcIdx = GetTileElementOffset<TileDataS>(i,j);
+                size_t srcIdx = GetTileElementOffset<TileDataS>(i,j);  
                 using D = typename TileDataD::DType;
                 using S = typename TileDataS::DType;
 
