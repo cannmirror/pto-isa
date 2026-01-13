@@ -31,7 +31,7 @@ def gen_golden_data_ttril(case_name, param):
     return output, golden
 
 
-class TTrilParams:
+class TTRIParams:
     def __init__(self, dtype, valid_rows, valid_cols, upper_or_lower=0, diagonal=0):
         self.dtype = dtype
         self.valid_rows = valid_rows
@@ -53,7 +53,7 @@ def generate_case_name(param):
     type_str = 'upper' if param.upper_or_lower == 1 else 'lower'
     sign_diag = '' if param.diagonal >=0 else 'n'
     diag_str = sign_diag + str(abs(param.diagonal))
-    return f"TTrilTest.case_{dtype_str}_{param.valid_rows}x{param.valid_cols}_{type_str}_diag_{diag_str}"
+    return f"TTRITest.case_{dtype_str}_{param.valid_rows}x{param.valid_cols}_{type_str}_diag_{diag_str}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -65,18 +65,18 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TTrilParams(np.float32,  32,   91, 0, 0),
-        TTrilParams(np.float32, 128,  128, 0, 0),
-        TTrilParams(np.float32,  32,   91, 0, 3),
-        TTrilParams(np.float32, 128,  128, 0, 3),
-        TTrilParams(np.float32,  32,   91, 0, -3),
-        TTrilParams(np.float32, 128,  128, 0, -3),
-        TTrilParams(np.float32,  32,   91, 1, 0),
-        TTrilParams(np.float32, 128,  128, 1, 0),
-        TTrilParams(np.float32,  32,   91, 1, 3),
-        TTrilParams(np.float32, 128,  128, 1, 3),
-        TTrilParams(np.float32,  32,   91, 1, -3),
-        TTrilParams(np.float32, 128,  128, 1, -3),
+        TTRIParams(np.float32,  32,   91, 0, 0),
+        TTRIParams(np.float32, 128,  128, 0, 0),
+        TTRIParams(np.float32,  32,   91, 0, 3),
+        TTRIParams(np.float32, 128,  128, 0, 3),
+        TTRIParams(np.float32,  32,   91, 0, -3),
+        TTRIParams(np.float32, 128,  128, 0, -3),
+        TTRIParams(np.float32,  32,   91, 1, 0),
+        TTRIParams(np.float32, 128,  128, 1, 0),
+        TTRIParams(np.float32,  32,   91, 1, 3),
+        TTRIParams(np.float32, 128,  128, 1, 3),
+        TTRIParams(np.float32,  32,   91, 1, -3),
+        TTRIParams(np.float32, 128,  128, 1, -3),
     ]
 
     for param in case_params_list:

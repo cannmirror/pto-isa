@@ -95,6 +95,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t texpands -g TEXPANDSTest.case_float_64x64_64x64_64x64_PAD_VALUE_NULL
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmp -g TCMPTest.case_float_1x64_1x64_1x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tscatter -g TSCATTERTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t ttri -g TTRITest.case_float_128x128_128x31_1__444
 
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
@@ -141,6 +142,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t texpands
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmp
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tscatter
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t ttri
   fi
 fi
 
@@ -211,6 +213,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tscatter -g TSCATTERTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tneg -g TNEGTest.case_float_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolexpand -g TCOLEXPANDTest.case_float_1_8_128_63
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttri -g TTRITest.case_float_128x128_upper_diag_n3
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd
@@ -274,5 +277,6 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tscatter
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tneg
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolexpand
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttri
   fi
 fi

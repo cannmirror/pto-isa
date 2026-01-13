@@ -13,31 +13,15 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/constants.hpp>
 #include <pto/common/utils.hpp>
+#include <type_traits>
 
 namespace pto {
 
-// Helper to construct element `one`/`zero` with correct literal type for
-// integer vs floating/half element types. Avoids duplicated code and
-// accidental shadowing from in-function redeclarations.
-template <typename T>
-PTO_INTERNAL constexpr T make_one() {
-    if constexpr (std::is_floating_point<T>::value || std::is_same<T, half>::value) {
-        return static_cast<T>(1.0);
-    } else {
-        return static_cast<T>(1);
-    }
-}
-
-template <typename T>
-PTO_INTERNAL constexpr T make_zero() {
-    return static_cast<T>(0);
-}
-
-template <typename T, int isUpperOrLower, int diagonal, unsigned rowStride>
+// lower-triangular
+template <typename T, int diagonal, unsigned rowStride>
 PTO_INTERNAL void TTril(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol) {
-    T one = make_one<T>();
-    T zero = make_zero<T>();
-    // lower-triangular
+    T one = static_cast<T>(1);
+    T zero = static_cast<T>(0);
     for (unsigned i = 0; i < validRow; ++i) {
         __ubuf__ T *drow = dstPtr + i * rowStride;
 
@@ -60,11 +44,11 @@ PTO_INTERNAL void TTril(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol
     }
 }
 
-template <typename T, int isUpperOrLower, int diagonal, unsigned rowStride>
+// upper-triangular
+template <typename T, int diagonal, unsigned rowStride>
 PTO_INTERNAL void TTriu(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol) {
-    T one = make_one<T>();
-    T zero = make_zero<T>();
-    // upper-triangular
+    T one = static_cast<T>(1);
+    T zero = static_cast<T>(0);
     for (unsigned i = 0; i < validRow; ++i) {
         __ubuf__ T *drow = dstPtr + i * rowStride;
 
@@ -74,8 +58,7 @@ PTO_INTERNAL void TTriu(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol
         pipe_barrier(PIPE_V);
 
         int firstCol = static_cast<int>(i) + static_cast<int>(diagonal);
-        if (firstCol < 0)
-            firstCol = 0;
+        firstCol = (firstCol < 0) ? 0 : firstCol;
         if (firstCol < static_cast<int>(validCol)) {
             unsigned start = static_cast<unsigned>(firstCol);
             set_vector_mask(0, validCol - start);
@@ -92,9 +75,9 @@ __tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned
 
     set_mask_count();
     if constexpr (isUpperOrLower == 0) {
-        TTril<T, isUpperOrLower, diagonal, rowStride>(dstPtr, validRow, validCol);
+        TTril<T, diagonal, rowStride>(dstPtr, validRow, validCol);
     } else {
-        TTriu<T, isUpperOrLower, diagonal, rowStride>(dstPtr, validRow, validCol);
+        TTriu<T, diagonal, rowStride>(dstPtr, validRow, validCol);
     }
     set_mask_norm();
     set_vector_mask(-1, -1);

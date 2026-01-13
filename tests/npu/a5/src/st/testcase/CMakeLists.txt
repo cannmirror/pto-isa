@@ -184,7 +184,7 @@ set(ALL_TESTCASES
     tcolexpandmul
     tcolexpandsub
     trowexpandbrcb
-    ttril
+    ttri
     tcolexpand
 )
 
