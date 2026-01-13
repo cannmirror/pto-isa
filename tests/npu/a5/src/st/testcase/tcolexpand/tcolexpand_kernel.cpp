@@ -62,8 +62,8 @@ void launchTCOLEXPAND(T *out, T *src, void *stream) {
 
 template void launchTCOLEXPAND<aclFloat16, 1, 16, 512, 512>(aclFloat16 *out, aclFloat16 *src, void *stream);
 template void launchTCOLEXPAND<int8_t, 2, 32, 256, 255>(int8_t *out, int8_t *src, void *stream);
-template void launchTCOLEXPAND<float,  1, 8,  128, 63>(float  *out, float  *src, void *stream);
+template void launchTCOLEXPAND<float, 1, 8, 128, 63>(float *out, float  *src, void *stream);
 template void launchTCOLEXPAND<aclFloat16, 1, 33, 512, 512>(aclFloat16 *out, aclFloat16 *src, void *stream);
 template void launchTCOLEXPAND<int8_t, 2, 17, 256, 44>(int8_t *out, int8_t *src, void *stream);
-template void launchTCOLEXPAND<float,  1, 54,  64, 63>(float  *out, float  *src, void *stream);
+template void launchTCOLEXPAND<float, 1, 54, 64, 63>(float *out, float *src, void *stream);
 }

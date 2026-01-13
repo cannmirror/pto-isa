@@ -93,7 +93,7 @@ TEST_F(TCOLEXPANDTest, case_int8_2_32_256_255)
 }
 TEST_F(TCOLEXPANDTest, case_float_1_8_128_63)
 {
-    test_tcolexpand<float, 1, 8,  128, 63>();
+    test_tcolexpand<float, 1, 8, 128, 63>();
 }
 TEST_F(TCOLEXPANDTest, case_half_1_33_512_512)
 {
@@ -105,6 +105,6 @@ TEST_F(TCOLEXPANDTest, case_int8_2_17_256_44)
 }
 TEST_F(TCOLEXPANDTest, case_float_1_54_64_63)
 {
-    test_tcolexpand<float, 1, 54,  64, 63>();
+    test_tcolexpand<float, 1, 54, 64, 63>();
 }
 }
