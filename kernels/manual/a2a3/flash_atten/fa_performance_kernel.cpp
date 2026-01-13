@@ -12,7 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/pto-inst.hpp>
 
 #include "fa_performance_kernel.h"
-#include <pto/npu/a2a3/custom/Pto_prefetch.hpp>
+#include <pto/npu/a2a3/kernels/Pto_prefetch.hpp>
 #include <pto/npu/a2a3/custom/TSyncCVID.hpp>
 #include "pto_macro_matmul.hpp"
 #include "pto_macro_fa_softmax.hpp"
@@ -34,7 +34,7 @@ enum FftsBufferFlag : uint32_t {
     CV_BLOCK_END = 7, // CV comm slot block end (CV_COMM_CTRL reserved in TSyncCVID)
 };
 #endif
-
+ 
 enum CoreEvtID : uint32_t {
     QK_EVENT_ID0,
     QK_EVENT_ID1,
@@ -904,11 +904,19 @@ void LaunchTFA(uint16_t *ffts, aclFloat16 *q, aclFloat16 *k, aclFloat16 *v, aclF
     warmup_kernel<<<24, nullptr, stream>>>();
 
     const uint64_t tensor_elems = static_cast<uint64_t>(S0) * static_cast<uint64_t>(HEAD_SIZE);
-    constexpr uint32_t prefetch_blocks = 20;
+    const uint64_t tensor_bytes = tensor_elems * sizeof(half);
+    constexpr bool kPrefetchUseSdma = true; //simulation cannot use sdma
+    constexpr int kPrefetchAivCores = 40; // only used when kPrefetchUseSdma is false
 
-    PTO_PREFETCH<<<prefetch_blocks, nullptr, stream>>>((__gm__ half *)q, tensor_elems);
-    PTO_PREFETCH<<<prefetch_blocks, nullptr, stream>>>((__gm__ half *)k, tensor_elems);
-    PTO_PREFETCH<<<prefetch_blocks, nullptr, stream>>>((__gm__ half *)v, tensor_elems);
+    if constexpr (kPrefetchUseSdma) {
+        PTO_PREFETCH((__gm__ void *)q, tensor_bytes, stream);
+        PTO_PREFETCH((__gm__ void *)k, tensor_bytes, stream);
+        PTO_PREFETCH((__gm__ void *)v, tensor_bytes, stream);
+    } else {
+        PTO_PREFETCH<false, kPrefetchAivCores>((__gm__ void *)q, tensor_bytes, stream);
+        PTO_PREFETCH<false, kPrefetchAivCores>((__gm__ void *)k, tensor_bytes, stream);
+        PTO_PREFETCH<false, kPrefetchAivCores>((__gm__ void *)v, tensor_bytes, stream);
+    }
 
     runTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, CV_FIFO_SIZE, INTERMEDIATE_CHECK,
         CV_FIFO_CONS_SYNC_PERIOD><<<block_rows, nullptr, stream>>>((__gm__ uint64_t *)ffts, (half *)q, (half *)k,

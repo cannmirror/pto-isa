@@ -90,6 +90,12 @@ PTO_INST RecordEvent TLOAD(TileData &dst, GlobalData &src, WaitEvents&... events
   return {};
 }
 
+template <typename TileData, typename GlobalData>
+PTO_INST RecordEvent TPREFETCH(TileData &dst, GlobalData &src) {
+  MAP_INSTR_IMPL(TPREFETCH, dst, src);
+  return {};
+}
+
 template <typename TileDataDst, typename TileDataSrc0, typename T, typename... WaitEvents>
 PTO_INST RecordEvent TCMPS(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode, WaitEvents&... events) {
   TSYNC(events...);
