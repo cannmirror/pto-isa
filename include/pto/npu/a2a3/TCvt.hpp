@@ -51,9 +51,6 @@ namespace pto {
             case RoundMode::CAST_ODD:
                 vconv_f322f16o(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
-            case RoundMode::CAST_NONE:
-                vconv_f322f16(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-                break;
             default:
                 vconv_f322f16r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
@@ -111,7 +108,7 @@ namespace pto {
                 vconv_f322s64z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
             default:
-                vconv_f322s64r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                vconv_f322s64z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
         }
     }
@@ -252,7 +249,7 @@ namespace pto {
                 vconv_f162s16z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
             default:
-                vconv_f162s16r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                vconv_f162s16z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
         }
     }
@@ -278,9 +275,6 @@ namespace pto {
                 break;
             case RoundMode::CAST_TRUNC:
                 vconv_f162s8z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-                break;
-            case RoundMode::CAST_NONE:
-                vconv_f162s8(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
             default:
                 vconv_f162s8z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
@@ -310,11 +304,8 @@ namespace pto {
             case RoundMode::CAST_TRUNC:
                 vconv_f162u8z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
-            case RoundMode::CAST_NONE:
-                vconv_f162u8(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-                break;
             default:
-                vconv_f162u8r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                vconv_f162u8z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
         }
     }
@@ -340,9 +331,6 @@ namespace pto {
                 break;
             case RoundMode::CAST_TRUNC:
                 vconv_bf162s32z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-                break;
-            case RoundMode::CAST_NONE:
-                vconv_bf162s32(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
             default:
                 vconv_bf162s32z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
@@ -372,11 +360,8 @@ namespace pto {
             case RoundMode::CAST_TRUNC:
                 vconv_s162f16z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
-            case RoundMode::CAST_NONE:
-                vconv_s162f16(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-                break;
             default:
-                vconv_s162f16r(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
+                vconv_s162f16(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
         }
     }
@@ -402,9 +387,6 @@ namespace pto {
                 break;
             case RoundMode::CAST_TRUNC:
                 vconv_s322f32z(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
-                break;
-            case RoundMode::CAST_NONE:
-                vconv_s322f32(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
                 break;
             default:
                 vconv_s322f32(dst, src, repeatNum, dstBlockStride, srcBlockStride, dstRepeatStride, srcRepeatStride);
