@@ -18,10 +18,10 @@ namespace TRowExpandTest{
 template <typename T, uint32_t dstRows, uint32_t dstCols>
 __global__ AICORE void runROWEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src) {
 
-    using SrcDynShapeDim5 = Shape<1, 1, 1, 1, dstRows>;
-    using SrcDynStridDim5 = pto::Stride<1, 1, 1, dstRows, 1>;
-    using GlobalData = GlobalTensor<T, SrcDynShapeDim5, SrcDynStridDim5>;
-    using SrcTileData = Tile<TileType::Vec, T, 1, dstRows, BLayout::RowMajor>;
+    using SrcDynShapeDim5 = Shape<1, 1, 1, dstRows, 1>;
+    using SrcDynStridDim5 = pto::Stride<1, 1, dstRows, 1, 1>;
+    using GlobalData = GlobalTensor<T, SrcDynShapeDim5, SrcDynStridDim5, Layout::DN>;
+    using SrcTileData = Tile<TileType::Vec, T, dstRows, 1, BLayout::ColMajor>;
 
     using DstDynShapeDim5 = Shape<1, 1, 1, dstRows, dstCols>;
     using DstDynStridDim5 = pto::Stride<1, 1, 1, dstCols, 1>;

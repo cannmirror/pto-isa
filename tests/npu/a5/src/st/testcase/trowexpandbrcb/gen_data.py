@@ -19,15 +19,15 @@ np.random.seed(2025)
 
 def gen_golden_data(case_name, param):
     datatype = param.datatype
-    src_row = 1
-    src_col = param.dst_row
+    src_row = param.dst_row
+    src_col = 1
     dst_row = param.dst_row
     dst_col = param.dst_col
     input_arr = (np.random.rand(src_row, src_col) * 10).astype(datatype)
     golden = np.zeros((dst_row, dst_col)).astype(datatype)
     for i in range(dst_row):
         for j in range(dst_col):
-            golden[i][j] = input_arr[0][i]
+            golden[i][j] = input_arr[i][0]
     input_arr.tofile("./input.bin")
     golden.tofile("./golden.bin")
 
