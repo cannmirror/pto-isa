@@ -278,13 +278,16 @@ PTO_INTERNAL void CheckTMovAccValid()
 }
 
 template <typename T, typename DstTileData, typename SrcTileData>
-AICORE void TMovToVecNd2Nz(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr, uint32_t validRow, uint32_t validCol)
+__tf__ PTO_INTERNAL void TMovToVecNd2Nz(typename DstTileData::TileDType __out__ dst,
+    typename SrcTileData::TileDType __in__ src, uint32_t validRow, uint32_t validCol)
 {
     static_assert((std::is_same<T, half>::value) || (std::is_same<T, bfloat16_t>::value) ||
         (std::is_same<T, float>::value) || (std::is_same<T, int32_t>::value) ||
         (std::is_same<T, float8_e4m3_t>::value) || (std::is_same<T, float8_e5m2_t>::value) ||
         (std::is_same<T, hifloat8_t>::value) || (std::is_same<T, int8_t>::value),
         "Dst and src must be float/int32_t/half/bfloat16_t/int8_t/float8_e4m3_t/float8_e5m2_t/hifloat8_t.");
+    __ubuf__ T *dstPtr  = (__ubuf__ T *)__cce_get_tile_ptr(dst);
+    __ubuf__ T *srcPtr  = (__ubuf__ T *)__cce_get_tile_ptr(src);
     constexpr int32_t srcRow = SrcTileData::Rows;
     constexpr int32_t srcCol = SrcTileData::Cols;
     constexpr int32_t srcByteSize = srcRow * srcCol * sizeof(T);
@@ -329,17 +332,10 @@ __tf__ PTO_INTERNAL void TMovToVec(DstTileData &dst, SrcTileData &src) {
     uint64_t validDstCol = dst.GetValidCol();
     uint64_t validRow = (validSrcRow < validDstRow) ? validSrcRow : validDstRow;
     uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
-    if constexpr ((SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::NoneBox)) &&
-        (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor))) {
-        TMovToVecNd2Nz<typename DstTileData::DType, DstTileData, SrcTileData>(
-            (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst.data()),
-            (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src.data()), validRow, validCol);
-    } else {
-        TPartCopyInstr<typename DstTileData::DType, DstTileData, SrcTileData, blockSizeElem, dstStride, srcStride>(
-            (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst.data()),
-            (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src.data()),
-            validRow, validCol, 0);
-    }
+    TPartCopyInstr<typename DstTileData::DType, DstTileData, SrcTileData, blockSizeElem, dstStride, srcStride>(
+        (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst.data()),
+        (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src.data()),
+        validRow, validCol, 0);
 }
 
 template <typename DstTileData, typename SrcTileData>
@@ -427,7 +423,13 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
         }
     } else if constexpr (SrcTileData::Loc == TileType::Vec) {
         if constexpr (DstTileData::Loc == TileType::Vec) {
-            TMovToVec<DstTileData, SrcTileData>(dst, src);
+            if constexpr ((SrcTileData::isRowMajor && (SrcTileData::SFractal == SLayout::NoneBox)) &&
+                (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor))) {
+                TMovToVecNd2Nz<typename DstTileData::DType, DstTileData, SrcTileData>(dst.data(), src.data(),
+                    src.GetValidRow(), src.GetValidCol());
+            } else {
+                TMovToVec<DstTileData, SrcTileData>(dst, src);
+            }
         } else if constexpr(DstTileData::Loc == TileType::Mat) {
             CommonCheck<DstTileData, SrcTileData>();
             TExtractVecToMat<DstTileData, SrcTileData>(dst.data(), src.data(), 0, 0, src.GetValidRow(),
