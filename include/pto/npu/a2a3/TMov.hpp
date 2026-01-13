@@ -133,11 +133,49 @@ PTO_INTERNAL void CheckTMovCcToCb()
         }
     }
 }
+template <typename DstTileData, typename SrcTileData>
+PTO_INTERNAL void TMovToLeft(DstTileData &dst, SrcTileData &src)
+{
+    if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+        if constexpr (DstTileData::Compact == CompactMode::Normal) {
+            TExtractToACompact<DstTileData, SrcTileData, false>(
+                dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol(), dst.GetKAligned());
+        } else {
+            TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
+        }
+    } else {
+        if constexpr (DstTileData::Compact == CompactMode::Normal || sizeof(typename SrcTileData::DType) == 1) {
+            TExtractToACompact<DstTileData, SrcTileData, true>(
+                dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol(), dst.GetKAligned());
+        } else {
+            TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
+        }
+    }
+}
+
+template <typename DstTileData, typename SrcTileData>
+PTO_INTERNAL void TMovToRight(DstTileData &dst, SrcTileData &src)
+{
+    if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+        if constexpr (DstTileData::Compact == CompactMode::Normal) {
+            TExtractToBCompact<DstTileData, SrcTileData, false>(
+                dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol());
+        } else {
+            TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
+        }
+    } else {
+        if constexpr (DstTileData::Compact == CompactMode::Normal || sizeof(typename SrcTileData::DType) == 1) {
+            TExtractToBCompact<DstTileData, SrcTileData, true>(
+                dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol());
+        } else {
+            TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
+        }
+    }
+}
 
 template <typename DstTileData, typename SrcTileData>
 AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
-    CheckKAlignedMode<DstTileData, SrcTileData>(dst, src);
     static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
         "TMov: The shape of src needs to be the same as that of dst.");
     static_assert((SrcTileData::Loc == TileType::Mat &&
@@ -147,17 +185,9 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
                       (DstTileData::Loc == TileType::Mat && SrcTileData::Loc == TileType::Acc),
         "TMov: Invalid TileType.");
     if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Left) {
-        if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-            TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
-        } else {
-            TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
-        }
+        TMovToLeft<DstTileData, SrcTileData>(dst,src);
     } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Right) {
-        if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-            TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), 0, 0);
-        } else {
-            TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), 0, 0);
-        }
+        TMovToRight<DstTileData, SrcTileData>(dst,src);
     } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Bias) {
         TMovToBt<DstTileData, SrcTileData>(dst.data(), src.data());
     } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Scaling) {
@@ -178,6 +208,7 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
 PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
+    CheckTMovCcToCb<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
     static_assert((DstTileData::Loc == TileType::Mat && SrcTileData::Loc == TileType::Acc), "TMov: Invalid TileType.");
     uint16_t m = src.GetValidRow();
     uint16_t n = src.GetValidCol();

@@ -406,7 +406,7 @@ TEST_F(TEXTRACT_Compact_Test, case13_bfloat16_0_1_param)
 }
 TEST_F(TEXTRACT_Compact_Test, case21_float_0_0_param)
 {
-    textract_compact_test<21, float, float, float>(20, 215, 22, 16, 16, 16, 128, 256, 128);
+    textract_compact_test<21, float, float, float>(36, 215, 22, 16, 16, 16, 128, 256, 128);
 }
 TEST_F(TEXTRACT_Compact_Test, case22_int8_0_0_param)
 {

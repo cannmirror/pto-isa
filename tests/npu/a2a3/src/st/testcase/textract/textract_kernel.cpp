@@ -109,6 +109,7 @@ AICORE inline void runTMOV_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *src1
     TASSIGN(bMatTile, 0x10000);
 
     LeftTile aTile;
+    aTile.SetKAligned(isKAlign);
     RightTile bTile;
     AccTile cTile;
     TASSIGN(aTile, 0x0);
@@ -247,6 +248,7 @@ AICORE inline void runTEXTRACT_UNALIGN(__gm__ T *out, __gm__ U *src0, __gm__ S *
     TASSIGN(bMatTile, 0x10000);
 
     LeftTile aTile;
+    aTile.SetKAligned(isKAlign);
     RightTile bTile;
     AccTile cTile;
     TASSIGN(aTile, 0x0);
@@ -386,6 +388,7 @@ AICORE inline void runTEXTRACT_COMPACT(__gm__ T *out, __gm__ U *src0, __gm__ S *
     TASSIGN(bMatTile, 0x10000);
 
     LeftTile aTile;
+    aTile.SetKAligned(isKAlign);
     RightTile bTile;
     AccTile cTile;
     TASSIGN(aTile, 0x0);
@@ -1294,7 +1297,7 @@ extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_13(__gm__ uint8_t *out,
 
 extern "C" __global__ AICORE void launchTEXTRACT_COMPACT_21(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
 {
-    constexpr uint32_t M = 20;
+    constexpr uint32_t M = 36;
     constexpr uint32_t N = 215;
     constexpr uint32_t K = 22;
 
