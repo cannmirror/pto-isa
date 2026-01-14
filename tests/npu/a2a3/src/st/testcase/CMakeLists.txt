@@ -167,6 +167,7 @@ tscatter
 tfa
 tcolexpand
 ttri
+tnot
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

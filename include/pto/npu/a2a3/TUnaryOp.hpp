@@ -203,7 +203,7 @@ namespace pto {
     }
   }
 
-  template <typename Op, typename DstTile, typename SrcTile>
+  template <typename Op, typename DstTile, typename SrcTile, bool floatOnly = true>
   PTO_INTERNAL void TUNARY_IMPL(DstTile &dst, SrcTile &src) {
     static_assert(DstTile::isRowMajor && SrcTile::isRowMajor,
       "TUnaryOp: Not supported Layout type");
@@ -219,7 +219,7 @@ namespace pto {
       "TUnaryOp: Number of dst's valid rows must not be greater than number of tile rows.");
     static_assert(std::is_same<typename DstTile::DType, typename SrcTile::DType>::value,
       "TUnaryOp: The data type of dst must be consistent with of src");
-    static_assert(std::is_same<typename DstTile::DType, float32_t>::value ||
+    static_assert(!floatOnly || std::is_same<typename DstTile::DType, float32_t>::value ||
       std::is_same<typename DstTile::DType, float>::value ||
       std::is_same<typename DstTile::DType, half>::value ||
       std::is_same<typename DstTile::DType, float16_t>::value,
@@ -271,6 +271,19 @@ namespace pto {
   template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TEXP_IMPL(DstTile &dst, SrcTile &src) {
     TUNARY_IMPL<ExpOp<typename DstTile::DType>>(dst, src);
+  }
+
+  /* NOT */
+  template <typename T>
+  struct NotOp {
+    PTO_INTERNAL static void UnaryInstr(__ubuf__ T* dst, __ubuf__ T* src, uint8_t repeat,
+      uint8_t dstStride = BLOCK_MAX_PER_REPEAT, uint8_t srcStride = BLOCK_MAX_PER_REPEAT) {
+      vnot(dst, src, repeat, 1, 1, dstStride, srcStride);
+    }
+  };
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TNOT_IMPL(DstTile &dst, SrcTile &src) {
+    TUNARY_IMPL<NotOp<typename DstTile::DType>, DstTile, SrcTile, false>(dst, src);
   }
 
   /* ABS */

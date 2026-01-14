@@ -96,6 +96,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmp -g TCMPTest.case_float_1x64_1x64_1x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tscatter -g TSCATTERTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t ttri -g TTRITest.case_float_128x128_128x31_1__444
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tnot -g TNOTTest.case_int16_64x64_64x64_64x64
 
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
@@ -143,6 +144,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmp
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tscatter
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t ttri
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tnot
   fi
 fi
 
