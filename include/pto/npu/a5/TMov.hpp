@@ -323,9 +323,9 @@ __tf__ PTO_INTERNAL void TMovToVecNd2Nz(typename DstTileData::TileDType __out__ 
 }
 
 template <typename DstTileData, typename SrcTileData>
-__tf__ PTO_INTERNAL void TMovVecToVec(typename DstTileData::TileDType __out__ dstData,
-    typename SrcTileData::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
-    unsigned version = VFImplKind::VFIMPL_DEFAULT)
+__tf__ PTO_INTERNAL OP_NAME(TMOV) OP_TYPE(element_wise)
+void TMovVecToVec(typename DstTileData::TileDType __out__ dstData, typename SrcTileData::TileDType __in__ srcData,
+    unsigned validRow, unsigned validCol, unsigned version = VFImplKind::VFIMPL_DEFAULT)
 {
     using T = typename DstTileData::DType;
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
