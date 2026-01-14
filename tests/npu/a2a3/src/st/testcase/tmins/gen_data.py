@@ -14,57 +14,77 @@ import os
 import numpy as np
 np.random.seed(19)
 
+PAD_VALUE_NULL = "PAD_VALUE_NULL"
+PAD_VALUE_MAX = "PAD_VALUE_MAX"
+PAD_VALUE_MIN = "PAD_VALUE_MIN"
 
-def gen_golden_data_tmins(case_name, param):
+def gen_golden_data(case_name, param):
     dtype = param.dtype
 
-    height, width = [param.tile_row, param.tile_col]
+    dst_tile_row, dst_tile_col = [param.dst_tile_row, param.dst_tile_col]
+    src0_tile_row, src0_tile_col = [param.src0_tile_row, param.src0_tile_col]
+    src1_tile_row, src1_tile_col = [param.src1_tile_row, param.src1_tile_col]
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    if dtype in (np.int16, np.int32):
-        input1 = np.random.randint(1, 10, size=[height, width]).astype(dtype)
-        input2 = np.random.randint(1, 10, size=[1]).astype(dtype)
-    else:
-        input1 = np.random.uniform(low=-13.033, high=101.011, size=[height, width]).astype(dtype)
-        input2 = np.random.uniform(low=-13.033, high=101.011, size=[1]).astype(dtype)
+    input1, input2 = [], []
+    if dtype == np.int16:
+        input1 = np.random.randint(-30_000, 30_000, size=[src0_tile_row, src0_tile_col]).astype(dtype)
+        input2 = np.random.randint(-30_000, 30_000, size=[src1_tile_row, src1_tile_col]).astype(dtype)
+    elif dtype == np.int32:
+        input1 = np.random.randint(-2_000_000_000, 2_000_000_000, size=[src0_tile_row, src0_tile_col]).astype(dtype)
+        input2 = np.random.randint(-2_000_000_000, 2_000_000_000, size=[src1_tile_row, src1_tile_col]).astype(dtype)
+    elif dtype == np.float16:
+        input1 = np.random.uniform(-30_000, 30_000, size=[src0_tile_row, src0_tile_col]).astype(dtype)
+        input2 = np.random.uniform(-30_000, 30_000, size=[src1_tile_row, src1_tile_col]).astype(dtype)
+    elif dtype == np.float32:
+        input1 = np.random.uniform(-2_000_000_000, 2_000_000_000, size=[src0_tile_row, src0_tile_col]).astype(dtype)
+        input2 = np.random.uniform(-2_000_000_000, 2_000_000_000, size=[src1_tile_row, src1_tile_col]).astype(dtype)
 
-    golden = np.minimum(input1, input2)
+    golden = np.zeros([dst_tile_row, dst_tile_col]).astype(dtype)
+    for h in range(h_valid):
+        for w in range(w_valid):
+            golden[h][w] = min(input1[h][w], input2[h][w])
+    golden = np.array(golden).astype(dtype)
+    output = np.zeros([dst_tile_row, dst_tile_col]).astype(dtype)
 
-    # Apply valid region constraints
-    output = np.zeros([height, width]).astype(dtype)
-    for h in range(height):
-        for w in range(width):
+    for h in range(dst_tile_row):
+        for w in range(dst_tile_col):
             if h >= h_valid or w >= w_valid:
                 golden[h][w] = output[h][w]
 
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
-    input2.tofile("input_scalar.bin")
+    input2.tofile("input2.bin")
     golden.tofile("golden.bin")
 
     return output, input1, input2, golden
 
 
-class TminsParams:
-    def __init__(self, dtype, global_row, global_col, tile_row, tile_col, valid_row, valid_col):
+class TMinsParams:
+    def __init__(self, dtype, dst_tile_row, dst_tile_col, src0_tile_row, src0_tile_col, src1_tile_row, src1_tile_col, 
+                 valid_row, valid_col, pad_value_type=PAD_VALUE_NULL):
         self.dtype = dtype
-        self.global_row = global_row
-        self.global_col = global_col
-        self.tile_row = tile_row
-        self.tile_col = tile_col
+        self.dst_tile_row = dst_tile_row
+        self.dst_tile_col = dst_tile_col
+        self.src0_tile_row = src0_tile_row
+        self.src0_tile_col = src0_tile_col
+        self.src1_tile_row = src1_tile_row
+        self.src1_tile_col = src1_tile_col 
         self.valid_row = valid_row
         self.valid_col = valid_col
+        self.pad_value_type = pad_value_type
+
 
 def generate_case_name(param):
     dtype_str = {
         np.float32: 'float',
         np.float16: 'half',
+        np.int8: 'int8',
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TMINSTest.case_{dtype_str}_{param.global_row}x{param.global_col}"\
-        f"_{param.tile_row}x{param.tile_col}_{param.valid_row}x{param.valid_col}"
+    return f"TMINSTest.case_{dtype_str}_{param.valid_row}x{param.valid_col}_{param.pad_value_type}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -76,11 +96,14 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TminsParams(np.float32, 64, 64, 64, 64, 64, 64),
-        TminsParams(np.int32, 64, 64, 64, 64, 64, 64),
-        TminsParams(np.int16, 64, 64, 64, 64, 64, 64),
-        TminsParams(np.float16, 64, 64, 64, 64, 64, 64),
-        TminsParams(np.float16, 16, 256, 16, 256, 16, 256),
+        TMinsParams(np.float32, 64, 64, 64, 64, 64, 64, 64, 64),
+        TMinsParams(np.int32, 64, 64, 64, 64, 64, 64, 64, 64),
+        TMinsParams(np.int16, 64, 64, 64, 64, 64, 64, 64, 64),
+        TMinsParams(np.float16, 64, 64, 64, 64, 64, 64, 64, 64),
+        TMinsParams(np.float32, 60, 128, 64, 64, 60, 128, 60, 60, PAD_VALUE_MIN),
+        TMinsParams(np.int32, 60, 128, 64, 64, 60, 128, 60, 60, PAD_VALUE_MIN),
+        TMinsParams(np.float16, 1, 3600, 2, 4096, 1, 3600, 1, 3600, PAD_VALUE_MIN),
+        TMinsParams(np.int16, 16, 256, 20, 512, 16, 256, 16, 200, PAD_VALUE_MIN),
     ]
 
     for i, param in enumerate(case_params_list):
@@ -89,5 +112,5 @@ if __name__ == "__main__":
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data_tmins(case_name, param)
+        gen_golden_data(case_name, param)
         os.chdir(original_dir)

@@ -33,13 +33,16 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH, int src1TileW, int vRows,
+          int vCols, int padValueType>
 void LaunchTMins(T *out, T *src0, T *src1, void *stream);
 
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH, int src1TileW, int vRows,
+          int vCols, int padValueType>
 void test_tmins() {
-    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
-    size_t scalarFileSize = sizeof(T);
+    size_t dstFileSize = dstTileH * dstTileW * sizeof(T);
+    size_t src0FileSize = src0TileH * src0TileW * sizeof(T);
+    size_t src1FileSize = src1TileH * src1TileW * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -49,26 +52,26 @@ void test_tmins() {
     T *dstHost, *src0Host, *src1Host;
     T *dstDevice, *src0Device, *src1Device;
 
-    aclrtMallocHost((void **)(&dstHost), fileSize);
-    aclrtMallocHost((void **)(&src0Host), fileSize);
-    aclrtMallocHost((void **)(&src1Host), scalarFileSize);
+    aclrtMallocHost((void **)(&dstHost), dstFileSize);
+    aclrtMallocHost((void **)(&src0Host), src0FileSize);
+    aclrtMallocHost((void **)(&src1Host), src1FileSize);
+    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src0Device, src0FileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src1Device, src1FileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    aclrtMalloc((void **)&dstDevice, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, scalarFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    ReadFile(GetGoldenDir() + "/input1.bin", src0FileSize, src0Host, src0FileSize);
+    ReadFile(GetGoldenDir() + "/input2.bin", src1FileSize, src1Host, src1FileSize);
 
-    ReadFile(GetGoldenDir() + "/input1.bin", fileSize, src0Host, fileSize);
-    ReadFile(GetGoldenDir() + "/input_scalar.bin", scalarFileSize, src1Host, scalarFileSize);
+    aclrtMemcpy(src0Device, src0FileSize, src0Host, src0FileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(src1Device, src1FileSize, src1Host, src1FileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-    aclrtMemcpy(src0Device, fileSize, src0Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, fileSize, src1Host, scalarFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTMins<T, kGRows_, kGCols_, kTRows_, kTCols_>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMins<T, dstTileH, dstTileW, src0TileH, src0TileW, src1TileH, src1TileW, vRows, vCols, padValueType>(
+        dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, fileSize);
-
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
     aclrtFree(dstDevice);
     aclrtFree(src0Device);
     aclrtFree(src1Device);
@@ -80,28 +83,37 @@ void test_tmins() {
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(fileSize);
-    std::vector<T> devFinal(fileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize);
+    std::vector<T> golden(dstFileSize);
+    std::vector<T> devFinal(dstFileSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
+    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp<T>(golden, devFinal, 0.0001f);
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TMINSTest, case_float_64x64_64x64_64x64) {
-    test_tmins<float, 64, 64, 64, 64>();
+TEST_F(TMINSTest, case_float_64x64_PAD_VALUE_NULL) {
+    test_tmins<float, 64, 64, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_int32_64x64_64x64_64x64) {
-    test_tmins<int32_t, 64, 64, 64, 64>();
+TEST_F(TMINSTest, case_int32_64x64_PAD_VALUE_NULL) {
+    test_tmins<int32_t, 64, 64, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_int16_64x64_64x64_64x64) {
-    test_tmins<int16_t, 64, 64, 64, 64>();
+TEST_F(TMINSTest, case_half_64x64_PAD_VALUE_NULL) {
+    test_tmins<aclFloat16, 64, 64, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_half_64x64_64x64_64x64) {
-    test_tmins<aclFloat16, 64, 64, 64, 64>();
+TEST_F(TMINSTest, case_int16_64x64_PAD_VALUE_NULL) {
+    test_tmins<int16_t, 64, 64, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_half_16x256_16x256_16x256) {
-    test_tmins<aclFloat16, 16, 256, 16, 256>();
+TEST_F(TMINSTest, case_float_60x60_PAD_VALUE_MIN) {
+    test_tmins<float, 60, 128, 64, 64, 60, 128, 60, 60, PAD_VALUE_MIN>();
+}
+TEST_F(TMINSTest, case_int32_60x60_PAD_VALUE_MIN) {
+    test_tmins<int32_t, 60, 128, 64, 64, 60, 128, 60, 60, PAD_VALUE_MIN>();
+}
+TEST_F(TMINSTest, case_half_1x3600_PAD_VALUE_MIN) {
+    test_tmins<aclFloat16, 1, 3600, 2, 4096, 1, 3600, 1, 3600, PAD_VALUE_MIN>();
+}
+TEST_F(TMINSTest, case_int16_16x200_PAD_VALUE_MIN) {
+    test_tmins<int16_t, 16, 256, 20, 512, 16, 256, 16, 200, PAD_VALUE_MIN>();
 }

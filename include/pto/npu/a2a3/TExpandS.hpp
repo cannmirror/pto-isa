@@ -34,8 +34,8 @@ namespace pto
         using T = typename TileData::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
 
-        TBinSInstr<ExpandSOp<typename TileData::DType>, TileData, elementsPerRepeat, blockSizeElem, stride>(
-                dstPtr, nullptr, scalar, validRow, validCol);
+        TBinSInstr<ExpandSOp<typename TileData::DType>, TileData, TileData, elementsPerRepeat, blockSizeElem, stride,
+            stride>(dstPtr, dstPtr, scalar, validRow, validCol);
     }
     template <typename TileData>
     PTO_INTERNAL void TEXPANDS_IMPL(TileData &dst, typename TileData::DType scalar)

@@ -13,7 +13,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/constants.hpp>
 #include "TBinSOp.hpp"
-#include "pto/npu/a2a3/TBinSPlusOp.hpp"
 
 namespace pto
 {
@@ -26,46 +25,21 @@ namespace pto
             vmins(dst, src0, src1, repeats, 1, 1, dstRepeatStride, srcRepeatStride);
         }
     };
-    template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
-    __tf__ PTO_INTERNAL void TMinS(typename TileData::TileDType __out__ dst,
-                                typename TileData::TileDType __in__ src0,
-                                typename TileData::DType __in__ src1,
-                                unsigned validRow,
-                                unsigned validCol) {
-    using T = typename TileData::DType;
-	__ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
-   	__ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-
-    TBinSInstr<MinSOp<typename TileData::DType>, TileData, elementsPerRepeat, blockSizeElem, stride>(
-            dstPtr, src0Ptr, src1, validRow, validCol);
-    }
-    template <typename TileData>
-    PTO_INTERNAL void TMINS_IMPL(TileData &dst, TileData &src0, typename TileData::DType scalar)
-    {
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
-        unsigned numRepeatPerLine = dst.GetValidCol() / elementsPerRepeat;
-        unsigned numRemainPerLine = dst.GetValidCol() % elementsPerRepeat;
-        constexpr unsigned stride = TileData::RowStride;
-        unsigned validRow = dst.GetValidRow();
-        unsigned validCol = dst.GetValidCol();
-        TMinS<TileData, elementsPerRepeat, blockSizeElem, stride>(dst.data(), src0.data(), scalar, validRow, validCol);
-    }
-    
 
     template <typename T, typename TileDataDst, typename TileDataSrc>
     __tf__ PTO_INTERNAL void TMinS(typename TileDataDst::TileDType __out__ dstData,
-        typename TileDataDst::TileDType __in__ srcData, T __in__ scalar, unsigned validRow, unsigned validCol) {
+                                   typename TileDataSrc::TileDType __in__ srcData,
+                                   T __in__ scalar,
+                                   unsigned validRow,
+                                   unsigned validCol) {
         __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
         __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
-        if constexpr (std::is_same_v<TileDataDst, TileDataSrc>) {
-            constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
-            constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
-            constexpr unsigned stride = TileDataDst::RowStride;
-            TBinSInstr<MinSOp<T>, T, TileDataDst, elementsPerRepeat, blockSizeElem, stride>(dst, src, scalar, validRow, validCol);
-        } else {
-            TBinSPlusInstr<MinSOp<T>, T, TileDataDst, TileDataSrc>(dst, src, scalar, validRow, validCol);
-        }
+        constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
+        constexpr unsigned blockSizeElem = pto::BLOCK_BYTE_SIZE / sizeof(T);
+        constexpr unsigned dstStride = TileDataDst::RowStride;
+        constexpr unsigned srcStride = TileDataSrc::RowStride;
+        TBinSInstr<MinSOp<T>, TileDataDst, TileDataSrc, elementsPerRepeat, blockSizeElem, dstStride, srcStride>
+            (dst, src, scalar, validRow, validCol);
     }
 
     template <typename TileDataDst, typename TileDataSrc>

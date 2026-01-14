@@ -15,13 +15,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace pto;
 
-template<typename T, int row, int validRow, int col, int validCol>
+template<typename T, int dstTileRow, int dstTileCol, int row, int validRow, int col, int validCol>
 PTO_INTERNAL void runTDivS(__gm__ T *out, __gm__  T *src, T scalar) {
     using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
     GlobalData srcGlobal(src, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
-    GlobalData dstGlobal(out, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
+    GlobalData dstGlobal(out, DynDim2Shape(validRow, validCol), DynDim2Stride(dstTileRow, dstTileCol));
 
     using srcTileData = Tile<TileType::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
     using dstTileData = Tile<TileType::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
@@ -43,16 +43,16 @@ PTO_INTERNAL void runTDivS(__gm__ T *out, __gm__  T *src, T scalar) {
     out = dstGlobal.data();
 }
 
-template<typename T, int row, int validRow, int col, int validCol>
+template<typename T, int dstTileRow, int dstTileCol, int row, int validRow, int col, int validCol>
 PTO_INTERNAL void runSTDivS(__gm__ T *out, __gm__  T *src, T scalar) {
     using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
     GlobalData srcGlobal(src, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
-    GlobalData dstGlobal(out, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
+    GlobalData dstGlobal(out, DynDim2Shape(validRow, validCol), DynDim2Stride(dstTileRow, dstTileCol));
 
     using srcTileData = Tile<TileType::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
-    using dstTileData = Tile<TileType::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
+    using dstTileData = Tile<TileType::Vec, T, dstTileRow, dstTileCol, BLayout::RowMajor, -1, -1>;
     srcTileData srcTile(validRow, validCol);
     dstTileData dstTile(validRow, validCol);
     TASSIGN(srcTile, 0x0);
@@ -72,35 +72,75 @@ PTO_INTERNAL void runSTDivS(__gm__ T *out, __gm__  T *src, T scalar) {
 }
 extern "C" __global__ AICORE void launchTDIVSCase1(__gm__ float *out, __gm__ float *src, float scalar)
 {
-    runTDivS<float, 32, 32, 64, 64>(out, src, scalar);
+    runTDivS<float, 32, 64, 32, 32, 64, 64>(out, src, scalar);
 }
 extern "C" __global__ AICORE void launchTDIVSCase2(__gm__ aclFloat16 *out, __gm__ aclFloat16 *src, float scalar)
 {
-    runTDivS<half, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, scalar);
+    runTDivS<half, 63, 64, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, scalar);
 }
 extern "C" __global__ AICORE void launchTDIVSCase3(__gm__ int32_t *out, __gm__ int32_t *src, float scalar)
 {
-    runTDivS<int32_t, 31, 31, 128, 128>(out, src, scalar);
+    runTDivS<int32_t, 31, 128, 31, 31, 128, 128>(out, src, scalar);
 }
 extern "C" __global__ AICORE void launchTDIVSCase4(__gm__ int16_t *out, __gm__ int16_t *src, int16_t scalar)
 {
-    runTDivS<int16_t, 15, 15, 192, 192>(out, src, scalar);
+    runTDivS<int16_t, 15, 192, 15, 15, 192, 192>(out, src, scalar);
 }
 extern "C" __global__ AICORE void launchTDIVSCase5(__gm__ float *out, __gm__ float *src, float scalar)
 {
-    runSTDivS<float, 32, 32, 64, 64>(out, src, scalar);
+    runTDivS<float, 32, 128, 32, 32, 64, 64>(out, src, scalar);
 }
 extern "C" __global__ AICORE void launchTDIVSCase6(__gm__ aclFloat16 *out, __gm__ aclFloat16 *src, float scalar)
 {
-    runSTDivS<half, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, scalar);
+    runTDivS<half, 63, 128, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, (half)scalar);
 }
-extern "C" __global__ AICORE void launchTDIVSCase7(__gm__ int32_t *out, __gm__ int32_t *src, float scalar)
+extern "C" __global__ AICORE void launchTDIVSCase7(__gm__ int16_t *out, __gm__ int16_t *src, int16_t scalar)
 {
-    runSTDivS<int32_t, 31, 31, 128, 128>(out, src, scalar);
+    runTDivS<int16_t, 15, 192, 15, 15, 192, 192>(out, src, scalar);
 }
-extern "C" __global__ AICORE void launchTDIVSCase8(__gm__ int16_t *out, __gm__ int16_t *src, int16_t scalar)
+extern "C" __global__ AICORE void launchTDIVSCase8(__gm__ float *out, __gm__ float *src, float scalar)
 {
-    runSTDivS<int16_t, 15, 15, 192, 192>(out, src, scalar);
+    runTDivS<float, 7, 512, 7, 7, 448, 448>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase9(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runTDivS<float, 256, 32, 256, 256, 16, 16>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase10(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runSTDivS<float, 32, 64, 32, 32, 64, 64>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase11(__gm__ aclFloat16 *out, __gm__ aclFloat16 *src, float scalar)
+{
+    runSTDivS<half, 63, 64, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase12(__gm__ int32_t *out, __gm__ int32_t *src, float scalar)
+{
+    runSTDivS<int32_t, 31, 128, 31, 31, 128, 128>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase13(__gm__ int16_t *out, __gm__ int16_t *src, int16_t scalar)
+{
+    runSTDivS<int16_t, 15, 192, 15, 15, 192, 192>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase14(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runSTDivS<float, 32, 128, 32, 32, 64, 64>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase15(__gm__ aclFloat16 *out, __gm__ aclFloat16 *src, float scalar)
+{
+    runSTDivS<half, 63, 128, 63, 63, 64, 64>((__gm__ half*)out, (__gm__ half*)src, (half)scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase16(__gm__ int16_t *out, __gm__ int16_t *src, int16_t scalar)
+{
+    runSTDivS<int16_t, 15, 192, 15, 15, 192, 192>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase17(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runSTDivS<float, 7, 512, 7, 7, 448, 448>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTDIVSCase18(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runSTDivS<float, 256, 32, 256, 256, 16, 16>(out, src, scalar);
 }
 
 template <uint32_t caseId>
@@ -131,11 +171,51 @@ void launchTDIVSTestCase(void *out, void *src, float scalar, aclrtStream stream)
             break;
         }
         case 7: {
-            launchTDIVSCase7<<<1, nullptr, stream>>>((int32_t *)out, (int32_t *)src, scalar);
+            launchTDIVSCase7<<<1, nullptr, stream>>>((int16_t *)out, (int16_t *)src, scalar);
             break;
         }
         case 8: {
-            launchTDIVSCase8<<<1, nullptr, stream>>>((int16_t *)out, (int16_t *)src, scalar);
+            launchTDIVSCase8<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
+        case 9: {
+            launchTDIVSCase9<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
+        case 10: {
+            launchTDIVSCase10<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
+        case 11: {
+            launchTDIVSCase11<<<1, nullptr, stream>>>((aclFloat16 *)out, (aclFloat16 *)src, scalar);
+            break;
+        }
+        case 12: {
+            launchTDIVSCase12<<<1, nullptr, stream>>>((int32_t *)out, (int32_t *)src, scalar);
+            break;
+        }
+        case 13: {
+            launchTDIVSCase13<<<1, nullptr, stream>>>((int16_t *)out, (int16_t *)src, scalar);
+            break;
+        }
+        case 14: {
+            launchTDIVSCase14<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
+        case 15: {
+            launchTDIVSCase15<<<1, nullptr, stream>>>((aclFloat16 *)out, (aclFloat16 *)src, scalar);
+            break;
+        }
+        case 16: {
+            launchTDIVSCase16<<<1, nullptr, stream>>>((int16_t *)out, (int16_t *)src, scalar);
+            break;
+        }
+        case 17: {
+            launchTDIVSCase17<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
+        case 18: {
+            launchTDIVSCase18<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
             break;
         }
         default: {
@@ -152,3 +232,13 @@ template void launchTDIVSTestCase<5>(void *out, void *src, float scalar, aclrtSt
 template void launchTDIVSTestCase<6>(void *out, void *src, float scalar, aclrtStream stream);
 template void launchTDIVSTestCase<7>(void *out, void *src, float scalar, aclrtStream stream);
 template void launchTDIVSTestCase<8>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<9>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<10>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<11>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<12>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<13>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<14>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<15>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<16>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<17>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTDIVSTestCase<18>(void *out, void *src, float scalar, aclrtStream stream);

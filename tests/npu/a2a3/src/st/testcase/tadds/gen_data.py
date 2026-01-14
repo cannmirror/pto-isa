@@ -21,10 +21,12 @@ def gen_golden_data(param):
     data_type = param.data_type
     rows = param.row
     cols = param.col
+    dst_tile_row = param.dst_tile_row
+    dst_tile_col = param.dst_tile_col
 
     input_arr = np.random.uniform(low=-8, high=8, size=(rows, cols)).astype(data_type)
     divider = np.random.uniform(low=-8, high=8, size=(1, 1)).astype(data_type)
-    output_arr = np.zeros((rows, cols), dtype=data_type)
+    output_arr = np.zeros((dst_tile_row, dst_tile_col), dtype=data_type)
     for i in range(rows):
         for j in range(cols):
             output_arr[i, j] = input_arr[i, j] + divider[0, 0]
@@ -34,20 +36,28 @@ def gen_golden_data(param):
     output_arr.tofile('golden.bin')
 
 class taddsParams:
-    def __init__(self, name, data_type, row, col):
+    def __init__(self, name, data_type, dst_tile_row, dst_tile_col, row, col):
         self.name = name
         self.data_type = data_type
+        self.dst_tile_row = dst_tile_row
+        self.dst_tile_col = dst_tile_col
         self.row = row
         self.col = col
 
 if __name__ == "__main__":
     case_params_list = [
-        taddsParams("TADDSTest.case1", np.float32, 32, 64),
-        taddsParams("TADDSTest.case2", np.float16, 63, 64),
-        taddsParams("TADDSTest.case3", np.int32, 31, 128),
-        taddsParams("TADDSTest.case4", np.int16, 15, 64 * 3),
-        taddsParams("TADDSTest.case5", np.float32, 7, 64 * 7),
-        taddsParams("TADDSTest.case6", np.float32, 256, 16)
+        taddsParams("TADDSTest.case1", np.float32, 32, 64, 32, 64),
+        taddsParams("TADDSTest.case2", np.float16, 63, 64, 63, 64),
+        taddsParams("TADDSTest.case3", np.int32, 31, 128, 31, 128),
+        taddsParams("TADDSTest.case4", np.int16, 15, 64 * 3, 15, 64 * 3),
+        taddsParams("TADDSTest.case5", np.float32, 7, 64 * 7, 7, 64 * 7),
+        taddsParams("TADDSTest.case6", np.float32, 256, 16, 256, 16),
+        taddsParams("TADDSTest.case7", np.float32, 32, 128, 32, 64),
+        taddsParams("TADDSTest.case8", np.float16, 63, 128, 63, 64),
+        taddsParams("TADDSTest.case9", np.int32, 31, 256, 31, 128),
+        taddsParams("TADDSTest.case10", np.int16, 15, 192, 15, 64 * 3),
+        taddsParams("TADDSTest.case11", np.float32, 7, 512, 7, 64 * 7),
+        taddsParams("TADDSTest.case12", np.float32, 256, 32, 256, 16)
     ]
 
     for i, case in enumerate(case_params_list):
