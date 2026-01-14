@@ -99,62 +99,32 @@ def gen_golden_data(case_name, param):
     m, k, n, is_bias, is_atrans, is_btrans = param.m, param.k, param.n, param.is_bias, False, False
 
     original_k = k
-    if k % 64 != 0:
-        k_aligned = align_to_multiple(k, 64)
-    else:
-        k_aligned = original_k
+    k_aligned = align_to_multiple(k, 64)
 
     if a_type == fp4_e2m1x2:
-        if original_k % 64 != 0:
-            x1_gm_original = np.random.randint(-7, 7, [m, original_k]).astype(a_type)
-            x1_gm = np.zeros([m, k_aligned], dtype=a_type)
-            x1_gm[:, :original_k] = x1_gm_original
-
-        else:
-            x1_gm = np.random.randint(-7, 7, [m, original_k]).astype(a_type)
-
-        x1_gm_bin = pack_two_fp4(x1_gm)
-        x1_gm_bin.tofile("./x1_gm.bin")
+        x1_gm = np.random.randint(-7, 7, [m, k_aligned]).astype(a_type)
     elif a_type == fp4_e1m2x2:
-        if original_k % 64 != 0:
-
-            x1_gm_original = np.random.randint(-2, 2, [m, original_k]).astype(a_type)
-            x1_gm = np.zeros([m, k_aligned], dtype=a_type)
-            x1_gm[:, :original_k] = x1_gm_original
-
-        else:
-            x1_gm = np.random.randint(-2, 2, [m, original_k]).astype(a_type)
-
-        x1_gm_bin = pack_two_fp4(x1_gm)
-        x1_gm_bin.tofile("./x1_gm.bin")
+        x1_gm = np.random.randint(-2, 2, [m, k_aligned]).astype(a_type)
     else:
-        if k % 64 != 0:
-            x1_gm_original = np.random.randint(1, 5, [m, original_k]).astype(a_type)
-            x1_gm = np.zeros([m, k_aligned], dtype=a_type)
-            x1_gm[:, :original_k] = x1_gm_original
-
-        else:
-            x1_gm = np.random.randint(1, 5, [m, original_k]).astype(a_type)
-
-        x1_gm.tofile("./x1_gm.bin")
+        x1_gm = np.random.randint(-10, 10, [m, k_aligned]).astype(a_type)
 
     if b_type == fp4_e2m1x2:
         x2_gm = np.random.randint(-7, 7, [k_aligned, n]).astype(b_type)
-        if original_k % 64 != 0:
-            x2_gm[original_k:, :] = 0
-
-        x2_gm_bin = pack_two_fp4(x2_gm)
-        x2_gm_bin.tofile("./x2_gm.bin")
     elif b_type == fp4_e1m2x2:
         x2_gm = np.random.randint(-2, 2, [k_aligned, n]).astype(b_type)
-        if original_k % 64 != 0:
-            x2_gm[original_k:, :] = 0
+    else:
+        x2_gm = np.random.randint(-10, 10, [k_aligned, n]).astype(b_type)
+
+    x1_gm[:, original_k:] = 0
+    x2_gm[original_k:, :] = 0
+
+    if a_type == fp4_e2m1x2 or a_type == fp4_e1m2x2:
+        x1_gm_bin = pack_two_fp4(x1_gm)
         x2_gm_bin = pack_two_fp4(x2_gm)
+        x1_gm_bin.tofile("./x1_gm.bin")
         x2_gm_bin.tofile("./x2_gm.bin")
     else:
-        x2_gm = np.random.randint(1, 5, [k_aligned, n]).astype(b_type)
-        if original_k % 64 != 0:
-            x2_gm[original_k:, :] = 0
+        x1_gm.tofile("./x1_gm.bin")
         x2_gm.tofile("./x2_gm.bin")
     
     x1_mx_gm = np.random.randint(127, 130, [m, math.ceil(k_aligned / 32)]).astype(np.uint8)
@@ -180,7 +150,7 @@ def gen_golden_data(case_name, param):
     x1_scale_gm.tofile("./x1_mx_gm.bin")
     x2_scale_gm.tofile("./x2_mx_gm.bin")
     if is_bias:
-        bias_gm = np.random.randint(0, 1, [n, ]).astype(bias_type)
+        bias_gm = np.random.randint(1, 10, [n, ]).astype(bias_type)
         bias_gm.tofile("./bias_gm.bin")
         golden = np.matmul(x1.astype(np.float64), x2.astype(np.float64)).astype(dst_type) + bias_gm.astype(dst_type)
     else:

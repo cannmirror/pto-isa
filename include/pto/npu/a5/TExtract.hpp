@@ -37,7 +37,7 @@ __tf__ AICORE void TExtractToAmx(typename DstTileData::TileDType __out__ dst,
 
     using DataType = typename DstTileData::DType;
     __cbuf__ DataType *srcAddr = (__cbuf__ DataType *)__cce_get_tile_ptr(src);
-    unsigned long dstAddr = reinterpret_cast<uintptr_t>(dst);
+    uint64_t dstAddr = (uint64_t)__cce_get_tile_ptr(dst);
     uint16_t rowStartPosition = indexRow >> SHIFT_MX_ROW;
     uint16_t colStartPosition = (indexCol * sizeof(DataType)) >> SHIFT_MX_COL;
 
@@ -75,7 +75,7 @@ __tf__ AICORE void TExtractToBmx(typename DstTileData::TileDType __out__ dst,
     
     using DataType = typename DstTileData::DType;
     __cbuf__ DataType *srcAddr = (__cbuf__ DataType *)__cce_get_tile_ptr(src);
-    unsigned long dstAddr = reinterpret_cast<uintptr_t>(dst);
+    uint64_t dstAddr = (uint64_t)__cce_get_tile_ptr(dst);
     uint16_t rowStartPosition = indexCol >> SHIFT_MX_ROW;
  	uint16_t colStartPosition = (indexRow * sizeof(DataType)) >> SHIFT_MX_COL;
 

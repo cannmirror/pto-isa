@@ -32,17 +32,16 @@ AICORE inline constexpr T CeilDiv(T num_1, T num_2)
     return (num_1 + num_2 - 1) / num_2;
 }
 
-template <typename OutType, typename AType, typename BType, typename ScaleType, typename BiasType, int validM, int validK, int validN,
-    bool isBias, bool isFp4>
-__global__ AICORE void RunTMATMULMX(__gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1,
-    __gm__ ScaleType *src2, __gm__ ScaleType *src3, __gm__ BiasType *src4)
+template <typename OutType, typename AType, typename BType, typename ScaleType, typename BiasType, int validM,
+    int validK, int validN, bool isBias, bool isFp4>
+__global__ AICORE void RunTMATMULMX(__gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ ScaleType *src2,
+    __gm__ ScaleType *src3, __gm__ BiasType *src4)
 {
     constexpr int blockNAlign = isFp4 ? 64 : 32; // need to be 32B aligned
 
     constexpr int M = CeilAlign<int>(validM, 16);
     constexpr int kAlign = CeilAlign<int>(validK, 64);
     constexpr int N = CeilAlign<int>(validN, blockNAlign);
-
     constexpr uint8_t kMX = CeilDiv(kAlign, 32);
 
     using GlobalDataSrc0 = GlobalTensor<AType, pto::Shape<1, 1, 1, validM, kAlign>,
@@ -50,13 +49,14 @@ __global__ AICORE void RunTMATMULMX(__gm__ OutType *out, __gm__ AType *src0, __g
     using GlobalDataSrc1 = GlobalTensor<BType, pto::Shape<1, 1, 1, kAlign, validN>,
         pto::Stride<1 * kAlign * validN, 1 * kAlign * validN, kAlign * validN, validN, 1>>;
 
-    
-    using GlobalDataSrc2 = GlobalTensor<ScaleType, pto::Shape<1, M / 16, kMX / 2, 16, 2>,
-        pto::Stride<M * kMX, 16 * kMX, 16 * 2, 2, 1>, Layout::MX_A_ZZ>;
-    using GlobalDataSrc3 = GlobalTensor<ScaleType, pto::Shape<1, N / 16, kMX / 2, 16, 2>,
-        pto::Stride<N * kMX, 16 * kMX, 16 * 2, 2, 1>, Layout::MX_B_NN>;
-    
-    
+    using MxShapeA = TileShape2D<ScaleType, M, kMX, Layout::MX_A_ZZ>;
+    using MxStrideA = BaseShape2D<ScaleType, M, kMX, Layout::MX_A_ZZ>;
+    using GlobalDataSrc2 = GlobalTensor<ScaleType, MxShapeA, MxStrideA, Layout::MX_A_ZZ>;
+
+    using MxShapeB = TileShape2D<ScaleType, kMX, N, Layout::MX_B_NN>;
+    using MxStrideB = BaseShape2D<ScaleType, kMX, N, Layout::MX_B_NN>;
+    using GlobalDataSrc3 = GlobalTensor<ScaleType, MxShapeB, MxStrideB, Layout::MX_B_NN>;
+
     using GlobalDataSrc4 = GlobalTensor<BiasType, pto::Shape<1, 1, 1, 1, validN>,
         pto::Stride<1 * validN, 1 * validN, 1 * validN, validN, 1>>;
     using GlobalDataOut = GlobalTensor<OutType, pto::Shape<1, 1, 1, validM, validN>,
@@ -159,8 +159,8 @@ __global__ AICORE void RunTMATMULMX(__gm__ OutType *out, __gm__ AType *src0, __g
     out = dstGlobal.data();
 }
 
-template <typename OutType, typename AType, typename BType, typename ScaleType, typename BiasType, int validM, int validK, int validN,
-    bool isBias, bool isFp4>
+template <typename OutType, typename AType, typename BType, typename ScaleType, typename BiasType, int validM,
+    int validK, int validN, bool isBias, bool isFp4>
 __global__ AICORE void RunTMATMULMX_SPLIT_K(__gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1,
     __gm__ ScaleType *src2, __gm__ ScaleType *src3, __gm__ BiasType *src4)
 {
@@ -178,10 +178,14 @@ __global__ AICORE void RunTMATMULMX_SPLIT_K(__gm__ OutType *out, __gm__ AType *s
         pto::Stride<1 * validM * K, 1 * validM * K, validM * K, K, 1>>;
     using GlobalDataSrc1 = GlobalTensor<BType, pto::Shape<1, 1, 1, BASEK, validN>,
         pto::Stride<1 * K * validN, 1 * K * validN, K * validN, validN, 1>>;
-    using GlobalDataSrc2 = GlobalTensor<ScaleType, pto::Shape<1, M / 16, BASEKMX / 2, 16, 2>,
-        pto::Stride<M * KMX, 16 * KMX, 16 * 2, 2, 1>, Layout::MX_A_ZZ>;
-    using GlobalDataSrc3 = GlobalTensor<ScaleType, pto::Shape<1, N / 16, BASEKMX / 2, 16, 2>,
-        pto::Stride<N * KMX, 16 * KMX, 16 * 2, 2, 1>, Layout::MX_B_NN>;
+
+    using MxShapeA = TileShape2D<ScaleType, M, BASEKMX, Layout::MX_A_ZZ>;
+    using MxStrideA = BaseShape2D<ScaleType, M, KMX, Layout::MX_A_ZZ>;
+    using GlobalDataSrc2 = GlobalTensor<ScaleType, MxShapeA, MxStrideA, Layout::MX_A_ZZ>;
+
+    using MxShapeB = TileShape2D<ScaleType, BASEKMX, N, Layout::MX_B_NN>;
+    using MxStrideB = BaseShape2D<ScaleType, KMX, N, Layout::MX_B_NN>;
+    using GlobalDataSrc3 = GlobalTensor<ScaleType, MxShapeB, MxStrideB, Layout::MX_B_NN>;
 
     using GlobalDataOut = GlobalTensor<OutType, pto::Shape<1, 1, 1, validM, validN>,
         pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
@@ -227,8 +231,6 @@ __global__ AICORE void RunTMATMULMX_SPLIT_K(__gm__ OutType *out, __gm__ AType *s
     RightScaleTile bScaleTile;
     BiasTile biasTile;
 
-
-
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
@@ -238,7 +240,6 @@ __global__ AICORE void RunTMATMULMX_SPLIT_K(__gm__ OutType *out, __gm__ AType *s
     uint64_t scaleBAddr = GetScaleAddr(bTile.data());
     TASSIGN(aScaleTile, scaleAAddr);
     TASSIGN(bScaleTile, scaleBAddr);
-
 
     constexpr int iter = K / BASEK;
     for (int i = 0; i < iter; i++) {

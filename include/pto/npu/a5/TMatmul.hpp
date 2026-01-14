@@ -76,6 +76,20 @@ __tf__ AICORE void TMatmulMxBias(typename TileRes::TileDType __out__ cMatrix,
     mad_mx(c, a, b, m, k, n, 0, gemvCtrl, biasBufferCtrl, cmatrixInitVal);
 }
 
+template<typename A, typename B>
+constexpr bool isSupportedFp4Combo = 
+    (std::is_same_v<A, float4_e1m2x2_t> && std::is_same_v<B, float4_e1m2x2_t>) ||
+    (std::is_same_v<A, float4_e1m2x2_t> && std::is_same_v<B, float4_e2m1x2_t>) ||
+    (std::is_same_v<A, float4_e2m1x2_t> && std::is_same_v<B, float4_e2m1x2_t>) ||
+    (std::is_same_v<A, float4_e2m1x2_t> && std::is_same_v<B, float4_e1m2x2_t>);
+
+template<typename A, typename B>
+constexpr bool isSupportedFp8Combo = 
+    (std::is_same_v<A, float8_e4m3_t> && std::is_same_v<B, float8_e4m3_t>) ||
+    (std::is_same_v<A, float8_e4m3_t> && std::is_same_v<B, float8_e5m2_t>) ||
+    (std::is_same_v<A, float8_e5m2_t> && std::is_same_v<B, float8_e4m3_t>) ||
+    (std::is_same_v<A, float8_e5m2_t> && std::is_same_v<B, float8_e5m2_t>);
+
 template <typename TileRes, typename TileLeft, typename TileLeftScale, typename TileRight, typename TileRightScale>
 PTO_INTERNAL void CheckMadMxValid()
 {
@@ -83,27 +97,14 @@ PTO_INTERNAL void CheckMadMxValid()
     using AType = typename TileLeft::DType;
     using BType = typename TileRight::DType;
     using CType = typename TileRes::DType;
-    static_assert((std::is_same_v<AType, float8_e4m3_t> && std::is_same_v<BType, float8_e4m3_t> &&
-                      std::is_same_v<CType, float>) || // e4m3e4m3
-                      (std::is_same_v<AType, float8_e4m3_t> && std::is_same_v<BType, float8_e5m2_t> &&
-                          std::is_same_v<CType, float>) || // e4m3e5m2
-                      (std::is_same_v<AType, float8_e5m2_t> && std::is_same_v<BType, float8_e4m3_t> &&
-                          std::is_same_v<CType, float>) || // e5m2e4m3
-                      (std::is_same_v<AType, float8_e5m2_t> && std::is_same_v<BType, float8_e5m2_t> &&
-                          std::is_same_v<CType, float>) || // e5m2e5m2
-                      (std::is_same_v<AType, float4_e1m2x2_t> && std::is_same_v<BType, float4_e1m2x2_t> &&
-                          std::is_same_v<CType, float>) || // e1m2e1m2
-                      (std::is_same_v<AType, float4_e1m2x2_t> && std::is_same_v<BType, float4_e2m1x2_t> &&
-                          std::is_same_v<CType, float>) || // e1m2e2m1
-                      (std::is_same_v<AType, float4_e2m1x2_t> && std::is_same_v<BType, float4_e2m1x2_t> &&
-                          std::is_same_v<CType, float>) ||                                                 // e2m1e2m1
-                      (std::is_same_v<AType, float4_e2m1x2_t> && std::is_same_v<BType, float4_e1m2x2_t> && // e2m1e1m2
-                          std::is_same_v<CType, float>),
-        "TMatmulMX:No supported data type");
+    constexpr bool isFp4 = isSupportedFp4Combo<AType, BType>;
+    constexpr bool isFp8 = isSupportedFp8Combo<AType, BType>;
+
+    static_assert((isFp4 || isFp8) && std::is_same_v<CType, float>, "TMatmulMX:No supported data type combination.");
     static_assert((TileLeft::Cols % BASEK == 0), "TMatmulMX:k must be a multiple of 64.");
-    static_assert(
-        (TileLeft::Rows == TileRes::Rows) && (TileLeft::Cols == TileRight::Rows) && (TileRight::Cols == TileRes::Cols),
-        "TMatmulMX:Inconsistent number of m, k, n");
+    if constexpr (isFp4) {
+        static_assert((TileLeft::Cols % 2 == 0), "TMatmulMX:For FP4 data types, k must be an even number.");
+    }
     static_assert(
         ((TileLeft::Loc == TileType::Left) && (!TileLeft::isRowMajor) && (TileLeft::SFractal == SLayout::RowMajor)) &&
             ((TileRight::Loc == TileType::Right) && (TileRight::isRowMajor) &&
@@ -111,6 +112,15 @@ PTO_INTERNAL void CheckMadMxValid()
             ((TileRes::Loc == TileType::Acc) && (!TileRes::isRowMajor) && (TileRes::SFractal == SLayout::RowMajor)),
         "TMatmulMX:Non-conforming matrix fractal");
 }
+
+PTO_INTERNAL void CheckDynamicMmad(uint16_t aMatrixRow, uint16_t aMatrixCol, uint16_t bMatrixCol)
+{
+    constexpr uint16_t elementSize = 4095;
+    PTO_ASSERT(aMatrixRow >= 1 && aMatrixRow <= elementSize, "ERROR: The range of valid aMatrixRow is [1, 4095].");
+    PTO_ASSERT(aMatrixCol >= 1 && aMatrixCol <= elementSize, "ERROR: The range of valid aMatrixCol is [1, 4095].");
+    PTO_ASSERT(bMatrixCol >= 1 && bMatrixCol <= elementSize, "ERROR: The range of valid bMatrixCol is [1, 4095].");
+}
+
 
 template <typename TileRes, typename TileLeft, typename TileRight>
 PTO_INTERNAL void CheckMadValid()
@@ -134,9 +144,6 @@ PTO_INTERNAL void CheckMadValid()
             "No supported data type when Acc Type is float.");
     }
     static_assert(
-        (TileLeft::Rows == TileRes::Rows) && (TileLeft::Cols == TileRight::Rows) && (TileRight::Cols == TileRes::Cols),
-        "Inconsistent number of m, k, n.");
-    static_assert(
         ((TileLeft::Loc == TileType::Left) && (!TileLeft::isRowMajor) && (TileLeft::SFractal == SLayout::RowMajor)) &&
             ((TileRight::Loc == TileType::Right) && (TileRight::isRowMajor) &&
                 (TileRight::SFractal == SLayout::ColMajor)) &&
@@ -153,6 +160,7 @@ PTO_INTERNAL void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &b
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    CheckDynamicMmad(m, k, n);
 
     TMatmul<TileRes, TileLeft, TileRight, false, true>(cMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
 }
@@ -166,6 +174,7 @@ PTO_INTERNAL void TMATMUL_ACC_IMPL(TileRes &cOutMatrix, TileRes &cInMatrix, Tile
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    CheckDynamicMmad(m, k, n);
 
     TMatmul<TileRes, TileLeft, TileRight, false, false>(cOutMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n);
 }
@@ -183,6 +192,7 @@ PTO_INTERNAL void TMATMUL_BIAS_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRig
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    CheckDynamicMmad(m, k, n);
 
     TMatmulBias<TileRes, TileLeft, TileRight, true, false>(
         cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n);
@@ -195,6 +205,7 @@ PTO_INTERNAL void TMATMUL_MX_IMPL(
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    CheckDynamicMmad(m, k, n);
 
     CheckMadMxValid<TileRes, TileLeft, TileLeftScale, TileRight, TileRightScale>();
 
@@ -208,6 +219,7 @@ PTO_INTERNAL void TMATMUL_MX_IMPL(TileRes &cOutMatrix, TileRes &cInMatrix, TileL
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    CheckDynamicMmad(m, k, n);
 
     CheckMadMxValid<TileRes, TileLeft, TileLeftScale, TileRight, TileRightScale>();
 
@@ -226,6 +238,7 @@ PTO_INTERNAL void TMATMUL_MX_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileLeftS
     uint16_t m = aMatrix.GetValidRow();
     uint16_t k = aMatrix.GetValidCol();
     uint16_t n = bMatrix.GetValidCol();
+    CheckDynamicMmad(m, k, n);
 
     TMatmulMxBias<TileRes, TileLeft, TileRight, true, false>(
         cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n);

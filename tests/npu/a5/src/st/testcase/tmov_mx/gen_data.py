@@ -99,14 +99,14 @@ def gen_golden_data(case_name, param):
     elif a_type == fp4_e1m2x2:
         x1_gm = np.random.randint(-2, 2, [m, k_aligned]).astype(a_type)
     else:
-        x1_gm = np.random.randint(1, 2, [m, k_aligned]).astype(a_type)
+        x1_gm = np.random.randint(-10, 10, [m, k_aligned]).astype(a_type)
 
     if b_type == fp4_e2m1x2:
         x2_gm = np.random.randint(-7, 7, [k_aligned, n]).astype(b_type)
     elif b_type == fp4_e1m2x2:
         x2_gm = np.random.randint(-2, 2, [k_aligned, n]).astype(b_type)
     else:
-        x2_gm = np.random.randint(1, 2, [k_aligned, n]).astype(b_type)
+        x2_gm = np.random.randint(-10, 10, [k_aligned, n]).astype(b_type)
 
     x1_gm[:, original_k:] = 0
     x2_gm[original_k:, :] = 0
@@ -133,8 +133,8 @@ def gen_golden_data(case_name, param):
             x2_gm.tofile("./x2_gm.bin")
 
     k_mx = k_aligned // 32
-    x1_mx_gm = np.random.randint(127, 128, [m, k_mx]).astype(np.uint8)
-    x2_mx_gm = np.random.randint(127, 128, [k_mx, n]).astype(np.uint8)
+    x1_mx_gm = np.random.randint(127, 130, [m, k_mx]).astype(np.uint8)
+    x2_mx_gm = np.random.randint(127, 130, [k_mx, n]).astype(np.uint8)
 
     ###################### compute ########################
     x1_mx = 2**(x1_mx_gm.astype(np.float64) - 127)
@@ -256,13 +256,13 @@ if __name__ == "__main__":
         # TExtractCompact
         TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 46, 66, 45, 'zznn', 0, 0, 0, 128, 256, 128),
         TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 68, 130, 80, 'zznn', 16, 64, 32, 128, 256, 128),
-        TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 127, 126, 129, 'zznn', 32, 64, 16, 256, 128, 256),
+        TMovmxParams(fp8_e5m2, fp8_e5m2, np.float32, 127, 126, 129, 'zznn', 32, 64, 32, 256, 128, 256),
         TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 80, 96, 192, 'ndnd', 48, 0, 64, 128, 256, 256),
-        TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 98, 126, 108, 'ndnd', 32, 64, 16, 128, 256, 128),
+        TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 98, 126, 108, 'ndnd', 32, 64, 32, 128, 256, 128),
         TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 68, 96, 80, 'ndnd', 0, 0, 0, 128, 256, 128),
         TMovmxParams(fp8_e5m2, fp8_e4m3fn, np.float32, 32, 64, 108, 'dndn', 16, 0, 32, 128, 256, 128),
-        TMovmxParams(fp8_e5m2, fp8_e4m3fn, np.float32, 196, 146, 96, 'dndn', 64, 64, 48, 256, 256, 128),
-        TMovmxParams(fp8_e4m3fn, fp8_e5m2, np.float32, 97, 96, 122, 'dndn', 32, 0, 16, 128, 256, 128),
+        TMovmxParams(fp8_e5m2, fp8_e4m3fn, np.float32, 196, 146, 96, 'dndn', 64, 64, 32, 256, 256, 128),
+        TMovmxParams(fp8_e4m3fn, fp8_e5m2, np.float32, 97, 96, 122, 'dndn', 32, 0, 32, 128, 256, 128),
     ]
 
 

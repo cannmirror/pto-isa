@@ -181,6 +181,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov -g TMOVTest.case_bias1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_acc2vec -g TMOVTest.case_nz2nd_1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_vect -g TMOVTest.vect_copy_case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_mx -g TMOVMXTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmrgsort -g TMRGSORTTest.case_topk1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmul -g TMULTest.case_float_64x64_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmuls -g TMULSTest.case1
@@ -245,6 +246,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_acc2vec
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_vect
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_mx
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmrgsort
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmul
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmuls

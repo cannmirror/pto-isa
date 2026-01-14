@@ -283,7 +283,7 @@ TEST_F(TMOVMXTest, case17)
 
 TEST_F(TMOVMXTest, case18)
 {
-    TmovMXTest<float, uint8_t, uint8_t, false, 18, 0>(127, 126, 129, 32, 64, 16, 256, 128, 256);
+    TmovMXTest<float, uint8_t, uint8_t, false, 18, 0>(127, 126, 129, 32, 64, 32, 256, 128, 256);
 }
 
 TEST_F(TMOVMXTest, case19)
@@ -293,7 +293,7 @@ TEST_F(TMOVMXTest, case19)
 
 TEST_F(TMOVMXTest, case20)
 {
-    TmovMXTest<float, uint8_t, uint8_t, false, 20, 1>(98, 126, 108, 32, 64, 16, 128, 256, 128);
+    TmovMXTest<float, uint8_t, uint8_t, false, 20, 1>(98, 126, 108, 32, 64, 32, 128, 256, 128);
 }
 
 TEST_F(TMOVMXTest, case21)
@@ -308,10 +308,10 @@ TEST_F(TMOVMXTest, case22)
 
 TEST_F(TMOVMXTest, case23)
 {
-    TmovMXTest<float, uint8_t, uint8_t, false, 23, 2>(196, 146, 96, 64, 64, 48, 256, 256, 128);
+    TmovMXTest<float, uint8_t, uint8_t, false, 23, 2>(196, 146, 96, 64, 64, 32, 256, 256, 128);
 }
 
 TEST_F(TMOVMXTest, case24)
 {
-    TmovMXTest<float, uint8_t, uint8_t, false, 24, 2>(97, 96, 122, 32, 0, 16, 128, 256, 128);
+    TmovMXTest<float, uint8_t, uint8_t, false, 24, 2>(97, 96, 122, 32, 0, 32, 128, 256, 128);
 }

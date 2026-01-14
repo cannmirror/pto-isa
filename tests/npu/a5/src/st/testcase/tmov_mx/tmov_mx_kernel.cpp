@@ -32,46 +32,23 @@ AICORE inline constexpr T CeilDiv(T num_1, T num_2)
     return (num_1 + num_2 - 1) / num_2;
 }
 
-template<typename T, int format, int M, int kMX>
-using GlobalDataSrc2_t = std::conditional_t<
-    (format == 0),
-    GlobalTensor<T, 
-        pto::Shape<1, M / 16, kMX / 2, 16, 2>, 
-        pto::Stride<M * kMX, 16 * kMX, 16 * 2, 2, 1>,
-        Layout::MX_A_ZZ>,
-    std::conditional_t<
-        (format == 1),
-        GlobalTensor<T,
-            pto::Shape<1, 1, M, kMX / 2, 2>,
-            pto::Stride<M * kMX, M * kMX, kMX, 2, 1>,
+template <typename T, int format, int M, int KMX>
+using GlobalDataSrc2_t = std::conditional_t<(format == 0),
+    GlobalTensor<T, TileShape2D<T, M, KMX, Layout::MX_A_ZZ>, BaseShape2D<T, M, KMX, Layout::MX_A_ZZ>, Layout::MX_A_ZZ>,
+    std::conditional_t<(format == 1),
+        GlobalTensor<T, TileShape2D<T, M, KMX, Layout::MX_A_ND>, BaseShape2D<T, M, KMX, Layout::MX_A_ND>,
             Layout::MX_A_ND>,
-        GlobalTensor<T,
-            pto::Shape<1, 1, kMX / 2, M, 2>,
-            pto::Stride<M * kMX, M * kMX, M * 2, 2, 1>,
-            Layout::MX_A_DN>
-    >
->;
+        GlobalTensor<T, TileShape2D<T, M, KMX, Layout::MX_A_DN>, BaseShape2D<T, M, KMX, Layout::MX_A_DN>,
+            Layout::MX_A_DN>>>;
 
-
-template<typename T, int format, int kMX, int N>
-using GlobalDataSrc3_t = std::conditional_t<
-    (format == 0),
-    GlobalTensor<T, 
-        pto::Shape<1, N / 16, kMX / 2, 16, 2>,
-        pto::Stride<N * kMX, 16 * kMX, 16 * 2, 2, 1>, 
-        Layout::MX_B_NN>,
-    std::conditional_t<
-        (format == 1),
-        GlobalTensor<T, 
-            pto::Shape<1, 1, kMX / 2, N, 2>,
-            pto::Stride<N * kMX, N * kMX, N * 2, 2, 1>, 
+template <typename T, int format, int KMX, int N>
+using GlobalDataSrc3_t = std::conditional_t<(format == 0),
+    GlobalTensor<T, TileShape2D<T, KMX, N, Layout::MX_B_NN>, BaseShape2D<T, KMX, N, Layout::MX_B_NN>, Layout::MX_B_NN>,
+    std::conditional_t<(format == 1),
+        GlobalTensor<T, TileShape2D<T, KMX, N, Layout::MX_B_ND>, BaseShape2D<T, KMX, N, Layout::MX_B_ND>,
             Layout::MX_B_ND>,
-        GlobalTensor<T, 
-            pto::Shape<1, 1, N, kMX / 2, 2>,
-            pto::Stride<N * kMX, N * kMX, kMX, 2, 1>, 
-            Layout::MX_B_DN>
-    >
->;
+        GlobalTensor<T, TileShape2D<T, KMX, N, Layout::MX_B_DN>, BaseShape2D<T, KMX, N, Layout::MX_B_DN>,
+            Layout::MX_B_DN>>>;
 
 template <int format, typename OutType, typename AType, typename BType, typename ScaleType, int validM, int validK,
     int validN, bool isFp4>
@@ -475,7 +452,7 @@ void LaunchTMOV_MX(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, ui
                 reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
     } else if constexpr (tilingKey == 18) {
-        RunTEXTRACTMX_COMPACT<format, float, float8_e5m2_t, float8_e5m2_t, float8_e8m0_t, 127, 126, 129, 32, 64, 16, 256, 128, 256, false>
+        RunTEXTRACTMX_COMPACT<format, float, float8_e5m2_t, float8_e5m2_t, float8_e8m0_t, 127, 126, 129, 32, 64, 32, 256, 128, 256, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e5m2_t *>(src0),
                 reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
@@ -485,7 +462,7 @@ void LaunchTMOV_MX(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, ui
                 reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
     } else if constexpr (tilingKey == 20) {
-        RunTEXTRACTMX_COMPACT<format, float, float8_e4m3_t, float8_e4m3_t, float8_e8m0_t, 98, 126, 108, 32, 64, 16, 128, 256, 128, false>
+        RunTEXTRACTMX_COMPACT<format, float, float8_e4m3_t, float8_e4m3_t, float8_e8m0_t, 98, 126, 108, 32, 64, 32, 128, 256, 128, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
                 reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
@@ -500,12 +477,12 @@ void LaunchTMOV_MX(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, ui
                 reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
     } else if constexpr (tilingKey == 23) {
-        RunTEXTRACTMX_COMPACT<format, float, float8_e5m2_t, float8_e4m3_t, float8_e8m0_t, 196, 146, 96, 64, 64, 48, 256, 256, 128, false>
+        RunTEXTRACTMX_COMPACT<format, float, float8_e5m2_t, float8_e4m3_t, float8_e8m0_t, 196, 146, 96, 64, 64, 32, 256, 256, 128, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e5m2_t *>(src0),
                 reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
     } else if constexpr (tilingKey == 24) {
-        RunTEXTRACTMX_COMPACT<format, float, float8_e4m3_t, float8_e5m2_t, float8_e8m0_t, 97, 96, 122, 32, 0, 16, 128, 256, 128, false>
+        RunTEXTRACTMX_COMPACT<format, float, float8_e4m3_t, float8_e5m2_t, float8_e8m0_t, 97, 96, 122, 32, 0, 32, 128, 256, 128, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
                 reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));

@@ -67,10 +67,6 @@ PTO_INTERNAL void CheckStaticMad()
                           (std::is_same<BType, bfloat16_t>::value)),
         "The data type is not supported.");
 
-    static_assert(
-        (TileLeft::Rows == TileRes::Rows) && (TileLeft::Cols == TileRight::Rows) && (TileRight::Cols == TileRes::Cols),
-        "Inconsistent number of m, k, n.");
-
     static_assert(TileLeft::Loc == TileType::Left, "TileLeft TileType must be set to TileType::Left.");
     static_assert(TileRight::Loc == TileType::Right, "TileRight TileType must be set to TileType::Right.");
     static_assert(TileRes::Loc == TileType::Acc, "TileRes TileType must be set to TileType::Acc.");
