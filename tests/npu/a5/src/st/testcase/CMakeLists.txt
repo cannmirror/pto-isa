@@ -12,7 +12,6 @@ function(pto_vec_st NAME)
     add_library(${NAME}_kernel SHARED ${NAME}_kernel.cpp)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c310-vec -DREGISTER_BASE -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE 
-        ${PROJECT_SOURCE_DIR}/../../../../../include
         ${ASCEND_HOME_PATH}/pkg_inc/
         ${ASCEND_HOME_PATH}/pkg_inc/profiling/
         ${ASCEND_HOME_PATH}/pkg_inc/runtime/runtime
@@ -22,7 +21,6 @@ function(pto_vec_st NAME)
     add_executable(${NAME} main.cpp)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE
-        ${PROJECT_SOURCE_DIR}/../../../../../include
         ${PROJECT_SOURCE_DIR}/../../../../common
     )
 
@@ -44,7 +42,6 @@ function(pto_cube_st NAME)
     add_library(${NAME}_kernel SHARED ${NAME}_kernel.cpp)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c310-cube -DREGISTER_BASE -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE 
-        ${PROJECT_SOURCE_DIR}/../../../../../include
         ${ASCEND_HOME_PATH}/pkg_inc/
         ${ASCEND_HOME_PATH}/pkg_inc/profiling/
         ${ASCEND_HOME_PATH}/pkg_inc/runtime/runtime
@@ -54,7 +51,6 @@ function(pto_cube_st NAME)
     add_executable(${NAME} main.cpp)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE
-        ${PROJECT_SOURCE_DIR}/../../../../../include 
         ${PROJECT_SOURCE_DIR}/../../../../common
     )
 
@@ -77,7 +73,6 @@ function(pto_mix_st NAME)
     target_compile_options(${NAME}_kernel_mix PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c310 -DREGISTER_BASE -std=c++17)
 
     target_include_directories(${NAME}_kernel_mix PRIVATE 
-        ${PROJECT_SOURCE_DIR}/../../../../../include
         ${ASCEND_HOME_PATH}/pkg_inc/
         ${ASCEND_HOME_PATH}/pkg_inc/profiling/
         ${ASCEND_HOME_PATH}/pkg_inc/runtime/runtime
@@ -87,7 +82,6 @@ function(pto_mix_st NAME)
     add_executable(${NAME} main.cpp)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE 
-        ${PROJECT_SOURCE_DIR}/../../../../../include
         ${PROJECT_SOURCE_DIR}/../../../../common
     )
 
