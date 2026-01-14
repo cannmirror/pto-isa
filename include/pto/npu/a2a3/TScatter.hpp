@@ -29,14 +29,13 @@ namespace pto
         __ubuf__ TD *dstPtr = (__ubuf__ TD *)__cce_get_tile_ptr(dst);
         __ubuf__ TS *srcPtr = (__ubuf__ TS *)__cce_get_tile_ptr(src);
         __ubuf__ TI *indPtr = (__ubuf__ TI *)__cce_get_tile_ptr(idx);
-        PtoSetWaitFlag<PIPE_V, PIPE_S>();
+
         for (int i = 0; i < validRow; i++) {
             for (int j = 0; j < validCol; j++) {
                 TI ix = *(indPtr + i * TileDataI::Cols + j);
                 dstPtr[ix] = srcPtr[i * TileDataS::Cols + j];
             }
         }
-        PtoSetWaitFlag<PIPE_S, PIPE_V>();
     }
 
     template <typename TileDataD, typename TileDataS, typename TileDataI>
