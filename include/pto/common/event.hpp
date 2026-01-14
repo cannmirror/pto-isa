@@ -32,6 +32,8 @@ namespace pto {
     TMIN,
     TMINS,
     TMAX,
+    TAND,
+    TOR,
     TSEL,
     TEXP,
     TSELS,

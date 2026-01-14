@@ -49,13 +49,13 @@ __tf__ PTO_INTERNAL void TAdd(typename TileData::TileDType __out__ dst, typename
 template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
 PTO_INTERNAL void TAddCheck(const TileDataDst &dst, const TileDataSrc0 &src0, const TileDataSrc1 &src1) {
     static_assert(
-        std::is_same<T, typename TileDataSrc0::DType>::value || std::is_same<T, typename TileDataSrc1::DType>::value,
+        std::is_same<T, typename TileDataSrc0::DType>::value && std::is_same<T, typename TileDataSrc1::DType>::value,
         "Fix: TADD the data type of dst must be consistent with of src0 and src1.");
     static_assert(std::is_same<T, int32_t>::value || std::is_same<T, int>::value || std::is_same<T, int16_t>::value ||
                       std::is_same<T, half>::value || std::is_same<T, float16_t>::value ||
                       std::is_same<T, float>::value || std::is_same<T, float32_t>::value,
         "Fix: TADD has invalid data type.");
-    static_assert(TileDataDst::isRowMajor || TileDataSrc0::isRowMajor || TileDataSrc1::isRowMajor,
+    static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
         "Fix: TADD only support row major layout.");
     unsigned validRows = dst.GetValidRow();
     unsigned validCols = dst.GetValidCol();

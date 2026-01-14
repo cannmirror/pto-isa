@@ -128,6 +128,8 @@ tcvt
 tmul
 tadd
 taddplus
+tand
+tor
 tpartadd
 tpartmin
 tpartmax

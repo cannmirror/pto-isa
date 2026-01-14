@@ -131,6 +131,8 @@ set(ALL_TESTCASES
     tgather
     tcvt
     tsub
+    tand
+    tor
     tadd
     tpartadd
     tfillpad

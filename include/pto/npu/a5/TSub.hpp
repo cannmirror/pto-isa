@@ -56,7 +56,7 @@ PTO_INTERNAL void TSubCheck(const TileDataDst &dst, const TileDataSrc0 &src0, co
                       std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, half> ||
                       std::is_same_v<T, bfloat16_t> || std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t>,
         "Fix: TSub has invalid data type.");
-    static_assert(TileDataDst::isRowMajor || TileDataSrc0::isRowMajor || TileDataSrc1::isRowMajor,
+    static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
         "Fix: TSub only support row major layout.");
     unsigned validRows = dst.GetValidRow();
     unsigned validCols = dst.GetValidCol();

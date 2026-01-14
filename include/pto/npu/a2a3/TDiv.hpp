@@ -51,7 +51,7 @@ PTO_INTERNAL void TDivCheck(const TileDataDst &dst, const TileDataSrc0 &src0, co
     static_assert(std::is_same<T, half>::value || std::is_same<T, float16_t>::value || std::is_same<T, float>::value ||
                       std::is_same<T, float32_t>::value,
         "Fix: TDIV has invalid data type.");
-    static_assert(TileDataDst::isRowMajor || TileDataSrc0::isRowMajor || TileDataSrc1::isRowMajor,
+    static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
         "Fix: TDIV only support row major layout.");
     unsigned validRows = dst.GetValidRow();
     unsigned validCols = dst.GetValidCol();
