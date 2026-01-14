@@ -369,6 +369,13 @@ PTO_INST RecordEvent TEXTRACT(DstTileData &dst, SrcTileData &src,
   return {};
 }
 
+template <typename TileData, PadValue PadVal = PadValue::Zero, typename... WaitEvents>
+PTO_INST RecordEvent TFILLPAD(TileData &dst, TileData &src, WaitEvents&... events) {
+  TSYNC(events...);
+  TFILLPAD_IMPL<TileData, PadVal>(dst, src);
+  return {};
+}
+
 template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
 PTO_INST RecordEvent TFILLPAD(DstTileData &dst, SrcTileData &src,
                             WaitEvents&... events) {

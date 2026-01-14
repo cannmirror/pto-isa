@@ -46,6 +46,9 @@ PTO_INTERNAL void TFILLPAD_INPLACE(TileDataDst& dst, TileDataSrc& src);
 
 template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TFILLPAD_EXPAND(TileDataDst& dst, TileDataSrc& src);
+
+template <typename TileData, PadValue PadVal = PadValue::Zero>
+PTO_INTERNAL void TFILLPAD(TileData &dst, TileData &src);
 ```
 
 ## Constraints
@@ -54,6 +57,7 @@ PTO_INTERNAL void TFILLPAD_EXPAND(TileDataDst& dst, TileDataSrc& src);
 - `sizeof(TileDataDst::DType) == sizeof(TileDataSrc::DType)` and element size must be `1`, `2`, or `4` bytes.
 - `TFILLPAD`: `TileDataDst::Rows/Cols` must match `TileDataSrc::Rows/Cols`.
 - `TFILLPAD_EXPAND`: `TileDataDst::Rows >= TileDataSrc::Rows` and `TileDataDst::Cols >= TileDataSrc::Cols`.
+- `TFILLPAD(TileData &dst, TileData &src)`:`if TileData::TileType is Mat, layout only support (!TileData::isRowMajor && TileData::Slayout::RowMajor), and PadVal only support PadValue::Zero`
 
 ## Examples
 
@@ -62,13 +66,20 @@ PTO_INTERNAL void TFILLPAD_EXPAND(TileDataDst& dst, TileDataSrc& src);
 
 using namespace pto;
 
-void example() {
+void example1() {
   using SrcT = Tile<TileType::Vec, float, 16, 16>;
   using DstT = Tile<TileType::Vec, float, 16, 16, BLayout::RowMajor, 16, 16, SLayout::NoneBox, TileConfig::fractalABSize, PadValue::Min>;
 
   SrcT src;
   DstT dst;
   TFILLPAD(dst, src);
+}
+
+void example2() {
+  using TileMatData = Tile<TileType::Mat, float, 16, 256, BLayout::ColMajor, 1, 224, SLayout::RowMajor, 512>;
+
+  TileMatData matTile;
+  TFILLPAD(matTile, matTile);
 }
 ```
 
