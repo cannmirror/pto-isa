@@ -20,6 +20,14 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
+// Import rounding type definitions from __cce_simd namespace
+using __cce_simd::RoundRType;
+using __cce_simd::RoundAType;
+using __cce_simd::RoundFType;
+using __cce_simd::RoundCType;
+using __cce_simd::RoundZType;
+using __cce_simd::RoundOType;
+
 /**
  * Unified enum for all type conversion modes
  * Describes the vcvt intrinsic parameter pattern used for conversion
@@ -35,8 +43,8 @@ enum class CastMode {
 };
 
 #define FOR_ELEMENTS(elNum) constexpr uint16_t elementsNum = (elNum);\
-    uint16_t count = (len + elementsNum-1) / elementsNum;\
-    for(uint16_t idx = 0; idx < count; idx++) {
+    uint16_t repeatTimes = CeilDivision(len, elementsNum);\
+    for(uint16_t idx = 0; idx < repeatTimes; idx++) {
 
 
 #define END_FOR_ELEMENTS srcOffset += elementsNum;dstOffset += elementsNum;}
@@ -51,17 +59,16 @@ enum class CastMode {
  */
 template <typename R, typename DST, typename SRC>
 inline AICORE void castS64to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
-    typedef DST __attribute__((ext_vector_type(ELE_CNT_B32))) DST_VEC;
     vector_s64 v_input_0;
 
     const uint32_t ELE_CNT_B64 = ELE_CNT_B32 / 2;
     uint32_t len64 = len * 2; // As we operate with 64bit blocks using 32bit operations
-    vector_bool preg_b64 = plt_b32(len64, POST_UPDATE);
+    MaskReg preg_b64 = CreatePredicate<float>(len64);
 
     FOR_ELEMENTS(ELE_CNT_B64)
-        DST_VEC v_output;
+        RegTensor<DST> v_output;
         uint32_t len_even = len * 2; // As only the even part is taken
-        vector_bool preg_b32 = plt_b32(len_even, POST_UPDATE);
+        MaskReg preg_b32 = CreatePredicate<float>(len_even);
         
         vlds(v_input_0, src, srcOffset, NORM);
         if constexpr (std::is_same<R, void>::value) {
@@ -82,16 +89,14 @@ inline AICORE void castS64to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& ds
  */
 template <typename R, typename DST, typename SRC>
 inline AICORE void cast32to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
-    typedef SRC __attribute__((ext_vector_type(ELE_CNT_B32))) SRC_VEC;
-    typedef DST __attribute__((ext_vector_type(ELE_CNT_B16))) DST_VEC;
     
     uint32_t len32 = ELE_CNT_B32;
-    vector_bool preg_b32 = plt_b32(len32, POST_UPDATE);
+    MaskReg preg_b32 = CreatePredicate<float>(len32);
     
     FOR_ELEMENTS(ELE_CNT_B16)
-        SRC_VEC v_input_0, v_input_1;
-        DST_VEC v_output_odd, v_output_even, v_output;
-        vector_bool preg_b16 = plt_b16(len, POST_UPDATE);
+        RegTensor<SRC> v_input_0, v_input_1;
+        RegTensor<DST> v_output_odd, v_output_even, v_output;
+        MaskReg preg_b16 = CreatePredicate<half>(len);
 
         vlds(v_input_0, v_input_1, src, srcOffset, DINTLV_B32);
         if constexpr (std::is_same<R, void>::value) {
@@ -114,13 +119,11 @@ inline AICORE void cast32to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dst
  */
 template <typename R, CastMode MODE, typename DST, typename SRC>
 inline AICORE void cast32to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
-    typedef SRC __attribute__((ext_vector_type(ELE_CNT_B32))) SRC_VEC;
-    typedef DST __attribute__((ext_vector_type(ELE_CNT_B32))) DST_VEC;
 
     FOR_ELEMENTS(ELE_CNT_B32)
-        SRC_VEC v_input_0;
-        DST_VEC v_output;
-        vector_bool preg_b32 = plt_b32(len, POST_UPDATE);
+        RegTensor<SRC> v_input_0;
+        RegTensor<DST> v_output;
+        MaskReg preg_b32 = CreatePredicate<float>(len);
         
         vlds(v_input_0, src, srcOffset, NORM);
         if constexpr (MODE == CastMode::ROUND_SAT) {
@@ -141,17 +144,16 @@ inline AICORE void cast32to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dst
  */
 template <typename R, typename SRC>
 inline AICORE void cast32toS64(__ubuf__ int64_t *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
-    typedef SRC __attribute__((ext_vector_type(ELE_CNT_B32))) SRC_VEC;
 
     const uint32_t ELE_CNT_B64 = ELE_CNT_B32 / 2;
     uint32_t len32 = ELE_CNT_B32;
-    vector_bool preg_b32 = plt_b32(len32, POST_UPDATE);
+    MaskReg preg_b32 = CreatePredicate<float>(len32);
 
     FOR_ELEMENTS(ELE_CNT_B64)
-        SRC_VEC v_input_0;
+        RegTensor<SRC> v_input_0;
         vector_s64 v_output;
         uint32_t len64 = len * 2; // As we operate with 64bit blocks using 32bit operations
-        vector_bool preg_b64 = plt_b32(len64, POST_UPDATE);
+        MaskReg preg_b64 = CreatePredicate<float>(len64);
         
         vlds(v_input_0, src, srcOffset, UNPK_B32);
         if constexpr (std::is_same<R, void>::value) {
@@ -172,13 +174,11 @@ inline AICORE void cast32toS64(__ubuf__ int64_t *dst, __ubuf__ SRC *src, int32_t
  */
 template <typename R, CastMode MODE, typename DST, typename SRC >
 inline AICORE void cast16to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
-    typedef SRC __attribute__((ext_vector_type(ELE_CNT_B16))) SRC_VEC;
-    typedef DST __attribute__((ext_vector_type(ELE_CNT_B16))) DST_VEC;
 
     FOR_ELEMENTS(ELE_CNT_B16)
-        SRC_VEC v_input_0;
-        DST_VEC v_output;
-        vector_bool preg_b16 = plt_b16(len, POST_UPDATE);
+        RegTensor<SRC> v_input_0;
+        RegTensor<DST> v_output;
+        MaskReg preg_b16 = CreatePredicate<half>(len);
         
         vlds(v_input_0, src, srcOffset, NORM);
         if constexpr (MODE == CastMode::ROUND_SAT) {
@@ -201,16 +201,14 @@ inline AICORE void cast16to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dst
  */
 template <typename R, CastMode MODE, typename DST, typename SRC >
 inline AICORE void cast16to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
-    typedef SRC __attribute__((ext_vector_type(ELE_CNT_B16))) SRC_VEC;
-    typedef DST __attribute__((ext_vector_type(ELE_CNT_B32))) DST_VEC;
 
     uint32_t len16 = ELE_CNT_B16;
-    vector_bool preg_b16 = plt_b16(len16, POST_UPDATE);
+    MaskReg preg_b16 = CreatePredicate<half>(len16);
 
     FOR_ELEMENTS(ELE_CNT_B32)
-        SRC_VEC v_input_0;
-        DST_VEC v_output;
-        vector_bool preg_b32 = plt_b32(len, POST_UPDATE);
+        RegTensor<SRC> v_input_0;
+        RegTensor<DST> v_output;
+        MaskReg preg_b32 = CreatePredicate<float>(len);
         
         vlds(v_input_0, src, srcOffset, UNPK_B16);
         if constexpr (MODE == CastMode::EXPAND) {
@@ -235,12 +233,12 @@ inline AICORE void cast16to8(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstO
     typedef SRC __attribute__((ext_vector_type(ELE_CNT_B16))) SRC_VEC;
    
     uint32_t len16 = ELE_CNT_B16;
-    vector_bool preg_b16 = plt_b16(len16, POST_UPDATE);
+    MaskReg preg_b16 = CreatePredicate<half>(len16);
 
     FOR_ELEMENTS(ELE_CNT_B8)
         SRC_VEC v_input_0, v_input_1;
         DST_VEC v_output_odd, v_output_even, v_output;
-        vector_bool preg_b8 = plt_b8(len, POST_UPDATE);
+        MaskReg preg_b8 = CreatePredicate<uint8_t>(len);
 
         vlds(v_input_0, v_input_1, src, srcOffset, DINTLV_B16);
         if constexpr (MODE == CastMode::ROUND_SAT_PART) {
@@ -266,12 +264,12 @@ inline AICORE void cast8to16(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstO
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B16))) DST_VEC;
    
     uint32_t len8 = ELE_CNT_B8;
-    vector_bool preg_b8 = plt_b8(len8, POST_UPDATE);    
+    MaskReg preg_b8 = CreatePredicate<uint8_t>(len8);
 
     FOR_ELEMENTS(ELE_CNT_B16)
         SRC_VEC v_input_0;
         DST_VEC v_output;
-        vector_bool preg_b16 = plt_b16(len, POST_UPDATE);
+        MaskReg preg_b16 = CreatePredicate<half>(len);
 
         vlds(v_input_0, src, srcOffset, UNPK_B8);
         vcvt(v_output, v_input_0, preg_b8, PART_EVEN);
@@ -289,10 +287,10 @@ inline AICORE void cast8to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstO
     typedef DST __attribute__((ext_vector_type(ELE_CNT_B32))) DST_VEC;
    
     uint32_t len8 = ELE_CNT_B8;
-    vector_bool preg_b8 = plt_b8(len8, POST_UPDATE);  
+    MaskReg preg_b8 = CreatePredicate<uint8_t>(len8);
     uint32_t len16 = ELE_CNT_B16;
-    vector_bool preg_b16 = plt_b16(len16, POST_UPDATE);
-    vector_bool pg = pset_b8(PAT_ALL);
+    MaskReg preg_b16 = CreatePredicate<half>(len16);
+    MaskReg pg = pset_b8(PAT_ALL);
     SRC_VEC v_zero;
     vdup((RegTensor<uint8_t> &) v_zero, 0, pg, MODE_ZEROING);  
     uint32_t next_len = (len > 64) ? len - 64 : 0;
@@ -300,10 +298,10 @@ inline AICORE void cast8to32(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstO
     FOR_ELEMENTS(ELE_CNT_B16)
         SRC_VEC v_input_0, v_input_1, v_input_2;
         DST_VEC v_output_0, v_output_1;
-        vector_bool preg_b16 = plt_b16(len, POST_UPDATE);
-        vector_bool preg_b16_next = plt_b16(next_len, POST_UPDATE);
-        vector_bool preg_b32;
-        vector_bool preg_b32_next;
+        MaskReg preg_b16 = CreatePredicate<half>(len);
+        MaskReg preg_b16_next = CreatePredicate<half>(next_len);
+        MaskReg preg_b32;
+        MaskReg preg_b32_next;
         punpack(preg_b32, preg_b16, LOWER);
         punpack(preg_b32_next, preg_b16_next, LOWER);
 
@@ -333,8 +331,8 @@ inline AICORE void cast32to8(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstO
     uint32_t preg_len_head = INPUT_VL_LEN;
     uint32_t preg_len_tail = (len % INPUT_VL_LEN == 0) ? INPUT_VL_LEN : (len % INPUT_VL_LEN);
     uint32_t len32 = ELE_CNT_B32;
-    vector_bool preg_b32 = plt_b32(len32, POST_UPDATE);
-    vector_bool preg_idx = pset_b8(PAT_ALL);
+    MaskReg preg_b32 = CreatePredicate<float>(len32);
+    MaskReg preg_idx = pset_b8(PAT_ALL);
     DST_VEC v_idx;
     vci((RegTensor<int8_t> &) v_idx, (int8_t) 0 , INC_ORDER);
     vmuls((RegTensor<int16_t> &) v_idx, (RegTensor<int16_t> &) v_idx, (int16_t) 4, preg_idx); // multiply by 4 for byte addressing
@@ -342,8 +340,8 @@ inline AICORE void cast32to8(__ubuf__ DST *dst, __ubuf__ SRC *src, int32_t& dstO
     FOR_ELEMENTS(ELE_CNT_B32)
         SRC_VEC v_input_0;
         DST_VEC v_output_0, v_output;
-        uint32_t preg_len = (idx == count - 1) ? preg_len_tail : preg_len_head;
-        vector_bool preg_b8 = plt_b8(preg_len, POST_UPDATE);
+        uint32_t preg_len = (idx == repeatTimes - 1) ? preg_len_tail : preg_len_head;
+        MaskReg preg_b8 = CreatePredicate<uint8_t>(preg_len);
 
         vlds(v_input_0, src, srcOffset, NORM);
         if constexpr (MODE == CastMode::ROUND_SAT_PART) {
@@ -369,7 +367,7 @@ template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ float *src, int32_t& dstOffset, int32_t& srcOffset, uint32_t len) {
     FOR_ELEMENTS(ELE_CNT_B32)
         vector_f32 v_input_0, v_output;
-        vector_bool preg_b32 = plt_b32(len, POST_UPDATE);
+        MaskReg preg_b32 = CreatePredicate<float>(len);
         
         vlds(v_input_0, src, srcOffset, NORM);
         vtrc(v_output, v_input_0, R(), preg_b32);
@@ -458,8 +456,8 @@ inline AICORE void castData(__ubuf__ hifloat8_t *dst, __ubuf__ float *src, int32
     uint32_t preg_len_head = INPUT_VL_LEN;
     uint32_t preg_len_tail = (len % INPUT_VL_LEN == 0) ? INPUT_VL_LEN : (len % INPUT_VL_LEN);
     uint32_t len32 = ELE_CNT_B32;
-    vector_bool preg_b32 = plt_b32(len32, POST_UPDATE);
-    vector_bool preg_idx = pset_b8(PAT_ALL);
+    MaskReg preg_b32 = CreatePredicate<float>(len32);
+    MaskReg preg_idx = pset_b8(PAT_ALL);
     vector_u8 v_idx;
     vci((RegTensor<int8_t> &) v_idx, (int8_t) 0 , INC_ORDER);
     vmuls((RegTensor<int16_t> &) v_idx, (RegTensor<int16_t> &) v_idx, (int16_t) 4, preg_idx); // multiply by 4 for byte addressing
@@ -467,8 +465,8 @@ inline AICORE void castData(__ubuf__ hifloat8_t *dst, __ubuf__ float *src, int32
     FOR_ELEMENTS(ELE_CNT_B32)
         vector_f32 v_input_0;
         vector_hif8 v_output_0, v_output;
-        uint32_t preg_len = (idx == count - 1) ? preg_len_tail : preg_len_head;
-        vector_bool preg_b8 = plt_b8(preg_len, POST_UPDATE);
+        uint32_t preg_len = (idx == repeatTimes - 1) ? preg_len_tail : preg_len_head;
+        MaskReg preg_b8 = CreatePredicate<uint8_t>(preg_len);
         vlds(v_input_0, src, srcOffset, NORM);
         vcvt(v_output_0, v_input_0, preg_b32, ROUND_A, RS_ENABLE, PART_P0);
         vselr((RegTensor<uint8_t> &) v_output, (RegTensor<uint8_t> &) v_output_0, (RegTensor<uint8_t> &) v_idx);
@@ -526,12 +524,12 @@ inline AICORE void castData(__ubuf__ hifloat8_t *dst, __ubuf__ half *src, int32_
     // static_assert(std::is_same<R, RoundAType>::value || std::is_same<R, RoundCType>::value,
     //               "Fix: FP16 to HIFLOAT8 conversion only supports ROUND_A (CAST_ROUND) or ROUND_H (CAST_CEIL) rounding modes");
     uint32_t len16 = ELE_CNT_B16;
-    vector_bool preg_b16 = plt_b16(len16, POST_UPDATE);
+    MaskReg preg_b16 = CreatePredicate<half>(len16);
 
     FOR_ELEMENTS(ELE_CNT_B8)
         vector_f16 v_input_0, v_input_1;
         vector_hif8 v_output_odd, v_output_even, v_output;
-        vector_bool preg_b8 = plt_b8(len, POST_UPDATE);
+        MaskReg preg_b8 = CreatePredicate<uint8_t>(len);
 
         vlds(v_input_0, v_input_1, src, srcOffset, DINTLV_B16);
         vcvt(v_output_odd, v_input_1, preg_b16, ROUND_A, RS_ENABLE, PART_ODD);
@@ -722,47 +720,48 @@ inline AICORE void castData(__ubuf__ float *dst, __ubuf__ hifloat8_t *src, int32
  * Iterates over rows and calls appropriate castData specialization
  */
 template <typename TileDataD, typename TileDataS, typename R>
-inline AICORE void implTCVT(TileDataD &dst, TileDataS &src)
+__tf__ PTO_INTERNAL OP_NAME(TCVT) OP_TYPE(element_wise)
+void implTCVT(TileDataD &dst, TileDataS &src, unsigned validRows, unsigned validCols, VFImplKind version = VFImplKind::VFIMPL_DEFAULT)
 {
-    uint16_t rows = src.GetValidRow();
-    uint16_t cols = src.GetValidCol();
-    for (uint16_t row = 0; row < rows; row++) {
-        int32_t dstOffset = row * TileDataD::Cols;
-        int32_t srcOffset = row * TileDataS::Cols;
-        castData<R>(dst.data(), src.data(), dstOffset, srcOffset, cols);
+    __VEC_SCOPE__ {
+        uint16_t rows = (uint16_t) validRows;
+        uint16_t cols = (uint16_t) validCols;
+        for (uint16_t row = 0; row < rows; row++) {
+            int32_t dstOffset = row * TileDataD::Cols;
+            int32_t srcOffset = row * TileDataS::Cols;
+            castData<R>(dst.data(), src.data(), dstOffset, srcOffset, cols);
+        }
     }
 }
 
 template <typename TileDataD, typename TileDataS>
 AICORE void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
 {
-    __VEC_SCOPE__ {
-        switch (mode) {
-            case RoundMode::CAST_RINT:
-                implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
-                break;
-            case RoundMode::CAST_ROUND:
-                implTCVT<TileDataD,TileDataS,RoundAType>(dst,src);
-                break;
-            case RoundMode::CAST_FLOOR:
-                implTCVT<TileDataD,TileDataS,RoundFType>(dst,src);
-                break;
-            case RoundMode::CAST_CEIL:
-                implTCVT<TileDataD,TileDataS,RoundCType>(dst,src);
-                break;
-            case RoundMode::CAST_TRUNC:
-                implTCVT<TileDataD,TileDataS,RoundZType>(dst,src);
-                break;
-            case RoundMode::CAST_ODD:
-                if constexpr (std::is_same<typename TileDataD::DType, half>::value && 
-                    std::is_same<typename TileDataS::DType, float>::value) {
-                    implTCVT<TileDataD,TileDataS,RoundOType>(dst,src);
-                } 
-                break;
-            default:
-                implTCVT<TileDataD,TileDataS,RoundRType>(dst,src);
-                break;
-        }
+    switch (mode) {
+        case RoundMode::CAST_RINT:
+            implTCVT<TileDataD,TileDataS,RoundRType>(dst,src, dst.GetValidRow(), dst.GetValidCol());
+            break;
+        case RoundMode::CAST_ROUND:
+            implTCVT<TileDataD,TileDataS,RoundAType>(dst,src, dst.GetValidRow(), dst.GetValidCol());
+            break;
+        case RoundMode::CAST_FLOOR:
+            implTCVT<TileDataD,TileDataS,RoundFType>(dst,src, dst.GetValidRow(), dst.GetValidCol());
+            break;
+        case RoundMode::CAST_CEIL:
+            implTCVT<TileDataD,TileDataS,RoundCType>(dst,src, dst.GetValidRow(), dst.GetValidCol());
+            break;
+        case RoundMode::CAST_TRUNC:
+            implTCVT<TileDataD,TileDataS,RoundZType>(dst,src, dst.GetValidRow(), dst.GetValidCol());
+            break;
+        case RoundMode::CAST_ODD:
+            if constexpr (std::is_same<typename TileDataD::DType, half>::value && 
+                std::is_same<typename TileDataS::DType, float>::value) {
+                implTCVT<TileDataD,TileDataS,RoundOType>(dst,src, dst.GetValidRow(), dst.GetValidCol());
+            } 
+            break;
+        default:
+            implTCVT<TileDataD,TileDataS,RoundRType>(dst,src, dst.GetValidRow(), dst.GetValidCol());
+            break;
     }
 }
 
