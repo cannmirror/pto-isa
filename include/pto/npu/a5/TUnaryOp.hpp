@@ -115,7 +115,7 @@ namespace pto {
     }
   }
 
-  template <typename DstTile, typename SrcTile>
+  template <typename DstTile, typename SrcTile, bool floatOnly = true>
   PTO_INTERNAL void TUnaryCheck() {
     static_assert(DstTile::isRowMajor && SrcTile::isRowMajor,
       "TUnaryOp: Not supported Layout type");
@@ -131,7 +131,7 @@ namespace pto {
       "TUnaryOp: Number of src's valid rows must not be greater than number of tile rows.");
     static_assert(std::is_same_v<typename DstTile::DType, typename SrcTile::DType>,
       "TUnaryOp: The data type of dst must be consistent with of src");
-    static_assert(std::is_same_v<typename DstTile::DType, float32_t> ||
+    static_assert(!floatOnly || std::is_same_v<typename DstTile::DType, float32_t> ||
       std::is_same_v<typename DstTile::DType, float> ||
       std::is_same_v<typename DstTile::DType, float16_t> ||
       std::is_same_v<typename DstTile::DType, half>,
@@ -185,9 +185,9 @@ namespace pto {
     TRsqrt<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
-  template <typename DstTile, typename SrcTile, typename Op>
+  template <typename DstTile, typename SrcTile, typename Op, bool floatOnly = true>
   PTO_INTERNAL void TUNARY_IMPL(DstTile &dst, SrcTile &src) {
-    TUnaryCheck<DstTile, SrcTile>();
+    TUnaryCheck<DstTile, SrcTile, floatOnly>();
     unsigned dstValidRow = dst.GetValidRow();
     unsigned dstValidCol = dst.GetValidCol();
     PTO_ASSERT(dstValidCol == src.GetValidCol(),
@@ -207,6 +207,18 @@ namespace pto {
   template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TEXP_IMPL(DstTile &dst, SrcTile &src) {
     TUNARY_IMPL<DstTile, SrcTile, ExpOp<typename DstTile::DType>>(dst, src);
+  }
+
+  /* TNOT */
+  template <typename T>
+  struct NotOp {
+    PTO_INTERNAL static void UnaryInstr(RegTensor<T> &dstReg, RegTensor<T> &srcReg, MaskReg &pReg) {
+      vnot(dstReg, srcReg, pReg, MODE_ZEROING);
+    }
+  };
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TNOT_IMPL(DstTile &dst, SrcTile &src) {
+    TUNARY_IMPL<DstTile, SrcTile, NotOp<typename DstTile::DType>, false>(dst, src);
   }
 
   /* TSQRT */

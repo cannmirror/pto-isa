@@ -182,6 +182,7 @@ set(ALL_TESTCASES
     trowexpandbrcb
     ttri
     tcolexpand
+    tnot
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
