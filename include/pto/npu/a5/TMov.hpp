@@ -279,7 +279,8 @@ PTO_INTERNAL void CheckTMovAccValid()
 
 template <typename T, typename DstTileData, typename SrcTileData>
 __tf__ PTO_INTERNAL void TMovToVecNd2Nz(typename DstTileData::TileDType __out__ dst,
-    typename SrcTileData::TileDType __in__ src, uint32_t validRow, uint32_t validCol)
+    typename SrcTileData::TileDType __in__ src, uint32_t validRow, uint32_t validCol,
+    unsigned version = VFImplKind::VFIMPL_DEFAULT)
 {
     static_assert((std::is_same<T, half>::value) || (std::is_same<T, bfloat16_t>::value) ||
         (std::is_same<T, float>::value) || (std::is_same<T, int32_t>::value) ||
@@ -322,20 +323,42 @@ __tf__ PTO_INTERNAL void TMovToVecNd2Nz(typename DstTileData::TileDType __out__ 
 }
 
 template <typename DstTileData, typename SrcTileData>
-__tf__ PTO_INTERNAL void TMovToVec(DstTileData &dst, SrcTileData &src) {
-    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename SrcTileData::DType);
-    constexpr unsigned dstStride = DstTileData::RowStride;
-    constexpr unsigned srcStride = SrcTileData::RowStride;
+__tf__ PTO_INTERNAL void TMovVecToVec(typename DstTileData::TileDType __out__ dstData,
+    typename SrcTileData::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
+    unsigned version = VFImplKind::VFIMPL_DEFAULT)
+{
+    using T = typename DstTileData::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+    constexpr unsigned nRepeatElem = REPEAT_BYTE / sizeof(T);
+    __VEC_SCOPE__
+    {
+        RegTensor<T> vreg0;
+        MaskReg preg;
+        uint32_t sreg;
+        uint16_t repeatTimes = CeilDivision(validCol, nRepeatElem);
+        constexpr auto distValue =
+            std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+        for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
+            sreg = (uint32_t)validCol;
+            for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
+                preg = CreatePredicate<T>(sreg);
+                vlds(vreg0, src, i * SrcTileData::RowStride + j * nRepeatElem, NORM);
+                vsts(vreg0, dst, i * DstTileData::RowStride + j * nRepeatElem, distValue, preg);
+            }
+        }
+    }
+}
+
+template <typename DstTileData, typename SrcTileData>
+PTO_INTERNAL void TMovToVec(DstTileData &dst, SrcTileData &src) {
     uint64_t validSrcRow = src.GetValidRow();
     uint64_t validDstRow = dst.GetValidRow();
     uint64_t validSrcCol = src.GetValidCol();
     uint64_t validDstCol = dst.GetValidCol();
     uint64_t validRow = (validSrcRow < validDstRow) ? validSrcRow : validDstRow;
     uint64_t validCol = (validSrcCol < validDstCol) ? validSrcCol : validDstCol;
-    TPartCopyInstr<typename DstTileData::DType, DstTileData, SrcTileData, blockSizeElem, dstStride, srcStride>(
-        (__ubuf__ typename DstTileData::DType *)__cce_get_tile_ptr(dst.data()),
-        (__ubuf__ typename SrcTileData::DType *)__cce_get_tile_ptr(src.data()),
-        validRow, validCol, 0);
+    TMovVecToVec<DstTileData, SrcTileData>(dst.data(), src.data(), validRow, validCol);
 }
 
 template <typename DstTileData, typename SrcTileData>
