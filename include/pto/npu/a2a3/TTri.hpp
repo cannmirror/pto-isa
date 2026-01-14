@@ -25,11 +25,12 @@ PTO_INTERNAL void TTril(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol
     for (unsigned i = 0; i < validRow; ++i) {
         __ubuf__ T *drow = dstPtr + i * rowStride;
 
-        // clear full row first
+        // write full zero first
         set_vector_mask(0, validCol);
         vector_dup(drow, zero, 1, 1, 1, 8, 0);
         pipe_barrier(PIPE_V);
 
+        // write one
         int lastCol = static_cast<int>(i) + static_cast<int>(diagonal);
         if (lastCol >= 0) {
             int want = lastCol + 1;
@@ -52,18 +53,22 @@ PTO_INTERNAL void TTriu(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol
     for (unsigned i = 0; i < validRow; ++i) {
         __ubuf__ T *drow = dstPtr + i * rowStride;
 
-        // clear full row first
+        // write full one first
         set_vector_mask(0, validCol);
-        vector_dup(drow, zero, 1, 1, 1, 8, 0);
+        vector_dup(drow, one, 1, 1, 1, 8, 0);
         pipe_barrier(PIPE_V);
 
-        int firstCol = static_cast<int>(i) + static_cast<int>(diagonal);
-        firstCol = (firstCol < 0) ? 0 : firstCol;
-        if (firstCol < static_cast<int>(validCol)) {
-            unsigned start = static_cast<unsigned>(firstCol);
-            set_vector_mask(0, validCol - start);
-            vector_dup(drow + start, one, 1, 1, 1, 8, 0);
-            pipe_barrier(PIPE_V);
+        // write zero
+        int lastCol = static_cast<int>(i) + static_cast<int>(diagonal);
+        if (lastCol >= 0) {
+            unsigned fillCol = (lastCol <= 0) ?
+                                   0 :
+                                   (lastCol >= static_cast<int>(validCol) ? validCol : static_cast<unsigned>(lastCol));
+            if (fillCol > 0) {
+                set_vector_mask(0, fillCol);
+                vector_dup(drow, one, 1, 1, 1, 8, 0);
+                pipe_barrier(PIPE_V);
+            }
         }
     }
 }
@@ -84,16 +89,21 @@ __tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned
     return;
 }
 
+template <typename TileData, int isUpperOrLower>
+PTO_INTERNAL void TTriCheck(const TileData &dst) {
+    using T = typename TileData::DType;
+    static_assert(std::is_same<T, int32_t>::value || std::is_same<T, int>::value || std::is_same<T, int16_t>::value ||
+                      std::is_same<T, uint32_t>::value || std::is_same<T, uint16_t>::value ||
+                      std::is_same<T, half>::value || std::is_same<T, float16_t>::value ||
+                      std::is_same<T, float>::value || std::is_same<T, float32_t>::value,
+        "Fix: TTRI has invalid data type.");
+    static_assert(isUpperOrLower == 0 || isUpperOrLower == 1, "Fix: isUpperOrLower must be 0 or 1.");
+    static_assert(TileData::isRowMajor, "Fix: TTRI only support row major layout.");
+}
+
 template <typename TileData, int isUpperOrLower, int diagonal>
 PTO_INTERNAL void TTRI_IMPL(TileData &dst) {
-    static_assert(std::is_same<typename TileData::DType, int32_t>::value ||
-                  std::is_same<typename TileData::DType, int16_t>::value ||
-                  std::is_same<typename TileData::DType, uint32_t>::value ||
-                  std::is_same<typename TileData::DType, uint16_t>::value ||
-                  std::is_same<typename TileData::DType, half>::value ||
-                  std::is_same<typename TileData::DType, float>::value || "Fix: TTri has invalid data type.");
-    static_assert(TileData::isRowMajor, "Fix: TTri has not supported Layout type.");
-    static_assert(isUpperOrLower == 0 || isUpperOrLower == 1, "Fix: isUpperOrLower must be 0 or 1.");
+    TTriCheck<TileData, isUpperOrLower>(dst);
     constexpr unsigned rowStride = TileData::RowStride;
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
