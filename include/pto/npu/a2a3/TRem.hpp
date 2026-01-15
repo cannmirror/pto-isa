@@ -150,7 +150,7 @@ __tf__ PTO_INTERNAL void TRem(typename TileData::TileDType __out__ dst, typename
             RemOp<T>::REMF32Instr(dstNext, s0Next, s1Next, tmpPtr, prod);
         } else if constexpr (std::is_same_v<T, half> || std::is_same_v<T, float16_t>) {
             RemOp<T>::REMF16Instr(dstNext, s0Next, s1Next, tmpPtr, prod);
-        } else if constexpr (std::is_integral_v<T> || sizeof(T) == 4) {
+        } else if constexpr (std::is_integral_v<T> && sizeof(T) == 4) {
             RemOp<T>::REMInt32Instr(dstNext, s0Next, s1Next, tmpPtr, validCols);
         } else if constexpr (std::is_integral_v<T> && sizeof(T) == 2) {
             RemOp<T>::REMInt16Instr(dstNext, s0Next, s1Next, tmpPtr, validCols);
@@ -167,7 +167,7 @@ PTO_INTERNAL void TRemCheck(const TileDataDst &dst, const TileDataSrc0 &src0, co
     static_assert(std::is_same<T, half>::value || std::is_same<T, float>::value || std::is_same<T, float32_t>::value ||
                       std::is_same<T, int32_t>::value,
         "Fix: TREM currently supports half/float and 16/32-bit integer data types.");
-    static_assert(TileDataDst::isRowMajor || TileDataSrc0::isRowMajor || TileDataSrc1::isRowMajor,
+    static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
         "Fix: TREM only support row major layout.");
     unsigned validRows = dst.GetValidRow();
     unsigned validCols = dst.GetValidCol();

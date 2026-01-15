@@ -34,13 +34,10 @@ PTO_INTERNAL void TTril(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol
         int lastCol = static_cast<int>(i) + static_cast<int>(diagonal);
         if (lastCol >= 0) {
             int want = lastCol + 1;
-            unsigned fillCol =
-                (want <= 0) ? 0 : (want >= static_cast<int>(validCol) ? validCol : static_cast<unsigned>(want));
-            if (fillCol > 0) {
-                set_vector_mask(0, fillCol);
-                vector_dup(drow, one, 1, 1, 1, 8, 0);
-                pipe_barrier(PIPE_V);
-            }
+            unsigned fillCol = (want >= static_cast<int>(validCol) ? validCol : static_cast<unsigned>(want));
+            set_vector_mask(0, fillCol);
+            vector_dup(drow, one, 1, 1, 1, 8, 0);
+            pipe_barrier(PIPE_V);
         }
     }
 }
@@ -61,14 +58,10 @@ PTO_INTERNAL void TTriu(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol
         // write zero
         int lastCol = static_cast<int>(i) + static_cast<int>(diagonal);
         if (lastCol >= 0) {
-            unsigned fillCol = (lastCol <= 0) ?
-                                   0 :
-                                   (lastCol >= static_cast<int>(validCol) ? validCol : static_cast<unsigned>(lastCol));
-            if (fillCol > 0) {
-                set_vector_mask(0, fillCol);
-                vector_dup(drow, one, 1, 1, 1, 8, 0);
-                pipe_barrier(PIPE_V);
-            }
+            unsigned fillCol = (lastCol >= static_cast<int>(validCol) ? validCol : static_cast<unsigned>(lastCol));
+            set_vector_mask(0, fillCol);
+            vector_dup(drow, zero, 1, 1, 1, 8, 0);
+            pipe_barrier(PIPE_V);
         }
     }
 }
