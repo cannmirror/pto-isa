@@ -700,6 +700,13 @@ PTO_INST RecordEvent TNOT(TileDataDst &dst, TileDataSrc &src, WaitEvents&... eve
   return {};
 }
 
+template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
+PTO_INST RecordEvent TRELU(TileDataDst &dst, TileDataSrc &src, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TRELU, dst, src);
+  return {};
+}
+
 template <typename TileDataDst, typename TileDataSrc, typename TileDataOffset, typename... WaitEvents>
 PTO_INST RecordEvent TGATHERB(TileDataDst &dst, TileDataSrc &src, TileDataOffset &offset, WaitEvents&... events) {
   TSYNC(events...);

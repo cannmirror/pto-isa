@@ -286,6 +286,19 @@ namespace pto {
     TUNARY_IMPL<NotOp<typename DstTile::DType>, DstTile, SrcTile, false>(dst, src);
   }
 
+  /* RELU */
+  template <typename T>
+  struct ReluOp {
+    PTO_INTERNAL static void UnaryInstr(__ubuf__ T* dst, __ubuf__ T* src, uint8_t repeat,
+      uint8_t dstStride = BLOCK_MAX_PER_REPEAT, uint8_t srcStride = BLOCK_MAX_PER_REPEAT) {
+      vrelu(dst, src, repeat, 1, 1, dstStride, srcStride);
+    }
+  };
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TRELU_IMPL(DstTile &dst, SrcTile &src) {
+    TUNARY_IMPL<ReluOp<typename DstTile::DType>, DstTile, SrcTile, false>(dst, src);
+  }
+
   /* ABS */
   template <typename T>
   struct AbsOp {

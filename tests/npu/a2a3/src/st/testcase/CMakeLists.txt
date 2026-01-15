@@ -164,6 +164,7 @@ tfa
 tcolexpand
 ttri
 tnot
+trelu
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
