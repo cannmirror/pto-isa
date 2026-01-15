@@ -128,6 +128,7 @@ set(ALL_TESTCASES
     trowexpandmin
     trowexpandmul
     trowexpandsub
+    trowexpandexpdif
     tgather
     tcvt
     tsub
@@ -179,6 +180,7 @@ set(ALL_TESTCASES
     tcolexpanddiv
     tcolexpandmul
     tcolexpandsub
+    tcolexpandexpdif
     trowexpandbrcb
     ttri
     tcolexpand

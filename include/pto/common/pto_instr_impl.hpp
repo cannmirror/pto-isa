@@ -120,6 +120,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TRowExpandMin.hpp"
 #include "pto/npu/a5/TRowExpandMul.hpp"
 #include "pto/npu/a5/TRowExpandSub.hpp"
+#include "pto/npu/a5/TRowExpandExpdif.hpp"
 #include "pto/npu/a5/TPartAdd.hpp"
 #include "pto/npu/a5/TPartMax.hpp"
 #include "pto/npu/a5/TPartMin.hpp"
@@ -136,6 +137,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TColExpandDiv.hpp"
 #include "pto/npu/a5/TColExpandMul.hpp"
 #include "pto/npu/a5/TColExpandSub.hpp"
+#include "pto/npu/a5/TColExpandExpdif.hpp"
 #include "pto/npu/a5/TTri.hpp"
 #endif
 
