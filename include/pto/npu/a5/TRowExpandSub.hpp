@@ -39,11 +39,11 @@ namespace pto {
     };
 
     template <typename TileDataDst, typename TileDataSrc1, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride, bool src0eqdst>
-    __tf__ AICORE void TRowExpandSub(typename TileDataDst::TileDType __out__ dst, 
+    __tf__ AICORE OP_NAME(TROWEXPANDSUB) OP_TYPE(broadcast) void TRowExpandSub(typename TileDataDst::TileDType __out__ dst, 
                                 typename TileDataDst::TileDType __in__ src0,
                                 typename TileDataSrc1::TileDType __in__ src1,
                                 unsigned validRow,
-                                unsigned validCol) {
+                                unsigned validCol, unsigned version = VFImplKind::VFIMPL_DEFAULT) {
         using T = typename TileDataDst::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
