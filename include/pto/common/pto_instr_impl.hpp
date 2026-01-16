@@ -21,6 +21,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a2a3/TAdd.hpp"
 #include "pto/npu/a2a3/TAnd.hpp"
 #include "pto/npu/a2a3/TOr.hpp"
+#include "pto/npu/a2a3/TXor.hpp"
 #include "pto/npu/a2a3/TMins.hpp"
 #include "pto/npu/a2a3/TAddS.hpp"
 #include "pto/npu/a2a3/TDivS.hpp"

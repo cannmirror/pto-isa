@@ -169,6 +169,8 @@ tands
 tors
 tshls
 tshrs
+txor
+txors
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)

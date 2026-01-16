@@ -104,6 +104,18 @@ namespace pto
         TEXPANDS_IMPL(dst, scalar);
         TOR_IMPL(dst, src, dst);
     }
+
+    template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
+    PTO_INTERNAL void TXORS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar, TileDataTmp &tmp)
+    {
+        TORS_IMPL(dst, src, scalar);
+        pipe_barrier(PIPE_V);
+        TANDS_IMPL(tmp, src, scalar);
+        pipe_barrier(PIPE_V);
+        TNOT_IMPL(tmp, tmp);
+        pipe_barrier(PIPE_V);
+        TAND_IMPL(dst, dst, tmp);
+    }
 }
 
 #endif
