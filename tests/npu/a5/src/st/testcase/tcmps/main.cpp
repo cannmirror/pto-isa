@@ -99,7 +99,7 @@ void test_tcmps() {
                 devFinal[ind * kTCols_ / 8 + kGCols_ / 8 + ind_col] = 0;
             }
         }
-        for (size_t ind = kGRows_; ind < kTRows_ / 8; ind++) {
+        for (size_t ind = kGRows_; ind < kTRows_; ind++) {
             for (size_t ind_col = 0; ind_col < kTCols_ / 8; ind_col++) {
                 devFinal[ind * kTCols_ / 8 + ind_col] = 0;
             }
