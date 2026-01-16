@@ -17,7 +17,7 @@ namespace pto {
 using namespace std;
 template <typename T, typename AddrType>
 PTO_INTERNAL void TASSIGN_IMPL(T &obj, AddrType addr) {
-  if constexpr (is_tile_data_v<T>) {
+  if constexpr (is_tile_data_v<T> || is_conv_tile_v<T>) {
 #ifndef __PTO_AUTO__
     static_assert(is_integral_v<AddrType>,
                   "Tile can only be assigned with address of int type.");
