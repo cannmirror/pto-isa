@@ -28,7 +28,9 @@ namespace pto {
     PIPE_V /* TCOLMAX */, PIPE_V /* TCOLMIN */, PIPE_V /* TTRANS */, PIPE_V /* TTRI */, PIPE_V /* TREM */, PIPE_V /* TMOV_V2V */, 
     PIPE_FIX /* TMOV_V2M */, PIPE_FIX /* TEXTRACT_V2M */, PIPE_MTE1 /* TMOV_M2B */, PIPE_MTE1 /* TMOV_M2L */, PIPE_MTE1 /* TMOV_M2R */, 
     PIPE_FIX /* TMOV_M2S */, PIPE_FIX /* TMOV_A2V */, PIPE_FIX /* TMOV_A2M */, PIPE_FIX /* TSTORE_ACC */, PIPE_MTE3 /* TSTORE_MAT */, 
-    PIPE_M /* TMATMUL */, PIPE_M /* TMATMUL_MX */, PIPE_MTE1 /* TEXTRACT_M2LR */, PIPE_ALL /* OP_COUNT */,
+    PIPE_M /* TMATMUL */, PIPE_M /* TMATMUL_MX */, PIPE_MTE1 /* TEXTRACT_M2LR */, 
+    PIPE_V /* TANDS */, PIPE_V /* TORS */, PIPE_V /* TSHLS */, PIPE_V /* TSHRS */,
+    PIPE_ALL /* OP_COUNT */,
   };
 
   template <Op OpCode>

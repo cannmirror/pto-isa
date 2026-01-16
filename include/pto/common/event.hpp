@@ -74,6 +74,10 @@ namespace pto {
     TMATMUL,
     TMATMUL_MX,
     TEXTRACT_M2LR,  /* Mat to Left/Right */
+    TANDS,
+    TORS,
+    TSHLS,
+    TSHRS,
     OP_COUNT, // The Total number of operations, please add new operations before OP_COUNT
   };
 

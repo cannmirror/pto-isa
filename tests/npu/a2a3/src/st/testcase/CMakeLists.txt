@@ -165,6 +165,10 @@ tcolexpand
 ttri
 tnot
 trelu
+tands
+tors
+tshls
+tshrs
 )
 
 if(TEST_CASE IN_LIST ALL_TESTCASES)
