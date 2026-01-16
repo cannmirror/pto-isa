@@ -134,6 +134,10 @@ set(ALL_TESTCASES
     tsub
     tand
     tor
+    tands
+    tors
+    txor
+    txors
     tadd
     tpartadd
     tfillpad

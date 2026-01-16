@@ -39,6 +39,7 @@ constexpr pipe_t opPipeList[] = {
     PIPE_MTE1 /* TMOV_M2L */, PIPE_MTE1 /* TMOV_M2R */, PIPE_FIX /* TMOV_M2S */, PIPE_FIX /* TMOV_A2V */, 
     PIPE_FIX /* TMOV_A2M */, PIPE_FIX /* TSTORE_ACC */, PIPE_MTE3 /* TSTORE_MAT */, PIPE_M /* TMATMUL */, 
     PIPE_MTE1 /* TEXTRACT_M2LR */, PIPE_V /* TANDS */, PIPE_V /* TORS */, PIPE_V /* TSHLS */, PIPE_V /* TSHRS */,
+    PIPE_V /* TXOR */, PIPE_V /* TXORS */,
   };
 
   template <Op OpCode>

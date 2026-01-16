@@ -78,6 +78,8 @@ namespace pto {
     TORS,
     TSHLS,
     TSHRS,
+    TXOR,
+    TXORS,
     OP_COUNT, // The Total number of operations, please add new operations before OP_COUNT
   };
 
