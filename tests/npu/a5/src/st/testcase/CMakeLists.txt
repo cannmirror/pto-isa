@@ -100,6 +100,8 @@ endfunction()
 
 # 定义测试用例列表 testcase下如有新增用例目录需要在此加
 set(ALL_TESTCASES
+    tsubs
+    tmaxs    
     tci
     tmatmul
     tmatmul_mx

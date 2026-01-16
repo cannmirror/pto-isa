@@ -30,7 +30,7 @@ namespace pto
         SetVectorCount(validCol);
         for (unsigned i = 0; i < validRow; i++) {
             unsigned dstOffset = i * dstStride;
-            unsigned srcOffset = i * srcStride; 
+            unsigned srcOffset = i * srcStride;
             Op::BinSInstr(dst + dstOffset, src0 + srcOffset, src1, 0);
         }
         set_mask_norm();
