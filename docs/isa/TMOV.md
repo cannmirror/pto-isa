@@ -7,7 +7,7 @@ Move/copy between tiles, optionally applying implementation-defined conversion m
 `TMOV` is used for:
 
 - Vec -> Vec moves
-- Mat -> Left/Right/Bias/Scale moves (target-dependent)
+- Mat -> Left/Right/Bias/Scaling/Scale(Microscaling) moves (target-dependent)
 - Acc -> Vec moves (target-dependent)
 
 ## Math Interpretation
@@ -76,11 +76,12 @@ PTO_INST RecordEvent TMOV(DstTileData& dst, SrcTileData& src, FpTileData& fp, Wa
 - **Implementation checks (A5)**:
   - For `Mat -> *`, shapes must match; for some `Vec` moves, the effective copy size is the min of src/dst valid rows/cols.
   - Supported location pairs include (target-dependent):
-    - `Mat -> Left/Right/Bias/Scaling`
+    - `Mat -> Left/Right/Bias/Scaling/Scale`
     - `Vec -> Vec` and `Vec -> Mat`
     - `Acc -> Vec` and `Acc -> Mat` (including optional pre-quant / relu / fp variants via overloads)
   - For `Mat -> Left/Right`, additional fractal and dtype constraints are enforced via `CommonCheck` (source fractal must be compatible and element types must match).
   - For `Acc -> Vec/Mat`, additional fractal/type/alignment constraints are enforced via `CheckTMovAccValid`.
+  - For `Mat -> Scale`, additional fractal and dtype constraints are enforced via `CommonCheckMX` (source fractal must be compatible and element types must match).
 
 ## Examples
 

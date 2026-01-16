@@ -63,13 +63,56 @@ PTO_INST RecordEvent TMATMUL_MX(TileRes &cMatrix, TileLeft &aMatrix, TileLeftSca
 
 ## Examples
 
+### Auto
+
 ```cpp
 #include <pto/pto-inst.hpp>
 
 using namespace pto;
 
-void example() {
-  // Exact tile types depend on the target’s MX matmul ABI; this is a schematic example.
+void example_auto() {
+  using A = TileLeft<float8_e5m2_t, 16, 64>;
+  using B = TileRight<float8_e5m2_t, 64, 32>;
+  using ScaleA = TileLeftScale<float8_e8m0_t, 16, 2>;
+  using ScaleB = TileRightScale<float8_e8m0_t, 2, 32>;
+  using Bias = Tile<TileType::Bias, float, 1, 32>;
+  using C = TileAcc<float, 16, 32>;
+  A a;
+  B b;
+  ScaleA scaleA;
+  ScaleB scaleB;
+  Bias bias;
+  C c;
+  TMATMUL_MX(c, a, scaleA, b, scaleB, bias);
 }
 ```
 
+### Manual
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example_manual() {
+  using A = TileLeft<float8_e5m2_t, 16, 64>;
+  using B = TileRight<float8_e5m2_t, 64, 32>;
+  using ScaleA = TileLeftScale<float8_e8m0_t, 16, 2>;
+  using ScaleB = TileRightScale<float8_e8m0_t, 2, 32>;
+  using Bias = Tile<TileType::Bias, float, 1, 32>;
+  using C = TileAcc<float, 16, 32>;
+  A a;
+  B b;
+  ScaleA scaleA;
+  ScaleB scaleB;
+  Bias bias;
+  C c;
+  TASSIGN(a, 0x1000);
+  TASSIGN(b, 0x2000);
+  TASSIGN(scaleA, GetScaleAddr(a.data()));
+  TASSIGN(scaleB, GetScaleAddr(b.data()));
+  TASSIGN(bias, 0x3000);
+  TASSIGN(c, 0x4000);
+  TMATMUL_MX(c, a, scaleA, b, scaleB, bias);
+}
+```
