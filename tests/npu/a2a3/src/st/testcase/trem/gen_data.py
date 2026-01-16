@@ -24,8 +24,8 @@ def gen_golden_data_trem(case_name, param):
     h_valid, w_valid = param.valid_row, param.valid_col
 
     # Generate random input arrays
-    input1 = np.random.randint(6, 20, size=[src0_tile_row, src0_tile_col]).astype(dtype)
-    input2 = np.random.randint(1, 5, size=[src1_tile_row, src1_tile_col]).astype(dtype)
+    input1 = np.random.randint(1, 100, size=[src0_tile_row, src0_tile_col]).astype(dtype)
+    input2 = np.random.randint(1, 100, size=[src1_tile_row, src1_tile_col]).astype(dtype)
 
     # Perform the operation
     golden = np.zeros([dst_tile_row, dst_tile_col]).astype(dtype)
@@ -56,7 +56,6 @@ def generate_case_name(param):
     dtype_str = {
         np.float32: 'float',
         np.float16: 'half',
-        np.int8: 'int8',
         np.int32: 'int32',
         np.int16: 'int16',
     }[param.dtype]
@@ -81,6 +80,8 @@ if __name__ == "__main__":
         TremParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 63),
         TremParams(np.float32, 2, 32, 2, 64, 2, 32, 2, 31),
         TremParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 31),
+        TremParams(np.int16, 16, 32, 16, 64, 16, 32, 16, 31),
+        TremParams(np.int16, 16, 64, 16, 128, 16, 128, 16, 63),
     ]
 
     for param in case_params_list:

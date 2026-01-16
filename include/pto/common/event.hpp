@@ -58,6 +58,8 @@ namespace pto {
     TCOLMAX,
     TCOLMIN,
     TTRANS,
+    TTRI,
+    TREM,
     TMOV_V2V,       /* Vec to Vec */
     TMOV_V2M,       /* Vec to Mat */
     TEXTRACT_V2M,   /* Vec to Mat */

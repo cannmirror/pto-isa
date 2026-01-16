@@ -117,3 +117,11 @@ TEST_F(TREMTest, case_float_2x32_2x64_2x32_2x31) {
 TEST_F(TREMTest, case_int32_16x32_16x64_16x32_16x31) {
     test_trem<int32_t, 16, 32, 16, 64, 16, 32, 16, 31>();
 }
+
+TEST_F(TREMTest, case_int16_16x32_16x64_16x32_16x31) {
+    test_trem<int16_t, 16, 32, 16, 64, 16, 32, 16, 31>();
+}
+
+TEST_F(TREMTest, case_int16_16x64_16x128_16x128_16x63) {
+    test_trem<int16_t, 16, 64, 16, 128, 16, 128, 16, 63>();
+}

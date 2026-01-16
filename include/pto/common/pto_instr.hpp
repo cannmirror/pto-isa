@@ -176,13 +176,6 @@ PTO_INST RecordEvent TDIV(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &sr
 }
 
 template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TREM(TileData &dst, TileData &src0, TileData &src1, WaitEvents&... events) {
-  TSYNC(events...);
-  MAP_INSTR_IMPL(TREM, dst, src0, src1);
-  return {};
-}
-
-template <typename TileData, typename... WaitEvents>
 PTO_INST RecordEvent TSHL(TileData &dst, TileData &src0, TileData &src1, WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TSHL, dst, src0, src1);
@@ -878,9 +871,9 @@ PTO_INST RecordEvent TCOLEXPANDEXPDIF(TileDataDst &dst, TileDataDst &src0, TileD
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
-PTO_INST RecordEvent TREM(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1, WaitEvents&... events) {
+PTO_INST RecordEvent TREM(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1, TileDataDst &tmp, WaitEvents&... events) {
   TSYNC(events...);
-  MAP_INSTR_IMPL(TREM, dst, src0, src1);
+  MAP_INSTR_IMPL(TREM, dst, src0, src1, tmp);
   return {};
 }
 
