@@ -234,6 +234,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolexpand -g TCOLEXPANDTest.case_float_1_8_128_63
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttri -g TTRITest.case_float_128x128_upper_diag_n3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tnot -g TNOTTest.case_int16_64x64_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trelu -g TNOTTest.case_int32_64x64_64x64_64x64
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd
@@ -302,5 +303,6 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolexpand
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttri
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tnot
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trelu
   fi
 fi

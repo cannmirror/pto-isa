@@ -221,6 +221,18 @@ namespace pto {
     TUNARY_IMPL<DstTile, SrcTile, NotOp<typename DstTile::DType>, false>(dst, src);
   }
 
+  /* TRELU */
+  template <typename T>
+  struct ReluOp {
+    PTO_INTERNAL static void UnaryInstr(RegTensor<T> &dstReg, RegTensor<T> &srcReg, MaskReg &pReg) {
+      vrelu(dstReg, srcReg, pReg, MODE_ZEROING);
+    }
+  };
+  template <typename DstTile, typename SrcTile>
+  PTO_INTERNAL void TRELU_IMPL(DstTile &dst, SrcTile &src) {
+    TUNARY_IMPL<DstTile, SrcTile, ReluOp<typename DstTile::DType>, false>(dst, src);
+  }
+
   /* TSQRT */
   template <typename T>
   struct SqrtOp {
