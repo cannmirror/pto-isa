@@ -194,9 +194,9 @@ __global__ AICORE void RunTEXTRACTMX(
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData =
-        Tile<TileType::Mat, AType, M, kAlign, BLayout::ColMajor, validM, kAlign, SLayout::RowMajor, 512>;
+        Tile<TileType::Mat, AType, M, kAlign, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
     using TileMatBData =
-        Tile<TileType::Mat, BType, kAlign, N, BLayout::ColMajor, kAlign, validN, SLayout::RowMajor, 512>;
+        Tile<TileType::Mat, BType, kAlign, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
     using TileScaleAData =
         Tile<TileType::Mat, ScaleType, M, kMX, BLayout::RowMajor, validM, kMX, SLayout::RowMajor, 32>;
     using TileScaleBData =
@@ -422,7 +422,7 @@ void LaunchTMOV_MX(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, ui
                 reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
     } else if constexpr (tilingKey == 10) {
-        RunTEXTRACTMX<format, float, float8_e4m3_t, float8_e4m3_t, float8_e8m0_t, 128, 32, 64, 64, 0, 32, false>
+        RunTEXTRACTMX<format, float, float8_e4m3_t, float8_e4m3_t, float8_e8m0_t, 128, 31, 64, 64, 0, 32, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
                 reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
