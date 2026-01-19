@@ -84,6 +84,7 @@ if __name__ == "__main__":
         TAddParams(np.float32, 16, 32, 16, 64, 16, 32, 16, 31),
         TAddParams(np.int16, 32, 128, 32, 128, 32, 256, 32, 127),
         TAddParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 31),
+        TAddParams(np.float16, 2, 128, 2, 128, 2, 128, 1, 106),
     ]
 
     for param in case_params_list:

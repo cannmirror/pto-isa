@@ -118,7 +118,7 @@ template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned b
 PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
     typename TileData::TileDType __in__ src1, unsigned validRows, unsigned validCols, VFImplKind version) {
     using T = typename TileData::DType;
-    if constexpr (TileData::ValidCol == TileData::Cols) {
+    if constexpr ((TileData::ValidCol == TileData::Cols) || (TileData::Rows == 1)) {
         switch (version) {
             case VFImplKind::VFIMPL_DEFAULT:
                 TBinOps_1D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
@@ -139,6 +139,9 @@ PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename
     } else {
         switch (version) {
             case VFImplKind::VFIMPL_DEFAULT:
+                TBinOps_2D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
+                    dst, src0, src1, validRows, validCols);
+                break;
             case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
             case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
                 TBinOps_2D_NoPostUpdate<Op, T, elementsPerRepeat, blockSizeElem, rowStride>(
@@ -160,6 +163,9 @@ PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename
     using T = typename TileData::DType;
     switch (version) {
         case VFImplKind::VFIMPL_DEFAULT:
+            TBinOps_2D_PostUpdate<Op, T, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
+                dst, src0, src1, validRows, validCols);
+            break;
         case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
         case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
             TBinOps_2D_NoPostUpdate<Op, T, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride,
