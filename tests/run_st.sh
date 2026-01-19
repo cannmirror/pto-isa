@@ -104,6 +104,8 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tors -g TORSTest.case_int16_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshls -g TSHLSTest.case_int16_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshrs -g TSHRSTest.case_int16_64x64_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t txor -g TXORSTest.case_int16_64x64_64x64_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t txors -g TXORSTest.case_int16_64x64_64x64_64x64
 
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
@@ -159,6 +161,8 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tors
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshls
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshrs
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t txor
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t txors
   fi
 fi
 
