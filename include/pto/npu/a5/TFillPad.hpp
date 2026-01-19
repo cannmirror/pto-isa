@@ -161,7 +161,7 @@ __tf__ PTO_INTERNAL void TFillPad(typename TileData::TileDType __out__ dst, uint
     if (blockLen != 0) {
         create_cbuf_matrix((__cbuf__ uint16_t *)(dstPtr + dstValidRow * elementsPerBlock), repeatConfig, 0);
     }
-    if (alignedValidCol != dstValidCol) { // if alignedValidCol is not equal to dstValidCol, need to pad the left column
+    if (alignedValidCol != TileData::Cols) { // if alignedValidCol is not equal to TileData::Cols, need to pad the left column
         blockLen = TileData::Rows;        // unit is 32B
         repeatConfig = (static_cast<uint64_t>(blockLen) << 16) | // [30:16] is the block number of each repeat
                        (static_cast<uint64_t>(0) << 32) | 1;     // [46:32] is the repeat gap

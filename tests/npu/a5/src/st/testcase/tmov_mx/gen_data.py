@@ -239,7 +239,7 @@ if __name__ == "__main__":
         TMovmxParams(fp4_e2m1x2, fp4_e2m1x2, np.float32, 95, 12, 90, 'dndn'),
         TMovmxParams(fp8_e4m3fn, fp8_e5m2, np.float32, 4, 30, 8, 'dndn'),
         # startIdx != 0
-        TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 128, 31, 64, 'zznn', 64, 0, 32),
+        TMovmxParams(fp8_e4m3fn, fp8_e4m3fn, np.float32, 128, 32, 64, 'zznn', 64, 0, 32),
         TMovmxParams(fp4_e2m1x2, fp4_e2m1x2, np.float32, 128, 98, 64, 'zznn', 32, 64, 0),
 
         TMovmxParams(fp4_e1m2x2, fp4_e1m2x2, np.float32, 128, 60, 254, 'ndnd', 16, 0, 64),

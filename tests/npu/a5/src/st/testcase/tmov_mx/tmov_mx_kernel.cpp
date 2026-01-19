@@ -422,7 +422,7 @@ void LaunchTMOV_MX(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, ui
                 reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));
     } else if constexpr (tilingKey == 10) {
-        RunTEXTRACTMX<format, float, float8_e4m3_t, float8_e4m3_t, float8_e8m0_t, 128, 31, 64, 64, 0, 32, false>
+        RunTEXTRACTMX<format, float, float8_e4m3_t, float8_e4m3_t, float8_e8m0_t, 128, 32, 64, 64, 0, 32, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
                 reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3));

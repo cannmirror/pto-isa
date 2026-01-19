@@ -216,7 +216,7 @@ TEST_F(TMOVMXTest, case9)
 TEST_F(TMOVMXTest, case10)
 {
     uint32_t M = 128;
-    uint32_t K = 31;
+    uint32_t K = 32;
     uint32_t N = 64;
 
     TmovMXTest<float, uint8_t, uint8_t, false, 10, 0>(M, K, N, 64, 0, 32);
