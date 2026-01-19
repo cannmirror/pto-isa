@@ -217,13 +217,6 @@ PTO_INST RecordEvent TLOG(TileDataDst &dst, TileDataSrc &src, WaitEvents&... eve
   return {};
 }
 
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TNOT(TileData &dst, TileData &src, WaitEvents&... events) {
-  TSYNC(events...);
-  MAP_INSTR_IMPL(TNOT, dst, src);
-  return {};
-}
-
 template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
 PTO_INST RecordEvent TRECIP(TileDataDst &dst, TileDataSrc &src, WaitEvents&... events) {
   TSYNC(events...);
@@ -231,13 +224,6 @@ PTO_INST RecordEvent TRECIP(TileDataDst &dst, TileDataSrc &src, WaitEvents&... e
    * A3's TRECIP instruction does not support setting the source Tile and destination Tile to the same memory.
    */
   MAP_INSTR_IMPL(TDIVS, dst, 1, src);
-  return {};
-}
-
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TRELU(TileData &dst, TileData &src, WaitEvents&... events) {
-  TSYNC(events...);
-  MAP_INSTR_IMPL(TRELU, dst, src);
   return {};
 }
 
