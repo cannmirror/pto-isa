@@ -8,8 +8,13 @@ Elementwise remainder with a scalar: `fmod(src, scalar)` (or `%` for integers).
 
 For each element `(i, j)` in the valid region:
 
-- Integer types: $$\mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \bmod \mathrm{scalar}$$
-- Floating types: $$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{src}_{i,j}, \mathrm{scalar})$$
+- Integer types:
+
+$$\mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \bmod \mathrm{scalar}$$
+
+- Floating types:
+
+$$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{src}_{i,j}, \mathrm{scalar})$$
 
 ## Assembly Syntax
 

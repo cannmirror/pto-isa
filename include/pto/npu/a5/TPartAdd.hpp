@@ -22,8 +22,8 @@ void TPartCopyInstr(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr,
     uint64_t validRow, uint64_t validCol, uint64_t startRow)
 {
     validRow -= startRow;
-    srcPtr += startRow * TileDataDst::RowStride;
-    dstPtr += startRow * TileDataSrc::RowStride;
+    srcPtr += startRow * TileDataSrc::RowStride;
+    dstPtr += startRow * TileDataDst::RowStride;
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
     __VEC_SCOPE__
     {
@@ -36,8 +36,8 @@ void TPartCopyInstr(__ubuf__ T *dstPtr, __ubuf__ T *srcPtr,
             uint32_t sreg = (uint32_t)(validCol);
             for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
                 preg = CreatePredicate<T>(sreg);
-                vlds(vreg0, srcPtr + i * srcStride, j * elementsPerRepeat, NORM);
-                vsts(vreg0, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
+                vlds(vreg0, srcPtr, j * elementsPerRepeat + i * srcStride, NORM);
+                vsts(vreg0, dstPtr, j * elementsPerRepeat + i * dstStride, distValue, preg);
             }
         }
     }
@@ -48,28 +48,24 @@ template <typename T, typename TileDataDst, typename TileDataSrc0, typename Tile
 PTO_INTERNAL
 void TPartAddInstr(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
     unsigned validRow, unsigned validCol) {
-    if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> || std::is_same_v<T, uint16_t> ||
-              std::is_same_v<T, int16_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, int32_t> ||
-              std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, bfloat16_t>) {
-        __VEC_SCOPE__
-        {                
-            MaskReg preg;
-            RegTensor<T> vreg0, vreg1, vreg2;                   
-            uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
-            constexpr auto distValue =
-                std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-            for (uint16_t i = 0; i < (uint16_t)(validRow); ++i) {
-                uint32_t sreg = (uint32_t)(validCol);
-                for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
-                    preg = CreatePredicate<T>(sreg);
-                    vlds(vreg0, src0Ptr + i * src0Stride, j * elementsPerRepeat, NORM);
-                    vlds(vreg1, src1Ptr + i * src1Stride, j * elementsPerRepeat, NORM);
-                    vadd(vreg2, vreg0, vreg1, preg, MODE_ZEROING);
-                    vsts(vreg2, dstPtr + i * dstStride, j * elementsPerRepeat, distValue, preg);
-                }
+    __VEC_SCOPE__
+    {
+        MaskReg preg;
+        RegTensor<T> vreg0, vreg1, vreg2;
+        uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
+        constexpr auto distValue =
+            std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+        for (uint16_t i = 0; i < (uint16_t)(validRow); ++i) {
+            uint32_t sreg = (uint32_t)(validCol);
+            for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
+                preg = CreatePredicate<T>(sreg);
+                vlds(vreg0, src0Ptr, j * elementsPerRepeat + i * src0Stride, NORM);
+                vlds(vreg1, src1Ptr, j * elementsPerRepeat + i * src1Stride, NORM);
+                vadd(vreg2, vreg0, vreg1, preg, MODE_ZEROING);
+                vsts(vreg2, dstPtr, j * elementsPerRepeat + i * dstStride, distValue, preg);
             }
-        }  // end VF
-    }
+        }
+    }  // end VF
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat,

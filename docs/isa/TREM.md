@@ -8,8 +8,13 @@ Elementwise remainder of two tiles.
 
 For each element `(i, j)` in the valid region:
 
-- Integer types: $$\mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} \bmod \mathrm{src1}_{i,j}$$
-- Floating types: $$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{src0}_{i,j}, \mathrm{src1}_{i,j})$$
+- Integer types:
+
+$$\mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} \bmod \mathrm{src1}_{i,j}$$
+
+- Floating types:
+
+$$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{src0}_{i,j}, \mathrm{src1}_{i,j})$$
 
 ## Assembly Syntax
 
