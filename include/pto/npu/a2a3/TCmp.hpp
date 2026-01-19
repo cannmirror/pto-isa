@@ -66,43 +66,57 @@ constexpr const uint64_t BITS_IN_BYTE = 8;
     }
 
 
-    template <typename TileDataDst, typename TileDataSrc, typename T, unsigned SS, unsigned DS>
+    template <typename TileDataDst, typename TileDataSrc, typename T>
     __tf__ AICORE void TCmp(
         typename TileDataDst::TileDType __out__ dst,
         typename TileDataSrc::TileDType __in__ src0, 
         typename TileDataSrc::TileDType __in__ src1, 
-        CmpMode mode, unsigned numRepeatPerLine,
-        unsigned numRemainPerLine, unsigned validRow,
-        unsigned elementsPerRepeat, unsigned blockSizeElem) 
+        CmpMode mode, 
+        unsigned numRepeatPerLine,
+        unsigned validRow,
+        unsigned elementsPerRepeat) 
     {
         __ubuf__ typename TileDataDst::DType *dstPtr = (__ubuf__ typename TileDataDst::DType *)__cce_get_tile_ptr(dst);
         __ubuf__ typename TileDataSrc::DType *src0Ptr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileDataSrc::DType *src1Ptr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src1);
         
-        set_mask_count();
-        set_vector_mask(0, TileDataDst::Cols);
-        size_t dst_offset = 0;
-        for (size_t i = 0; i < validRow * numRepeatPerLine; i++) {
-            CmpCall<TileDataDst, TileDataSrc>(
-                                    dstPtr + i * BLOCK_BYTE_SIZE,
-                                    src0Ptr + i * SS,
-                                    src1Ptr + i * SS,
-                                    mode,
-                                    1,
-                                    1,
-                                    1,
-                                    1,
-                                    1);
-        }
-        PtoSetWaitFlag<PIPE_V, PIPE_S>();
-        for (size_t index = 0; index < validRow * numRepeatPerLine; index++) {
-            for (size_t bit_index = 0; bit_index < DS; bit_index++){
-                dstPtr[dst_offset + bit_index] = dstPtr[index * BLOCK_BYTE_SIZE + bit_index];
-            }
-            dst_offset = dst_offset + DS;
-        }
+        size_t numLoop = numRepeatPerLine / REPEAT_MAX;
+        int numRemainPerLine = numRepeatPerLine % REPEAT_MAX;
+        constexpr int srcAlignCols = TileDataSrc::Cols;
+        constexpr int dstAlignCols = TileDataDst::Cols;
+        constexpr int srcOffset = REPEAT_MAX * REPEAT_BYTE / sizeof(T);
+        constexpr int dstOffset = REPEAT_MAX * REPEAT_BYTE / sizeof(T) / BITS_IN_BYTE;
+
         set_mask_norm();
         set_vector_mask(-1, -1);
+        for(size_t i = 0; i< validRow; i++) {
+            for (size_t j = 0; i < numLoop; j++) {
+                CmpCall<TileDataDst, TileDataSrc>(
+                    dstPtr + i * dstAlignCols + j * dstOffset,
+                    src0Ptr + i * srcAlignCols + j * srcOffset,
+                    src1Ptr + i * srcAlignCols + j * srcOffset,
+                    mode, 
+                    REPEAT_MAX,
+                    1,
+                    1,
+                    8,
+                    8
+                );
+            }
+            if(numRemainPerLine) {
+                CmpCall<TileDataDst, TileDataSrc>(
+                    dstPtr + i * dstAlignCols + numLoop * dstOffset,
+                    src0Ptr + i * srcAlignCols + numLoop * srcOffset,
+                    src1Ptr + i * srcAlignCols + numLoop * srcOffset,
+                    mode, 
+                    numRemainPerLine,
+                    1,
+                    1,
+                    8,
+                    8
+                );
+            }
+        }
     }
 
     template <typename TileDataDst, typename TileDataSrc>
@@ -114,16 +128,12 @@ constexpr const uint64_t BITS_IN_BYTE = 8;
         
         PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
         PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataSrc::DType);
+
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataSrc::DType);
         unsigned numRepeatPerLine = CeilDivision(src0.GetValidCol(), elementsPerRepeat);
-        unsigned numRemainPerLine = src0.GetValidCol() % elementsPerRepeat;
-        constexpr unsigned SS = REPEAT_BYTE / sizeof(typename TileDataSrc::DType);
         unsigned validRow = src0.GetValidRow();
         using T = typename TileDataSrc::DType;
-        constexpr uint64_t DS = BITS_IN_BYTE * (sizeof(float)/sizeof(T));
-        TCmp<TileDataDst, TileDataSrc, T, SS, DS>(dst.data(), src0.data(), src1.data(), cmpMode, numRepeatPerLine, numRemainPerLine,
-                                                validRow, elementsPerRepeat, blockSizeElem);
+        TCmp<TileDataDst, TileDataSrc, T>(dst.data(), src0.data(), src1.data(), cmpMode, numRepeatPerLine, validRow, elementsPerRepeat);
     }
 }
 #endif
