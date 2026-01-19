@@ -12,8 +12,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/pto-inst.hpp>
 
 #include "fa_performance_kernel.h"
+#include <pto/npu/kernels/Pto_prefetch.hpp>
 #if defined(__DAV_C220_CUBE__) || defined(__DAV_C220_VEC__)
-#include <pto/npu/a2a3/kernels/Pto_prefetch.hpp>
 #include <pto/npu/a2a3/custom/TSyncCVID.hpp>
 #include <pto/npu/a2a3/custom/TSync_Custom.hpp>
 #elif defined(__DAV_C310_CUBE__) || defined(__DAV_C310_VEC__)

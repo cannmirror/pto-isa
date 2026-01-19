@@ -148,6 +148,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TColExpandSub.hpp"
 #include "pto/npu/a5/TColExpandExpdif.hpp"
 #include "pto/npu/a5/TTri.hpp"
+#include "pto/npu/a5/TPrefetch.hpp"
 #endif
 
 #ifdef __CPU_SIM
