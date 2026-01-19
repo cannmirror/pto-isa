@@ -14,12 +14,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/pto_tile.hpp>
 
 namespace pto {
-using namespace std;
 template <typename T, typename AddrType>
 PTO_INTERNAL void TASSIGN_IMPL(T &obj, AddrType addr) {
   if constexpr (is_tile_data_v<T> || is_conv_tile_v<T>) {
 #ifndef __PTO_AUTO__
-    static_assert(is_integral_v<AddrType>,
+    static_assert(std::is_integral_v<AddrType>,
                   "Tile can only be assigned with address of int type.");
     obj.assignData(reinterpret_cast<typename T::TileDType>(
         static_cast<std::uintptr_t>(addr)));
@@ -30,10 +29,10 @@ PTO_INTERNAL void TASSIGN_IMPL(T &obj, AddrType addr) {
     static_assert(is_global_data_v<T>,
                   "Only Tile and GlobalTensor data types are supported.");
     static_assert(
-        is_pointer_v<AddrType>,
+        std::is_pointer_v<AddrType>,
         "GlobalTensor can only be assigned with address of pointer type.");
     static_assert(
-        is_same_v<remove_cv_t<remove_pointer_t<AddrType>>, typename T::DType>,
+        std::is_same_v<std::remove_cv_t<std::remove_pointer_t<AddrType>>, typename T::DType>,
         "GlobalTensor can only be assigned with pointer of same data type.");
     obj.SetAddr(addr);
   }

@@ -16,9 +16,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/npu/a5/common.hpp>
 #include <pto/npu/a5/utils.hpp>
 
-using namespace pto;
-using namespace std;
-
 namespace pto {
 template <typename Op, typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
 PTO_INTERNAL void TBinOps_1D_NoPostUpdate(

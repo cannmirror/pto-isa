@@ -19,9 +19,6 @@ full text of the License.
 #include <type_traits>
 
 namespace pto {
-
-using namespace std;
-
 template <typename T> struct ROWSUM {
   static constexpr T InitVal = 0;
   using RegType = typename TypeGet<T>::T;
@@ -62,10 +59,10 @@ template <typename TileDataOut, typename TileDataIn>
 PTO_INTERNAL void TRowReduceCheck(uint32_t srcValidRows, uint32_t srcValidCols,
                                   uint32_t dstValidRow) {
   using T = typename TileDataIn::DType;
-  static_assert(is_same_v<T, half> || is_same_v<T, float>,
+  static_assert(std::is_same_v<T, half> || std::is_same_v<T, float>,
                 "Row reduction only supports 'half' or 'float' data types. "
                 "Fix: Define TileDataIn with DType = half or float.");
-  static_assert(is_same_v<T, typename TileDataOut::DType>,
+  static_assert(std::is_same_v<T, typename TileDataOut::DType>,
                 "Input and output tile data types must match. "
                 "Fix: Ensure TileDataOut uses the same DType as TileDataIn.");
   static_assert(

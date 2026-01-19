@@ -18,7 +18,6 @@ full text of the License.
 
 namespace pto {
 
-using namespace std;
 
 template <typename T> PTO_INTERNAL constexpr const __gm__ char *GetDTypeName() {
   return "unknown";

@@ -11,16 +11,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef TCOLEXPANDSUB_HPP
 #define TCOLEXPANDSUB_HPP
 
-
 #include <pto/common/constants.hpp>
 #include <pto/common/utils.hpp>
 #include "common.hpp"
 #include "utils.hpp"
 #include "TColExpandBinOp.hpp"
-
-using namespace pto;
-using namespace std;
-
 
 namespace pto {
     

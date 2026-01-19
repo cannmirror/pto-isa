@@ -17,9 +17,6 @@ full text of the License.
 #include <type_traits>
 
 namespace pto {
-
-using namespace std;
-
 template <typename TileDataOut, typename TileDataIn>
 PTO_INTERNAL void TRESHAPE_IMPL(TileDataOut &dst, TileDataIn &src) {
   static_assert(is_tile_data_v<TileDataIn>, "input must be a Tile instance.");
@@ -42,9 +39,9 @@ PTO_INTERNAL void TRESHAPE_IMPL(TileDataOut &dst, TileDataIn &src) {
                 "TRESHAPE: Total byte size must match.");
   // 3. Element types must be compatible.
   static_assert(
-      is_same_v<remove_const_t<ElemType>, remove_const_t<NewElemType>> ||
-          (is_floating_point_v<ElemType> && is_floating_point_v<NewElemType>) ||
-          (is_integral_v<ElemType> && is_integral_v<NewElemType>),
+      std::is_same_v<std::remove_const_t<ElemType>, std::remove_const_t<NewElemType>> ||
+          (std::is_floating_point_v<ElemType> && std::is_floating_point_v<NewElemType>) ||
+          (std::is_integral_v<ElemType> && std::is_integral_v<NewElemType>),
       "TRESHAPE: Element types must be compatible.");
   // 4. reshape between non-boxed and boxed tile is not allowed.
   static_assert(
@@ -53,8 +50,8 @@ PTO_INTERNAL void TRESHAPE_IMPL(TileDataOut &dst, TileDataIn &src) {
       "TRESHAPE: Cannot reshape between boxed and non-boxed layouts.");
 
   constexpr size_t N = sizeof(ElemType) * ElemNum;
-  const byte *src_bytes = reinterpret_cast<const byte *>(src.data());
-  byte *dst_bytes = reinterpret_cast<byte *>(dst.data());
+  const std::byte *src_bytes = reinterpret_cast<const std::byte *>(src.data());
+  std::byte *dst_bytes = reinterpret_cast<std::byte *>(dst.data());
 
   for (size_t i = 0; i < N; ++i) {
     dst_bytes[i] = src_bytes[i];

@@ -18,7 +18,6 @@ full text of the License.
 
 namespace pto {
 
-using namespace std;
 
 template <typename TileDataOut, typename TileDataIn>
 PTO_INTERNAL void TRESHAPE_IMPL(TileDataOut &dst, TileDataIn &src) {

@@ -15,6 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "acl/acl.h"
 
 using namespace pto;
+using namespace std;
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, MaskPattern maskPattern>
 __global__ AICORE void runTGATHER(__gm__ T __out__ *out, __gm__ T __in__ *src)
 {
