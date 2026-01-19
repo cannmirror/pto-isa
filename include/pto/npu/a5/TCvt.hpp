@@ -8,6 +8,48 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+/**
+ * @file TCvt.hpp
+ * @brief Type Conversion (TCVT) Implementation for NPU A5 Architecture
+ * 
+ * FILE ORGANIZATION (for easy navigation):
+ * =======================================
+ * 
+ * 1. CastMode enum and helper macros (lines ~77-100)
+ * 
+ * 2. 1D Helper Templates (lines ~103-466)
+ *    - Optimized for contiguous data without padding
+ *    - castS64to32_1D_NoPostUpdate, cast32to16_1D_NoPostUpdate, cast32to32_1D_NoPostUpdate, cast32toS64_1D_NoPostUpdate
+ *    - cast16to16_1D_NoPostUpdate, cast16to32_1D_NoPostUpdate, cast16to8_1D_NoPostUpdate
+ *    - cast8to16_1D_NoPostUpdate, cast8to32_1D_NoPostUpdate, cast32to8_1D_NoPostUpdate, cast32toH8_1D_NoPostUpdate, cast16toH8_1D_NoPostUpdate
+ * 
+ * 3. 2D Helper Templates (lines ~467-855)
+ *    - For data with row/column layout and potential padding
+ *    - Same function set as 1D but with row iteration
+ * 
+ * 4. castData Overloads - 2D versions (lines ~856-1503)
+ *    Organized by SOURCE type for easy lookup:
+ *    - FP32 (float)        → fp16, bf16, int16, int32, int64, fp8 variants
+ *    - FP16 (half)         → fp32, int32, int16, int8, uint8, h8 (hifloat8 only)
+ *    - BFloat16            → fp32, int32, half
+ *    - U8, I8 (8-bit int)  → half, uint16, int16, int32
+ *    - I16 (16-bit int)    → uint8, half, float, uint32, int32
+ *    - I32 (32-bit int)    → float, int16, uint16, int64, uint8
+ *    - U32 (32-bit uint)   → uint8, uint16, int16
+ *    - I64 (64-bit int)    → float, int32
+ *    - FP8 variants        → float
+ * 
+ * 5. castData_1D_NoPostUpdate Overloads (lines ~1504-1710)
+ *    - Same organization as 2D versions, optimized for contiguous data
+ * 
+ * 6. Main TCVT Implementation (lines ~1711-end)
+ *    - implTCVT: Main template function
+ *    - TCVT_IMPL: Rounding mode dispatcher
+ * 
+ * QUICK FIND: To find a specific conversion, search for the source type section header,
+ * e.g., "Source: FP32" or "Source: I16", then look for the destination type.
+ */
+
 #ifndef TCVT_HPP
 #define TCVT_HPP
 
@@ -57,7 +99,15 @@ enum class CastMode {
 
 #define END_FOR_ROWS }
 
-//--- 1D templates (for contiguous data) --------------------------------------------------------
+//=============================================================================================
+// 1D Helper Templates - For contiguous data (optimized fast path)
+//=============================================================================================
+// These templates handle conversions when data is laid out contiguously in memory without
+// padding. They process data in a single pass without row/column iteration overhead.
+//
+// PERFORMANCE NOTE: 1D versions are significantly faster than 2D versions when applicable,
+// as they avoid the FOR_ROWS/FOR_ELEMENTS loop overhead and process data in bulk.
+
 /**
  * Cast 64-bit integer to 32-bit (signed/float) - 1D version
  * Handles: s64 -> s32 #sat #part, s64 -> f32 #rnd #part
@@ -117,6 +167,7 @@ inline AICORE void cast32to16_1D_NoPostUpdate(__ubuf__ DST *dst, __ubuf__ SRC *s
 
 /**
  * Cast between 32-bit types - 1D version
+ * Handles: f32 -> s32 #rnd #sat, s32 -> f32 #rnd, f32 -> f32 #rnd (same-type rounding)
  */
 template <typename R, CastMode MODE, typename DST, typename SRC>
 inline AICORE void cast32to32_1D_NoPostUpdate(__ubuf__ DST *dst, __ubuf__ SRC *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -317,6 +368,11 @@ inline AICORE void cast8to32_1D_NoPostUpdate(__ubuf__ DST *dst, __ubuf__ SRC *sr
 
 /**
  * Cast 32-bit to 8-bit types - 1D version
+ * 
+ * IMPLEMENTATION NOTE: Uses vselr with index vector to extract bytes from 32-bit words.
+ * The conversion happens in two steps:
+ *   1. vcvt: Convert 32-bit source to target type (PART_P0 extracts low byte)
+ *   2. vselr: Gather bytes using index vector for proper byte packing
  */
 template <typename R, CastMode MODE, typename DST_VEC, typename DST, typename SRC>
 inline AICORE void cast32to8_1D_NoPostUpdate(__ubuf__ DST *dst, __ubuf__ SRC *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -332,9 +388,9 @@ inline AICORE void cast32to8_1D_NoPostUpdate(__ubuf__ DST *dst, __ubuf__ SRC *sr
     for (uint16_t i = 0; i < repeatTimes; ++i) {
         RegTensor<SRC> v_input;
         DST_VEC v_output_p0, v_output;
-        uint32_t preg_len = (sReg > ELE_CNT_B32) ? ELE_CNT_B32 : sReg;
-        MaskReg preg_b32 = CreatePredicate<float>(preg_len);
-        MaskReg preg_b8 = CreatePredicate<uint8_t>(preg_len);
+        uint32_t cur_len = sReg;
+        MaskReg preg_b32 = CreatePredicate<float>(sReg);
+        MaskReg preg_b8 = CreatePredicate<uint8_t>(cur_len);
 
         vlds(v_input, src, i * ELE_CNT_B32, NORM);
         
@@ -346,21 +402,22 @@ inline AICORE void cast32to8_1D_NoPostUpdate(__ubuf__ DST *dst, __ubuf__ SRC *sr
         
         vselr((RegTensor<uint8_t> &)v_output, (RegTensor<uint8_t> &)v_output_p0, (RegTensor<uint8_t> &)v_idx);
         vsts((RegTensor<uint8_t> &)v_output, (__ubuf__ uint8_t *)dst, i * ELE_CNT_B32, NORM_B8, preg_b8);
-        sReg -= ELE_CNT_B32;
+        // sReg is decremented by the first CreatePredicate with POST_UPDATE
     }
 }
 
 /**
  * Cast 32-bit to hifloat8 - 1D version
- * Special version for H8 that uses ROUND_A instead of ROUND_R
+ * 
+ * SPECIAL HANDLING: H8 (hifloat8) requires ROUND_A (round away from zero) instead of
+ * ROUND_R (round to nearest even) for correct IEEE-like behavior with 8-bit precision.
+ * This is a hardware requirement specific to the hifloat8 format.
  */
 template <typename R>
 inline AICORE void cast32toH8_1D_NoPostUpdate(__ubuf__ hifloat8_t *dst, __ubuf__ float *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     uint32_t totalElements = validRows * validCols;
     uint16_t repeatTimes = CeilDivision(totalElements, ELE_CNT_B32);
     uint32_t sReg = totalElements;
-    uint32_t len32 = ELE_CNT_B32;
-    MaskReg preg_b32 = CreatePredicate<float>(len32);
     MaskReg preg_idx = pset_b8(PAT_ALL);
     
     vector_hif8 v_idx;
@@ -370,7 +427,9 @@ inline AICORE void cast32toH8_1D_NoPostUpdate(__ubuf__ hifloat8_t *dst, __ubuf__
     for (uint16_t i = 0; i < repeatTimes; ++i) {
         vector_f32 v_input;
         vector_hif8 v_output_p0, v_output;
-        MaskReg preg_b8 = CreatePredicate<uint8_t>(sReg);
+        uint32_t cur_len = sReg;
+        MaskReg preg_b32 = CreatePredicate<float>(sReg);
+        MaskReg preg_b8 = CreatePredicate<uint8_t>(cur_len);
 
         vlds(v_input, src, i * ELE_CNT_B32, NORM);
         vcvt(v_output_p0, v_input, preg_b32, ROUND_A, RS_ENABLE, PART_P0);
@@ -404,9 +463,12 @@ inline AICORE void cast16toH8_1D_NoPostUpdate(__ubuf__ hifloat8_t *dst, __ubuf__
     }
 }
 
-//--- Common templates --------------------------------------------------------
+//=============================================================================================
+// 2D Helper Templates - For non-contiguous data with padding
+//=============================================================================================
+
 /**
- * Cast 64-bit integer to 32-bit (signed/float)
+ * Cast 64-bit integer to 32-bit (signed/float) - 2D version
  * Handles: s64 -> s32 #sat #part, s64 -> f32 #rnd #part
  * Intrinsics:
  *   vcvt(output, input, preg, RS_ENABLE, PART_EVEN)  // s64 -> s32 with saturation
@@ -709,7 +771,7 @@ inline AICORE void cast8to16(__ubuf__ DST *dst, __ubuf__ SRC *src, uint32_t vali
 
 /**
  * Cast 8-bit to 32-bit types (FP8 to FP32 type expansion)
- * Handles: e4m3/e5m2/h8 -> f32 #pp
+ * Handles: e4m3/e5m2/h8 -> f32 #part
  * Intrinsic: vcvt(output, input, preg, PART_*)
  */
 template <typename SRC_VEC, typename DST, typename SRC>
@@ -717,31 +779,29 @@ inline AICORE void cast8to32(__ubuf__ DST *dst, __ubuf__ SRC *src, uint32_t vali
    
     uint32_t len8 = ELE_CNT_B8;
     MaskReg preg_b8 = CreatePredicate<uint8_t>(len8);
-    uint32_t len16 = ELE_CNT_B16;
-    MaskReg preg_b16 = CreatePredicate<half>(len16);
     MaskReg pg = pset_b8(PAT_ALL);
     SRC_VEC v_zero;
     vdup((RegTensor<uint8_t> &) v_zero, 0, pg, MODE_ZEROING);  
 
     FOR_ROWS
-        uint32_t next_len = (sreg > ELE_CNT_B32) ? sreg - ELE_CNT_B32 : 0;
-
+        int32_t rowDstOffset = row * dstCols;
         FOR_ELEMENTS(ELE_CNT_B16)
             SRC_VEC v_input_0, v_input_1, v_input_2;
             RegTensor<DST> v_output_0, v_output_1;
-            MaskReg preg_b16 = CreatePredicate<half>(sreg);
+            uint32_t next_len = (sreg > ELE_CNT_B32) ? sreg - ELE_CNT_B32 : 0;
+            MaskReg preg_b16_cur = CreatePredicate<half>(sreg);
             MaskReg preg_b16_next = CreatePredicate<half>(next_len);
             MaskReg preg_b32;
             MaskReg preg_b32_next;
-            punpack(preg_b32, preg_b16, LOWER);
+            punpack(preg_b32, preg_b16_cur, LOWER);
             punpack(preg_b32_next, preg_b16_next, LOWER);
 
             vlds((RegTensor<uint8_t> &) v_input_0, (__ubuf__ uint8_t *) src, srcOffset, UNPK_B8);
             vintlv((RegTensor<uint8_t> &) v_input_1, (RegTensor<uint8_t> &) v_input_2, (RegTensor<uint8_t> &) v_input_0, (RegTensor<uint8_t> &) v_zero); // interleave with zero
             vcvt(v_output_0, v_input_1, preg_b8, PART_P0);
             vcvt(v_output_1, v_input_2, preg_b8, PART_P0);
-            vsts(v_output_0, dst, dstOffset + ELE_CNT_B32 * (idx * 2), NORM_B32, preg_b32);
-            vsts(v_output_1, dst, dstOffset + ELE_CNT_B32 * (idx * 2 + 1), NORM_B32, preg_b32_next);
+            vsts(v_output_0, dst, rowDstOffset + ELE_CNT_B32 * (idx * 2), NORM_B32, preg_b32);
+            vsts(v_output_1, dst, rowDstOffset + ELE_CNT_B32 * (idx * 2 + 1), NORM_B32, preg_b32_next);
         END_FOR_ELEMENTS
     END_FOR_ROWS
 }
@@ -749,8 +809,8 @@ inline AICORE void cast8to32(__ubuf__ DST *dst, __ubuf__ SRC *src, uint32_t vali
 /**
  * Cast 32-bit to 8-bit types (both floating point and integer)
  * Handles: 
- *   - f32 -> e4m3/e5m2/h8 #rnd #sat #pp (ROUND_SAT_PART mode)
- *   - u32/s32 -> u8/s8 #sat #pp (SAT_PART mode)
+ *   - f32 -> e4m3/e5m2/h8 #rnd #sat #part (ROUND_SAT_PART mode)
+ *   - u32/s32 -> u8/s8 #sat #part (SAT_PART mode)
  * Intrinsics:
  *   vcvt(..., R(), RS_ENABLE, PART_P0) for floating point with rounding
  *   vcvt(..., RS_ENABLE, PART_P0) for integer without rounding
@@ -792,11 +852,26 @@ inline AICORE void cast32to8(__ubuf__ DST *dst, __ubuf__ SRC *src, uint32_t vali
     END_FOR_ROWS
 }
 
+//=============================================================================================
+// castData Overloads (2D - with row/column iteration for non-contiguous data)
+//=============================================================================================
+// These are the main conversion functions organized by source type for easy navigation.
+// Each source type section contains conversions to all supported destination types.
+// 
+// ORGANIZATION: Grouped by source type in ascending bit-width order (8→16→32→64-bit)
+// WHY: This ordering provides quick lookup - if you know the source type, you can
+// jump directly to its section and find all target conversions in one place.
 
-//--- Src:: FP32 ----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+// Source: FP32 (float) - 2D versions
+//---------------------------------------------------------------------------------------------
+
 /**
  * FP32 to FP32 - Applies rounding mode without type conversion
  * Intrinsic: vtrc(output, input, R(), preg)
+ * 
+ * NOTE: Same-type conversions like FP32→FP32 are useful for applying rounding modes
+ * to existing data without changing the underlying type (e.g., rounding to nearest even).
  */
 template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ float *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -934,7 +1009,7 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ float8_e5m2_t *dst, __ubuf_
 
 /**
  * FP32 to H8
- * Conversion: f32 -> h8 #rnd #sat #pp
+ * Conversion: f32 -> h8 #rnd #sat #part
  * Note: H8 conversion requires ROUND_A mode
  */
 template <typename R>
@@ -974,7 +1049,10 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ hifloat8_t *dst, __ubuf__ f
     castData<R>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-//--- Src:: FP16 ----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+// Source: FP16 (half) - 2D versions
+//---------------------------------------------------------------------------------------------
+
 /** FP16 -> FP32 #part (type expansion) → vcvt(output, input, preg, PART_EVEN) */
 template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -1030,27 +1108,6 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ uint8_t *dst, __ubuf__ half
     cast16to8_2D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-/** FP16 -> FP8_E5M2 #rnd #sat #part */
-template <typename R>
-inline AICORE void castData(__ubuf__ float8_e5m2_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8<R, CastMode::ROUND_SAT_PART, vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_2D_NoPostUpdate(__ubuf__ float8_e5m2_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_2D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-/** FP16 -> FP8_E4M3 #rnd #sat #part */
-template <typename R>
-inline AICORE void castData(__ubuf__ float8_e4m3_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8<R, CastMode::ROUND_SAT_PART, vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_2D_NoPostUpdate(__ubuf__ float8_e4m3_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_2D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
-}
 
 /** FP16 -> H8 #rnd #sat #part */
 template <typename R>
@@ -1082,7 +1139,10 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ hifloat8_t *dst, __ubuf__ h
     castData<R>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-//--- Src:: BF16 ----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+// Source: BFloat16 - 2D versions
+//---------------------------------------------------------------------------------------------
+
 /** BF16 -> FP32 #part (type expansion) → vcvt(output, input, preg, PART_EVEN) */
 template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -1116,29 +1176,11 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ bfloat1
     cast16to16<R, CastMode::SAT_ROUND>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-/** BF16 -> FP8_E5M2 #rnd #sat #part → vcvt(..., R(), RS_ENABLE, PART_*) */
-template <typename R>
-inline AICORE void castData(__ubuf__ float8_e5m2_t *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8<R, CastMode::ROUND_SAT_PART, vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
-}
 
-template <typename R>
-inline AICORE void castData_2D_NoPostUpdate(__ubuf__ float8_e5m2_t *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8<R, CastMode::ROUND_SAT_PART, vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
-}
+//---------------------------------------------------------------------------------------------
+// Source: U8, I8 (8-bit integers) - 2D versions
+//---------------------------------------------------------------------------------------------
 
-/** BF16 -> FP8_E4M3 #rnd #sat #part → vcvt(..., R(), RS_ENABLE, PART_*) */
-template <typename R>
-inline AICORE void castData(__ubuf__ float8_e4m3_t *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8<R, CastMode::ROUND_SAT_PART, vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_2D_NoPostUpdate(__ubuf__ float8_e4m3_t *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8<R, CastMode::ROUND_SAT_PART, vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-//--- Src:: U8,I8 ----------------------------------------------------------------------
 /** U8 -> FP16 #part (type expansion) */
 template <typename R>
 inline AICORE void castData(__ubuf__ half *dst, __ubuf__ uint8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -1183,7 +1225,7 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ int16_t *dst, __ubuf__ int8
     cast8to16<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-/** I8 -> I32 #pp (type expansion) */
+/** I8 -> I32 #part (type expansion) */
 template <typename R>
 inline AICORE void castData(__ubuf__ int32_t *dst, __ubuf__ int8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast8to32<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1194,7 +1236,10 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ int8
     cast8to32<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-//--- Src:: I16 ----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+// Source: I16 (signed 16-bit integer) - 2D versions
+//---------------------------------------------------------------------------------------------
+
 /** I16 -> U8 #sat #part */
 template <typename R>
 inline AICORE void castData(__ubuf__ uint8_t *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -1250,7 +1295,10 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ int1
     cast16to32<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-//--- Src:: I32 ----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+// Source: I32 (signed 32-bit integer) - 2D versions
+//---------------------------------------------------------------------------------------------
+
 /** I32 -> FP32 #rnd → vcvt(output, input, preg, R()) */
 template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ int32_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -1295,7 +1343,7 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ int64_t *dst, __ubuf__ int3
     cast32toS64<void>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-/** I32 -> U8 #sat #pp */
+/** I32 -> U8 #sat #part */
 template <typename R>
 inline AICORE void castData(__ubuf__ uint8_t *dst, __ubuf__ int32_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast32to8<void, CastMode::SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1306,8 +1354,11 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ uint8_t *dst, __ubuf__ int3
     cast32to8<void, CastMode::SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-//--- Src:: U32 ----------------------------------------------------------------------
-/** U32 -> U8 #sat #pp */
+//---------------------------------------------------------------------------------------------
+// Source: U32 (unsigned 32-bit integer) - 2D versions
+//---------------------------------------------------------------------------------------------
+
+/** U32 -> U8 #sat #part */
 template <typename R>
 inline AICORE void castData(__ubuf__ uint8_t *dst, __ubuf__ uint32_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast32to8<void, CastMode::SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1340,7 +1391,10 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ int16_t *dst, __ubuf__ uint
     cast32to16_2D_NoPostUpdate<void>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-//--- Src:: I64 ----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+// Source: I64 (signed 64-bit integer) - 2D versions
+//---------------------------------------------------------------------------------------------
+
 /** I64 -> FP32 #rnd #part → vcvt(output, input, preg, R(), PART_EVEN) */
 template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ int64_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
@@ -1363,8 +1417,15 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ int6
     castS64to32<void>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-//--- Src:: FP8 ----------------------------------------------------------------------
-/** E4M3 -> FP32 #pp (type expansion) → vcvt(output, input, preg, PART_EVEN/ODD) */
+//---------------------------------------------------------------------------------------------
+// Source: FP8 variants (float8_e4m3_t, float8_e5m2_t, hifloat8_t) - 2D versions
+//---------------------------------------------------------------------------------------------
+// FP8 formats are specialized 8-bit floating-point types with different exponent/mantissa splits:
+//   - E4M3: 4 exponent bits, 3 mantissa bits (higher precision, smaller range)
+//   - E5M2: 5 exponent bits, 2 mantissa bits (lower precision, larger range)
+//   - HIF8: Hardware-specific 8-bit float format
+
+/** E4M3 -> FP32 #part (type expansion) → vcvt(output, input, preg, PART_P0) */
 template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ float8_e4m3_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast8to32<vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1375,7 +1436,7 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ float8
     cast8to32<vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-/** E5M2 -> FP32 #pp (type expansion) → vcvt(output, input, preg, PART_EVEN/ODD) */
+/** E5M2 -> FP32 #part (type expansion) → vcvt(output, input, preg, PART_P0) */
 template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ float8_e5m2_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast8to32<vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1386,7 +1447,7 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ float8
     cast8to32<vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-/** H8 -> FP32 #pp (type expansion) → vcvt(output, input, preg, PART_EVEN/ODD) */
+/** H8 -> FP32 #part (type expansion) → vcvt(output, input, preg, PART_P0) */
 template <typename R>
 inline AICORE void castData(__ubuf__ float *dst, __ubuf__ hifloat8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast8to32<vector_hif8>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1397,9 +1458,152 @@ inline AICORE void castData_2D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ hifloa
     cast8to32<vector_hif8>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-//--- 1D wrapper functions (for contiguous data) --------------------------------------------------------
+//=============================================================================================
+// castData_1D_NoPostUpdate Overloads - Organized by Source Type (8→16→32→64-bit sources)
+//=============================================================================================
+// Optimized 1D versions for contiguous data without padding
+// Each section contains conversions FROM a specific source type TO all supported destination types
 
-// FP32 conversions
+//---------------------------------------------------------------------------------------------
+// Source: 8-bit types (uint8_t, int8_t, float8_e4m3_t, float8_e5m2_t, hifloat8_t) - 1D versions
+//---------------------------------------------------------------------------------------------
+
+// Source: U8 (unsigned 8-bit integer)
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ uint8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast8to16_1D_NoPostUpdate<vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint16_t *dst, __ubuf__ uint8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast8to16_1D_NoPostUpdate<vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+// Source: I8 (signed 8-bit integer)
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ int8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast8to16_1D_NoPostUpdate<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int16_t *dst, __ubuf__ int8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast8to16_1D_NoPostUpdate<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ int8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast8to32_1D_NoPostUpdate<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+// Source: FP8_E4M3
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ float8_e4m3_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast8to32_1D_NoPostUpdate<vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+// Source: FP8_E5M2
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ float8_e5m2_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast8to32_1D_NoPostUpdate<vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+// Source: Hifloat8
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ hifloat8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast8to32_1D_NoPostUpdate<vector_hif8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+//---------------------------------------------------------------------------------------------
+// Source: 16-bit types (half/fp16, bfloat16, int16_t) - 1D versions
+//---------------------------------------------------------------------------------------------
+// 16-bit conversions are commonly used for mixed-precision training and inference:
+//   - FP16 (half): Standard IEEE 754 half-precision (1 sign, 5 exp, 10 mantissa)
+//   - BF16 (bfloat16): Brain Float16 (1 sign, 8 exp, 7 mantissa) - FP32-compatible exponent
+//   - I16: Signed 16-bit integer
+
+// Source: FP16 (half)
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to32_1D_NoPostUpdate<R, CastMode::ROUND_PART>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int16_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to16_1D_NoPostUpdate<R, CastMode::ROUND_SAT>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int8_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to8_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint8_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to8_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+// Note: FP16 -> FP8_E5M2 and FP16 -> FP8_E4M3 conversions are NOT supported
+// Only FP16 -> Hifloat8 (H8) conversion is supported
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ hifloat8_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16toH8_1D_NoPostUpdate<R>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+// Source: BFloat16
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to32_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to16_1D_NoPostUpdate<R, CastMode::SAT_ROUND>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+
+// Source: I16 (signed 16-bit integer)
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint8_t *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to8_1D_NoPostUpdate<void, CastMode::SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to16_1D_NoPostUpdate<R, CastMode::ROUND>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint32_t *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+template <typename R>
+inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
+    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
+}
+
+//---------------------------------------------------------------------------------------------
+// Source: 32-bit types (float, int32_t, uint32_t) - 1D versions
+//---------------------------------------------------------------------------------------------
+// Note: Keep FP32/I32/U32 together for quick lookup of all 32-bit source conversions.
+
+// Source: FP32 (float)
 template <typename R>
 inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ float *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast32to32_1D_NoPostUpdate<R, CastMode::ROUND>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1445,126 +1649,7 @@ inline AICORE void castData_1D_NoPostUpdate(__ubuf__ hifloat8_t *dst, __ubuf__ f
     cast32toH8_1D_NoPostUpdate<R>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-// FP16 conversions
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to32_1D_NoPostUpdate<R, CastMode::ROUND_PART>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int16_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to16_1D_NoPostUpdate<R, CastMode::ROUND_SAT>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int8_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint8_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float8_e5m2_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float8_e4m3_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ hifloat8_t *dst, __ubuf__ half *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16toH8_1D_NoPostUpdate<R>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-// BF16 conversions
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to32_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to16_1D_NoPostUpdate<R, CastMode::SAT_ROUND>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float8_e5m2_t *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float8_e4m3_t *dst, __ubuf__ bfloat16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_1D_NoPostUpdate<R, CastMode::ROUND_SAT_PART, vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-// U8, I8 conversions
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ uint8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast8to16_1D_NoPostUpdate<vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint16_t *dst, __ubuf__ uint8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast8to16_1D_NoPostUpdate<vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ int8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast8to16_1D_NoPostUpdate<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int16_t *dst, __ubuf__ int8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast8to16_1D_NoPostUpdate<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ int8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast8to32_1D_NoPostUpdate<vector_s8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-// I16 conversions
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint8_t *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to8_1D_NoPostUpdate<void, CastMode::SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ half *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to16_1D_NoPostUpdate<R, CastMode::ROUND>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint32_t *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ int16_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast16to32_1D_NoPostUpdate<void, CastMode::EXPAND>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-// I32 conversions
+// Source: I32 (signed 32-bit integer)
 template <typename R>
 inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ int32_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast32to32_1D_NoPostUpdate<R, CastMode::ROUND>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1590,7 +1675,7 @@ inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint8_t *dst, __ubuf__ int3
     cast32to8_1D_NoPostUpdate<void, CastMode::SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-// U32 conversions
+// Source: U32 (unsigned 32-bit integer)
 template <typename R>
 inline AICORE void castData_1D_NoPostUpdate(__ubuf__ uint8_t *dst, __ubuf__ uint32_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     cast32to8_1D_NoPostUpdate<void, CastMode::SAT_PART, vector_u8>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1606,7 +1691,11 @@ inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int16_t *dst, __ubuf__ uint
     cast32to16_1D_NoPostUpdate<void>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-// I64 conversions
+//---------------------------------------------------------------------------------------------
+// Source: 64-bit types (int64_t)
+//---------------------------------------------------------------------------------------------
+
+// Source: I64 (signed 64-bit integer)
 template <typename R>
 inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ int64_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
     castS64to32_1D_NoPostUpdate<R>(dst, src, validRows, validCols, dstCols, srcCols);
@@ -1617,21 +1706,9 @@ inline AICORE void castData_1D_NoPostUpdate(__ubuf__ int32_t *dst, __ubuf__ int6
     castS64to32_1D_NoPostUpdate<void>(dst, src, validRows, validCols, dstCols, srcCols);
 }
 
-// FP8 conversions
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ float8_e4m3_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast8to32_1D_NoPostUpdate<vector_f8e4m3>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ float8_e5m2_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast8to32_1D_NoPostUpdate<vector_f8e5m2>(dst, src, validRows, validCols, dstCols, srcCols);
-}
-
-template <typename R>
-inline AICORE void castData_1D_NoPostUpdate(__ubuf__ float *dst, __ubuf__ hifloat8_t *src, uint32_t validRows, uint32_t validCols, uint32_t dstCols, uint32_t srcCols) {
-    cast8to32_1D_NoPostUpdate<vector_hif8>(dst, src, validRows, validCols, dstCols, srcCols);
-}
+//=============================================================================================
+// Main TCVT Implementation
+//=============================================================================================
 
 /**
  * Main TCVT implementation function
@@ -1649,8 +1726,12 @@ void implTCVT(typename TileDataD::TileDType __out__ dst,
     __ubuf__ T1 *dstPtr = (__ubuf__ T1 *)__cce_get_tile_ptr(dst);
     __ubuf__ T2 *srcPtr = (__ubuf__ T2 *)__cce_get_tile_ptr(src);
     __VEC_SCOPE__ {
+        // Compile-time check: Use 1D optimization if:
+        // 1. ValidCol == Cols (no column padding) for both src and dst, OR
+        // 2. Both tiles have Rows == 1 (single row case)
         if constexpr (((TileDataD::ValidCol == TileDataD::Cols) && (TileDataS::ValidCol == TileDataS::Cols)) ||
             ((TileDataD::Rows == 1) && (TileDataS::Rows == 1))) {
+            // Use 1D path: faster bulk processing without row iteration overhead
             switch (version) {
                 case VFImplKind::VFIMPL_DEFAULT:
                 case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
@@ -1663,6 +1744,10 @@ void implTCVT(typename TileDataD::TileDType __out__ dst,
             }
 
         } else {
+            // Use 2D path: handles strided/padded data with row-by-row iteration
+            // version parameter controls predicate update strategy:
+            // VFIMPL_2D_NO_POST_UPDATE: manual predicate handling
+            // default: auto predicate update
             switch (version) {
                 case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
                     castData_2D_NoPostUpdate<R>(dstPtr, srcPtr, validRows, validCols, TileDataD::Cols, TileDataS::Cols);

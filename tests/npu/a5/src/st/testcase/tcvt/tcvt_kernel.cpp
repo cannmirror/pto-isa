@@ -106,72 +106,71 @@ void launchTCVT(D *dst, S *src, void *stream) {
 
 // Macro to generate template instantiations for all shapes for a given type pair
 #define INSTANTIATE_TCVT(dst_type, src_type) \
+    template void launchTCVT<dst_type, src_type, 1, 128, 1, 128>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 2, 64, 2, 64>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 4, 32, 4, 32>(dst_type *dst, src_type *src, void *stream); \
     template void launchTCVT<dst_type, src_type, 2, 128, 2, 128>(dst_type *dst, src_type *src, void *stream); \
-    template void launchTCVT<dst_type, src_type, 2, 32, 2, 32>(dst_type *dst, src_type *src, void *stream); \
-    template void launchTCVT<dst_type, src_type, 3, 64, 3, 64>(dst_type *dst, src_type *src, void *stream); \
-    template void launchTCVT<dst_type, src_type, 2, 256, 2, 256, 2, 129>(dst_type *dst, src_type *src, void *stream);
+    template void launchTCVT<dst_type, src_type, 4, 128, 4, 128, 4, 65>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 4, 256, 4, 256, 4, 200>(dst_type *dst, src_type *src, void *stream); \
+    template void launchTCVT<dst_type, src_type, 1, 256, 1, 256, 1, 129>(dst_type *dst, src_type *src, void *stream);
 
-// FP32 Source
-INSTANTIATE_TCVT(float, float)
+// FP32 Source → fp16, bf16, int16, int32, int64, fp8 variants
 INSTANTIATE_TCVT(aclFloat16, float)
 INSTANTIATE_TCVT(bfloat16_t, float)
-INSTANTIATE_TCVT(int32_t, float)
 INSTANTIATE_TCVT(int16_t, float)
+INSTANTIATE_TCVT(int32_t, float)
 INSTANTIATE_TCVT(int64_t, float)
 INSTANTIATE_TCVT(fp8_e4m3_wrapper, float)
 INSTANTIATE_TCVT(fp8_e5m2_wrapper, float)
-// INSTANTIATE_TCVT(hifloat8_wrapper, float)
+INSTANTIATE_TCVT(hifloat8_wrapper, float)
+INSTANTIATE_TCVT(float, float)
 
-// FP16 Source
+// FP16 Source → fp32, int32, int16, int8, uint8, h8
 INSTANTIATE_TCVT(float, aclFloat16)
 INSTANTIATE_TCVT(int32_t, aclFloat16)
 INSTANTIATE_TCVT(int16_t, aclFloat16)
 INSTANTIATE_TCVT(int8_t, aclFloat16)
 INSTANTIATE_TCVT(uint8_t, aclFloat16)
-// INSTANTIATE_TCVT(fp8_e5m2_wrapper, aclFloat16)
-// INSTANTIATE_TCVT(fp8_e4m3_wrapper, aclFloat16)
-// INSTANTIATE_TCVT(hifloat8_wrapper, aclFloat16)
+INSTANTIATE_TCVT(hifloat8_wrapper, aclFloat16)
 
-// BF16 Source
+// BF16 Source → fp32, int32, half
 INSTANTIATE_TCVT(float, bfloat16_t)
 INSTANTIATE_TCVT(int32_t, bfloat16_t)
 // INSTANTIATE_TCVT(aclFloat16, bfloat16_t)
-// INSTANTIATE_TCVT(fp8_e5m2_wrapper, bfloat16_t)
-// INSTANTIATE_TCVT(fp8_e4m3_wrapper, bfloat16_t)
 
-// INT32 Source
+// U8 Source → half, uint16
+INSTANTIATE_TCVT(aclFloat16, uint8_t)
+// INSTANTIATE_TCVT(uint16_t, uint8_t)
+
+// I8 Source → half, int16, int32
+INSTANTIATE_TCVT(aclFloat16, int8_t)
+INSTANTIATE_TCVT(int16_t, int8_t)
+INSTANTIATE_TCVT(int32_t, int8_t)
+
+// I16 Source → uint8, half, float, uint32, int32
+INSTANTIATE_TCVT(uint8_t, int16_t)
+INSTANTIATE_TCVT(aclFloat16, int16_t)
+INSTANTIATE_TCVT(float, int16_t)
+INSTANTIATE_TCVT(uint32_t, int16_t)
+INSTANTIATE_TCVT(int32_t, int16_t)
+
+// I32 Source → float, int16, uint16, int64, uint8
 INSTANTIATE_TCVT(float, int32_t)
 INSTANTIATE_TCVT(int16_t, int32_t)
 // INSTANTIATE_TCVT(uint16_t, int32_t)
 INSTANTIATE_TCVT(int64_t, int32_t)
 INSTANTIATE_TCVT(uint8_t, int32_t)
 
-// UINT32 Source
+// U32 Source → uint8, uint16, int16
 INSTANTIATE_TCVT(uint8_t, uint32_t)
 // INSTANTIATE_TCVT(uint16_t, uint32_t)
 INSTANTIATE_TCVT(int16_t, uint32_t)
 
-// INT16 Source
-INSTANTIATE_TCVT(aclFloat16, int16_t)
-INSTANTIATE_TCVT(float, int16_t)
-INSTANTIATE_TCVT(uint32_t, int16_t)
-INSTANTIATE_TCVT(int32_t, int16_t)
-INSTANTIATE_TCVT(uint8_t, int16_t)
-
-// INT8 Source
-INSTANTIATE_TCVT(aclFloat16, int8_t)
-INSTANTIATE_TCVT(int16_t, int8_t)
-INSTANTIATE_TCVT(int32_t, int8_t)
-
-// UINT8 Source
-INSTANTIATE_TCVT(aclFloat16, uint8_t)
-// INSTANTIATE_TCVT(uint16_t, uint8_t)
-
-// INT64 Source
+// I64 Source → float, int32
 INSTANTIATE_TCVT(float, int64_t)
 INSTANTIATE_TCVT(int32_t, int64_t)
 
-// FP8 Source
+// FP8 Source → float
 INSTANTIATE_TCVT(float, fp8_e4m3_wrapper)
 INSTANTIATE_TCVT(float, fp8_e5m2_wrapper)
-// INSTANTIATE_TCVT(float, hifloat8_wrapper)
+INSTANTIATE_TCVT(float, hifloat8_wrapper)
