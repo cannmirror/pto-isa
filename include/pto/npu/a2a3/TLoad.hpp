@@ -368,7 +368,7 @@ PTO_INTERNAL void CheckTloadData(TileData &dst, GlobalData &src) {
 }
 
 template <typename TileData, typename GlobalData>
-AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src) {
+PTO_INTERNAL void TLOAD_IMPL(TileData &dst, GlobalData &src) {
     CheckTloadData<TileData, GlobalData>(dst, src);
     constexpr bool isSameLayout =
         (GlobalData::layout == pto::Layout::ND && GetTileLayoutCustom<TileData>() == TileLayoutCustom::ND) ||

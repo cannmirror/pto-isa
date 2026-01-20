@@ -271,7 +271,7 @@ namespace pto {
 
   /* TNEG */
   template <typename DstTile, typename SrcTile>
-  AICORE void TNEG_IMPL(DstTile &dst, SrcTile &src) {
+  PTO_INTERNAL void TNEG_IMPL(DstTile &dst, SrcTile &src) {
     TMULS_IMPL(dst, src, -1);
   }
 }

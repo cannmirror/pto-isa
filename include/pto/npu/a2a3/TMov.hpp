@@ -174,7 +174,7 @@ PTO_INTERNAL void TMovToRight(DstTileData &dst, SrcTileData &src)
 }
 
 template <typename DstTileData, typename SrcTileData>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
         "TMov: The shape of src needs to be the same as that of dst.");

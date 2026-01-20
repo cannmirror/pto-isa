@@ -399,7 +399,7 @@ PTO_INTERNAL void CheckTExtract()
 }
 
 template <typename DstTileData, typename SrcTileData>
-AICORE void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
 {
     CheckTExtract<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
     PTO_ASSERT(indexRow + DstTileData::Rows <= SrcTileData::Rows,

@@ -40,7 +40,7 @@ __tf__ PTO_INTERNAL void TExpandS(
 }
 
 template <typename TileDataDst>
-AICORE void TEXPANDS_IMPL(TileDataDst &dst, typename TileDataDst::DType scalar)
+PTO_INTERNAL void TEXPANDS_IMPL(TileDataDst &dst, typename TileDataDst::DType scalar)
 {
     using T = typename TileDataDst::DType;
     static_assert(std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value || std::is_same<T, int>::value ||

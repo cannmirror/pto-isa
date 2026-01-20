@@ -631,7 +631,7 @@ namespace pto {
     // TCVT_IMPL is the main entry point for tile data type conversion.
     // Calculates optimal repeat configuration and delegates to TCvt kernel.
     template <typename TileDataD, typename TileDataS>
-    AICORE void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
+    PTO_INTERNAL void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
     {
         // Determine repeat width as max of source/destination element sizes
         uint64_t repeatWidth = 

@@ -765,7 +765,7 @@ PTO_INTERNAL void StaticCheck() {
 }
 
 template <typename TileData, typename GlobalData>
-AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src) {
+PTO_INTERNAL void TLOAD_IMPL(TileData &dst, GlobalData &src) {
     StaticCheck<TileData, GlobalData>();
     if constexpr (TileData::Loc == pto::TileType::Vec) {
         TLoad<TileData, GlobalData>(dst.data(), src.data(), src.GetShape(pto::GlobalTensorDim::DIM_0),

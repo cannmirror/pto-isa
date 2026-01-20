@@ -122,8 +122,7 @@ void TPartAdd(typename TileDataDst::TileDType __out__ dst,
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-PTO_INTERNAL
-void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
+PTO_INTERNAL void TPARTADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
 {
     static_assert(std::is_same<typename TileDataDst::DType, typename TileDataSrc0::DType>::value &&
                   std::is_same<typename TileDataDst::DType, typename TileDataSrc1::DType>::value,

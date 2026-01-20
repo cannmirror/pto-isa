@@ -412,7 +412,7 @@ AICORE void TMovToRight(DstTileData &dst, SrcTileData &src)
 }
 
 template <typename DstTileData, typename SrcTileData>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     if constexpr (SrcTileData::Loc == TileType::Mat) {
         static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
@@ -462,7 +462,7 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 }
 
 template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
     uint16_t m = src.GetValidRow();
@@ -477,7 +477,7 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 }
 
 template <typename DstTileData, typename SrcTileData, AccToVecMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 {
     CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
     static_assert((DstTileData::Loc == TileType::Vec), "Destination location only support Vec.");
@@ -488,7 +488,7 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
 }
 
 template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
 {
     CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
     uint16_t m = src.GetValidRow();
@@ -504,7 +504,7 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScala
 }
 
 template <typename DstTileData, typename SrcTileData, AccToVecMode mode, ReluPreMode reluMode = ReluPreMode::NoRelu>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar)
 {
     CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
     static_assert((mode == AccToVecMode::SingleModeVec0) || (mode == AccToVecMode::SingleModeVec1),
@@ -526,7 +526,7 @@ __tf__ PTO_INTERNAL void SetFPC(typename FpTileData::TileDType __in__ fp)
 }
 
 template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
 {
     CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
     static_assert(FpTileData::Loc == TileType::Scaling, "Fp only support Scaling.");
@@ -544,7 +544,7 @@ AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
 
 template <typename DstTileData, typename SrcTileData, typename FpTileData, AccToVecMode mode,
     ReluPreMode reluMode = ReluPreMode::NoRelu>
-AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp)
 {
     CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
     static_assert((mode == AccToVecMode::SingleModeVec0) || (mode == AccToVecMode::SingleModeVec1),

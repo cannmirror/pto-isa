@@ -151,7 +151,7 @@ void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
 
 
 template <typename TileDataDst, typename TileDataSrc0, typename T>
-AICORE void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
+PTO_INTERNAL void TCMPS_IMPL(TileDataDst &dst, TileDataSrc0 &src0, T src1, CmpMode cmpMode) {
     static_assert(std::is_same<typename TileDataSrc0::DType, int32_t>::value || 
                 std::is_same<typename TileDataSrc0::DType, uint32_t>::value || std::is_same<typename TileDataSrc0::DType, float>::value ||
                 std::is_same<typename TileDataSrc0::DType, int16_t>::value || std::is_same<typename TileDataSrc0::DType, uint16_t>::value ||

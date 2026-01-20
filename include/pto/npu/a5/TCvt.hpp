@@ -1762,7 +1762,7 @@ void implTCVT(typename TileDataD::TileDType __out__ dst,
 }
 
 template <typename TileDataD, typename TileDataS>
-AICORE void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
+PTO_INTERNAL void TCVT_IMPL(TileDataD &dst, TileDataS &src, RoundMode mode)
 {
     switch (mode) {
         case RoundMode::CAST_RINT:

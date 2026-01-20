@@ -16,7 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto
 {
     template <typename DstTileData, typename SrcTileData>
-    AICORE void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t idxRow = 0, uint32_t idxCol = 0) {
+    PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint32_t idxRow = 0, uint32_t idxCol = 0) {
         assert(src.GetValidRow() - idxRow == dst.GetValidRow() && src.GetValidCol() - idxCol == dst.GetValidCol());
         for(size_t c = idxCol; c < src.GetValidCol(); c++) {
             const size_t subTileSrcC = c / SrcTileData::InnerCols;

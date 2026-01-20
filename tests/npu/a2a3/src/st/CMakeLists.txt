@@ -32,13 +32,37 @@ set(CMAKE_CXX_COMPILER ${CMAKE_COMPILER})
 
 find_package(GTest REQUIRED)
 
+set(PTO_GLIBCXX_USE_CXX11_ABI "auto" CACHE STRING "Force _GLIBCXX_USE_CXX11_ABI (auto/0/1) for linking with system libs such as GTest.")
+set_property(CACHE PTO_GLIBCXX_USE_CXX11_ABI PROPERTY STRINGS auto 0 1)
+if (PTO_GLIBCXX_USE_CXX11_ABI STREQUAL "auto")
+    if (UNIX AND NOT APPLE AND TARGET GTest::gtest AND (CMAKE_NM OR EXISTS "/usr/bin/nm"))
+        get_target_property(_pto_gtest_loc GTest::gtest IMPORTED_LOCATION)
+        if (NOT _pto_gtest_loc)
+            get_target_property(_pto_gtest_loc GTest::gtest LOCATION)
+        endif()
+        if (_pto_gtest_loc AND EXISTS "${_pto_gtest_loc}")
+            execute_process(
+                COMMAND bash -lc "nm -C \"${_pto_gtest_loc}\" 2>/dev/null | grep -q 'GetBoolAssertionFailureMessage\\[abi:cxx11\\]'"
+                RESULT_VARIABLE _pto_gtest_is_abi1
+            )
+            if (NOT _pto_gtest_is_abi1 EQUAL 0)
+                set(PTO_GLIBCXX_USE_CXX11_ABI "0" CACHE STRING "" FORCE)
+            endif()
+        endif()
+        unset(_pto_gtest_loc)
+        unset(_pto_gtest_is_abi1)
+    endif()
+endif()
+if (PTO_GLIBCXX_USE_CXX11_ABI STREQUAL "0")
+    add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
+endif()
+
 add_compile_options(
     -D_FORTIFY_SOURCE=2
     -O2 -std=c++17
     -Wno-macro-redefined -Wno-ignored-attributes
     -fstack-protector-strong
 )
-# add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
 add_link_options(
     -s
     -Wl,-z,relro

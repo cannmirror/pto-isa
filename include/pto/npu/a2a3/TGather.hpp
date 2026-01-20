@@ -83,7 +83,7 @@ __tf__ AICORE void TGather(typename TileDataD::TileDType __out__ dst, typename T
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-AICORE void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
+PTO_INTERNAL void TGATHER_IMPL(TileDataD &dst, TileDataS0 &src0, TileDataS1 &src1)
 {
     CheckValid<TileDataD, TileDataS0, TileDataS1>();
 

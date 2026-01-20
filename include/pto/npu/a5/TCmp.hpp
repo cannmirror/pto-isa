@@ -139,7 +139,7 @@ void TCmp_32B(
 }
 
 template <typename TileDataDst, typename TileDataSrc>
-AICORE void TCMP_IMPL(TileDataDst &dst, TileDataSrc &src0, TileDataSrc &src1, CmpMode cmpMode) {
+PTO_INTERNAL void TCMP_IMPL(TileDataDst &dst, TileDataSrc &src0, TileDataSrc &src1, CmpMode cmpMode) {
 
     unsigned validRow = src0.GetValidRow();
     unsigned validCol = src0.GetValidCol();

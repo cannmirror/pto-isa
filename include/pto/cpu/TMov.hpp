@@ -19,7 +19,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto
 {
     template <typename DstTileData, typename SrcTileData>
-    AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
+    PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
         assert (src.GetValidRow() == dst.GetValidRow() && src.GetValidRow() == dst.GetValidRow());
         for(size_t c=0; c<src.GetValidCol(); c++) {
             size_t subTileSrcC = c / SrcTileData::InnerCols;
@@ -51,7 +51,7 @@ namespace pto
     }
 
     template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
-    AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
+    PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
         TMOV_IMPL(dst, src);
         if constexpr (reluMode == ReluPreMode::NormalRelu) {
             const std::size_t rows = static_cast<std::size_t>(dst.GetValidRow());
@@ -69,35 +69,35 @@ namespace pto
 
     template <typename DstTileData, typename SrcTileData, AccToVecMode mode,
               ReluPreMode reluMode = ReluPreMode::NoRelu>
-    AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
+    PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src) {
         (void)mode;
         TMOV_IMPL<DstTileData, SrcTileData, reluMode>(dst, src);
     }
 
     template <typename DstTileData, typename SrcTileData, typename FpTileData,
               ReluPreMode reluMode = ReluPreMode::NoRelu>
-    AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp) {
+    PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp) {
         (void)fp;
         TMOV_IMPL<DstTileData, SrcTileData, reluMode>(dst, src);
     }
 
     template <typename DstTileData, typename SrcTileData, typename FpTileData, AccToVecMode mode,
               ReluPreMode reluMode = ReluPreMode::NoRelu>
-    AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp) {
+    PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp) {
         (void)mode;
         (void)fp;
         TMOV_IMPL<DstTileData, SrcTileData, reluMode>(dst, src);
     }
 
     template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
-    AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar) {
+    PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar) {
         (void)preQuantScalar;
         TMOV_IMPL<DstTileData, SrcTileData, reluMode>(dst, src);
     }
 
     template <typename DstTileData, typename SrcTileData, AccToVecMode mode,
               ReluPreMode reluMode = ReluPreMode::NoRelu>
-    AICORE void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar) {
+    PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar) {
         (void)mode;
         (void)preQuantScalar;
         TMOV_IMPL<DstTileData, SrcTileData, reluMode>(dst, src);

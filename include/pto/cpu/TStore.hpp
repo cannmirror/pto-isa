@@ -122,7 +122,7 @@ namespace pto {
     }
 
     template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
-     void TSTORE_IMPL(GlobalData &dst, TileData &src)
+     PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
     {
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
                       "Source dtype must be same with dst dtype!");

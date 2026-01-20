@@ -145,6 +145,12 @@ namespace pto {
     }
 
     template <typename tile_shape>
+    PTO_INTERNAL void TXORS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar, tile_shape &tmp) {
+        (void)tmp;
+        TXORS_IMPL(dst, src, scalar);
+    }
+
+    template <typename tile_shape>
     PTO_INTERNAL void TLRELU_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();

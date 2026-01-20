@@ -52,8 +52,7 @@ void Tci(typename TileData::TileDType __out__ dst, T start, unsigned validCol)
 }
 
 template <typename TileData, typename T, int descending>
-AICORE
-void TCI_IMPL (TileData &dst, T start)
+PTO_INTERNAL void TCI_IMPL (TileData &dst, T start)
 {
     CheckValid<TileData, T>();
     unsigned validCol = dst.GetValidCol();

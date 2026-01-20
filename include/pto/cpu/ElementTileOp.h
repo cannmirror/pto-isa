@@ -112,6 +112,12 @@ namespace pto {
     }
 
     template <typename tile_shape>
+    PTO_INTERNAL void TREM_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1, tile_shape &tmp) {
+        (void)tmp;
+        TREM_IMPL(dst, src0, src1);
+    }
+
+    template <typename tile_shape>
     PTO_INTERNAL void TSHL_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1) {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
@@ -144,6 +150,12 @@ namespace pto {
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
         BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_XOR>(dst.data(), src0.data(), src1.data(), row, col);
+    }
+
+    template <typename tile_shape>
+    PTO_INTERNAL void TXOR_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1, tile_shape &tmp) {
+        (void)tmp;
+        TXOR_IMPL(dst, src0, src1);
     }
 
     template <typename tile_shape>

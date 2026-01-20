@@ -148,7 +148,7 @@ namespace pto {
     }
 
     template <typename TileData, typename GlobalData>
-    AICORE void TLOAD_IMPL(TileData &dst, GlobalData &src)
+    PTO_INTERNAL void TLOAD_IMPL(TileData &dst, GlobalData &src)
     {
         static_assert(sizeof(typename TileData::DType) == sizeof(typename GlobalData::DType),
                       "Source dtype must be same with dst dtype");

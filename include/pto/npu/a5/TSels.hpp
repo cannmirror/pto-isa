@@ -110,7 +110,7 @@ void TSelsImpl(
 }
 
 template <typename TileData>
-AICORE void TSELS_IMPL(TileData &dst, TileData &src0, TileData &src1, uint8_t selectMode)
+PTO_INTERNAL void TSELS_IMPL(TileData &dst, TileData &src0, TileData &src1, uint8_t selectMode)
 {
     using T = typename TileData::DType;
     static_assert(std::is_same<T, int8_t>::value || std::is_same<T, int16_t>::value ||

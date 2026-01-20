@@ -442,7 +442,7 @@ AICORE void TExtractToRight(DstTileData &dst, SrcTileData &src, uint16_t indexRo
 }
 
 template <typename DstTileData, typename SrcTileData>
-AICORE void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol)
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol)
 {
     static_assert(is_textract_supported_type<typename DstTileData::DType>,
         "TExtract: Unsupported data type! Supported types: int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
