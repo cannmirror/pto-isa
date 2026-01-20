@@ -33,7 +33,6 @@ def gen_golden_data(param):
     for i in range(rows):
         for j in range(cols):
             output_arr[i, j] = np.fmod(input_arr[i, j], scalar[0, 0]).astype(data_type)
-    # output_arr = np.fmod(input_arr, scalar[0, 0]).astype(data_type)
 
     input_arr.tofile("input.bin")
     with open("scalar.bin", "wb") as f:

@@ -25,21 +25,25 @@ PTO_INTERNAL void runTREMS(__gm__ T *out, __gm__  T *src, T scalar) {
 
     using dstTileData = Tile<TileType::Vec, T, dstTileRow, dstTileCol, BLayout::RowMajor, -1, -1>;
     using srcTileData = Tile<TileType::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
-    using tmpTileData = Tile<TileType::Vec, T, 20, col, BLayout::RowMajor, -1, -1>;
+    using tmpTileData = Tile<TileType::Vec, T, 10, col, BLayout::RowMajor, -1, -1>;
     srcTileData srcTile(validRow, validCol);
     dstTileData dstTile(validRow, validCol);
-    tmpTileData tmpTile(16, validCol);
+    tmpTileData tmpTile(10, validCol);
     TASSIGN(srcTile, 0x0);
-    TASSIGN(dstTile, 0x30000);
-    TASSIGN(tmpTile, 0x60000); // tmp buffer
+    TASSIGN(dstTile, 0x10000);
+    TASSIGN(tmpTile, 0x20000); // tmp buffer
 
     TLOAD(srcTile, srcGlobal);
+
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
+
     TREMS(dstTile, srcTile, scalar, tmpTile);
+
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
-    TSTORE(dstGlobal, dstTile);
+
+    TSTORE(dstGlobal, dstTile);    
     out = dstGlobal.data();
 }
 

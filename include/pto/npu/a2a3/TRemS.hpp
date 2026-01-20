@@ -14,17 +14,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/constants.hpp>
 #include <pto/npu/a2a3/TExpandS.hpp>
 
-#define SRC1_INDEX 7
-
 namespace pto {
 template <typename T>
 struct RemSOp {
   PTO_INTERNAL static void RemSF32Instr(__ubuf__ float *dst, __ubuf__ float *src, __ubuf__ float *src1,
                                         __ubuf__ float *tmp) {
-    pipe_barrier(PIPE_V);
-    vector_dup(src1, (float)41, 1, 1, 1, 8, 8);
-    pipe_barrier(PIPE_V);
-
     // tmporary buffer size: validCols*sizeof(float)
     __ubuf__ int32_t *tmpPtr = (__ubuf__ int32_t *)tmp;
     // qf = s0 / s1
@@ -49,7 +43,7 @@ struct RemSOp {
   PTO_INTERNAL static void RemSF16Instr(__ubuf__ T *dst, __ubuf__ T *src, __ubuf__ T *src1, __ubuf__ T *tmp,
                                         unsigned rowStride) {
     // tmporary buffer size: validCols*sizeof(float)*4
-    __ubuf__ float *tmpPtr = (__ubuf__ float *)tmp;
+    __ubuf__ float *tmpPtr = reinterpret_cast<__ubuf__ float *>(tmp);
     __ubuf__ float *tmpSrc = tmpPtr + rowStride;
     __ubuf__ float *tmpSrc1 = tmpPtr + rowStride * 2;
     __ubuf__ float *tmpShare = tmpPtr + rowStride * 3;
@@ -147,6 +141,7 @@ __tf__ PTO_INTERNAL void TRemS(typename TileData::TileDType __out__ dst, typenam
 
   set_mask_count();
   set_vector_mask(0, validCols);
+  constexpr unsigned SRC1_INDEX = 8;
   __ubuf__ T *s1Next = tmpPtr + SRC1_INDEX * tmpRowStride;
   for (int i = 0; i < validRows; ++i) {
     __ubuf__ T *dstNext = dstPtr + i * dstRowStride;
@@ -185,13 +180,14 @@ PTO_INTERNAL void TREMS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDa
                 "TREMS: Only support row major layout.");
 
   // dynamic checks
-  PTO_ASSERT(tmp.GetValidRow() >= 8, "TREMS: Number of valid rows of tmp tile must be at least 8.");
+  PTO_ASSERT(tmp.GetValidRow() >= 10, "TREMS: Number of valid rows of tmp tile must be at least 10.");
   PTO_ASSERT(dst.GetValidRow() == src.GetValidRow() && dst.GetValidRow() > 0,
              "TREMS: Number of valid rows of src and dst must be the same, and both greater than 0.");
   PTO_ASSERT(dst.GetValidCol() == src.GetValidCol() && dst.GetValidCol() == tmp.GetValidCol(),
              "TREMS: Number of valid columns of src, dst and tmp must be the same, and all greater than 0.");
 
   TEXPANDS_IMPL(tmp, scalar);
+  pipe_barrier(PIPE_V);
 
   constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
   constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
