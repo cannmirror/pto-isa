@@ -10,6 +10,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifndef TEXTRACT_HPP
 #define TEXTRACT_HPP
+#include "common.hpp"
 
 namespace pto {
 
@@ -383,10 +384,30 @@ __tf__ AICORE void TExtractToBCompact(typename DstTileData::TileDType __out__ ds
     }
 }
 
+template <typename DstTileData, typename SrcTileData, QuantMode_t QuantPre, ReluPreMode reluMode>
+__tf__ AICORE void TExtractAccToMat(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+    uint16_t validRow, uint16_t validCol, uint16_t indexRow, uint16_t indexCol)
+{
+    using SrcType = typename SrcTileData::DType;
+    using DstType = typename DstTileData::DType;
+    constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(DstType);
+    constexpr int32_t accC0Size = BLOCK_BYTE_SIZE / sizeof(half);
+    uint32_t srcOffset = SrcTileData::Rows * accC0Size * (indexCol / accC0Size) + (indexRow * accC0Size + (indexCol % accC0Size));
+    __cc__ SrcType *srcAddr = (__cc__ SrcType *)__cce_get_tile_ptr(src) + srcOffset;
+    __cbuf__ DstType *dstAddr = (__cbuf__ DstType *)__cce_get_tile_ptr(dst);
+
+    constexpr uint32_t dstStride_dst_D = DstTileData::Rows;
+    constexpr uint16_t srcStride = SrcTileData::Rows;
+    uint16_t nSize = CeilDivision(validCol, c0Size) * c0Size;
+    copy_matrix_cc_to_cbuf(
+        dstAddr, srcAddr, 0, nSize, validRow, dstStride_dst_D, 
+        srcStride, 0, QuantPre, reluMode, false, false);
+}
+
 template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType>
 PTO_INTERNAL void CheckTExtract()
 {
-    static_assert(std::is_same<DstType, SrcType>::value,
+    static_assert((SrcTileData::Loc == TileType::Acc) || std::is_same<DstType, SrcType>::value,
         "TExtract: Destination and Source tile data types must be the same.");
     static_assert(std::is_same<DstType, int8_t>::value ||
                       std::is_same<DstType, half>::value ||
@@ -424,7 +445,7 @@ PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t ind
                 TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
             }
         }
-    } else {
+    } else if constexpr (DstTileData::Loc == TileType::Right) {
         static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
             "TExtract: RightTile Invalid Fractal.");
         if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
@@ -442,7 +463,70 @@ PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t ind
                 TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
             }
         }
+    }  else if constexpr (SrcTileData::Loc == TileType::Acc && DstTileData::Loc == TileType::Mat) {
+        CheckTMovAccToMat<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+        constexpr QuantMode_t quantPre =
+            GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>(); 
+        TExtractAccToMat<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data(),
+            dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
     }
+}
+
+// relu
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
+{
+    PTO_ASSERT(indexRow + DstTileData::Rows <= SrcTileData::Rows,
+        "The sum of indexRow and dstRow should be less than srcRow!");
+    PTO_ASSERT(indexCol + DstTileData::Cols <= SrcTileData::Cols,
+        "The sum of indexCol and dstCol should be less than srcCol!");
+    CheckTMovAccToMat<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    TExtractAccToMat<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(),
+        dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+}
+
+// scalar quant
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar,
+    uint16_t indexRow = 0, uint16_t indexCol = 0)
+{
+    PTO_ASSERT(indexRow + DstTileData::Rows <= SrcTileData::Rows,
+        "The sum of indexRow and dstRow should be less than srcRow!");
+    PTO_ASSERT(indexCol + DstTileData::Cols <= SrcTileData::Cols,
+        "The sum of indexCol and dstCol should be less than srcCol!");
+    CheckTMovAccToMat<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, false>();
+    constexpr QuantMode_t quantPre = GetScalarPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    set_quant_pre(preQuantScalar);
+    TExtractAccToMat<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(),
+        dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+}
+
+// vector quant
+template <typename FpTileData>
+__tf__ PTO_INTERNAL void SetFPC(typename FpTileData::TileDType __in__ fp, uint16_t indexCol)
+{
+    using FpType = typename FpTileData::DType;
+    __fbuf__ FpType *dstAddrFp = (__fbuf__ FpType *)__cce_get_tile_ptr(fp) + indexCol;
+    uint64_t deqTensorAddr = ((uint64_t)dstAddrFp >> static_cast<uint64_t>(7))
+                             << 8;  // fpc[15:8] means Quant_PRE_ADDR, uint of 128(2^7)bytes
+    set_fpc(deqTensorAddr);
+}
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp,
+     uint16_t indexRow = 0, uint16_t indexCol = 0)
+{
+    PTO_ASSERT(indexRow + DstTileData::Rows <= SrcTileData::Rows,
+        "The sum of indexRow and dstRow should be less than srcRow!");
+    PTO_ASSERT(indexCol + DstTileData::Cols <= SrcTileData::Cols,
+        "The sum of indexCol and dstCol should be less than srcCol!");
+    CheckTMovAccToMat<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, false>();
+    static_assert(FpTileData::Loc == TileType::Scaling, "Fp only support Scaling.");
+    constexpr QuantMode_t quantPre = GetVectorPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    SetFPC<FpTileData>(fp.data(), indexCol);
+    TExtractAccToMat<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(),
+        dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
 }
 }  // namespace pto
 #endif  // TEXTRACT_HPP

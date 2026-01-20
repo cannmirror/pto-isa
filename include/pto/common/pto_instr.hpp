@@ -361,13 +361,73 @@ PTO_INST RecordEvent TEXTRACT(DstTileData &dst, SrcTileData &src,
   MAP_INSTR_IMPL(TEXTRACT, dst, src, indexRow, indexCol);
   return {};
 }
+ 
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode, typename... WaitEvents>
+PTO_INST RecordEvent TEXTRACT(DstTileData &dst, SrcTileData &src, 
+                            uint16_t indexRow, uint16_t indexCol, WaitEvents&... events) {
+  TSYNC(events...);
+  TEXTRACT_IMPL<DstTileData, SrcTileData, reluMode>(dst, src, indexRow, indexCol);
+  return {};
+}
+
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu,
+  typename... WaitEvents>
+PTO_INST RecordEvent TEXTRACT(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar,
+                            uint16_t indexRow, uint16_t indexCol, WaitEvents&... events) {
+  TSYNC(events...);
+  TEXTRACT_IMPL<DstTileData, SrcTileData, reluMode>(dst, src, preQuantScalar, indexRow, indexCol);
+  return {};
+}
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu,
+  typename... WaitEvents>
+PTO_INST RecordEvent TEXTRACT_FP(DstTileData &dst, SrcTileData &src, FpTileData &fp,
+                            uint16_t indexRow, uint16_t indexCol, WaitEvents&... events) {
+  TSYNC(events...);
+  TEXTRACT_IMPL<DstTileData, SrcTileData, FpTileData, reluMode>(dst, src, fp, indexRow, indexCol);
+  return {};
+}
+
+template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
+PTO_INST RecordEvent TINSERT(DstTileData &dst, SrcTileData &src,
+                            uint16_t indexRow, uint16_t indexCol, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TINSERT, dst, src, indexRow, indexCol);
+  return {};
+}
+
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode, typename... WaitEvents>
+PTO_INST RecordEvent TINSERT(DstTileData &dst, SrcTileData &src,
+                            uint16_t indexRow, uint16_t indexCol, WaitEvents&... events) {
+  TSYNC(events...);
+  TINSERT_IMPL<DstTileData, SrcTileData, reluMode>(dst, src, indexRow, indexCol);
+  return {};
+}
+
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu,
+  typename... WaitEvents>
+PTO_INST RecordEvent TINSERT(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar,
+                            uint16_t indexRow, uint16_t indexCol, WaitEvents&... events) {
+  TSYNC(events...);
+  TINSERT_IMPL<DstTileData, SrcTileData, reluMode>(dst, src, preQuantScalar, indexRow, indexCol);
+  return {};
+}
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu,
+  typename... WaitEvents>
+PTO_INST RecordEvent TINSERT_FP(DstTileData &dst, SrcTileData &src, FpTileData &fp,
+                            uint16_t indexRow, uint16_t indexCol, WaitEvents&... events) {
+  TSYNC(events...);
+  TINSERT_IMPL<DstTileData, SrcTileData, FpTileData, reluMode>(dst, src, fp, indexRow, indexCol);
+  return {};
+}
 
 template <typename TileData, PadValue PadVal = PadValue::Zero, typename... WaitEvents>
 PTO_INST RecordEvent TFILLPAD(TileData &dst, TileData &src, WaitEvents&... events) {
   TSYNC(events...);
   TFILLPAD_IMPL<TileData, PadVal>(dst, src);
   return {};
-}
+} 
 
 template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
 PTO_INST RecordEvent TFILLPAD(DstTileData &dst, SrcTileData &src,

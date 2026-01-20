@@ -10,6 +10,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifndef TSTORE_HPP
 #define TSTORE_HPP
+#include "common.hpp"
 
 namespace pto {
 template <typename GlobalData, typename TileData>
@@ -256,72 +257,6 @@ __tf__ AICORE void TStoreMat(typename GlobalData::DType __out__ *dst, typename T
         TStoreMat2GmNz2Nz<GlobalData, TileData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
     }
-}
-
-template <typename SrcType, typename DstType>
-PTO_INTERNAL constexpr QuantMode_t GetCastPreQuantMode()
-{
-    QuantMode_t quantPre = QuantMode_t::NoQuant;
-    if constexpr (std::is_same<SrcType, float>::value) {
-        if constexpr ((std::is_same<DstType, __gm__ half>::value) || (std::is_same<DstType, half>::value)) {
-            quantPre = QuantMode_t::F322F16;
-        } else if constexpr ((std::is_same<DstType, __gm__ bfloat16_t>::value) ||
-                             (std::is_same<DstType, bfloat16_t>::value)) {
-            quantPre = QuantMode_t::F322BF16;
-        }
-    }
-    return quantPre;
-}
-
-template <typename SrcType, typename DstType>
-PTO_INTERNAL constexpr QuantMode_t GetScalarPreQuantMode()
-{
-    QuantMode_t quantPre = QuantMode_t::NoQuant;
-    if constexpr (std::is_same<SrcType, float>::value) {
-        if constexpr ((std::is_same<DstType, __gm__ int8_t>::value) || (std::is_same<DstType, __gm__ uint8_t>::value) ||
-                      (std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value)) {
-            quantPre = QuantMode_t::QF322B8_PRE;
-        } else if constexpr ((std::is_same<DstType, __gm__ half>::value) || (std::is_same<DstType, half>::value)) {
-            quantPre = QuantMode_t::QF322F16_PRE;
-        } else if constexpr ((std::is_same<DstType, __gm__ bfloat16_t>::value) ||
-                             (std::is_same<DstType, bfloat16_t>::value)) {
-            quantPre = QuantMode_t::QF322BF16_PRE;
-        }
-    } else if constexpr (std::is_same<SrcType, int32_t>::value) {
-        if constexpr ((std::is_same<DstType, __gm__ int8_t>::value) || (std::is_same<DstType, __gm__ uint8_t>::value) ||
-                      (std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value)) {
-            quantPre = QuantMode_t::REQ8;
-        } else if constexpr ((std::is_same<DstType, __gm__ half>::value) || (std::is_same<DstType, half>::value)) {
-            quantPre = QuantMode_t::DEQF16;
-        } else if constexpr ((std::is_same<DstType, __gm__ int16_t>::value) ||
-                             (std::is_same<DstType, int16_t>::value)) {
-            quantPre = QuantMode_t::SHIFTS322S16;
-        }
-    }
-    return quantPre;
-}
-
-template <typename SrcType, typename DstType>
-PTO_INTERNAL constexpr QuantMode_t GetVectorPreQuantMode()
-{
-    QuantMode_t quantPre = QuantMode_t::NoQuant;
-    if constexpr (std::is_same<SrcType, float>::value) {
-        if constexpr ((std::is_same<DstType, __gm__ int8_t>::value) || (std::is_same<DstType, __gm__ uint8_t>::value) ||
-                      (std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value)) {
-            quantPre = QuantMode_t::VQF322B8_PRE;
-        }
-    } else if constexpr (std::is_same<SrcType, int32_t>::value) {
-        if constexpr ((std::is_same<DstType, __gm__ int8_t>::value) || (std::is_same<DstType, __gm__ uint8_t>::value) ||
-                      (std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value)) {
-            quantPre = QuantMode_t::VREQ8;
-        } else if constexpr ((std::is_same<DstType, __gm__ half>::value) || (std::is_same<DstType, half>::value)) {
-            quantPre = QuantMode_t::VDEQF16;
-        } else if constexpr ((std::is_same<DstType, __gm__ int16_t>::value) ||
-                             (std::is_same<DstType, int16_t>::value)) {
-            quantPre = QuantMode_t::VSHIFTS322S16;
-        }
-    }
-    return quantPre;
 }
 
 template <typename T>

@@ -112,7 +112,7 @@ def get_vector_quant(golden, m, n, dst_type, quant_type):
     return quant_golden
 
 
-def get_golden_nd_to_nz(golden, m, n, dst_type, s_fractal_size):
+def get_golden_nd_to_nz(golden, m, n, dst_type, s_fractal_size, param):
     if dst_type == np.float32 and s_fractal_size == 512:
         block_cols = 8
     elif dst_type == np.int8 and s_fractal_size == 512:
@@ -121,7 +121,17 @@ def get_golden_nd_to_nz(golden, m, n, dst_type, s_fractal_size):
         block_cols = 16
     assert(m % 16) == 0, "M should be 16 aligned when matrix C is NZ format"
     assert(n % block_cols) == 0, "N should be aligned when matrix C is NZ format"
-    golden = golden.reshape((int(m / 16), 16, int(n / block_cols), block_cols)).transpose(2, 0, 1, 3).astype(dst_type)
+    if (param.is_insert):
+        dst_data = np.zeros((param.dst_row, param.dst_col), dtype=dst_type)
+        dst_data.astype(dst_type).tofile("./dst.bin")
+        dst_data[param.index_rows:(param.index_rows + m), param.index_cols:(param.index_cols + n)] = golden
+        golden = dst_data.reshape((int(param.dst_row / 16), 16,
+            int(param.dst_col / block_cols), block_cols)).transpose(2, 0, 1, 3).astype(dst_type)
+    else:
+        if param.index_rows != 0 or param.index_cols != 0:
+            golden = golden[param.index_rows:, param.index_cols:]
+        golden = golden.reshape((int((m - param.index_rows) / 16), 16,
+            int((n - param.index_cols) / block_cols), block_cols)).transpose(2, 0, 1, 3).astype(dst_type)
     return golden
 
 
@@ -160,7 +170,7 @@ def gen_golden_data(case_name, param):
         golden = np.maximum(golden, 0)
 
     if dst_format == 'NZ':
-        golden = get_golden_nd_to_nz(golden, base_m, base_n, dst_type, s_fractal_size)
+        golden = get_golden_nd_to_nz(golden, base_m, base_n, dst_type, s_fractal_size, param)
     elif dst_format == 'DN':
         golden = golden.transpose()
     golden.astype(dst_type).tofile("./golden.bin")
@@ -170,7 +180,8 @@ def gen_golden_data(case_name, param):
 class TMovParams:
     def __init__(self, atype, btype, dst_type, m, k, n, base_m=0, base_k=0, base_n=0,
                  dst_format='ND', s_fractal_size=512, is_v_quant=False,
-                 is_s_quant=False, is_relu=False, quant_type=None, scalar=1):
+                 is_s_quant=False, is_relu=False, quant_type=None, scalar=1,
+                 index_rows=0, index_cols=0, is_insert=False, dst_row=0, dst_col=0):
         self.atype = atype
         self.btype = btype
         self.ctype = np.float32
@@ -192,6 +203,11 @@ class TMovParams:
             self.quant_type = quant_type
         if (is_s_quant):
             self.scalar = scalar
+        self.index_rows = index_rows
+        self.index_cols = index_cols
+        self.is_insert = is_insert
+        self.dst_row = dst_row
+        self.dst_col = dst_col        
 
 
 if __name__ == "__main__":
@@ -241,6 +257,15 @@ if __name__ == "__main__":
         "TMOVTest.case_nz2dn_sc_quant_2",
         "TMOVTest.case_nz2dn_sc_quant_3",
         "TMOVTest.case_nz2dn_sc_quant_4",
+
+        ##textract
+        "TMOVTest.case_nz2nz_extract",
+        "TMOVTest.case_nz2nz_sc_quant_extract",
+        "TMOVTest.case_nz2nz_fb_quant_extract",
+        ##tinsert
+        "TMOVTest.case_nz2nz_insert",
+        "TMOVTest.case_nz2nz_sc_quant_insert", 
+        "TMOVTest.case_nz2nz_fb_quant_insert",
     ]
 
     case_params_list = [
@@ -288,6 +313,21 @@ if __name__ == "__main__":
         TMovParams(np.float16, np.float16, np.int8, 96, 128, 60, 0, 0, 0, 'DN', 512, False, True, True, None, 3),
         TMovParams(np.int8, np.int8, np.float16, 128, 128, 64, 0, 0, 0, 'DN', 512, False, True, False, None, 5),
         TMovParams(np.int8, np.int8, np.int8, 64, 64, 90, 0, 0, 0, 'DN', 512, False, True, False, None, 2),
+        
+        TMovParams(np.float16, np.float16, np.float16, 64, 64, 64, 64, 64, 64, 'NZ', 512, False, False, False, None, 1,
+            16, 16),
+        TMovParams(np.int8, np.int8, np.float16, 96, 128, 64, 96, 128, 64, 'NZ', 512, False, True, False, None, 2,
+            48, 48),
+        TMovParams(np.float16, np.float16, np.int8, 128, 64, 128, 128, 64, 128, 'NZ', 512, True, False, False,
+            np.uint64, 1, 32, 32),
+
+
+        TMovParams(np.float16, np.float16, np.float16, 32, 32, 32, 32, 32, 32, 'NZ', 512, False, False, False, None, 1,
+            32, 32, True, 128, 128),
+        TMovParams(np.int8, np.int8, np.float16, 96, 128, 64, 96, 128, 64, 'NZ', 512, False, True, False, None, 2,
+            48, 48, True, 256, 256),
+        TMovParams(np.float16, np.float16, np.int8, 128, 64, 128, 128, 64, 128, 'NZ', 512, True, False, False,
+            np.uint64, 1, 32, 32, True, 256, 256),
     ]
 
     for i, case_name in enumerate(case_name_list):

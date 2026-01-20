@@ -178,15 +178,26 @@ def gen_golden_data(case_name, param):
     block_cols = 16
     if (dst_type == np.int8 or dst_type == np.uint8):
         block_cols = 32
-    golden = golden.reshape(
-        (int(base_m / 16), 16, int(base_n / block_cols), block_cols)).transpose(2, 0, 1, 3).astype(dst_type)
+    
+    if (param.is_insert):
+        dst_data = np.zeros((param.dst_row, param.dst_col), dtype=dst_type)
+        dst_data.astype(dst_type).tofile("./dst.bin")
+        dst_data[param.index_rows:(param.index_rows + m), param.index_cols:(param.index_cols + n)] = golden
+        golden = dst_data.reshape((int(param.dst_row / 16), 16,
+            int(param.dst_col / block_cols), block_cols)).transpose(2, 0, 1, 3).astype(dst_type)
+    else:
+        if param.index_rows != 0 or param.index_cols != 0:
+            golden = golden[param.index_rows:, param.index_cols:]
+        golden = golden.reshape((int((base_m - param.index_rows) / 16), 16,
+            int((base_n - param.index_cols) / block_cols), block_cols)).transpose(2, 0, 1, 3).astype(dst_type)
     golden.astype(dst_type).tofile("./golden.bin")
 
 
 class TmovParams:
     def __init__(self, atype, btype, dst_type, m, k, n, base_m=0, base_k=0, base_n=0,
                  is_v_quant=False, is_s_quant=False, is_relu=False,
-                 quant_type=None, scalar=1):
+                 quant_type=None, scalar=1, index_rows=0, index_cols=0,
+                 is_insert=False, dst_row=0, dst_col=0):
         self.atype = atype
         self.btype = btype
         self.ctype = np.float32
@@ -205,6 +216,11 @@ class TmovParams:
         if (quant_type):
             self.quant_type = quant_type
         self.scalar = scalar
+        self.index_rows = index_rows
+        self.index_cols = index_cols
+        self.is_insert = is_insert
+        self.dst_row = dst_row
+        self.dst_col = dst_col
 
 if __name__ == "__main__":
     case_name_list = [
@@ -247,6 +263,14 @@ if __name__ == "__main__":
         ##int32->int16
         "TMOVTest.case_nz2nz_sc_quant_31",
         "TMOVTest.case_nz2nz_fb_quant_32",
+        ##textract
+        "TMOVTest.case_nz2nz_extract",
+        "TMOVTest.case_nz2nz_sc_quant_extract",
+        "TMOVTest.case_nz2nz_fb_quant_extract",
+        ##tinsert
+        "TMOVTest.case_nz2nz_insert",
+        "TMOVTest.case_nz2nz_sc_quant_insert", 
+        "TMOVTest.case_nz2nz_fb_quant_insert",
     ]
 
     case_params_list = [
@@ -289,6 +313,18 @@ if __name__ == "__main__":
         ##int32->int16
         TmovParams(np.int8, np.int8, np.int16, 12, 32, 31, 16, 32, 32, False, True, True, None, 2),
         TmovParams(np.int8, np.int8, np.int16, 76, 128, 61, 80, 128, 64, True, False, True, np.uint64),
+        
+        TmovParams(np.float16, np.float16, np.float16, 64, 64, 64, 64, 64, 64, False, False, False, None, 1, 16, 16),
+        TmovParams(np.int8, np.int8, np.float16, 96, 128, 64, 96, 128, 64, False, True, False, None, 2, 48, 48),
+        TmovParams(np.float16, np.float16, np.int8, 128, 64, 128, 128, 64, 128, True, False, False, np.uint64,
+            1, 32, 32),
+
+        TmovParams(np.float16, np.float16, np.float16, 32, 32, 32, 32, 32, 32, False, False, False, None, 1, 32, 32,
+            True, 128, 128),
+        TmovParams(np.int8, np.int8, np.float16, 96, 128, 64, 96, 128, 64, False, True, False, None, 2, 48, 48,
+            True, 256, 256),
+        TmovParams(np.float16, np.float16, np.int8, 128, 64, 128, 128, 64, 128, True, False, False, np.uint64,
+            1, 32, 32, True, 256, 256), 
     ]
 
     for i, case_name in enumerate(case_name_list):

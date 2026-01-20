@@ -10,6 +10,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifndef TMOV_HPP
 #define TMOV_HPP
+#include "common.hpp"
 #include "TExtract.hpp"
 #include "TPartAdd.hpp"
 
@@ -131,15 +132,16 @@ __tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typen
 {
     using dstType = typename DstTileData::DType;
     using srcType = typename SrcTileData::DType;
+    constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
+    static_assert(((dstStride * sizeof(dstType) % C0_SIZE_BYTE == 0) && ((dstStride) > 0)),
+        "Dst Tile Cols * sizeof(dstT) must be multiples of 32 and not 0 when nz2nd. \
+            Dst Tile Rows * sizeof(dstT) must be multiples of 32 and not 0 when nz2dn. \
+            Dst Tile Cols * sizeof(dstType) must be multiples of 32 and not 0 when nz2nz.");
     constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(dstType);
-    constexpr bool enableNz2Nd = (DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox);
-    constexpr bool enableNz2Dn = (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox);
     constexpr bool enableNz2Nz = (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor);
     constexpr bool channelSplitEnable = (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) &&
                                         (std::is_same_v<typename DstTileData::DType, float>) &&
                                         (DstTileData::SFractalSize == 512);
-    constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
-
     if constexpr (enableNz2Nz) {
         validRow = SrcTileData::Rows;
         if constexpr (std::is_same_v<typename DstTileData::DType, float>) {
@@ -149,6 +151,9 @@ __tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typen
             validCol = CeilDivision(validCol, c0Size) * c0Size;
         }
     }
+
+    constexpr bool enableNz2Nd = (DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox);
+    constexpr bool enableNz2Dn = (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox);
     if constexpr (enableNz2Nd || enableNz2Dn) {
         SetLoop3Para();
     }
@@ -181,6 +186,10 @@ __tf__ AICORE void TMovCcToUb(typename DstTileData::TileDType __out__ dst, typen
                                         (std::is_same_v<typename DstTileData::DType, float>) &&
                                         (DstTileData::SFractalSize == 512);
     constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
+    static_assert(((dstStride * sizeof(dstType) % C0_SIZE_BYTE == 0) && ((dstStride) > 0)),
+        "Dst Tile Cols * sizeof(dstT) must be multiples of 32 and not 0 when nz2nd. \
+            Dst Tile Rows * sizeof(dstT) must be multiples of 32 and not 0 when nz2dn. \
+            Dst Tile Cols * sizeof(dstType) must be multiples of 32 and not 0 when nz2nz.");
 
     if constexpr (enableNz2Nz) {
         validRow = SrcTileData::Rows;
@@ -233,48 +242,6 @@ PTO_INTERNAL constexpr void CommonCheckMX()
         "TMov: Unsupported data type! Supported types: float8_e8m0_t");
     static_assert(std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value,
         "TMov: Destination and Source tile data types must be the same.");
-}
-
-template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isQuant = false>
-PTO_INTERNAL void CheckTMovAccValid()
-{
-    static_assert((SrcTileData::Loc == TileType::Acc), "Source TileType only support Acc.");
-    static_assert((!SrcTileData::isRowMajor && SrcTileData::SFractal == SLayout::RowMajor),
-        "Src fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
-    static_assert(((std::is_same<SrcType, float>::value) || (std::is_same<SrcType, int32_t>::value)),
-        "Src data type only support float or int32_t.");
-    if constexpr (isQuant) {
-        if constexpr (std::is_same<SrcType, float>::value) {
-            static_assert((std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value) ||
-                              (std::is_same<DstType, hifloat8_t>::value) || (std::is_same<DstType, half>::value) ||
-                              (std::is_same<DstType, bfloat16_t>::value) || (std::is_same<DstType, float8_e4m3_t>::value) ||
-                              (std::is_same<DstType, float>::value),
-                "The output data type must be restricted to int8_t/uint8_t/hifloat/bfloat8_t/half/bfloat16_t/ \
-                    float8_e4m3_t/float.");
-        } else if constexpr (std::is_same<SrcType, int32_t>::value) {
-            static_assert((std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value) ||
-                              (std::is_same<DstType, half>::value) || (std::is_same<DstType, bfloat16_t>::value),
-                "The output data type must be restricted to int8_t/uint8_t/half/bfloat16_t.");
-        }
-    } else {
-        if constexpr (std::is_same<SrcType, float>::value) {
-            static_assert((std::is_same<DstType, half>::value) || (std::is_same<DstType, bfloat16_t>::value) ||
-                              (std::is_same<DstType, float>::value),
-                "The output data type must be restricted to half/bfloat16_t/float.");
-        } else if constexpr (std::is_same<SrcType, int32_t>::value) {
-            static_assert(
-                (std::is_same<DstType, int32_t>::value), "The output data type must be restricted to int32_t.");
-        }
-    }
-    static_assert(((DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
-                      (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
-                      (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor)),
-        "Only support nz2nz, nz2nd or nz2dn.");
-    constexpr uint32_t dstStride = GetTmovAccDstStride<DstTileData, SrcTileData>();
-    static_assert(((dstStride * sizeof(DstType) % C0_SIZE_BYTE == 0) && ((dstStride) > 0)),
-        "Dst Tile Cols * sizeof(dstT) must be multiples of 32 and not 0 when nz2nd. \
-            Dst Tile Rows * sizeof(dstT) must be multiples of 32 and not 0 when nz2dn. \
-            Dst Tile Cols * sizeof(DstType) must be multiples of 32 and not 0 when nz2nz.");
 }
 
 template <typename T, typename DstTileData, typename SrcTileData>

@@ -144,6 +144,43 @@ namespace pto {
         }
         return quantPre;
     }
+
+template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isQuant = false>
+PTO_INTERNAL void CheckTMovAccValid()
+{
+    static_assert((SrcTileData::Loc == TileType::Acc), "Source TileType only support Acc.");
+    static_assert((!SrcTileData::isRowMajor && SrcTileData::SFractal == SLayout::RowMajor),
+        "Src fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
+    static_assert(((std::is_same<SrcType, float>::value) || (std::is_same<SrcType, int32_t>::value)),
+        "Src data type only support float or int32_t.");
+    if constexpr (isQuant) {
+        if constexpr (std::is_same<SrcType, float>::value) {
+            static_assert((std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value) ||
+                              (std::is_same<DstType, hifloat8_t>::value) || (std::is_same<DstType, half>::value) ||
+                              (std::is_same<DstType, bfloat16_t>::value) || (std::is_same<DstType, float8_e4m3_t>::value) ||
+                              (std::is_same<DstType, float>::value),
+                "The output data type must be restricted to int8_t/uint8_t/hifloat/bfloat8_t/half/bfloat16_t/ \
+                    float8_e4m3_t/float.");
+        } else if constexpr (std::is_same<SrcType, int32_t>::value) {
+            static_assert((std::is_same<DstType, int8_t>::value) || (std::is_same<DstType, uint8_t>::value) ||
+                              (std::is_same<DstType, half>::value) || (std::is_same<DstType, bfloat16_t>::value),
+                "The output data type must be restricted to int8_t/uint8_t/half/bfloat16_t.");
+        }
+    } else {
+        if constexpr (std::is_same<SrcType, float>::value) {
+            static_assert((std::is_same<DstType, half>::value) || (std::is_same<DstType, bfloat16_t>::value) ||
+                              (std::is_same<DstType, float>::value),
+                "The output data type must be restricted to half/bfloat16_t/float.");
+        } else if constexpr (std::is_same<SrcType, int32_t>::value) {
+            static_assert(
+                (std::is_same<DstType, int32_t>::value), "The output data type must be restricted to int32_t.");
+        }
+    }
+    static_assert(((DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
+                      (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
+                      (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor)),
+        "Only support nz2nz, nz2nd or nz2dn.");
+}
 }
 
 #endif

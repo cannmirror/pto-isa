@@ -10,6 +10,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifndef TEXTRACT_HPP
 #define TEXTRACT_HPP
+#include "common.hpp"
 
 namespace pto {
 
@@ -373,6 +374,31 @@ __tf__ AICORE void TExtractVecToMat(typename DstTileData::TileDType __out__ dst,
     }
 }
 
+template <typename DstTileData, typename SrcTileData, QuantMode_t QuantPre, ReluPreMode reluMode>
+__tf__ AICORE void TExtractAccToMat(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+    uint16_t validRow, uint16_t validCol, uint16_t indexRow, uint16_t indexCol)
+{
+    using dstType = typename DstTileData::DType;
+    using srcType = typename SrcTileData::DType;
+    constexpr bool channelSplitEnable = (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) &&
+                                        (std::is_same_v<dstType, float>) &&
+                                        (DstTileData::SFractalSize == 512);
+    constexpr int32_t c0Size = (!channelSplitEnable) && (DstTileData::SFractalSize == 1024) ?
+                                    2 * C0_SIZE_BYTE / sizeof(dstType) :
+                                    C0_SIZE_BYTE / sizeof(dstType);
+    constexpr uint32_t dstStride = DstTileData::Rows * c0Size;
+    uint16_t nSize = CeilDivision(validCol, c0Size) * c0Size;
+
+    constexpr int32_t accC0Size = BLOCK_BYTE_SIZE / sizeof(half);
+    uint32_t srcOffset = SrcTileData::Rows * accC0Size * (indexCol / accC0Size) + (indexRow * accC0Size + (indexCol % accC0Size));
+    __cbuf__ dstType *dstAddr = (__cbuf__ dstType *)__cce_get_tile_ptr(dst);
+    __cc__ srcType *srcData = (__cc__ srcType *)(src) + srcOffset;
+
+    copy_matrix_cc_to_cbuf(dstAddr, srcData, 0, nSize, validRow, dstStride, SrcTileData::Rows, 
+        0, 0, 0, QuantPre, reluMode, channelSplitEnable, false, 0, 0, false, false, 0, false, false,
+        false, false, false, false);
+}
+
 template<typename T>
 constexpr bool is_textract_supported_type = std::disjunction_v<
     std::is_same<T, int8_t>,
@@ -447,7 +473,8 @@ PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t ind
     static_assert(is_textract_supported_type<typename DstTileData::DType>,
         "TExtract: Unsupported data type! Supported types: int8_t, hifloat8_t, fp8_e5m2_t, fp8_e4m3fn_t, \
         half, bfloat16_t, float, float4_e2m1x2_t, float4_e1m2x2_t, float8_e8m0_t");
-    static_assert(std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value,
+    static_assert((SrcTileData::Loc == TileType::Acc) ||
+        std::is_same<typename DstTileData::DType, typename SrcTileData::DType>::value,
         "TExtract: Destination and Source tile data types must be the same");
 
     if constexpr (DstTileData::Loc == TileType::Left) {
@@ -461,7 +488,67 @@ PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t ind
         TExtractToAmx<DstTileData, SrcTileData>(dst.data(), src.data(), indexRow, indexCol, dst.GetValidRow(), dst.GetValidCol());
     } else if constexpr (DstTileData::Loc == TileType::ScaleRight) {
         TExtractToBmx<DstTileData, SrcTileData>(dst.data(), src.data(), indexRow, indexCol, dst.GetValidRow(), dst.GetValidCol());
+    }  else if constexpr (SrcTileData::Loc == TileType::Acc && DstTileData::Loc == TileType::Mat) {
+        static_assert((!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor),
+            "Dst fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
+        CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
+        constexpr QuantMode_t quantPre =
+            GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>(); 
+        TExtractAccToMat<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data(),
+            dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
     }
+}
+
+// vector quant
+template <typename FpTileData>
+__tf__ PTO_INTERNAL void SetFPC(typename FpTileData::TileDType __in__ fp, uint16_t indexCol)
+{
+    __fbuf__ typename FpTileData::DType *dstAddrFp = (__fbuf__ typename FpTileData::DType *)__cce_get_tile_ptr(fp) + indexCol;
+    uint64_t deqTensorAddr = ((uint64_t)dstAddrFp >> static_cast<uint64_t>(7)) << 8;
+    set_fpc(deqTensorAddr);
+}
+
+// relu
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
+{
+    static_assert((DstTileData::Loc == TileType::Mat), "Destination TileType only support Mat.");
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
+    static_assert((!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor),
+        "Dst fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
+    constexpr QuantMode_t quantPre = GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    TExtractAccToMat<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(),
+        dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+}
+
+// scalar quant
+template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint64_t preQuantScalar,
+    uint16_t indexRow = 0, uint16_t indexCol = 0)
+{
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    static_assert((DstTileData::Loc == TileType::Mat), "Destination TileType only support Mat.");
+    static_assert((!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor),
+        "Dst fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
+    constexpr QuantMode_t quantPre = GetScalarPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    set_quant_pre(preQuantScalar);
+    TExtractAccToMat<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(),
+        dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+}
+
+template <typename DstTileData, typename SrcTileData, typename FpTileData, ReluPreMode reluMode = ReluPreMode::NoRelu>
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, FpTileData &fp,
+     uint16_t indexRow = 0, uint16_t indexCol = 0)
+{
+    CheckTMovAccValid<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
+    static_assert((DstTileData::Loc == TileType::Mat), "Destination TileType only support Mat.");
+    static_assert((!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor),
+        "Dst fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
+    static_assert(FpTileData::Loc == TileType::Scaling, "Fp only support Scaling.");
+    constexpr QuantMode_t quantPre = GetVectorPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>();
+    SetFPC<FpTileData>(fp.data(), indexCol);
+    TExtractAccToMat<DstTileData, SrcTileData, quantPre, reluMode>(dst.data(), src.data(),
+        dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
 }
 } // namespace pto
 #endif // TEXTRACT_HPP
