@@ -135,6 +135,11 @@ tpartmin
 tpartmax
 tsel
 tsub
+tsubs
+trem
+trems
+tlrelu
+tmaxs
 tmins
 tmin
 tmax

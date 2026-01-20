@@ -35,6 +35,7 @@ constexpr pipe_t opPipeList[] = {
     PIPE_V /* TGATHER */, PIPE_V /* TGATHERB */, PIPE_V /* TCVT */, PIPE_V /* TROWSUM */,
     PIPE_V /* TROWMAX */, PIPE_V /* TROWMIN */, PIPE_V /* TROWEXPAND */, PIPE_V /* TCOLSUM */,
     PIPE_V /* TCOLMAX */, PIPE_V /* TCOLMIN */, PIPE_V /* TTRANS */, PIPE_V /* TTRI */, PIPE_V /* TREM */, 
+    PIPE_V /* TREMS */, PIPE_V /* TSUBS */, PIPE_V /* TMAXS */, PIPE_V /* TLRELU */,
     PIPE_V /* TMOV_V2V */, PIPE_FIX /* TMOV_V2M */, PIPE_FIX /* TEXTRACT_V2M */, PIPE_MTE1 /* TMOV_M2B */, 
     PIPE_MTE1 /* TMOV_M2L */, PIPE_MTE1 /* TMOV_M2R */, PIPE_FIX /* TMOV_M2S */, PIPE_FIX /* TMOV_A2V */, 
     PIPE_FIX /* TMOV_A2M */, PIPE_FIX /* TSTORE_ACC */, PIPE_MTE3 /* TSTORE_MAT */, PIPE_M /* TMATMUL */, 
