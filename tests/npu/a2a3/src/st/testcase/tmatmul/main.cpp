@@ -97,8 +97,8 @@ void TmatmulTest(uint32_t M, uint32_t K, uint32_t N)
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
+    std::vector<T> golden(cFileSize);
+    std::vector<T> devFinal(cFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
@@ -149,8 +149,7 @@ void TmatmulBiasTest(uint32_t M, uint32_t K, uint32_t N)
     size_t aFileSize = M * K * sizeof(U);
     size_t bFileSize = K * N * sizeof(S);
     size_t cFileSize = M * N * sizeof(T);
-    uint32_t alignBiasN = (N * sizeof(biasType) + 63) / 64 * 64 / sizeof(biasType);
-    size_t biasFileSize = 1 * alignBiasN * sizeof(biasType);
+    size_t biasFileSize = 1 * N * sizeof(biasType);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -199,8 +198,8 @@ void TmatmulBiasTest(uint32_t M, uint32_t K, uint32_t N)
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<float> golden(cFileSize);
-    std::vector<float> devFinal(cFileSize);
+    std::vector<T> golden(cFileSize);
+    std::vector<T> devFinal(cFileSize);
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
@@ -266,7 +265,7 @@ TEST_F(TMATMULBIASTest, case6)
 TEST_F(TMATMULBIASTest, case7)
 {
     uint32_t M = 135;
-    uint32_t K = 78;
+    uint32_t K = 64;
     uint32_t N = 88;
 
     TmatmulBiasTest<int32_t, int8_t, int8_t, int32_t, 7>(M, K, N);

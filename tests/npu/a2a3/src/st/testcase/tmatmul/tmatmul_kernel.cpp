@@ -34,9 +34,6 @@ __global__ AICORE void RunTMATMUL_GEMV_CLOSE(__gm__ T *out, __gm__ U *src0, __gm
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, blockAlign);
 
-    // The bias addr needs to be 64B aligned.
-    constexpr int alignBiasN = ((validN * sizeof(B) + BIAS_ALIGN - 1) / BIAS_ALIGN) * BIAS_ALIGN / sizeof(B);
-
     using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
@@ -47,19 +44,19 @@ __global__ AICORE void RunTMATMUL_GEMV_CLOSE(__gm__ T *out, __gm__ U *src0, __gm
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, alignBiasN>,
-        pto::Stride<alignBiasN, alignBiasN, alignBiasN, alignBiasN, 1>>;
+    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>,
+        pto::Stride<validN, validN, validN, validN, 1>>;
     GlobalDataSrc2 src2Global(src2);
 
     using TileMatAData = Tile<TileType::Mat, U, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
     using TileMatBData = Tile<TileType::Mat, S, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<TileType::Mat, B, 1, alignBiasN, BLayout::RowMajor, 1, alignBiasN>;
+    using TileBiasData = Tile<TileType::Mat, B, 1, N, BLayout::RowMajor, 1, N>;
 
     using LeftTile = TileLeft<U, M, K, validM, validK>;
     using RightTile = TileRight<S, K, N, validK, validN>;
     using AccTile = TileAcc<T, M, N, validM, validN>;
 
-    using BiasTile = Tile<TileType::Bias, B, 1, alignBiasN, BLayout::RowMajor, 1, validN>;
+    using BiasTile = Tile<TileType::Bias, B, 1, N, BLayout::RowMajor, 1, validN>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -125,9 +122,6 @@ __global__ AICORE void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1,
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, blockAlign);
 
-    // The bias addr needs to be 64B aligned.
-    constexpr int alignBiasN = ((validN * sizeof(B) + BIAS_ALIGN - 1) / BIAS_ALIGN) * BIAS_ALIGN / sizeof(B);
-
     using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
@@ -138,18 +132,18 @@ __global__ AICORE void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1,
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, alignBiasN>,
-        pto::Stride<alignBiasN, alignBiasN, alignBiasN, alignBiasN, 1>>;
+    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>,
+        pto::Stride<validN, validN, validN, validN, 1>>;
     GlobalDataSrc2 src2Global(src2);
 
     using TileMatAData = Tile<TileType::Mat, U, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
     using TileMatBData = Tile<TileType::Mat, S, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<TileType::Mat, B, 1, alignBiasN, BLayout::RowMajor, 1, alignBiasN>;
+    using TileBiasData = Tile<TileType::Mat, B, 1, N, BLayout::RowMajor, 1, N>;
 
     using LeftTile = TileLeft<U, M, K, validM, validK>;
     using RightTile = TileRight<S, K, N, validK, validN>;
     using AccTile = TileAcc<T, M, N, validM, validN>;
-    using BiasTile = Tile<TileType::Bias, B, 1, alignBiasN, BLayout::RowMajor, 1, validN>;
+    using BiasTile = Tile<TileType::Bias, B, 1, N, BLayout::RowMajor, 1, validN>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -213,15 +207,12 @@ __global__ AICORE void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S 
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, BASEK);
 
-    // The bias addr needs to be 64B aligned.
-    constexpr int alignBiasN = ((validN * sizeof(B) + BIAS_ALIGN - 1) / BIAS_ALIGN) * BIAS_ALIGN / sizeof(B);
-
     using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, BASEK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, BASEK, validN>,
         pto::Stride<1 * BASEK * validN, 1 * BASEK * validN, BASEK * validN, validN, 1>>;
-    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, alignBiasN>,
-        pto::Stride<alignBiasN, alignBiasN, alignBiasN, alignBiasN, 1>>;
+    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>,
+        pto::Stride<validN, validN, validN, validN, 1>>;
     using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
         pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc2 src2Global(src2);
@@ -229,12 +220,12 @@ __global__ AICORE void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S 
 
     using TileMatAData = Tile<TileType::Mat, U, M, BASEK, BLayout::ColMajor, validM, BASEK, SLayout::RowMajor, 512>;
     using TileMatBData = Tile<TileType::Mat, S, BASEK, N, BLayout::ColMajor, BASEK, validN, SLayout::RowMajor, 512>;
-    using TileBiasData = Tile<TileType::Mat, B, 1, alignBiasN, BLayout::RowMajor, 1, alignBiasN>;
+    using TileBiasData = Tile<TileType::Mat, B, 1, N, BLayout::RowMajor, 1, validN>;
 
     using LeftTile = TileLeft<U, M, BASEK, validM, BASEK>;
     using RightTile = TileRight<S, BASEK, N, BASEK, validN>;
     using AccTile = TileAcc<T, M, N, validM, validN>;
-    using BiasTile = Tile<TileType::Bias, B, 1, alignBiasN, BLayout::RowMajor, 1, validN>;
+    using BiasTile = Tile<TileType::Bias, B, 1, N, BLayout::RowMajor, 1, validN>;
 
     TileMatAData aMatTile;
     TileMatBData bMatTile;
@@ -309,7 +300,7 @@ void LaunchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
         RunTMATMUL<float, half, half, float, 31, 120, 58, false><<<1, nullptr, stream>>>(
             reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1), nullptr);
     } else if constexpr (tilingKey == 2) {
-        RunTMATMUL<int32_t, int8_t, int8_t, int32_t, 65, 89, 90, false>
+        RunTMATMUL<int32_t, int8_t, int8_t, int32_t, 65, 90, 89, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1), nullptr);
     } else if constexpr (tilingKey == 3) {
@@ -346,9 +337,9 @@ void LaunchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2
             <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
                 reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
     } else if constexpr (tilingKey == 7) {
-        RunTMATMULSplitK<float, half, half, float, 135, 78, 88, true>
-            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0),
-                reinterpret_cast<half *>(src1), reinterpret_cast<float *>(src2));
+        RunTMATMULSplitK<int32_t, int8_t, int8_t, int32_t, 135, 64, 88, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
+                reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
     }
 }
 

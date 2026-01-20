@@ -42,6 +42,13 @@ PTO_INTERNAL void TLoadNd2nzInstr(__cbuf__ typename TileData::DType *dst, typena
     } else if constexpr (sizeof(typename TileData::DType) == 4) {
         copy_gm_to_cbuf_multi_nd2nz_b32s(dst, src, 0, ndNum, nValue, dValue, srcNdMatrixStride, srcDValue,
             dstNzC0Stride, dstNzNStride, dstNzMatrixStride);
+    } else if constexpr (sizeof(typename TileData::DType) == 8) {
+        auto dstCast = reinterpret_cast<__cbuf__ uint32_t*>(dst);
+        auto srcCast = reinterpret_cast<__gm__ uint32_t*>(src);
+        uint16_t dValueb64 = dValue * 2;
+        uint16_t srcDValueb64 = srcDValue * 2;
+        copy_gm_to_cbuf_multi_nd2nz_b32s(dstCast, srcCast, 0, ndNum, nValue, dValueb64, srcNdMatrixStride, srcDValueb64,
+            dstNzC0Stride, dstNzNStride, dstNzMatrixStride);
     }
 }
 
@@ -274,17 +281,70 @@ PTO_INTERNAL void TLoadGm2L1Nz2nz(__cbuf__ typename TileData::DType *dstAddr, ty
 }
 
 template <typename TileData, typename GlobalData>
+PTO_INTERNAL void TLoadGm2L1VectorInND(__cbuf__ typename TileData::DType *dstAddr, typename GlobalData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    PTO_ASSERT(validCol == gShape4, "The validCol of TileData must be equal to the 5th dim(Shape4) of ND shape!");
+    PTO_ASSERT(validRow == gShape0 * gShape1 * gShape2 * gShape3,
+        "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape3) of ND shape!");
+    static_assert(GlobalData::staticShape[0] == 1 && GlobalData::staticShape[1] == 1 && GlobalData::staticShape[2] == 1,
+        "Fix: GlobalTensor ony support 2 dim when using vector input!");
+    uint16_t nValue = gShape3;
+    uint16_t dValue = gShape4;
+    uint16_t srcDValue = gStride3;
+    typename GlobalData::DType *srcAddrP = srcAddr;
+    __cbuf__ typename TileData::DType *dstAddrP = dstAddr;
+    // Parameter list:
+    // dst, src, sid, ndNum, nValue, dValue, srcNdMatrixStride, srcDValue,
+    // dstNzC0Stride, dstNzNStride, dstNzMatrixStride
+    TLoadNd2nzInstr<TileData, GlobalData>(dstAddrP, srcAddrP, 1, nValue, dValue, 0, srcDValue, TileData::Rows, 1, 1);
+}
+
+template <typename TileData, typename GlobalData>
+PTO_INTERNAL void TLoadGm2L1VectorInDn(__cbuf__ typename TileData::DType *dstAddr, typename GlobalData::DType *srcAddr,
+    int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
+    int gStride3, int gStride4, int validRow, int validCol)
+{
+    static_assert(GlobalData::staticShape[0] == 1 && GlobalData::staticShape[1] == 1 && GlobalData::staticShape[2] == 1,
+        "Fix: GlobalTensor ony support 2 dim when using vector input!");
+    PTO_ASSERT(validRow == gShape3, "The validCol of TileData must be equal to the 4th dim(Shape3) of DN shape!");
+    PTO_ASSERT(validCol == gShape0 * gShape1 * gShape2 * gShape4,
+        "The validRow of TileData must be equal to (Shape0 * Shape1 * Shape2 * Shape4) of DN shape!");
+    uint16_t nValue = gShape4;
+    uint16_t dValue = gShape3;
+    uint16_t srcDValue = gStride3;
+    typename GlobalData::DType *srcAddrP = srcAddr;
+    __cbuf__ typename TileData::DType *dstAddrP = dstAddr;
+    // Parameter list:
+    // dst, src, sid, ndNum, nValue, dValue, srcNdMatrixStride, srcDValue,
+    // dstNzC0Stride, dstNzNStride, dstNzMatrixStride
+    TLoadNd2nzInstr<TileData, GlobalData>(dstAddrP, srcAddrP, 1, nValue, dValue, 0, srcDValue, TileData::Cols, 1, 1);
+}
+
+template <typename TileData, typename GlobalData>
 __tf__ AICORE void TLoadGm2L1(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
-    int gStride3, int gStride4, int validRow, int validCol) {
+    int gStride3, int gStride4, int validRow, int validCol)
+{
     __cbuf__ typename TileData::DType *dstAddr = (__cbuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
     typename GlobalData::DType *srcAddr = src;
     if constexpr (GetTileLayoutCustom<TileData>() == TileLayoutCustom::ND) {
-        TLoadGm2L1Nd2nd<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
-            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        if constexpr (TileData::Rows == 1) {
+            TLoadGm2L1VectorInND<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4,
+                gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        } else {
+            TLoadGm2L1Nd2nd<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4,
+                gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        }
     } else if constexpr (GetTileLayoutCustom<TileData>() == TileLayoutCustom::DN) {
-        TLoadGm2L1Dn2dn<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
-            gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        if constexpr (TileData::Cols == 1) {
+            TLoadGm2L1VectorInDn<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4,
+                gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        } else {
+            TLoadGm2L1Dn2dn<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4,
+                gStride0, gStride1, gStride2, gStride3, gStride4, validRow, validCol);
+        }
     } else if constexpr (GetTileLayoutCustom<TileData>() == TileLayoutCustom::NZ) {
         TLoadGm2L1Nz2nz<TileData, GlobalData>(dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0,
             gStride1, gStride2, gStride3, gStride4, validRow, validCol);
@@ -294,12 +354,14 @@ __tf__ AICORE void TLoadGm2L1(typename TileData::TileDType __out__ dst, typename
 template <typename TileData, typename GlobalData>
 __tf__ AICORE void TLoadGm2L1Nd2nz(typename TileData::TileDType __out__ dst, typename GlobalData::DType __in__ *src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
-    int gStride3, int gStride4, int validRow, int validCol) {
-    static_assert(GlobalData::staticShape[0] == 1 && GlobalData::staticShape[1] == 1 && GlobalData::staticShape[2] == 1,
-        "Fix: GlobalTensor ony support 2 dim when ND2NZ!");
-    static_assert(TileData::SFractalSize == 512, "Fix: TileData ony support SFractalSize = 512Bytes!");
+    int gStride3, int gStride4, int validRow, int validCol)
+{
     __cbuf__ typename TileData::DType *dstAddr = (__cbuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
     typename GlobalData::DType *srcAddr = src;
+    static_assert(GlobalData::staticShape[0] == 1 && GlobalData::staticShape[1] == 1 && GlobalData::staticShape[2] == 1,
+        "Fix: GlobalTensor ony support 2 dim when ND2NZ!");
+    static_assert(TileData::SFractalSize == 512 || TileData::SFractalSize == 32,
+        "Fix: TileData ony support SFractalSize = 512Bytes or 32Bytes!");
     PTO_ASSERT(gShape3 > 0 && gShape3 <= 16384, "The Shape3 of GlobalTensor must be in range of [1, 16384]!");
     PTO_ASSERT(gShape4 > 0 && gShape4 <= 65535, "The Shape4 of GlobalTensor must be must be in range of [1, 65535]!");
     PTO_ASSERT(
@@ -309,7 +371,6 @@ __tf__ AICORE void TLoadGm2L1Nd2nz(typename TileData::TileDType __out__ dst, typ
     uint16_t nValue = gShape3;
     uint16_t dValue = gShape4;
     uint16_t srcDValue = gStride3;
-    uint16_t dstNzC0Stride = TileData::Rows;
     // Parameter list:
     // dst, src, sid, ndNum, nValue, dValue, srcNdMatrixStride, srcDValue,
     // dstNzC0Stride, dstNzNStride, dstNzMatrixStride
@@ -334,7 +395,6 @@ __tf__ AICORE void TLoadGm2L1Dn2zn(typename TileData::TileDType __out__ dst, typ
     uint16_t nValue = gShape4;
     uint16_t dValue = gShape3;
     uint16_t srcDValue = gStride4;
-    uint16_t dstNzC0Stride = TileData::Cols;
     TLoadNd2nzInstr<TileData, GlobalData>(dstAddr, srcAddr, 1, nValue, dValue, 0, srcDValue, TileData::Cols, 1, 1);
 }
 

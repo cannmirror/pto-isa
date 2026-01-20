@@ -28,14 +28,14 @@ AICORE inline void TSTORE_MAT2GM(GlobalData &dst, TileData &src)
 
     if constexpr (GlobalData::layout == pto::Layout::ND && GetTileLayoutCustom<TileData>() == TileLayoutCustom::ND) {
         uint16_t nBurst = validRow;
-        uint16_t lenBurst = validCol / blockSizeElem;
+        uint16_t lenBurst = (validCol + blockSizeElem - 1) / blockSizeElem;
         uint16_t l1Gap = (TileData::Cols - validCol) / blockSizeElem;
         uint16_t gmGap = 0;
         copy_cbuf_to_gm(dstAddr, srcAddr, (uint8_t)0, nBurst, lenBurst, l1Gap, gmGap);
     } else if constexpr (GlobalData::layout == pto::Layout::DN &&
                          GetTileLayoutCustom<TileData>() == TileLayoutCustom::DN) {
         uint16_t nBurst = validCol;
-        uint16_t lenBurst = validRow / blockSizeElem;
+        uint16_t lenBurst = (validRow + blockSizeElem - 1) / blockSizeElem;
         uint16_t l1Gap = (TileData::Rows - validRow) / blockSizeElem;
         uint16_t gmGap = 0;
         copy_cbuf_to_gm(dstAddr, srcAddr, (uint8_t)0, nBurst, lenBurst, l1Gap, gmGap);
@@ -253,9 +253,11 @@ void LaunchTLoad(T *out, T *src, void *stream)
 template void LaunchTLoad<0, float, 1, 1, 1, 3, 128, 3, 3, 3, 32, 128>(float *out, float *src, void *stream);
 template void LaunchTLoad<0, int16_t, 2, 2, 1, 2, 32, 3, 3, 3, 111, 64>(int16_t *out, int16_t *src, void *stream);
 template void LaunchTLoad<0, int8_t, 1, 2, 1, 11, 32, 1, 3, 2, 93, 32>(int8_t *out, int8_t *src, void *stream);
+template void LaunchTLoad<0, int8_t, 1, 1, 1, 1, 201, 1, 1, 1, 1, 201>(int8_t *out, int8_t *src, void *stream);
 template void LaunchTLoad<1, float, 1, 1, 1, 128, 3, 3, 3, 3, 128, 32>(float *out, float *src, void *stream);
 template void LaunchTLoad<1, int16_t, 2, 2, 1, 32, 2, 3, 3, 3, 64, 111>(int16_t *out, int16_t *src, void *stream);
 template void LaunchTLoad<1, int8_t, 1, 2, 1, 32, 11, 1, 3, 2, 32, 93>(int8_t *out, int8_t *src, void *stream);
+template void LaunchTLoad<1, float, 1, 1, 1, 156, 1, 1, 1, 1, 156, 1>(float *out, float *src, void *stream);
 template void LaunchTLoad<2, float, 1, 5, 21, 16, 8, 1, 5, 21, 16, 8>(float *out, float *src, void *stream);
 template void LaunchTLoad<2, int16_t, 2, 15, 11, 16, 16, 3, 23, 13, 16, 16>(int16_t *out, int16_t *src, void *stream);
 template void LaunchTLoad<2, int8_t, 1, 16, 32, 16, 32, 1, 32, 32, 16, 32>(int8_t *out, int8_t *src, void *stream);

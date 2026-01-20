@@ -112,6 +112,11 @@ TEST_F(TLoadGM2L1Test, ND_int8_t_1_2_1_11_32_1_3_2_93_32)
     test_tload<0, int8_t, 1, 2, 1, 11, 32, 1, 3, 2, 93, 32>();
 }
 
+TEST_F(TLoadGM2L1Test, ND_int8_t_1_1_1_1_201_1_1_1_1_201)
+{
+    test_tload<0, int8_t, 1, 1, 1, 1, 201, 1, 1, 1, 1, 201>();
+}
+
 TEST_F(TLoadGM2L1Test, DN_float_1_1_1_128_3_3_3_3_128_32)
 {
     test_tload<1, float, 1, 1, 1, 128, 3, 3, 3, 3, 128, 32>();
@@ -125,6 +130,11 @@ TEST_F(TLoadGM2L1Test, DN_int16_t_2_2_1_32_2_3_3_3_64_111)
 TEST_F(TLoadGM2L1Test, DN_int8_t_1_2_1_32_11_1_3_2_32_93)
 {
     test_tload<1, int8_t, 1, 2, 1, 32, 11, 1, 3, 2, 32, 93>();
+}
+
+TEST_F(TLoadGM2L1Test, DN_float_1_1_1_156_1_1_1_1_156_1)
+{
+    test_tload<1, float, 1, 1, 1, 156, 1, 1, 1, 1, 156, 1>();
 }
 
 TEST_F(TLoadGM2L1Test, NZ_float_1_5_21_16_8_1_5_21_16_8)
