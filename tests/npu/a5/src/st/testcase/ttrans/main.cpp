@@ -11,9 +11,30 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "test_common.h"
 #include "acl/acl.h"
 #include <gtest/gtest.h>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 using namespace PtoTestCommon;
+
+//#define DEBUG_PRINT
+
+#ifdef DEBUG_PRINT
+template <typename T>
+void PrintFirst64(const char* name, const T* data, size_t totalSize) {
+    size_t count = std::min(totalSize / sizeof(T), static_cast<size_t>(64));
+    std::cout << "\n=== " << name << " (first " << count << " values) ===" << std::endl;
+    for (size_t i = 0; i < count; ++i) {
+        if constexpr (std::is_same_v<T, aclFloat16>) {
+            std::cout << std::setw(10) << aclFloat16ToFloat(data[i]);
+        } else {
+            std::cout << std::setw(10) << static_cast<float>(data[i]);
+        }
+        if ((i + 1) % 8 == 0) std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+#endif
 
 template <typename T, int dstTRows, int dstTCols, int srcTRows, int srcTCols, int vRows, int vCols>
 void LaunchTTRANS(T *out, T *src, void *stream);
@@ -83,13 +104,21 @@ void test_ttrans() {
     ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, result.data(), dstFileSize);
 
-    bool ret = ResultCmp(golden, result, 0.001f);
+#ifdef DEBUG_PRINT
+    std::vector<T> inputData(srcFileSize / sizeof(T));
+    ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, inputData.data(), srcFileSize);
+    PrintFirst64("INPUT", inputData.data(), srcFileSize);
+    PrintFirst64("OUTPUT", result.data(), dstFileSize);
+    PrintFirst64("GOLDEN", golden.data(), dstFileSize);
+#endif
+
+    bool ret = ResultCmp(golden, result, 0.000f);
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TTRANSTest, case_float_8x16_16x8_16x8) {
-    test_ttrans<float, 8, 16, 16, 8, 16, 8>();
+TEST_F(TTRANSTest, case_float_8x8_2x8_2x8) {
+    test_ttrans<float, 8, 8, 2, 8, 2, 8>();
 }
 TEST_F(TTRANSTest, case_half_16x16_16x16_16x16) {
     test_ttrans<aclFloat16, 16, 16, 16, 16, 16, 16, true>();
@@ -100,8 +129,8 @@ TEST_F(TTRANSTest, case_float_16x32_32x16_31x15) {
 TEST_F(TTRANSTest, case_half_32x32_32x32_31x31) {
     test_ttrans<aclFloat16, 32, 32, 32, 32, 31, 31, true>();
 }
-TEST_F(TTRANSTest, case_float_512x8_2x512_2x512) {
-    test_ttrans<float, 512, 8, 2, 512, 2, 512>();
+TEST_F(TTRANSTest, case_float_8x8_4x8_4x8) {
+    test_ttrans<float, 8, 8, 4, 8, 4, 8>();
 }
 TEST_F(TTRANSTest, case_float_512x16_9x512_9x512) {
     test_ttrans<float, 512, 16, 9, 512, 9, 512>();
@@ -127,21 +156,21 @@ TEST_F(TTRANSTest, case_half_64x128_128x64_100x64) {
 TEST_F(TTRANSTest, case_float_32x512_512x32_512x2) {
     test_ttrans<float, 32, 512, 512, 32, 512, 2>();
 }
-TEST_F(TTRANSTest, case_float_64x64_64x64_64x64) {
-    test_ttrans<float, 64, 64, 64, 64, 64, 64>();
-}
-TEST_F(TTRANSTest, case_float_32x64_64x32_64x32) {
-    test_ttrans<float, 32, 64, 64, 32, 64, 32>();
+TEST_F(TTRANSTest, case_float_16x8_1x16_1x16) {
+    test_ttrans<float, 16, 8, 1, 16, 1, 16>();
 }
 TEST_F(TTRANSTest, case_float_64x64_64x64_36x64) {
     test_ttrans<float, 64, 64, 64, 64, 36, 64>();
 }
-TEST_F(TTRANSTest, case_float_16x8_2x16_2x16) {
-    test_ttrans<float, 16, 8, 2, 16, 2, 16>();
+TEST_F(TTRANSTest, case_float_8x8_8x8_8x8) {
+    test_ttrans<float, 8, 8, 8, 8, 8, 8>();
 }
 TEST_F(TTRANSTest, case_uint8_32x32_32x32_32x32) {
     test_ttrans<uint8_t, 32, 32, 32, 32, 32, 32>();
 }
 TEST_F(TTRANSTest, case_uint8_64x64_64x64_22x63) {
     test_ttrans<uint8_t, 64, 64, 64, 64, 22, 63>();
+}
+TEST_F(TTRANSTest, case_float_8x8_1x8_1x8) {
+    test_ttrans<float, 8, 8, 1, 8, 1, 8>();
 }

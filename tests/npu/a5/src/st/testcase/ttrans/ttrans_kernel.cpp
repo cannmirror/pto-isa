@@ -62,11 +62,11 @@ void LaunchTTRANSHalf(aclFloat16 *out, aclFloat16 *src, void *stream)
         ((half *)(out), (half *)(src), vRows, vCols);
 }
 
-template void LaunchTTRANS<float, 8, 16, 16, 8, 16, 8>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 8, 8, 2, 8, 2, 8>(float *out, float *src, void *stream);
 template void LaunchTTRANSHalf<16, 16, 16, 16, 16, 16>(aclFloat16 *out, aclFloat16 *src, void *stream);
 template void LaunchTTRANS<float, 16, 32, 32, 16, 31, 15>(float *out, float *src, void *stream);
 template void LaunchTTRANSHalf<32, 32, 32, 32, 31, 31>(aclFloat16 *out, aclFloat16 *src, void *stream);
-template void LaunchTTRANS<float, 512, 8, 2, 512, 2, 512>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 8, 8, 4, 8, 4, 8>(float *out, float *src, void *stream);
 template void LaunchTTRANS<float, 512, 16, 9, 512, 9, 512>(float *out, float *src, void *stream);
 template void LaunchTTRANS<float, 66, 88, 9, 16, 7, 15>(float *out, float *src, void *stream);
 template void LaunchTTRANS<float, 16, 32, 32, 16, 23, 15>(float *out, float *src, void *stream);
@@ -75,9 +75,9 @@ template void LaunchTTRANSHalf<64, 112, 100, 64, 64, 64>(aclFloat16 *out, aclFlo
 template void LaunchTTRANSHalf<64, 128, 128, 64, 64, 64>(aclFloat16 *out, aclFloat16 *src, void *stream);
 template void LaunchTTRANSHalf<64, 128, 128, 64, 100, 64>(aclFloat16 *out, aclFloat16 *src, void *stream);
 template void LaunchTTRANS<float, 32, 512, 512, 32, 512, 2>(float *out, float *src, void *stream);
-template void LaunchTTRANS<float, 64, 64, 64, 64, 64, 64>(float *out, float *src, void *stream);
-template void LaunchTTRANS<float, 32, 64, 64, 32, 64, 32>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 16, 8, 1, 16, 1, 16>(float *out, float *src, void *stream);
 template void LaunchTTRANS<float, 64, 64, 64, 64, 36, 64>(float *out, float *src, void *stream);
-template void LaunchTTRANS<float, 16, 8, 2, 16, 2, 16>(float *out, float *src, void *stream);
+template void LaunchTTRANS<float, 8, 8, 8, 8, 8, 8>(float *out, float *src, void *stream);
 template void LaunchTTRANS<uint8_t, 32, 32, 32, 32, 32, 32>(uint8_t *out, uint8_t *src, void *stream);
 template void LaunchTTRANS<uint8_t, 64, 64, 64, 64, 22, 63>(uint8_t *out, uint8_t *src, void *stream);
+template void LaunchTTRANS<float, 8, 8, 1, 8, 1, 8>(float *out, float *src, void *stream);
