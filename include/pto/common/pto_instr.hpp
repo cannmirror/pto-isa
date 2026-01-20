@@ -175,15 +175,15 @@ PTO_INST RecordEvent TDIV(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &sr
   return {};
 }
 
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TSHL(TileData &dst, TileData &src0, TileData &src1, WaitEvents&... events) {
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
+PTO_INST RecordEvent TSHL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1, WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TSHL, dst, src0, src1);
   return {};
 }
 
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TSHR(TileData &dst, TileData &src0, TileData &src1, WaitEvents&... events) {
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
+PTO_INST RecordEvent TSHR(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1, WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TSHR, dst, src0, src1);
   return {};

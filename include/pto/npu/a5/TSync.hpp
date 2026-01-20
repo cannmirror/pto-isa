@@ -20,7 +20,8 @@ namespace pto {
   constexpr pipe_t opPipeList[] = {
     PIPE_MTE2 /* TLOAD */, PIPE_MTE3 /* TSTORE_VEC */, PIPE_S /* SCALAR */, PIPE_S /* TRESHAPE */, PIPE_V /* VECTOR */,
     PIPE_V /* TADD */, PIPE_V /* TADDS */, PIPE_V /* TSUB */, PIPE_V /* TMUL */, PIPE_V /* TMULS */, PIPE_V /* TDIV */,
-    PIPE_V /* TDIVS */, PIPE_V /* TMIN */, PIPE_V /* TMINS */, PIPE_V /* TMAX */, PIPE_V /* TAND */, PIPE_V /* TOR */, PIPE_V /* TSEL */,
+    PIPE_V /* TDIVS */, PIPE_V /* TMIN */, PIPE_V /* TMINS */, PIPE_V /* TMAX */, PIPE_V /* TAND */, PIPE_V /* TOR */,
+    PIPE_V /* TSEL */, PIPE_V /* TSHL */, PIPE_V /* TSHR */,
     PIPE_V /* TEXP */, PIPE_V /* TSELS */, PIPE_V /* TSQRT */, PIPE_V /* TRSQRT */, PIPE_V /* TEXPANDS */,
     PIPE_V /* TPARTADD */, PIPE_V /* TPARTMAX */, PIPE_V /* TPARTMIN */, PIPE_V /* TCMPS */, PIPE_V /* TMRGSORT */,
     PIPE_V /* TSORT32 */,PIPE_S /* TCI */, PIPE_V /* TGATHER */, PIPE_V /* TGATHERB */, PIPE_V /* TCVT */,

@@ -130,6 +130,8 @@ tadd
 taddplus
 tand
 tor
+tshl
+tshr
 tpartadd
 tpartmin
 tpartmax

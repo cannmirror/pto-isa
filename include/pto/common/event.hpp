@@ -35,6 +35,8 @@ namespace pto {
     TAND,
     TOR,
     TSEL,
+    TSHL,
+    TSHR,
     TEXP,
     TSELS,
     TSQRT,

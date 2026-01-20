@@ -39,7 +39,7 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TADDC`](../docs/isa/TADDC.md) | 是 | TODO | TODO | TODO |
 | [`TADDS`](../docs/isa/TADDS.md) | 是 | 是 | 是 | 是 |
 | [`TADDSC`](../docs/isa/TADDSC.md) | 是 | TODO | TODO | TODO |
-| [`TAND`](../docs/isa/TAND.md) | 是 | TODO | TODO | TODO |
+| [`TAND`](../docs/isa/TAND.md) | 是 | 是 | 是 | 是 |
 | [`TANDS`](../docs/isa/TANDS.md) | 是 | TODO | TODO | TODO |
 | [`TASSIGN`](../docs/isa/TASSIGN.md) | 是 | 是 | 是 | 是 |
 | [`TCI`](../docs/isa/TCI.md) | 是 | 是 | 是 | 是 |
@@ -74,7 +74,7 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TMULS`](../docs/isa/TMULS.md) | 是 | 是 | 是 | 是 |
 | [`TNEG`](../docs/isa/TNEG.md) | 是 | TODO | TODO | TODO |
 | [`TNOT`](../docs/isa/TNOT.md) | 是 | TODO | TODO | TODO |
-| [`TOR`](../docs/isa/TOR.md) | 是 | TODO | TODO | TODO |
+| [`TOR`](../docs/isa/TOR.md) | 是 | 是 | 是 | 是 |
 | [`TORS`](../docs/isa/TORS.md) | 是 | TODO | TODO | TODO |
 | [`TPARTADD`](../docs/isa/TPARTADD.md) | 是 | 是 | 是 | 是 |
 | [`TPARTMAX`](../docs/isa/TPARTMAX.md) | 是 | 是 | 是 | 是 |
@@ -96,8 +96,8 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TSCATTER`](../docs/isa/TSCATTER.md) | TODO | TODO | TODO | TODO |
 | [`TSEL`](../docs/isa/TSEL.md) | 是 | 是 | 是 | 是 |
 | [`TSELS`](../docs/isa/TSELS.md) | TODO | TODO | TODO | TODO |
-| [`TSHL`](../docs/isa/TSHL.md) | 是 | TODO | TODO | TODO |
-| [`TSHR`](../docs/isa/TSHR.md) | 是 | TODO | TODO | TODO |
+| [`TSHL`](../docs/isa/TSHL.md) | 是 | 是 | 是 | 是 |
+| [`TSHR`](../docs/isa/TSHR.md) | 是 | 是 | 是 | 是 |
 | [`TSORT32`](../docs/isa/TSORT32.md) | 是 | 是 | 是 | 是 |
 | [`TSQRT`](../docs/isa/TSQRT.md) | 是 | 是 | 是 | 是 |
 | [`TSTORE`](../docs/isa/TSTORE.md) | 是 | 是 | 是 | 是 |
@@ -108,5 +108,5 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TSUBSC`](../docs/isa/TSUBSC.md) | 是 | TODO | TODO | TODO |
 | [`TSYNC`](../docs/isa/TSYNC.md) | TODO | TODO | TODO | TODO |
 | [`TTRANS`](../docs/isa/TTRANS.md) | 是 | 是 | 是 | 是 |
-| [`TXOR`](../docs/isa/TXOR.md) | 是 | TODO | TODO | TODO |
+| [`TXOR`](../docs/isa/TXOR.md) | 是 | 是 | 是 | 是 |
 | [`TXORS`](../docs/isa/TXORS.md) | 是 | TODO | TODO | TODO |

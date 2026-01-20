@@ -107,6 +107,8 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trelu -g TNOTTest.case_int32_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tands -g TANDSTest.case_int16_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tors -g TORSTest.case_int16_64x64_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshl -g TSHLTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshr -g TSHRTest.case2
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshls -g TSHLSTest.case_int16_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshrs -g TSHRSTest.case_int16_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t txor -g TXORSTest.case_int16_64x64_64x64_64x64_64x64
@@ -169,6 +171,8 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trelu
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tands
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tors
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshl
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshr
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshls
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshrs
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t txor
@@ -229,6 +233,8 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trsqrt -g TRSQRTTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsel -g TSELTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsels -g TSELSTest.case_float_16x200_20x224_16x200
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tshl -g TSHLTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tshr -g TSHRTest.case2
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsort32 -g TSort32Test.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsqrt -g TSQRTTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tstore -g TStoreTest.case1
@@ -300,6 +306,8 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trsqrt
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsel
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsels
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshl
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshr
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsort32
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsqrt
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tstore
