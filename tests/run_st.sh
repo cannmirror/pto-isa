@@ -178,6 +178,7 @@ fi
 
 if [ "$ENABLE_A5" = "true" ]; then
   if [ "$ENABLE_SIMPLE" = "true" ]; then           # 单个用例
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tlrelu -g TLRELUTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadds -g TADDSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tand -g TANDTest.case1
@@ -252,6 +253,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_acc2mat -g TMOVTest.case_nz2nz_insert
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tlrelu
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadds
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tand

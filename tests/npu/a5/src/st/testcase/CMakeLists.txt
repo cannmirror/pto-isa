@@ -151,6 +151,7 @@ set(ALL_TESTCASES
     tmov
     tmov_mx
     tmul
+    tlrelu
     tdiv
     tcmps
     tmov_acc2vec
