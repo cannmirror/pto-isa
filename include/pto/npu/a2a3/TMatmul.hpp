@@ -13,6 +13,14 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
+// Accumulate phase for unit-flag aware TMATMUL paths; Unknown is kept as an alias for compatibility.
+enum class AccPhase : uint8_t {
+    Unspecified = 0x0,
+    Unknown = Unspecified,
+    Partial = 0x2,
+    Final = 0x3,
+};
+
 template <typename TileLeft, typename TileRight>
 PTO_INTERNAL bool GetKDirectionAlign(TileLeft &aMatrix, TileRight &bMatrix)
 {
@@ -26,7 +34,8 @@ PTO_INTERNAL bool GetKDirectionAlign(TileLeft &aMatrix, TileRight &bMatrix)
     }
     return false;
 }
-template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
+template <AccPhase Phase = AccPhase::Unspecified, typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource,
+    bool cmatrixInitVal>
 __tf__ AICORE void TMatmul(typename TileRes::TileDType __out__ cMatrix, typename TileLeft::TileDType __in__ aMatrix,
     typename TileRight::TileDType __in__ bMatrix, uint16_t m, uint16_t k, uint16_t n, bool kDirectionAlign)
 {
@@ -36,10 +45,11 @@ __tf__ AICORE void TMatmul(typename TileRes::TileDType __out__ cMatrix, typename
     if (m == 1) {
         m = 16; // avoid gemv mode, if m is 1, the gemv mode will be used in a3
     }
-    mad(c, a, b, m, k, n, 0, kDirectionAlign, cmatrixSource, cmatrixInitVal);
+    mad(c, a, b, m, k, n, static_cast<uint8_t>(Phase), kDirectionAlign, cmatrixSource, cmatrixInitVal);
 }
 
-template <typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource, bool cmatrixInitVal>
+template <AccPhase Phase = AccPhase::Unspecified, typename TileRes, typename TileLeft, typename TileRight, bool cmatrixSource,
+    bool cmatrixInitVal>
 __tf__ AICORE void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
     typename TileLeft::TileDType __in__ aMatrix, typename TileRight::TileDType __in__ bMatrix, uint64_t bias,
     uint16_t m, uint16_t k, uint16_t n, bool kDirectionAlign)
@@ -52,7 +62,7 @@ __tf__ AICORE void TMatmulBias(typename TileRes::TileDType __out__ cMatrix,
     if (m == 1) {
         m = 16; // avoid gemv mode, if m is 1, the gemv mode will be used in a3
     }
-    mad(c, a, b, m, k, n, 0, kDirectionAlign, cmatrixSource, cmatrixInitVal);
+    mad(c, a, b, m, k, n, static_cast<uint8_t>(Phase), kDirectionAlign, cmatrixSource, cmatrixInitVal);
 }
 
 template <typename TileRes, typename TileLeft, typename TileRight>
@@ -84,7 +94,7 @@ PTO_INTERNAL void CheckDynamicMad(uint16_t aMatrixRow, uint16_t aMatrixCol, uint
     PTO_ASSERT(bMatrixCol >= 1 && bMatrixCol <= elementSize, "ERROR: The range of valid bMatrixCol is [1, 4095].");
 }
 
-template <typename TileRes, typename TileLeft, typename TileRight>
+template <AccPhase Phase = AccPhase::Unspecified, typename TileRes, typename TileLeft, typename TileRight>
 PTO_INTERNAL void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
 {
     CheckStaticMad<TileRes, TileLeft, TileRight>();
@@ -93,10 +103,10 @@ PTO_INTERNAL void TMATMUL_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &b
     uint16_t n = bMatrix.GetValidCol();
     bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
     CheckDynamicMad(m, k, n);
-    TMatmul<TileRes, TileLeft, TileRight, false, true>(cMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n, kDirectionAlign);
+    TMatmul<Phase, TileRes, TileLeft, TileRight, false, true>(cMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n, kDirectionAlign);
 }
 
-template <typename TileRes, typename TileLeft, typename TileRight>
+template <AccPhase Phase = AccPhase::Unspecified, typename TileRes, typename TileLeft, typename TileRight>
 PTO_INTERNAL void TMATMUL_ACC_IMPL(
     TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix)
 {
@@ -106,10 +116,17 @@ PTO_INTERNAL void TMATMUL_ACC_IMPL(
     uint16_t n = bMatrix.GetValidCol();
     bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
     CheckDynamicMad(m, k, n);
-    TMatmul<TileRes, TileLeft, TileRight, false, false>(cOutMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n, kDirectionAlign);
+    TMatmul<Phase, TileRes, TileLeft, TileRight, false, false>(cOutMatrix.data(), aMatrix.data(), bMatrix.data(), m, k, n, kDirectionAlign);
 }
 
-template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias>
+// Convenience overload when accumulator input/output share the same tile.
+template <AccPhase Phase = AccPhase::Unspecified, typename TileRes, typename TileLeft, typename TileRight>
+PTO_INTERNAL void TMATMUL_ACC_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix)
+{
+    TMATMUL_ACC_IMPL<Phase, TileRes, TileLeft, TileRight>(cMatrix, cMatrix, aMatrix, bMatrix);
+}
+
+template <AccPhase Phase = AccPhase::Unspecified, typename TileRes, typename TileLeft, typename TileRight, typename TileBias>
 PTO_INTERNAL void TMATMUL_BIAS_IMPL(
     TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData)
 {
@@ -122,7 +139,7 @@ PTO_INTERNAL void TMATMUL_BIAS_IMPL(
     bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
     CheckDynamicMad(m, k, n);
 
-    TMatmulBias<TileRes, TileLeft, TileRight, true, false>(
+    TMatmulBias<Phase, TileRes, TileLeft, TileRight, true, false>(
         cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n, kDirectionAlign);
 }
 } // namespace pto

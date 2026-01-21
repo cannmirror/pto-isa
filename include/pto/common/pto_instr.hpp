@@ -133,12 +133,29 @@ PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...event
     return {};
 }
 
+// UF-aware overload: allow selecting unit-flag phase while keeping the TSTORE name.
+template <STPhase Phase, typename TileData, typename GlobalData, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...events)
+{
+  TSYNC(events...);
+  TSTORE_IMPL<TileData, GlobalData, AtomicType::AtomicNone, Phase>(dst, src);
+  return {};
+}
+
 template <typename TileData, typename GlobalData, AtomicType atomicType, typename... WaitEvents>
 PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...events)
 {
     TSYNC(events...);
     TSTORE_IMPL<TileData, GlobalData, atomicType>(dst, src);
     return {};
+}
+
+template <STPhase Phase, typename TileData, typename GlobalData, AtomicType atomicType, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...events)
+{
+  TSYNC(events...);
+  TSTORE_IMPL<TileData, GlobalData, atomicType, Phase>(dst, src);
+  return {};
 }
 
 template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
@@ -150,6 +167,15 @@ PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...event
     return {};
 }
 
+template <STPhase Phase, typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
+  ReluPreMode reluPreMode, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, WaitEvents &...events)
+{
+  TSYNC(events...);
+  TSTORE_IMPL<TileData, GlobalData, atomicType, reluPreMode, Phase>(dst, src);
+  return {};
+}
+
 template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
     ReluPreMode reluPreMode = ReluPreMode::NoRelu, typename... WaitEvents>
 PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, uint64_t preQuantScalar, WaitEvents &...events)
@@ -157,6 +183,15 @@ PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, uint64_t preQuantSca
     TSYNC(events...);
     TSTORE_IMPL<TileData, GlobalData, atomicType, reluPreMode>(dst, src, preQuantScalar);
     return {};
+}
+
+template <STPhase Phase, typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
+  ReluPreMode reluPreMode = ReluPreMode::NoRelu, typename... WaitEvents>
+PTO_INST RecordEvent TSTORE(GlobalData &dst, TileData &src, uint64_t preQuantScalar, WaitEvents &...events)
+{
+  TSYNC(events...);
+  TSTORE_IMPL<TileData, GlobalData, atomicType, reluPreMode, Phase>(dst, src, preQuantScalar);
+  return {};
 }
 
 template <typename TileData, typename GlobalData, typename FpTileData, AtomicType atomicType = AtomicType::AtomicNone,
@@ -292,6 +327,14 @@ PTO_INST RecordEvent TMATMUL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMa
   return {};
 }
 
+// UF-aware overload enabling unit-flag selection via AccPhase while retaining the TMATMUL name.
+template <AccPhase Phase, typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
+PTO_INST RecordEvent TMATMUL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, WaitEvents&... events) {
+  TSYNC(events...);
+  TMATMUL_IMPL<Phase>(cMatrix, aMatrix, bMatrix);
+  return {};
+}
+
 template <typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
 PTO_INST RecordEvent TMATMUL_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix,
   WaitEvents&... events) {
@@ -300,11 +343,38 @@ PTO_INST RecordEvent TMATMUL_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLe
   return {};
 }
 
+// UF-aware overloads for TMATMUL_ACC: explicit input/output or shared accumulator tile.
+template <AccPhase Phase, typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
+PTO_INST RecordEvent TMATMUL_ACC(
+  TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix, WaitEvents&... events) {
+  TSYNC(events...);
+  TMATMUL_ACC_IMPL<Phase>(cOutMatrix, cInMatrix, aMatrix, bMatrix);
+  return {};
+}
+
+template <AccPhase Phase = AccPhase::Unspecified, typename TileRes, typename TileLeft, typename TileRight,
+    typename... WaitEvents>
+PTO_INST RecordEvent TMATMUL_ACC(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, WaitEvents&... events) {
+  TSYNC(events...);
+  TMATMUL_ACC_IMPL<Phase>(cMatrix, aMatrix, bMatrix);
+  return {};
+}
+
 template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias, typename... WaitEvents>
 PTO_INST RecordEvent TMATMUL_BIAS(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData,
   WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TMATMUL_BIAS, cMatrix, aMatrix, bMatrix, biasData);
+  return {};
+}
+
+// UF-aware overload enabling unit-flag selection for bias matmul while keeping the TMATMUL_BIAS name.
+template <AccPhase Phase, typename TileRes, typename TileLeft, typename TileRight, typename TileBias,
+  typename... WaitEvents>
+PTO_INST RecordEvent TMATMUL_BIAS(
+  TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData, WaitEvents&... events) {
+  TSYNC(events...);
+  TMATMUL_BIAS_IMPL<Phase>(cMatrix, aMatrix, bMatrix, biasData);
   return {};
 }
 

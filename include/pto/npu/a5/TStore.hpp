@@ -13,6 +13,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "common.hpp"
 
 namespace pto {
+// UF store phase encodes unit flag behavior for accumulator stores.
+enum class STPhase : uint8_t {
+    Unspecified = 0x0,
+    Partial = 0x2,
+    Final = 0x3,
+};
 template <typename SrcType, typename DstType>
 PTO_INTERNAL constexpr QuantMode_t GetCastPreQuantModeGm()
 {
@@ -196,7 +202,7 @@ PTO_INTERNAL void CheckStaticVec()
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant,
-    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu, STPhase Phase = STPhase::Unspecified>
 PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr, __cc__ typename TileData::DType *srcTileAddr,
     int gShape3, int gShape4, int gStride2, int gStride3, int validRow, int validCol)
 {
@@ -213,7 +219,7 @@ PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr, __cc__ 
         srcStride = (validRow + FRACTAL_NZ_ROW - 1) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
         srcNdStride = srcStride * gShape4 * c0;
     }
-    constexpr uint8_t unitFlagCtrl = 0;
+    constexpr uint8_t unitFlagCtrl = static_cast<uint8_t>(Phase);
     constexpr uint8_t nz2ndEn = 1;
     uint16_t dstNdStride = gStride2;
 
@@ -236,7 +242,7 @@ PTO_INTERNAL void TStoreAccND(typename GlobalData::DType *dstGlobalAddr, __cc__ 
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant,
-    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu, STPhase Phase = STPhase::Unspecified>
 PTO_INTERNAL void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typename TileData::DType *srcAddr,
     typename GlobalData::DType *dstGlobalAddr, __cc__ typename TileData::DType *srcTileAddr, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gStride0, int validRow, int validCol)
@@ -261,7 +267,7 @@ PTO_INTERNAL void TStoreAccNZ(typename GlobalData::DType *dstAddr, __cc__ typena
     if constexpr (CompactMode::Normal == TileData::Compact) {
         srcStride = (FRACTAL_NZ_ROW - 1 + validRow) / FRACTAL_NZ_ROW * FRACTAL_NZ_ROW;
     }
-    constexpr uint8_t unitFlagCtrl = 0;
+    constexpr uint8_t unitFlagCtrl = static_cast<uint8_t>(Phase);
     uint8_t channelSplitEn = 0;
 
     uint16_t c0Size = 16;
@@ -315,7 +321,7 @@ __tf__ AICORE void TStoreAccFp(typename GlobalData::DType __out__ *dst, typename
 }
 
 template <typename GlobalData, typename TileData, QuantMode_t quantPre = QuantMode_t::NoQuant,
-    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu, STPhase Phase = STPhase::Unspecified>
 __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename TileData::TileDType __in__ src,
     int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2,
     int gStride3, int gStride4, int validRow, int validCol)
@@ -323,13 +329,13 @@ __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename T
     __cc__ typename TileData::DType *srcAddr = (__cc__ typename TileData::DType *)__cce_get_tile_ptr(src);
     typename GlobalData::DType *dstAddr = dst;
     if constexpr (GlobalData::layout == pto::Layout::ND) {
-        TStoreAccND<GlobalData, TileData, quantPre, reluPreMode>(
+        TStoreAccND<GlobalData, TileData, quantPre, reluPreMode, Phase>(
             dstAddr, srcAddr, gShape3, gShape4, gStride2, gStride3, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::NZ) {
         __cc__ typename TileData::DType *srcTileAddr = srcAddr;
         typename GlobalData::DType *dstGlobalAddr = dstAddr;
-        TStoreAccNZ<GlobalData, TileData, quantPre, reluPreMode>(dstAddr, srcAddr, dstGlobalAddr, srcTileAddr, gShape0,
-            gShape1, gShape2, gShape3, gShape4, gStride0, validRow, validCol);
+        TStoreAccNZ<GlobalData, TileData, quantPre, reluPreMode, Phase>(dstAddr, srcAddr, dstGlobalAddr, srcTileAddr,
+            gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, validRow, validCol);
     }
 }
 
@@ -489,7 +495,8 @@ __tf__ AICORE OP_NAME(TSTORE) OP_TYPE(memory) void TStore(typename GlobalData::D
     }
 }
 
-template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone>
+template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
+    STPhase Phase = STPhase::Unspecified>
 PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
     static_assert(TileData::Loc == pto::TileType::Vec || TileData::Loc == pto::TileType::Acc,
@@ -503,7 +510,7 @@ PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
         CheckStaticAcc<TileData, GlobalData, false>();
 
         constexpr QuantMode_t quantPre = GetCastPreQuantModeGm<L0cT, DstT>();
-        TStoreAcc<GlobalData, TileData, quantPre>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
+        TStoreAcc<GlobalData, TileData, quantPre, ReluPreMode::NoRelu, Phase>(dst.data(), src.data(), dst.GetShape(pto::GlobalTensorDim::DIM_0),
             dst.GetShape(pto::GlobalTensorDim::DIM_1), dst.GetShape(pto::GlobalTensorDim::DIM_2),
             dst.GetShape(pto::GlobalTensorDim::DIM_3), dst.GetShape(pto::GlobalTensorDim::DIM_4),
             dst.GetStride(pto::GlobalTensorDim::DIM_0), dst.GetStride(pto::GlobalTensorDim::DIM_1),
@@ -525,7 +532,7 @@ PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
 }
 
 template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
-    ReluPreMode reluPreMode>
+    ReluPreMode reluPreMode, STPhase Phase = STPhase::Unspecified>
 PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
 {
     static_assert(TileData::Loc == pto::TileType::Acc, "Source TileType only suport Acc!");
@@ -536,7 +543,7 @@ PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
         SetAtomicAdd<DstT>();
     }
     constexpr QuantMode_t quantPre = GetCastPreQuantModeGm<L0cT, DstT>();
-    TStoreAcc<GlobalData, TileData, quantPre, reluPreMode>(dst.data(), src.data(),
+    TStoreAcc<GlobalData, TileData, quantPre, reluPreMode, Phase>(dst.data(), src.data(),
         dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
         dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3),
         dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0),
@@ -549,7 +556,7 @@ PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src)
 }
 
 template <typename TileData, typename GlobalData, AtomicType atomicType = AtomicType::AtomicNone,
-    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu, STPhase Phase = STPhase::Unspecified>
 PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantScalar)
 {
     static_assert(TileData::Loc == pto::TileType::Acc, "Source TileType only suport Acc!");
@@ -562,7 +569,7 @@ PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantS
     }
     constexpr QuantMode_t quantPre = GetScalarPreQuantModeGm<L0cT, DstT>();
     set_quant_pre(preQuantScalar);
-    TStoreAcc<GlobalData, TileData, quantPre, reluPreMode>(dst.data(), src.data(),
+    TStoreAcc<GlobalData, TileData, quantPre, reluPreMode, Phase>(dst.data(), src.data(),
         dst.GetShape(pto::GlobalTensorDim::DIM_0), dst.GetShape(pto::GlobalTensorDim::DIM_1),
         dst.GetShape(pto::GlobalTensorDim::DIM_2), dst.GetShape(pto::GlobalTensorDim::DIM_3),
         dst.GetShape(pto::GlobalTensorDim::DIM_4), dst.GetStride(pto::GlobalTensorDim::DIM_0),
@@ -575,7 +582,7 @@ PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src, uint64_t preQuantS
 }
 
 template <typename TileData, typename GlobalData, typename FpTileData, AtomicType atomicType = AtomicType::AtomicNone,
-    ReluPreMode reluPreMode = ReluPreMode::NoRelu>
+    ReluPreMode reluPreMode = ReluPreMode::NoRelu, STPhase Phase = STPhase::Unspecified>
 PTO_INTERNAL void TSTORE_IMPL(GlobalData &dst, TileData &src, FpTileData &fp)
 {
     static_assert(TileData::Loc == pto::TileType::Acc, "Source TileType only suport Acc!");

@@ -28,6 +28,15 @@ namespace pto{
         NONE
     };
 
+    enum class AccMode {
+        Init,           // auto phase, first slice initializes, rest accumulate
+        Acc,            // auto phase, all slices accumulate into existing C
+        InitPartialSum, // explicitly partial, first slice initializes
+        InitFinalSum,   // explicitly final, first slice initializes
+        AccPartialSum,  // explicitly partial, all slices accumulate
+        AccFinalSum,    // explicitly final, all slices accumulate
+    };
+
     #define L0A_BUF0 ((__ca__ half*) (__ca__ char*) 0x0)
     #define L0A_BUF1 ((__ca__ half*) (__ca__ char*) 0x8000)
     #define L0B_BUF0 ((__ca__ half*) (__ca__ char*) 0x0)
@@ -92,8 +101,34 @@ namespace pto{
         return layout_t::NONE;
     }
 
+    struct MatmulCallConfig {
+        bool useAcc;      // true -> TMATMUL_UF_ACC, false -> TMATMUL_UF
+        AccPhase phase;   // UF mapping
+    };
+
+    AICORE inline MatmulCallConfig resolve_acc_mode(AccMode mode, bool isFirstSlice, bool isLastSlice)
+    {
+        switch (mode) {
+            case AccMode::Init:
+                return MatmulCallConfig{!isFirstSlice, AccPhase::Unknown};
+            case AccMode::Acc:
+                return MatmulCallConfig{true, AccPhase::Unknown};
+            case AccMode::InitPartialSum:
+                return MatmulCallConfig{!isFirstSlice, AccPhase::Partial};
+            case AccMode::InitFinalSum:
+                return MatmulCallConfig{!isFirstSlice, AccPhase::Final};
+            case AccMode::AccPartialSum:
+                return MatmulCallConfig{true, AccPhase::Partial};
+            case AccMode::AccFinalSum:
+                return MatmulCallConfig{true, AccPhase::Final};
+        }
+        return MatmulCallConfig{!isFirstSlice, AccPhase::Partial};
+    }
+
      template <unsigned Cube_M, unsigned Tile_K, unsigned Cube_N, layout_t LAYOUT = layout_t::NONE, typename TileDataA, typename TileDataB, typename TileDataC>
-    AICORE inline void pto_macro_matmul(TileDataA &aMatTile, TileDataB &bMatTile, TileDataC &cAccTile, bool accumulate = false) {
+    AICORE inline void pto_macro_matmul(
+        TileDataA &aMatTile, TileDataB &bMatTile, TileDataC &cAccTile, AccMode accMode = AccMode::Init)
+    {
 
 
         constexpr layout_t layout = deduce_layout<TileDataA, TileDataB>();
@@ -111,7 +146,8 @@ namespace pto{
         // Ping-pong is used to overlap TEXTRACT (L1->L0) with TMATMUL on alternating buffers.
         uint64_t pingpong = getPingPong(0);
         const uint64_t Cube_K = calculateFittingCubeK(Cube_M, Cube_N);
-        for (uint64_t k = 0 ; k < (uint64_t) (Tile_K / Cube_K); k++){
+        const uint64_t kSegments = (uint64_t)(Tile_K / Cube_K);
+        for (uint64_t k = 0 ; k < kSegments; k++){
             using LeftTile = TileLeft<half, Cube_M, Cube_K, Cube_M, Cube_K>;
             LeftTile al0Tiles[2] = {LeftTile(), LeftTile()};
             using RightTile = TileRight<half, Cube_K, Cube_N, Cube_K, Cube_N>;
@@ -137,13 +173,24 @@ namespace pto{
             set_flag(PIPE_MTE1, PIPE_M, pingpong);
             wait_flag(PIPE_MTE1, PIPE_M, pingpong);
 
-            // TMATMUL: first K-slice initializes, subsequent slices accumulate.
-            if (k == 0 && !accumulate) {
-                TMATMUL(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
-                // TMATMUL_UF(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong], UNIT_FLAG_ENABLE(k, (K / Cube_K)));
+            const bool isLast = (k + 1 == kSegments);
+            MatmulCallConfig cfg = resolve_acc_mode(accMode, k == 0, isLast);
+            if (cfg.useAcc) {
+                if (cfg.phase == AccPhase::Final) {
+                    TMATMUL_ACC<AccPhase::Final>(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
+                } else if (cfg.phase == AccPhase::Partial) {
+                    TMATMUL_ACC<AccPhase::Partial>(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
+                } else {
+                    TMATMUL_ACC(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
+                }
             } else {
-                TMATMUL_ACC(cAccTile, cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
-                // TMATMUL_ACC_UF(cAccTile, cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong], UNIT_FLAG_ENABLE(k, (K / Cube_K)));
+                if (cfg.phase == AccPhase::Final) {
+                    TMATMUL<AccPhase::Final>(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
+                } else if (cfg.phase == AccPhase::Partial) {
+                    TMATMUL<AccPhase::Partial>(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
+                } else {
+                    TMATMUL(cAccTile, al0Tiles[pingpong], bl0Tiles[pingpong]);
+                }
             }
             set_flag(PIPE_M, PIPE_MTE1, pingpong);
             pingpong = getPingPong(1);

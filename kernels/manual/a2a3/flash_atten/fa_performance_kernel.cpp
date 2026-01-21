@@ -16,9 +16,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #if defined(__DAV_C220_CUBE__) || defined(__DAV_C220_VEC__)
 #include <pto/npu/a2a3/custom/TSyncCVID.hpp>
 #include <pto/npu/a2a3/custom/TSync_Custom.hpp>
+#define UF_ENABLE 1
 #elif defined(__DAV_C310_CUBE__) || defined(__DAV_C310_VEC__)
 #include <pto/npu/a5/custom/TSyncCVID.hpp>
 #include <pto/npu/a5/custom/TSync_Custom.hpp>
+#define UF_ENABLE 1
 #endif
 #include "pto_macro_matmul.hpp"
 #include "pto_macro_fa_softmax.hpp"
@@ -296,13 +298,18 @@ AICORE inline void compute_qk(int tile_id, int sub_tile_id, __gm__ half *q, __gm
         set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
         wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
+        #if UF_ENABLE
+        pto_macro_matmul<Cube_S0, Cube_HEAD, Cube_S1>(qMatTile, kMatTile, qkAccTile, AccMode::InitFinalSum);
+        #else
+        pto_macro_matmul<Cube_S0, Cube_HEAD, Cube_S1>(qMatTile, kMatTile, qkAccTile, AccMode::Init);
         wait_flag(PIPE_FIX, PIPE_M, accTileEvtID);
-
-        pto_macro_matmul<Cube_S0, Cube_HEAD, Cube_S1>(qMatTile, kMatTile, qkAccTile);
+        #endif
 
         set_flag(PIPE_MTE1, PIPE_MTE2, qkMatTileEventId);
+        #if !UF_ENABLE
         set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
         wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+        #endif
 
         const int sync_iter = tile_id;
         const bool should_wait_consume = should_wait_consumption<QKP_CV_FIFO, CV_FIFO_CONS_SYNC_PERIOD>(sync_iter);
@@ -317,9 +324,14 @@ AICORE inline void compute_qk(int tile_id, int sub_tile_id, __gm__ half *q, __gm
                 static_cast<size_t>(Cube_S1) +
             static_cast<size_t>(sub_tile_id) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(Cube_S1);
         GlobalDataQK qkGlobalTile(qk_tile_fifo + base_elems);
-        TSTORE(qkGlobalTile, qkAccTile);
 
+
+        #if UF_ENABLE
+        TSTORE<STPhase::Final>(qkGlobalTile, qkAccTile);
+        #else
+        TSTORE(qkGlobalTile, qkAccTile);
         set_flag(PIPE_FIX, PIPE_M, accTileEvtID);
+        #endif
 
         if (sub_tile_id == static_cast<int>(kTileFactor) - 1)
             qk2smSync.record(); // notify for QK produce data
@@ -345,6 +357,7 @@ AICORE inline void compute_pv(int tile_id, int sub_tile_id, __gm__ half *p_tile_
     const int sync_iter = tile_id;
     const bool should_wait_consume = should_wait_consumption<QKP_CV_FIFO, CV_FIFO_CONS_SYNC_PERIOD>(sync_iter);
     const bool should_notify_consume = should_notify_consumption<QKP_CV_FIFO, CV_FIFO_CONS_SYNC_PERIOD>(sync_iter);
+    const bool is_last_subtile = (sub_tile_id + 1 == static_cast<int>(kTileFactor));
 
     if constexpr (DAV_CUBE) {
         using GlobalVT =
@@ -379,18 +392,29 @@ AICORE inline void compute_pv(int tile_id, int sub_tile_id, __gm__ half *p_tile_
         set_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
         wait_flag(PIPE_MTE2, PIPE_MTE1, EVENT_ID0);
 
+        #if !UF_ENABLE
         if (sub_tile_id == 0) {
             wait_flag(PIPE_FIX, PIPE_M, accTileEvtID);
-            pto_macro_matmul<Cube_S0, Cube_S1, Cube_HEAD>(pMatTile, vMatTile, pvAccTile, false);
-        } else {
-            pto_macro_matmul<Cube_S0, Cube_S1, Cube_HEAD>(pMatTile, vMatTile, pvAccTile, true);
         }
+        #endif
+
+        #if UF_ENABLE
+        const AccMode accMode = (sub_tile_id == 0)
+            ? (is_last_subtile ? AccMode::InitFinalSum : AccMode::InitPartialSum)
+            : (is_last_subtile ? AccMode::AccFinalSum : AccMode::AccPartialSum);
+        pto_macro_matmul<Cube_S0, Cube_S1, Cube_HEAD>(pMatTile, vMatTile, pvAccTile, accMode);
+        #else
+        const AccMode accMode = (sub_tile_id == 0) ? AccMode::Init : AccMode::Acc;
+        pto_macro_matmul<Cube_S0, Cube_S1, Cube_HEAD>(pMatTile, vMatTile, pvAccTile, accMode);
+        #endif
 
         set_flag(PIPE_MTE1, PIPE_MTE2, svMatTileEventId);
 
         if (sub_tile_id == static_cast<int>(kTileFactor) - 1) {
+            #if !UF_ENABLE
             set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
             wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+            #endif
 
             if (should_wait_consume)
                 pv2guSync.allocate(); // wait for update consume data
@@ -401,8 +425,13 @@ AICORE inline void compute_pv(int tile_id, int sub_tile_id, __gm__ half *p_tile_
             const size_t base_elems_pv =
                 static_cast<size_t>(buf_idx_pv) * static_cast<size_t>(Cube_S0) * static_cast<size_t>(HEAD_SIZE);
             GlobalDataPV pvGlobalTile((__gm__ float *)(pv_tile_fifo + base_elems_pv));
+
+            #if UF_ENABLE           
+            TSTORE<STPhase::Final>(pvGlobalTile, pvAccTile);
+            #else
             TSTORE(pvGlobalTile, pvAccTile);
             set_flag(PIPE_FIX, PIPE_M, accTileEvtID);
+            #endif
 
             pv2guSync.record(); // notify update produce data
         }                                                                   // end loop
