@@ -306,8 +306,8 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trsqrt
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsel
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsels
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshl
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tshr
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tshl
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tshr
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsort32
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsqrt
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tstore
