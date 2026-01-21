@@ -24,9 +24,10 @@ constexpr const int B8_DATA_TYPE_OFFSET = 8;
 
     PTO_INTERNAL DupType DupValue(T value) {
       if constexpr (isB8) {
-        // splice two b8 into one b16
-        DupType u16 = static_cast<DupType>(value);
-        return u16 + (u16 << B8_DATA_TYPE_OFFSET);
+        // convert signed int to unsigned int to avoid sign extension
+        uint16_t u16 = static_cast<uint8_t>(value);
+        // duplicate the 8-bit value into both lower and upper bytes of a 16-bit integer
+        return u16 | (u16 << B8_DATA_TYPE_OFFSET);
       } else {
         return value;
       }
