@@ -102,6 +102,8 @@ This table covers all PTO instructions exposed by `include/pto/common/pto_instr.
 | Tile-Scalar / Tile-Immediate | [`TSUBS`](isa/TSUBS.md) | Elementwise subtract a scalar from a tile. |
 | Tile-Scalar / Tile-Immediate | [`TSUBSC`](isa/TSUBSC.md) | Elementwise fused op: `src0 - scalar + src1`. |
 | Tile-Scalar / Tile-Immediate | [`TXORS`](isa/TXORS.md) | Elementwise bitwise XOR of a tile and a scalar. |
+| Tile-Scalar / Tile-Immediate | [`TSHLS`](isa/TSHLS.md) | Elementwise shift-left a tile by a scalar. |
+| Tile-Scalar / Tile-Immediate | [`TSHRS`](isa/TSHRS.md) | Elementwise shift-right a tile by a scalar. |
 | Axis Reduce / Expand | [`TCOLEXPAND`](isa/TCOLEXPAND.md) | Broadcast the first element of each source column across the destination column. |
 | Axis Reduce / Expand | [`TCOLMAX`](isa/TCOLMAX.md) | Reduce each column by taking the maximum across rows. |
 | Axis Reduce / Expand | [`TCOLMIN`](isa/TCOLMIN.md) | Reduce each column by taking the minimum across rows. |

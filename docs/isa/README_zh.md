@@ -55,6 +55,8 @@
 - [`TLRELU`](TLRELU.md) — 带标量 slope 的 Leaky ReLU。
 - [`TADDSC`](TADDSC.md) — 逐元素融合加法：`src0 + scalar + src1`。
 - [`TSUBSC`](TSUBSC.md) — 逐元素融合运算：`src0 - scalar + src1`。
+- [`TSHLS`](TSHLS.md) — tile 逐元素左移标量对应位数。
+- [`TSHRS`](TSHRS.md) — tile 逐元素右移标量对应位数。
 
 ## 轴向归约 / 展开
 - [`TROWSUM`](TROWSUM.md) — 对每行按列求和。

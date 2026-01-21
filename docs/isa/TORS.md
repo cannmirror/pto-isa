@@ -24,8 +24,8 @@ Synchronous form:
 Declared in `include/pto/common/pto_instr.hpp`:
 
 ```cpp
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TORS(TileData& dst, TileData& src0, typename TileData::DType scalar, WaitEvents&... events);
+template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
+PTO_INST RecordEvent TORS(TileDataDst& dst, TileDataSrc& src, typename TileDataSrc::DType scalar, WaitEvents&... events);
 ```
 
 ## Constraints
@@ -41,9 +41,11 @@ PTO_INST RecordEvent TORS(TileData& dst, TileData& src0, typename TileData::DTyp
 using namespace pto;
 
 void example() {
-  using TileT = Tile<TileType::Vec, uint32_t, 16, 16>;
-  TileT x, out;
-  TORS(out, x, 0x10u);
+  using TileDst = Tile<TileType::Vec, uint16_t, 16, 16>;
+  using TileSrc = Tile<TileType::Vec, uint16_t, 16, 16>;
+  TileDst dst;
+  TileSrc src;
+  TORS(dst, src, 0xffu);
 }
 ```
 

@@ -56,6 +56,8 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TLRELU`: `docs/isa/TLRELU.md`
 - `TADDSC`: `docs/isa/TADDSC.md`
 - `TSUBSC`: `docs/isa/TSUBSC.md`
+- `TSHLS`: `docs/isa/TSHLS.md`
+- `TSHRS`: `docs/isa/TSHRS.md`
 
 ## Axis Reduce / Expand
 - `TROWSUM`: `docs/isa/TROWSUM.md`

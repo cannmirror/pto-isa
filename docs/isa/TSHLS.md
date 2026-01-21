@@ -1,0 +1,52 @@
+# TSHLS
+
+## Introduction
+
+Elementwise shift-left of a tile, shift bits given by scalar.
+
+## Math Interpretation
+
+For each element `(i, j)` in the valid region:
+
+$$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \ll \mathrm{scalar} $$
+
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
+
+Synchronous form:
+
+```text
+%dst = tshls %src, %scalar : !pto.tile<...>, i32
+```
+## C++ Intrinsic
+
+Declared in `include/pto/common/pto_instr.hpp`:
+
+```cpp
+template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
+PTO_INST RecordEvent TSHLS(TileDataDst& dst, TileDataSrc& src, typename TileDataSrc::DType scalar, WaitEvents&... events);
+```
+
+## Constraints
+
+- Intended for integral element types.
+- The op iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
+- Scalar only support zero and positive value.
+
+## Examples
+
+```cpp
+#include <pto/pto-inst.hpp>
+
+using namespace pto;
+
+void example() {
+  using TileDst = Tile<TileType::Vec, uint16_t, 16, 16>;
+  using TileSrc = Tile<TileType::Vec, uint16_t, 16, 16>;
+  TileDst dst;
+  TileSrc src;
+  TSHLS(dst, src, 0x2);
+}
+```
+
