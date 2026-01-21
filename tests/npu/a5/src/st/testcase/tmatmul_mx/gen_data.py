@@ -102,21 +102,18 @@ def gen_golden_data(case_name, param):
     k_aligned = align_to_multiple(k, 64)
 
     if a_type == fp4_e2m1x2:
-        x1_gm = np.random.randint(-7, 7, [m, k_aligned]).astype(a_type)
+        x1_gm = np.random.randint(-6, 6, [m, k]).astype(a_type)
     elif a_type == fp4_e1m2x2:
-        x1_gm = np.random.randint(-2, 2, [m, k_aligned]).astype(a_type)
+        x1_gm = np.random.randint(-1, 2, [m, k]).astype(a_type)
     else:
-        x1_gm = np.random.randint(-10, 10, [m, k_aligned]).astype(a_type)
+        x1_gm = np.random.randint(-10, 10, [m, k]).astype(a_type)
 
-    if b_type == fp4_e2m1x2:
-        x2_gm = np.random.randint(-7, 7, [k_aligned, n]).astype(b_type)
-    elif b_type == fp4_e1m2x2:
-        x2_gm = np.random.randint(-2, 2, [k_aligned, n]).astype(b_type)
+    if a_type == fp4_e2m1x2:
+        x2_gm = np.random.randint(-6, 6, [k, n]).astype(b_type)
+    elif a_type == fp4_e1m2x2:
+        x2_gm = np.random.randint(-1, 2, [k, n]).astype(b_type)
     else:
-        x2_gm = np.random.randint(-10, 10, [k_aligned, n]).astype(b_type)
-
-    x1_gm[:, original_k:] = 0
-    x2_gm[original_k:, :] = 0
+        x2_gm = np.random.randint(-10, 10, [k, n]).astype(b_type)
 
     if a_type == fp4_e2m1x2 or a_type == fp4_e1m2x2:
         x1_gm_bin = pack_two_fp4(x1_gm)
@@ -127,8 +124,8 @@ def gen_golden_data(case_name, param):
         x1_gm.tofile("./x1_gm.bin")
         x2_gm.tofile("./x2_gm.bin")
     
-    x1_mx_gm = np.random.randint(127, 130, [m, math.ceil(k_aligned / 32)]).astype(np.uint8)
-    x2_mx_gm = np.random.randint(127, 130, [math.ceil(k_aligned / 32), n]).astype(np.uint8)
+    x1_mx_gm = np.random.randint(127, 130, [m, math.ceil(k / 32)]).astype(np.uint8)
+    x2_mx_gm = np.random.randint(127, 130, [math.ceil(k / 32), n]).astype(np.uint8)
 
     ###################### compute ########################
     x1_mx = 2**(x1_mx_gm.astype(np.float64) - 127)
@@ -140,8 +137,8 @@ def gen_golden_data(case_name, param):
         x1_full[:, i] = x1_gm[:, i] * x1_mx[:, i // 32]
         x2_full[i, :] = x2_gm[i, :] * x2_mx[i // 32, :]
 
-    x1 = x1_full[:, :original_k] if original_k < k_aligned else x1_full
-    x2 = x2_full[:original_k, :] if original_k < k_aligned else x2_full
+    x1 = x1_full[:, :original_k]
+    x2 = x2_full[:original_k, :]
     # x1_scale_gm, convert to zZ format
     x1_scale_gm = convert_x1_scale_format(x1_mx_gm, 16, 2)
     # x1_scale_gm, convert to nN format
@@ -192,7 +189,7 @@ if __name__ == "__main__":
         "TMATMULMXTest.case_e2m1_e1m2_35_128_56",
         # bias + acc test
         "TMATMULMXTest.case_e1m2_e1m2_47_128_62",
-        "TMATMULMXTest.case_e4m3_e5m2_64_65_64",
+        "TMATMULMXTest.case_e4m3_e5m2_64_192_64",
         # gemv mode
         "TMATMULMXTest.case_e1m2_e1m2_1_64_62",
     ]
@@ -214,7 +211,7 @@ if __name__ == "__main__":
         TmatmulmxParams(fp4_e2m1x2, fp4_e1m2x2, np.float32, 35, 128, 56, True),
         # bias + acc test
         TmatmulmxParams(fp4_e1m2x2, fp4_e1m2x2, np.float32, 47, 128, 62, True),
-        TmatmulmxParams(fp8_e4m3fn, fp8_e5m2, np.float32, 64, 65, 64, True),
+        TmatmulmxParams(fp8_e4m3fn, fp8_e5m2, np.float32, 64, 192, 64, True),
         # gemv mode
         TmatmulmxParams(fp4_e1m2x2, fp4_e1m2x2, np.float32, 1, 64, 62, True),
     ]

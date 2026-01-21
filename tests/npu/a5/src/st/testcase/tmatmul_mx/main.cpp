@@ -49,8 +49,8 @@ constexpr T CeilDiv(T num_1, T num_2)
 template <typename T, typename U, typename S, bool isBias, bool isFp4, int32_t key>
 void TmatmulMXTest(uint32_t M, uint32_t K, uint32_t N, uint32_t validM, uint32_t validK, uint32_t validN)
 {
-    size_t aFileSize = isFp4 ? CeilDiv<uint32_t>(validM * K, 2) : validM * K * sizeof(U);
-    size_t bFileSize = isFp4 ? CeilDiv<uint32_t>(K * validN, 2) : K * validN * sizeof(S);
+    size_t aFileSize = isFp4 ? CeilDiv<uint32_t>(validM * validK, 2) : validM * validK * sizeof(U);
+    size_t bFileSize = isFp4 ? CeilDiv<uint32_t>(validK * validN, 2) : validK * validN * sizeof(S);
     size_t aScaleFileSize = M * CeilDiv<uint32_t>(K, 32);
     size_t bScaleFileSize = N * CeilDiv<uint32_t>(K, 32);
     size_t cFileSize = validM * validN * sizeof(T);
@@ -262,13 +262,13 @@ TEST_F(TMATMULMXTest, case_e1m2_e1m2_47_128_62)
     TmatmulMXTest<float, uint8_t, uint8_t, true, true, 4>(48, 128, 64, M, K, N);
 }
 
-TEST_F(TMATMULMXTest, case_e4m3_e5m2_64_65_64)
+TEST_F(TMATMULMXTest, case_e4m3_e5m2_64_192_64)
 {
     uint32_t M = 64;
-    uint32_t K = 65;
+    uint32_t K = 192;
     uint32_t N = 64;
 
-    TmatmulMXTest<float, uint8_t, uint8_t, true, false, 5>(64, 128, 64, M, K, N);
+    TmatmulMXTest<float, uint8_t, uint8_t, true, false, 5>(64, 192, 64, M, K, N);
 }
 
 TEST_F(TMATMULMXTest, case_e1m2_e1m2_1_64_62)

@@ -37,17 +37,17 @@ template <typename OutType, typename AType, typename BType, typename ScaleType, 
 __global__ AICORE void RunTMATMULMX(__gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1, __gm__ ScaleType *src2,
     __gm__ ScaleType *src3, __gm__ BiasType *src4)
 {
-    constexpr int blockNAlign = isFp4 ? 64 : 32; // need to be 32B aligned
+    constexpr int blockAlign = isFp4 ? 64 : 32; // need to be 32B aligned
 
     constexpr int M = CeilAlign<int>(validM, 16);
     constexpr int kAlign = CeilAlign<int>(validK, 64);
-    constexpr int N = CeilAlign<int>(validN, blockNAlign);
+    constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr uint8_t kMX = CeilDiv(kAlign, 32);
 
-    using GlobalDataSrc0 = GlobalTensor<AType, pto::Shape<1, 1, 1, validM, kAlign>,
-        pto::Stride<1 * validM * kAlign, 1 * validM * kAlign, validM * kAlign, kAlign, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<BType, pto::Shape<1, 1, 1, kAlign, validN>,
-        pto::Stride<1 * kAlign * validN, 1 * kAlign * validN, kAlign * validN, validN, 1>>;
+    using GlobalDataSrc0 = GlobalTensor<AType, pto::Shape<1, 1, 1, validM, validK>,
+        pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
+    using GlobalDataSrc1 = GlobalTensor<BType, pto::Shape<1, 1, 1, validK, validN>,
+        pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
 
     using MxShapeA = TileShape2D<ScaleType, M, kMX, Layout::MX_A_ZZ>;
     using MxStrideA = BaseShape2D<ScaleType, M, kMX, Layout::MX_A_ZZ>;
@@ -69,9 +69,9 @@ __global__ AICORE void RunTMATMULMX(__gm__ OutType *out, __gm__ AType *src0, __g
     GlobalDataOut dstGlobal(out);
 
     using TileMatAData =
-        Tile<TileType::Mat, AType, M, kAlign, BLayout::ColMajor, validM, kAlign, SLayout::RowMajor, 512>;
+        Tile<TileType::Mat, AType, M, kAlign, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
     using TileMatBData =
-        Tile<TileType::Mat, BType, kAlign, N, BLayout::ColMajor, kAlign, validN, SLayout::RowMajor, 512>;
+        Tile<TileType::Mat, BType, kAlign, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
 
     using TileScaleAData =
         Tile<TileType::Mat, ScaleType, M, kMX, BLayout::RowMajor, validM, kMX, SLayout::RowMajor, 32>;
@@ -118,6 +118,12 @@ __global__ AICORE void RunTMATMULMX(__gm__ OutType *out, __gm__ AType *src0, __g
     /*************************************TLOAD****************************************/
     TLOAD(aMatTile, src0Global);
     TLOAD(bMatTile, src1Global);
+    // Clear L1 buffer
+    // Tload will pad to 32B alignment with at most 32B padding
+    if constexpr (kAlign - validK >= blockAlign) {
+        TFILLPAD(aMatTile, aMatTile);
+    }
+    TFILLPAD(bMatTile, bMatTile);
 
     TLOAD<TileScaleAData, GlobalDataSrc2>(aScaleMatTile, src2Global);
     TLOAD<TileScaleBData, GlobalDataSrc3>(bScaleMatTile, src3Global);
@@ -164,20 +170,20 @@ template <typename OutType, typename AType, typename BType, typename ScaleType, 
 __global__ AICORE void RunTMATMULMX_SPLIT_K(__gm__ OutType *out, __gm__ AType *src0, __gm__ BType *src1,
     __gm__ ScaleType *src2, __gm__ ScaleType *src3, __gm__ BiasType *src4)
 {
-    constexpr int blockNAlign = isFp4 ? 64 : 32; // need to be 32B aligned
+    constexpr int blockAlign = isFp4 ? 64 : 32; // need to be 32B aligned
 
     constexpr int M = CeilAlign<int>(validM, 16);
     constexpr int K = CeilAlign<int>(validK, 64);
-    constexpr int N = CeilAlign<int>(validN, blockNAlign);
+    constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int KMX = CeilDiv(K, 32);
 
     constexpr int BASEK = 64;
     constexpr int BASEKMX = CeilDiv(BASEK, 32);
 
     using GlobalDataSrc0 = GlobalTensor<AType, pto::Shape<1, 1, 1, validM, BASEK>,
-        pto::Stride<1 * validM * K, 1 * validM * K, validM * K, K, 1>>;
+        pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<BType, pto::Shape<1, 1, 1, BASEK, validN>,
-        pto::Stride<1 * K * validN, 1 * K * validN, K * validN, validN, 1>>;
+        pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
 
     using MxShapeA = TileShape2D<ScaleType, M, BASEKMX, Layout::MX_A_ZZ>;
     using MxStrideA = BaseShape2D<ScaleType, M, KMX, Layout::MX_A_ZZ>;
@@ -402,7 +408,7 @@ void LaunchTMATMUL_MX_BIAS(
                 reinterpret_cast<float4_e1m2x2_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3), reinterpret_cast<float *>(src4));
     } else if constexpr (tilingKey == 5) {
-        RunTMATMULMX_SPLIT_K<float, float8_e4m3_t, float8_e5m2_t, float8_e8m0_t, float, 64, 65, 64, true, false>
+        RunTMATMULMX_SPLIT_K<float, float8_e4m3_t, float8_e5m2_t, float8_e8m0_t, float, 64, 192, 64, true, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
                 reinterpret_cast<float8_e5m2_t *>(src1), reinterpret_cast<float8_e8m0_t *>(src2),
                 reinterpret_cast<float8_e8m0_t *>(src3), reinterpret_cast<float *>(src4));
