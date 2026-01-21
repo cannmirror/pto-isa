@@ -173,6 +173,8 @@ __global__ AICORE void runTMOV_nz2nz(__gm__ outType *out, __gm__ aType *src0, __
                 pto::Shape<1, 1, 1, copyOutM, copyOutN>,
                 pto::Stride<1 * copyOutM * copyOutN, 1 * copyOutM * copyOutN, copyOutM * copyOutN, copyOutN, 1>>;
             GlobalDataSrc2 src2Global(src2);
+            set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
+            wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
             TLOAD(dstTileData, src2Global);
             set_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
@@ -237,6 +239,8 @@ __global__ AICORE void runVectorQuantTMOV_nz2nz(__gm__ outType *out, __gm__ aTyp
                 pto::Shape<1, 1, 1, copyOutM, copyOutN>,
                 pto::Stride<1 * copyOutM * copyOutN, 1 * copyOutM * copyOutN, copyOutM * copyOutN, copyOutN, 1>>;
             GlobalDataSrc3 src3Global(src3);
+            set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
+            wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
             TLOAD(dstTileData, src3Global);
             set_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
@@ -303,6 +307,8 @@ __global__ AICORE void runScalarQuantTMOV_nz2nz(__gm__ outType *out, __gm__ aTyp
                 pto::Shape<1, 1, 1, copyOutM, copyOutN>,
                 pto::Stride<1 * copyOutM * copyOutN, 1 * copyOutM * copyOutN, copyOutM * copyOutN, copyOutN, 1>>;
             GlobalDataSrc2 src2Global(src2);
+            set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
+            wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
             TLOAD(dstTileData, src2Global);
             set_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);

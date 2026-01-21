@@ -40,12 +40,10 @@ PTO_INTERNAL void TINSERT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t inde
         "The sum of indexRow and srcRow should be less than dstRow!");
     PTO_ASSERT(indexCol + SrcTileData::Cols <= DstTileData::Cols,
         "The sum of indexCol and srcCol should be less than dstCol!");
-    if constexpr (SrcTileData::Loc == TileType::Acc && DstTileData::Loc == TileType::Mat) {
-        constexpr QuantMode_t quantPre =
-            GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>(); 
-        TInsertAccToMat<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data(),
-            src.GetValidRow(), src.GetValidCol(), indexRow, indexCol);
-    }
+    constexpr QuantMode_t quantPre =
+        GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>(); 
+    TInsertAccToMat<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data(),
+        src.GetValidRow(), src.GetValidCol(), indexRow, indexCol);
 }
 
 // relu

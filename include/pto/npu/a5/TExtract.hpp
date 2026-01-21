@@ -382,15 +382,14 @@ __tf__ AICORE void TExtractAccToMat(typename DstTileData::TileDType __out__ dst,
     using srcType = typename SrcTileData::DType;
     constexpr bool channelSplitEnable = (!DstTileData::isRowMajor && (DstTileData::SFractal == SLayout::RowMajor)) &&
                                         (std::is_same_v<dstType, float>) &&
-                                        (DstTileData::SFractalSize == 512);
-    constexpr int32_t c0Size = (!channelSplitEnable) && (DstTileData::SFractalSize == 1024) ?
+                                        (DstTileData::SFractalSize == CUBE_BLOCK_SIZE);
+    constexpr int32_t c0Size = (!channelSplitEnable) && (DstTileData::SFractalSize == 2 * CUBE_BLOCK_SIZE) ?
                                     2 * C0_SIZE_BYTE / sizeof(dstType) :
                                     C0_SIZE_BYTE / sizeof(dstType);
     constexpr uint32_t dstStride = DstTileData::Rows * c0Size;
     uint16_t nSize = CeilDivision(validCol, c0Size) * c0Size;
-
-    constexpr int32_t accC0Size = BLOCK_BYTE_SIZE / sizeof(half);
-    uint32_t srcOffset = SrcTileData::Rows * accC0Size * (indexCol / accC0Size) + (indexRow * accC0Size + (indexCol % accC0Size));
+    uint32_t srcOffset = SrcTileData::Rows * ACC_C0_SIZE * (indexCol / ACC_C0_SIZE) +
+        (indexRow * ACC_C0_SIZE + (indexCol % ACC_C0_SIZE));
     __cbuf__ dstType *dstAddr = (__cbuf__ dstType *)__cce_get_tile_ptr(dst);
     __cc__ srcType *srcData = (__cc__ srcType *)(src) + srcOffset;
 

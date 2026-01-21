@@ -391,16 +391,15 @@ __tf__ AICORE void TExtractAccToMat(typename DstTileData::TileDType __out__ dst,
     using SrcType = typename SrcTileData::DType;
     using DstType = typename DstTileData::DType;
     constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(DstType);
-    constexpr int32_t accC0Size = BLOCK_BYTE_SIZE / sizeof(half);
-    uint32_t srcOffset = SrcTileData::Rows * accC0Size * (indexCol / accC0Size) + (indexRow * accC0Size + (indexCol % accC0Size));
+    uint32_t srcOffset = SrcTileData::Rows * ACC_C0_SIZE * (indexCol / ACC_C0_SIZE) +
+        (indexRow * ACC_C0_SIZE + (indexCol % ACC_C0_SIZE));
     __cc__ SrcType *srcAddr = (__cc__ SrcType *)__cce_get_tile_ptr(src) + srcOffset;
     __cbuf__ DstType *dstAddr = (__cbuf__ DstType *)__cce_get_tile_ptr(dst);
 
-    constexpr uint32_t dstStride_dst_D = DstTileData::Rows;
+    constexpr uint32_t dstStrideD = DstTileData::Rows;
     constexpr uint16_t srcStride = SrcTileData::Rows;
     uint16_t nSize = CeilDivision(validCol, c0Size) * c0Size;
-    copy_matrix_cc_to_cbuf(
-        dstAddr, srcAddr, 0, nSize, validRow, dstStride_dst_D, 
+    copy_matrix_cc_to_cbuf(dstAddr, srcAddr, 0, nSize, validRow, dstStrideD,
         srcStride, 0, QuantPre, reluMode, false, false);
 }
 

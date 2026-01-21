@@ -427,7 +427,7 @@ PTO_INST RecordEvent TFILLPAD(TileData &dst, TileData &src, WaitEvents&... event
   TSYNC(events...);
   TFILLPAD_IMPL<TileData, PadVal>(dst, src);
   return {};
-} 
+}
 
 template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
 PTO_INST RecordEvent TFILLPAD(DstTileData &dst, SrcTileData &src,

@@ -297,6 +297,8 @@ __global__ AICORE void RunTMOV(__gm__ OutType *out, __gm__ AType *src0, __gm__ B
                 pto::Shape<1, 1, 1, copyOutM, copyOutN>,
                 pto::Stride<1 * copyOutM * copyOutN, 1 * copyOutM * copyOutN, copyOutM * copyOutN, copyOutN, 1>>;
             GlobalDataSrc2 src2Global(src2);
+            set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
+            wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
             TLOAD(srcTileData, src2Global);
             set_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
@@ -389,6 +391,8 @@ __global__ AICORE void RunTMOVFBQuant(__gm__ OutType *out, __gm__ AType *src0, _
                 pto::Shape<1, 1, 1, copyOutM, copyOutN>,
                 pto::Stride<1 * copyOutM * copyOutN, 1 * copyOutM * copyOutN, copyOutM * copyOutN, copyOutN, 1>>;
             GlobalDataSrc3 src3Global(src3);
+            set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
+            wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
             TLOAD(srcTileData, src3Global);
             set_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
@@ -475,6 +479,8 @@ __global__ AICORE void RunTMOVSCQuant(__gm__ OutType *out, __gm__ AType *src0, _
                 pto::Shape<1, 1, 1, copyOutM, copyOutN>,
                 pto::Stride<1 * copyOutM * copyOutN, 1 * copyOutM * copyOutN, copyOutM * copyOutN, copyOutN, 1>>;
             GlobalDataSrc2 src2Global(src2);
+            set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
+            wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
             TLOAD(srcTileData, src2Global);
             set_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
             wait_flag(PIPE_MTE2, PIPE_FIX, EVENT_ID0);
