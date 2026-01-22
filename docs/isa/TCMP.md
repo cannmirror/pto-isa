@@ -34,12 +34,16 @@ PTO_INST RecordEvent TCMP(TileDataDst& dst, TileDataSrc& src0, TileDataSrc& src1
 ## Constraints
 
 - **Implementation checks (A2A3)**:
+  - Input type must be one of: `int32_t`, `half`, `float`.
+  - Output type must be `uint8_t`.
   - `src0/src1/dst` tile location must be `TileType::Vec`.
   - Static valid bounds: `TileDataSrc::ValidRow <= TileDataSrc::Rows` and `TileDataSrc::ValidCol <= TileDataSrc::Cols`.
   - Runtime: `src0.GetValidRow() == dst.GetValidRow()` and `src0.GetValidCol() == dst.GetValidCol()`.
   - Note: `src1` shape/valid is not validated by explicit runtime assertions in this implementation.
   - For `TileDataSrc::DType == int32_t`, the implementation uses the `EQ` compare path regardless of `cmpMode`.
 - **Implementation checks (A5)**:
+  - Input type must be one of: `uint32_t`, `int32_t`, `uint16_t`, `int16_t`, `uint8_t`,  `int8_t`, `float`, `half`.
+  - Output type must be `uint32_t`.
   - Implemented (see `include/pto/npu/a5/TCmp.hpp`).
   - The A5 implementation uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain and writes a packed predicate mask into `dst` (target-defined packing).
 - **Mask encoding**:
