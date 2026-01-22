@@ -18,7 +18,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "utils.hpp"
 
 namespace pto {
-  template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+  template <typename Op, typename T, unsigned nRepeatElem>
   PTO_INTERNAL void TUnaryOps_1D_NoPostUpdate(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol) {
     uint16_t repeatTimes = CeilDivision(validRow * validCol, nRepeatElem);
     __VEC_SCOPE__
@@ -29,7 +29,6 @@ namespace pto {
       MaskReg pReg;
       constexpr auto distValue =
         std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-      #pragma clang loop unroll(disable)
       for (uint16_t i = 0; i < repeatTimes; ++i) {
         pReg = CreatePredicate<T>(sReg);
         vlds(srcReg, src, i * nRepeatElem, NORM);
@@ -39,7 +38,7 @@ namespace pto {
     }
   }
 
-  template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+  template <typename Op, typename T, unsigned nRepeatElem>
   PTO_INTERNAL void TUnaryOps_1D_PostUpdate(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol) {
     uint16_t repeatTimes = CeilDivision(validRow * validCol, nRepeatElem);
     __VEC_SCOPE__
@@ -50,7 +49,6 @@ namespace pto {
       unsigned sReg = validRow * validCol;
       constexpr auto distValue =
         std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-      #pragma clang loop unroll(disable)
       for (uint16_t i = 0; i < repeatTimes; ++i) {
         pReg = CreatePredicate<T>(sReg);
         vlds(srcReg, src, nRepeatElem, NORM, POST_UPDATE);
@@ -60,7 +58,7 @@ namespace pto {
     }
   }
 
-  template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+  template <typename Op, typename T, unsigned DstRowStride, unsigned SrcRowStride, unsigned nRepeatElem>
   PTO_INTERNAL void TUnaryOps_2D(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol) {
     uint16_t repeatTimes = CeilDivision(validCol, nRepeatElem);
     __VEC_SCOPE__
@@ -75,9 +73,9 @@ namespace pto {
         sReg = validCol;
         for (uint16_t j = 0; j < repeatTimes; ++j) {
           pReg = CreatePredicate<T>(sReg);
-          vlds(srcReg, src, i * SrcTile::RowStride + j * nRepeatElem, NORM);
+          vlds(srcReg, src, i * SrcRowStride + j * nRepeatElem, NORM);
           Op::UnaryInstr(dstReg, srcReg, pReg);
-          vsts(dstReg, dst, i * DstTile::RowStride + j * nRepeatElem, distValue, pReg);
+          vsts(dstReg, dst, i * DstRowStride + j * nRepeatElem, distValue, pReg);
         }
       }
     }
@@ -87,35 +85,36 @@ namespace pto {
   PTO_INTERNAL void TUnaryOps_1D_Switch(__ubuf__ T *dst, __ubuf__ T *src,
     unsigned validRow, unsigned validCol, VFImplKind version) {
     switch (version) {
-      case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
+      case VFImplKind::VFIMPL_1D_NO_POST_UPDATE: {
+        TUnaryOps_1D_NoPostUpdate<Op, T, nRepeatElem>(dst, src, validRow, validCol);
+        break;
+      }
+      case VFImplKind::VFIMPL_2D_POST_UPDATE:
       case VFImplKind::VFIMPL_2D_NO_POST_UPDATE: {
-        TUnaryOps_1D_NoPostUpdate<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
+        TUnaryOps_2D<Op, T, DstTile::RowStride, SrcTile::RowStride, nRepeatElem>(dst, src, validRow, validCol);
         break;
       }
       default: {
-        TUnaryOps_1D_PostUpdate<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
+        TUnaryOps_1D_PostUpdate<Op, T, nRepeatElem>(dst, src, validRow, validCol);
         break;
       }
     }
   }
 
   template <typename DstTile, typename SrcTile, typename Op>
-  __tf__ PTO_INTERNAL void TUnaryOp(typename DstTile::TileDType __out__ dstData, 
-    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
-    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+  PTO_INTERNAL void TUnaryOp(__ubuf__ typename DstTile::DType *dst, __ubuf__ typename SrcTile::DType *src,
+    unsigned validRow, unsigned validCol, VFImplKind version) {
     using T = typename DstTile::DType;
-    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
-    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
     constexpr unsigned nRepeatElem = CCE_VL / sizeof(T);
     if constexpr (((DstTile::ValidCol == DstTile::Cols) && (SrcTile::ValidCol == SrcTile::Cols)) ||
       ((DstTile::Rows == 1) && (SrcTile::Rows == 1))) {
       TUnaryOps_1D_Switch<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol, version);
     } else {
-      TUnaryOps_2D<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
+      TUnaryOps_2D<Op, T, DstTile::RowStride, SrcTile::RowStride, nRepeatElem>(dst, src, validRow, validCol);
     }
   }
 
-  template <typename DstTile, typename SrcTile, bool floatOnly = true>
+  template <typename DstTile, typename SrcTile, bool needDataTypeCheck = true>
   PTO_INTERNAL void TUnaryCheck() {
     static_assert(DstTile::isRowMajor && SrcTile::isRowMajor,
       "TUnaryOp: Not supported Layout type");
@@ -131,7 +130,7 @@ namespace pto {
       "TUnaryOp: Number of src's valid rows must not be greater than number of tile rows.");
     static_assert(std::is_same_v<typename DstTile::DType, typename SrcTile::DType>,
       "TUnaryOp: The data type of dst must be consistent with of src");
-    static_assert(!floatOnly || std::is_same_v<typename DstTile::DType, float32_t> ||
+    static_assert(!needDataTypeCheck || std::is_same_v<typename DstTile::DType, float32_t> ||
       std::is_same_v<typename DstTile::DType, float> ||
       std::is_same_v<typename DstTile::DType, float16_t> ||
       std::is_same_v<typename DstTile::DType, half>,
@@ -140,7 +139,7 @@ namespace pto {
 
   /* TRSQRT */
   template <typename DstTile, typename SrcTile>
-  __tf__ PTO_INTERNAL void TRsqrt(typename DstTile::TileDType __out__ dstData,
+  __tf__ PTO_INTERNAL void OP_NAME(TRSQRT) OP_TYPE(element_wise) TRsqrt(typename DstTile::TileDType __out__ dstData,
     typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol) {
     using T = typename DstTile::DType;
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
@@ -185,18 +184,6 @@ namespace pto {
     TRsqrt<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
-  template <typename DstTile, typename SrcTile, typename Op, bool floatOnly = true>
-  PTO_INTERNAL void TUNARY_IMPL(DstTile &dst, SrcTile &src) {
-    TUnaryCheck<DstTile, SrcTile, floatOnly>();
-    unsigned dstValidRow = dst.GetValidRow();
-    unsigned dstValidCol = dst.GetValidCol();
-    PTO_ASSERT(dstValidCol == src.GetValidCol(),
-      "TUNARY: Number of columns of src and dst must be the same.");
-    PTO_ASSERT(dstValidRow == src.GetValidRow(),
-      "TUNARY: Number of rows of src and dst must be the same.");
-    TUnaryOp<DstTile, SrcTile, Op>(dst.data(), src.data(), dstValidRow, dstValidCol);
-  }
-
   /* TEXP */
   template <typename T>
   struct ExpOp {
@@ -205,8 +192,24 @@ namespace pto {
     }
   };
   template <typename DstTile, typename SrcTile>
+  __tf__ PTO_INTERNAL OP_NAME(TEXP) OP_TYPE(element_wise) void TExp(typename DstTile::TileDType __out__ dstData,
+    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename DstTile::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+    TUnaryOp<DstTile, SrcTile, ExpOp<T>>(dst, src, validRow, validCol, version);
+  }
+  template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TEXP_IMPL(DstTile &dst, SrcTile &src) {
-    TUNARY_IMPL<DstTile, SrcTile, ExpOp<typename DstTile::DType>>(dst, src);
+    TUnaryCheck<DstTile, SrcTile>();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    PTO_ASSERT(dstValidCol == src.GetValidCol(),
+      "TEXP: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(dstValidRow == src.GetValidRow(),
+      "TEXP: Number of rows of src and dst must be the same.");
+    TExp<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
   /* TNOT */
@@ -217,8 +220,32 @@ namespace pto {
     }
   };
   template <typename DstTile, typename SrcTile>
+  __tf__ PTO_INTERNAL OP_NAME(TNOT) OP_TYPE(element_wise) void TNot(typename DstTile::TileDType __out__ dstData,
+    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename DstTile::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+    TUnaryOp<DstTile, SrcTile, NotOp<T>>(dst, src, validRow, validCol, version);
+  }
+  template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TNOT_IMPL(DstTile &dst, SrcTile &src) {
-    TUNARY_IMPL<DstTile, SrcTile, NotOp<typename DstTile::DType>, false>(dst, src);
+    TUnaryCheck<DstTile, SrcTile, false>();
+    static_assert(std::is_same_v<typename DstTile::DType, uint32_t> ||
+                  std::is_same_v<typename DstTile::DType, int32_t> ||
+                  std::is_same_v<typename DstTile::DType, uint16_t> ||
+                  std::is_same_v<typename DstTile::DType, int16_t> ||
+                  std::is_same_v<typename DstTile::DType, uint8_t> ||
+                  std::is_same_v<typename DstTile::DType, int8_t>,
+                  "TNOT: Invalid data type.");
+
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    PTO_ASSERT(dstValidCol == src.GetValidCol(),
+      "TNOT: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(dstValidRow == src.GetValidRow(),
+      "TNOT: Number of rows of src and dst must be the same.");
+    TNot<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
   /* TRELU */
@@ -229,8 +256,29 @@ namespace pto {
     }
   };
   template <typename DstTile, typename SrcTile>
+  __tf__ PTO_INTERNAL OP_NAME(TRELU) OP_TYPE(element_wise) void TRelu(typename DstTile::TileDType __out__ dstData,
+    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename DstTile::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+    TUnaryOp<DstTile, SrcTile, ReluOp<T>>(dst, src, validRow, validCol, version);
+  }
+  template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TRELU_IMPL(DstTile &dst, SrcTile &src) {
-    TUNARY_IMPL<DstTile, SrcTile, ReluOp<typename DstTile::DType>, false>(dst, src);
+    TUnaryCheck<DstTile, SrcTile, false>();
+    static_assert(std::is_same_v<typename DstTile::DType, half> ||
+                  std::is_same_v<typename DstTile::DType, float> ||
+                  std::is_same_v<typename DstTile::DType, int32_t>,
+                  "TRELU: Invalid data type.");
+
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    PTO_ASSERT(dstValidCol == src.GetValidCol(),
+      "TRELU: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(dstValidRow == src.GetValidRow(),
+      "TRELU: Number of rows of src and dst must be the same.");
+    TRelu<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
   /* TSQRT */
@@ -241,8 +289,24 @@ namespace pto {
     }
   };
   template <typename DstTile, typename SrcTile>
+  __tf__ PTO_INTERNAL OP_NAME(TSQRT) OP_TYPE(element_wise) void TSqrt(typename DstTile::TileDType __out__ dstData,
+    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename DstTile::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+    TUnaryOp<DstTile, SrcTile, SqrtOp<T>>(dst, src, validRow, validCol, version);
+  }
+  template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TSQRT_IMPL(DstTile &dst, SrcTile &src) {
-    TUNARY_IMPL<DstTile, SrcTile, SqrtOp<typename DstTile::DType>>(dst, src);
+    TUnaryCheck<DstTile, SrcTile>();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    PTO_ASSERT(dstValidCol == src.GetValidCol(),
+      "TSQRT: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(dstValidRow == src.GetValidRow(),
+      "TSQRT: Number of rows of src and dst must be the same.");
+    TSqrt<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
   /* TABS */
@@ -253,8 +317,24 @@ namespace pto {
     }
   };
   template <typename DstTile, typename SrcTile>
+  __tf__ PTO_INTERNAL OP_NAME(TABS) OP_TYPE(element_wise) void TAbs(typename DstTile::TileDType __out__ dstData,
+    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename DstTile::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+    TUnaryOp<DstTile, SrcTile, AbsOp<T>>(dst, src, validRow, validCol, version);
+  }
+  template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TABS_IMPL(DstTile &dst, SrcTile &src) {
-    TUNARY_IMPL<DstTile, SrcTile, AbsOp<typename DstTile::DType>>(dst, src);
+    TUnaryCheck<DstTile, SrcTile>();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    PTO_ASSERT(dstValidCol == src.GetValidCol(),
+      "TABS: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(dstValidRow == src.GetValidRow(),
+      "TABS: Number of rows of src and dst must be the same.");
+    TAbs<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
   /* TLOG */
@@ -265,8 +345,24 @@ namespace pto {
     }
   };
   template <typename DstTile, typename SrcTile>
+  __tf__ PTO_INTERNAL OP_NAME(TLOG) OP_TYPE(element_wise) void TLog(typename DstTile::TileDType __out__ dstData,
+    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol,
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename DstTile::DType;
+    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
+    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
+    TUnaryOp<DstTile, SrcTile, LogOp<T>>(dst, src, validRow, validCol, version);
+  }
+  template <typename DstTile, typename SrcTile>
   PTO_INTERNAL void TLOG_IMPL(DstTile &dst, SrcTile &src) {
-    TUNARY_IMPL<DstTile, SrcTile, LogOp<typename DstTile::DType>>(dst, src);
+    TUnaryCheck<DstTile, SrcTile>();
+    unsigned dstValidRow = dst.GetValidRow();
+    unsigned dstValidCol = dst.GetValidCol();
+    PTO_ASSERT(dstValidCol == src.GetValidCol(),
+      "TLOG: Number of columns of src and dst must be the same.");
+    PTO_ASSERT(dstValidRow == src.GetValidRow(),
+      "TLOG: Number of rows of src and dst must be the same.");
+    TLog<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
   }
 
   /* TNEG */
