@@ -42,44 +42,40 @@ struct ShlOp2 {
     }
 };
 
-template <typename T, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem,
-    unsigned dstRowStride, unsigned src0RowStride = dstRowStride, unsigned src1RowStride = dstRowStride>
-__tf__ PTO_INTERNAL OP_NAME(TSHL) OP_TYPE(element_wise) void TShl(typename TileData::TileDType __out__ dst,
-    typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1, unsigned validRows,
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned ElementsPerRepeat,
+    unsigned BlockSizeElem>
+__tf__ PTO_INTERNAL OP_NAME(TSHL) OP_TYPE(element_wise) void TShl(typename TileDataDst::TileDType __out__ dst,
+    typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned validRows,
     unsigned validCols, VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+    using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
     __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
     if constexpr (std::is_same<T, int8_t>::value || std::is_same<T, int16_t>::value ||
-        std::is_same<T, int32_t>::value) {
-        if constexpr (dstRowStride == src0RowStride && dstRowStride == src1RowStride) {
-            BinaryInstr<ShlOp<T>, TileData, elementsPerRepeat, blockSizeElem, dstRowStride>(
-                dstPtr, src0Ptr, src1Ptr, validRows, validCols, version);
-        } else {
-            BinaryInstr<ShlOp<T>, TileData, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
-                dstPtr, src0Ptr, src1Ptr, validRows, validCols, version);
-        }
+                  std::is_same<T, int32_t>::value) {
+        BinaryInstr<ShlOp<T>, TileDataDst, TileDataSrc0, TileDataSrc1, ElementsPerRepeat, BlockSizeElem>(
+            dstPtr, src0Ptr, src1Ptr, validRows, validCols, version);
     } else {
-        if constexpr (dstRowStride == src0RowStride && dstRowStride == src1RowStride) {
-            BinaryInstr<ShlOp2<T>, TileData, elementsPerRepeat, blockSizeElem, dstRowStride>(
-                dstPtr, src0Ptr, src1Ptr, validRows, validCols, version);
-        } else {
-            BinaryInstr<ShlOp2<T>, TileData, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
-                dstPtr, src0Ptr, src1Ptr, validRows, validCols, version);
-        }
+        BinaryInstr<ShlOp2<T>, TileDataDst, TileDataSrc0, TileDataSrc1, ElementsPerRepeat, BlockSizeElem>(
+            dstPtr, src0Ptr, src1Ptr, validRows, validCols, version);
     }
     return;
 }
 
-template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
 PTO_INTERNAL void TShlCheck(const TileDataDst &dst, const TileDataSrc0 &src0, const TileDataSrc1 &src1) {
-    static_assert(std::is_same<T, typename TileDataSrc0::DType>::value &&
-        std::is_same<T, typename TileDataSrc1::DType>::value, "Fix: TShl has invalid data type.");
+    using T = typename TileDataDst::DType;
+    static_assert(
+        std::is_same<T, typename TileDataSrc0::DType>::value && std::is_same<T, typename TileDataSrc1::DType>::value,
+        "Fix: TSHL has invalid data type.");
     static_assert(std::is_same<T, uint8_t>::value || std::is_same<T, int8_t>::value ||
-        std::is_same<T, uint16_t>::value || std::is_same<T, int16_t>::value ||
-        std::is_same<T, uint32_t>::value || std::is_same<T, int32_t>::value, "Fix: TShl has invalid data type.");
+                      std::is_same<T, uint16_t>::value || std::is_same<T, int16_t>::value ||
+                      std::is_same<T, uint32_t>::value || std::is_same<T, int32_t>::value,
+        "Fix: TSHL has invalid data type.");
     static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
-        "Fix: TShl only support row major layout.");
+        "Fix: TSHL only support row major layout.");
+    static_assert(std::is_same_v<T, typename TileDataSrc0::DType> && std::is_same_v<T, typename TileDataSrc1::DType>,
+        "Fix: TSHL input tile src0, src1 and dst tile data type mismatch.");
     unsigned validRows = dst.GetValidRow();
     unsigned validCols = dst.GetValidCol();
     PTO_ASSERT(src0.GetValidRow() == validRows && src0.GetValidCol() == validCols,
@@ -91,22 +87,11 @@ PTO_INTERNAL void TShlCheck(const TileDataDst &dst, const TileDataSrc0 &src0, co
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
 PTO_INTERNAL void TSHL_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
     using T = typename TileDataDst::DType;
-    TShlCheck<T, TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1);
+    TShlCheck<TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1);
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
-    // when tileshape of src0, src1 and dst are the same, validRows and validCols are also the same
-    if constexpr (std::is_same_v<TileDataDst, TileDataSrc0> && std::is_same_v<TileDataDst, TileDataSrc1>) {
-        constexpr unsigned dstRowStride = TileDataDst::RowStride;
-        TShl<T, TileDataDst, elementsPerRepeat, blockSizeElem, dstRowStride>(
-            dst.data(), src0.data(), src1.data(), dst.GetValidRow(), dst.GetValidCol());
-    } else {
-        // when tileshape of src0, src1 and dst are different, validRows and validCols are also the same
-        constexpr unsigned dstRowStride = TileDataDst::RowStride;
-        constexpr unsigned src0RowStride = TileDataSrc0::RowStride;
-        constexpr unsigned src1RowStride = TileDataSrc1::RowStride;
-        TShl<T, TileDataDst, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
-            dst.data(), src0.data(), src1.data(), dst.GetValidRow(), dst.GetValidCol());
-    }
+    TShl<TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem>(
+        dst.data(), src0.data(), src1.data(), dst.GetValidRow(), dst.GetValidCol());
 }
 } // namespace pto
 #endif

@@ -345,8 +345,8 @@ PTO_INTERNAL void Bin2LNormModeRowRpt(
 
 template <typename Op, typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride,
     unsigned src0RowStride, unsigned src1RowStride>
-PTO_INTERNAL void BinaryInstr(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
-    typename TileData::TileDType __in__ src1, unsigned validRows, unsigned validCols) {
+PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileData::DType *dst, __ubuf__ typename TileData::DType *src0,
+    __ubuf__ typename TileData::DType *src1, unsigned validRows, unsigned validCols) {
     using T = typename TileData::DType;
     Bin2LNormModeRowRpt<Op, T, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
         dst, src0, src1, validRows, validCols);
