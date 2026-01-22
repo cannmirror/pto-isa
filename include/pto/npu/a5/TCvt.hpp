@@ -1733,11 +1733,13 @@ void implTCVT(typename TileDataD::TileDType __out__ dst,
             ((TileDataD::Rows == 1) && (TileDataS::Rows == 1))) {
             // Use 1D path: faster bulk processing without row iteration overhead
             switch (version) {
+                case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
+                    castData_2D_NoPostUpdate<R>(dstPtr, srcPtr, validRows, validCols, TileDataD::Cols, TileDataS::Cols);
+                    break;
                 case VFImplKind::VFIMPL_DEFAULT:
                 case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
                 case VFImplKind::VFIMPL_1D_POST_UPDATE:
-                    castData_1D_NoPostUpdate<R>(dstPtr, srcPtr, validRows, validCols, TileDataD::Cols, TileDataS::Cols);
-                    break;
+                case VFImplKind::VFIMPL_2D_POST_UPDATE:
                 default:
                     castData_1D_NoPostUpdate<R>(dstPtr, srcPtr, validRows, validCols, TileDataD::Cols, TileDataS::Cols);
                     break;
@@ -1749,6 +1751,7 @@ void implTCVT(typename TileDataD::TileDType __out__ dst,
             // VFIMPL_2D_NO_POST_UPDATE: manual predicate handling
             // default: auto predicate update
             switch (version) {
+                case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
                 case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
                     castData_2D_NoPostUpdate<R>(dstPtr, srcPtr, validRows, validCols, TileDataD::Cols, TileDataS::Cols);
                     break;
