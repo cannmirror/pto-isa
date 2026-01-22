@@ -40,11 +40,11 @@ namespace pto {
     template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename TileDataTmp>
     PTO_INTERNAL void TXOR_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1, TileDataTmp &tmp) {
         TXorCheck(dst, src0, src1, tmp);
-        TOR_IMPL(dst, src0, src1);
+        TOR_IMPL(tmp, src0, src1);
         pipe_barrier(PIPE_V);
-        TAND_IMPL(tmp, src0, src1);
+        TAND_IMPL(dst, src0, src1);
         pipe_barrier(PIPE_V);
-        TNOT_IMPL(tmp, tmp);
+        TNOT_IMPL(dst, dst);
         pipe_barrier(PIPE_V);
         TAND_IMPL(dst, dst, tmp);
     }
