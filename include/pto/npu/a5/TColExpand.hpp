@@ -102,11 +102,14 @@ namespace pto {
         case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
         case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
             TColExpandInstr_NoPostUpdate<T, TileDataDst::Cols>(dstPtr, srcPtr, dstValidRow, dstValidCol, repeatTimes, eleCntValue);
+            break;
         case VFImplKind::VFIMPL_1D_POST_UPDATE:
         case VFImplKind::VFIMPL_2D_POST_UPDATE:
             TColExpandInstr_PostUpdate<T, TileDataDst::Cols>(dstPtr, srcPtr, dstValidRow, dstValidCol, repeatTimes, eleCntValue);
+            break;
         default:
             TColExpandInstr_PostUpdate<T, TileDataDst::Cols>(dstPtr, srcPtr, dstValidRow, dstValidCol, repeatTimes, eleCntValue);
+            break;
         }
     }
 
