@@ -60,6 +60,7 @@ print_error() {
 checkopts() {
   ENABLE_SIMPLE_ST=FALSE
   ENABLE_BUILD_ALL=FALSE
+  ENABLE_BUILD_ONLY=FALSE
   ENABLE_RUN_EXAMPLE=FALSE
   ENABLE_PACKAGE=FALSE
   ENABLE_A3=FALSE
@@ -70,7 +71,7 @@ checkopts() {
   PLATFORM_MODE=""
   INST_NAME=""
 
-  parsed_args=$(getopt -a -o j:hvuO: -l help,verbose,cov,make_clean,noexec,pkg,run_all,a3,a5,sim,npu,run_simple,cann_3rd_lib_path: -- "$@") || {
+  parsed_args=$(getopt -a -o j:hvuO: -l help,verbose,cov,make_clean,noexec,pkg,run_all,a3,a5,sim,npu,run_simple,build,cann_3rd_lib_path: -- "$@") || {
   usage
   exit 1
   }
@@ -116,6 +117,10 @@ checkopts() {
         CANN_3RD_LIB_PATH="$1"
         shift
         ;;
+      --build)
+        shift
+        ENABLE_BUILD_ONLY=TRUE
+        ;;
       --)
         shift
         break
@@ -129,6 +134,21 @@ checkopts() {
   CMAKE_ARGS="$CMAKE_ARGS -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"
 }
 
+build_only() {
+  echo $dotted_line
+  echo "build only"
+  chmod +x ./tests/run_st.sh
+  if [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "FALSE" ]; then
+    ./tests/run_st.sh a3 npu simple build_only
+  elif [ "$ENABLE_A3" = "FALSE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
+    ./tests/run_st.sh a5 npu simple build_only
+  elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
+    ./tests/run_st.sh a3_a5 npu simple build_only
+  else
+    ./tests/run_st.sh a5 npu simple build_only
+  fi
+}
+
 run_simple_st() {
   echo $dotted_line
   echo "Start to run simple st"
@@ -140,7 +160,6 @@ run_simple_st() {
   elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
     ./tests/run_st.sh a3_a5 $RUN_TYPE simple
   else
-    ./tests/run_st.sh a5 npu simple build_only
     ./tests/run_st.sh a3 npu simple
   fi
   echo "execute samples success"
@@ -210,6 +229,9 @@ main() {
   fi
   if [ "$ENABLE_PACKAGE" == "TRUE" ]; then
     build_package
+  fi
+  if [ "$ENABLE_BUILD_ONLY" == "TRUE" ]; then
+      build_only
   fi
 }
 
