@@ -36,35 +36,36 @@ namespace pto {
             "Fix: TCOLEXPAND input shape in invalid, validCol or validRow is 0.");
     }
 
-    template <typename T, unsigned DstStride>
+    template <typename T, unsigned DstStride, unsigned elementsPerRepeat>
     PTO_INTERNAL void TColExpandInstr_NoPostUpdate(__ubuf__ T* dstPtr, __ubuf__ T* srcPtr, unsigned dstValidRow, 
-        unsigned dstValidCol, uint16_t repeatTimes, uint16_t eleCntValue) {
+        unsigned dstValidCol) {
         
+        uint16_t repeatTimes = CeilDivision(dstValidCol, elementsPerRepeat);
         constexpr auto distValue = 
             std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
         __VEC_SCOPE__
         {
         RegTensor<T> vreg0;
-        __ubuf__ T* dstOffset;
         MaskReg preg;
         uint32_t sreg = dstValidCol;
 
         for (uint16_t i = 0; i < (uint16_t)dstValidRow; i++) {
             sreg = (uint32_t)(dstValidCol);
-            dstOffset = dstPtr + i * DstStride;
             for (uint16_t j = 0; j < (uint16_t)repeatTimes; j++) {
-                vlds(vreg0, srcPtr, j * eleCntValue, NORM);
+                vlds(vreg0, srcPtr, j * elementsPerRepeat, NORM);
                 preg = CreatePredicate<T>(sreg);
-                vsts(vreg0, dstOffset, (uint32_t)(j * eleCntValue), distValue, preg);
+                vsts(vreg0, dstPtr, (uint32_t)(i * DstStride + j * elementsPerRepeat), distValue, preg);
             }
         }
         }
     }
 
-    template <typename T, unsigned DstStride>
+    template <typename T, unsigned DstStride, unsigned elementsPerRepeat>
     PTO_INTERNAL void TColExpandInstr_PostUpdate(__ubuf__ T* dstPtr, __ubuf__ T* srcPtr, unsigned dstValidRow, 
-        unsigned dstValidCol, uint16_t repeatTimes, uint16_t eleCntValue) {
+        unsigned dstValidCol) {
         
+        uint16_t repeatTimes = CeilDivision(dstValidCol, elementsPerRepeat);
+
         constexpr auto distValue = 
             std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
         __VEC_SCOPE__
@@ -74,9 +75,9 @@ namespace pto {
         MaskReg preg;
 
         for (uint16_t j = 0; j < (uint16_t)repeatTimes; j++) {
-            vlds(vreg0, srcPtr, eleCntValue, NORM, POST_UPDATE);
+            vlds(vreg0, srcPtr, elementsPerRepeat, NORM, POST_UPDATE);
             preg = CreatePredicate<T>(dstValidCol);
-            dstOffset = dstPtr + j * eleCntValue;
+            dstOffset = dstPtr + j * elementsPerRepeat;
             for (uint16_t i = 0; i < (uint16_t)dstValidRow; i++) {
                 vsts(vreg0, dstOffset, (uint32_t)DstStride, distValue, preg, POST_UPDATE);
             }
@@ -85,7 +86,8 @@ namespace pto {
     }
 
     template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeEle>
-    __tf__ PTO_INTERNAL void TColExpand(typename TileDataDst::TileDType __out__ dst,
+    __tf__ PTO_INTERNAL OP_NAME(TCOLEXPAND) OP_TYPE(broadcast)
+    void TColExpand(typename TileDataDst::TileDType __out__ dst,
                                         typename TileDataSrc::TileDType __in__ src,
                                         unsigned dstValidRow,
                                         unsigned dstValidCol,
@@ -94,21 +96,19 @@ namespace pto {
         using T = typename TileDataDst::DType;
         __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
         __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
-        constexpr uint16_t eleCntValue = elementsPerRepeat;
-        uint16_t repeatTimes = CeilDivision(dstValidCol, eleCntValue);
 
         switch (version)
         {
         case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
         case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
-            TColExpandInstr_NoPostUpdate<T, TileDataDst::Cols>(dstPtr, srcPtr, dstValidRow, dstValidCol, repeatTimes, eleCntValue);
+            TColExpandInstr_NoPostUpdate<T, TileDataDst::RowStride, elementsPerRepeat>(dstPtr, srcPtr, dstValidRow, dstValidCol);
             break;
         case VFImplKind::VFIMPL_1D_POST_UPDATE:
         case VFImplKind::VFIMPL_2D_POST_UPDATE:
-            TColExpandInstr_PostUpdate<T, TileDataDst::Cols>(dstPtr, srcPtr, dstValidRow, dstValidCol, repeatTimes, eleCntValue);
+            TColExpandInstr_PostUpdate<T, TileDataDst::RowStride, elementsPerRepeat>(dstPtr, srcPtr, dstValidRow, dstValidCol);
             break;
         default:
-            TColExpandInstr_PostUpdate<T, TileDataDst::Cols>(dstPtr, srcPtr, dstValidRow, dstValidCol, repeatTimes, eleCntValue);
+            TColExpandInstr_PostUpdate<T, TileDataDst::RowStride, elementsPerRepeat>(dstPtr, srcPtr, dstValidRow, dstValidCol);
             break;
         }
     }
