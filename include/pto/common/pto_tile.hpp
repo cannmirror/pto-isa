@@ -904,7 +904,7 @@ public:
     }
 
 #ifdef __PTO_AUTO__
-    using TileDType = typename MemoryQualifier<Loc_, DType>::type tileSize(bufferSize);
+    using TileDType = typename MemoryQualifier<Loc_, DType>::type tile_size(bufferSize);
 #else
     using TileDType = typename MemoryQualifier<Loc_, DType>::type;
 #endif
