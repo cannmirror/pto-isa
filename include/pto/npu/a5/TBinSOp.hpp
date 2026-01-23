@@ -157,7 +157,7 @@ PTO_INTERNAL void TBinSOps_1D_selector(__ubuf__ typename TileDataDst::DType *dst
 
 template <typename Op, typename TileDataDst, typename TileDataSrc, typename ScalarType, unsigned elementsPerRepeat,
     unsigned blockSizeElem, unsigned dstRowStride, unsigned srcRowStride>
-PTO_INTERNAL void BinaryInstr(typename TileDataDst::TileDType __out__ dst, typename TileDataSrc::TileDType __in__ src0,
+PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileDataDst::DType *dst, __ubuf__ typename TileDataSrc::DType *src0,
     ScalarType src1, unsigned kValidRows, unsigned kValidCols, VFImplKind version)
 {
     using T = typename TileDataDst::DType;

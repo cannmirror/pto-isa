@@ -178,8 +178,8 @@ __tf__ AICORE void TGather_fp8_e5m2(typename TileDataD::TileDType __out__ dst,
 }
 
 template <typename TileDataD, typename TileDataS0, typename TileDataS1>
-AICORE void TGather(typename TileDataD::TileDType __out__ dst, typename TileDataS0::TileDType __in__ src0,
-    typename TileDataS1::TileDType __in__ src1, unsigned validCol, unsigned validRow)
+AICORE void TGather(__ubuf__ typename TileDataD::DType *dst, __ubuf__ typename TileDataS0::DType *src0,
+    __ubuf__ typename TileDataS1::DType *src1, unsigned validCol, unsigned validRow)
 {
     if constexpr (sizeof(typename TileDataS0::DType) == 4) {
         TGather_b32<TileDataD, TileDataS0, TileDataS1>(dst, src0, src1, validCol, validRow);
