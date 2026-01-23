@@ -26,10 +26,11 @@ template <typename T> struct AddSOp {
     }
 };
 
-template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride, unsigned src0RowStride>
+template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem,
+    unsigned dstRowStride, unsigned src0RowStride>
 __tf__ PTO_INTERNAL OP_NAME(TADDS) OP_TYPE(element_wise)
-void TAddS(typename TileDataDst::TileDType __out__ dst, 
-           typename TileDataSrc::TileDType __in__ src0, 
+void TAddS(typename TileDataDst::TileDType __out__ dst,
+           typename TileDataSrc::TileDType __in__ src0,
            typename TileDataSrc::DType src1,
            unsigned kValidRows,
            unsigned kValidCols,
@@ -70,7 +71,8 @@ PTO_INTERNAL void TADDS_IMPL(TileDataDst &dst, TileDataSrc &src0, typename TileD
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    TAddS<TileDataDst, TileDataSrc, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride>(dst.data(), src0.data(), src1, validRow, validCol);
+    TAddS<TileDataDst, TileDataSrc, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride>(
+        dst.data(), src0.data(), src1, validRow, validCol);
 }
 }  // namespace pto
 #endif

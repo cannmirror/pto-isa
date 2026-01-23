@@ -110,7 +110,8 @@ namespace pto {
             }
         }
     }
-    template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride, unsigned srcRowStride>
+    template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem,
+    unsigned dstRowStride, unsigned srcRowStride>
     __tf__ PTO_INTERNAL OP_NAME(TDIVS) OP_TYPE(element_wise)
     void TDivS(typename TileDataDst::TileDType __out__ dst,
                                 typename TileDataSrc::TileDType __in__ src0, 
@@ -126,10 +127,11 @@ namespace pto {
         } else {
             BinaryInstr<DivSOp<T>, TileDataDst, TileDataSrc, T, elementsPerRepeat, blockSizeElem, dstRowStride, srcRowStride>(
                     dstPtr, src0Ptr, src1, validRow, validCol, version);
-        }  
+        }
     }
 
-    template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride, unsigned srcRowStride>
+    template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem,
+        unsigned dstRowStride, unsigned srcRowStride>
     __tf__ PTO_INTERNAL OP_NAME(TDIVS) OP_TYPE(element_wise)
     void TDivS(typename TileDataDst::TileDType __out__ dst,
                                 typename TileDataSrc::DType __in__ src1, 
@@ -147,7 +149,7 @@ namespace pto {
                     dstPtr, src0Ptr, src1, validRow, validCol, version);
         }
     }
-    
+
     template <typename TileDataDst, typename TileDataSrc>
     PTO_INTERNAL void TDIVS_IMPL(TileDataDst &dst, TileDataSrc &src0, typename TileDataSrc::DType scalar)
     {
@@ -167,10 +169,14 @@ namespace pto {
 
         static_assert(TileDataSrc::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileDataDst::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
-        static_assert(TileDataSrc::ValidCol <= TileDataSrc::Cols, "Number of valid columns must not be greater than number of tile columns.");
-        static_assert(TileDataSrc::ValidRow <= TileDataSrc::Rows, "Number of valid rows must not be greater than number of tile rows.");
-        static_assert(TileDataDst::ValidCol <= TileDataDst::Cols, "Number of valid columns must not be greater than number of tile columns.");
-        static_assert(TileDataDst::ValidRow <= TileDataDst::Rows, "Number of valid rows must not be greater than number of tile rows.");
+        static_assert(TileDataSrc::ValidCol <= TileDataSrc::Cols,
+            "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataSrc::ValidRow <= TileDataSrc::Rows,
+            "Number of valid rows must not be greater than number of tile rows.");
+        static_assert(TileDataDst::ValidCol <= TileDataDst::Cols,
+            "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataDst::ValidRow <= TileDataDst::Rows,
+            "Number of valid rows must not be greater than number of tile rows.");
 
         PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
         PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
@@ -190,10 +196,14 @@ namespace pto {
     {
         static_assert(TileDataSrc::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
         static_assert(TileDataDst::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
-        static_assert(TileDataSrc::ValidCol <= TileDataSrc::Cols, "Number of valid columns must not be greater than number of tile columns.");
-        static_assert(TileDataSrc::ValidRow <= TileDataSrc::Rows, "Number of valid rows must not be greater than number of tile rows.");
-        static_assert(TileDataDst::ValidCol <= TileDataDst::Cols, "Number of valid columns must not be greater than number of tile columns.");
-        static_assert(TileDataDst::ValidRow <= TileDataDst::Rows, "Number of valid rows must not be greater than number of tile rows.");
+        static_assert(TileDataSrc::ValidCol <= TileDataSrc::Cols,
+            "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataSrc::ValidRow <= TileDataSrc::Rows,
+            "Number of valid rows must not be greater than number of tile rows.");
+        static_assert(TileDataDst::ValidCol <= TileDataDst::Cols,
+            "Number of valid columns must not be greater than number of tile columns.");
+        static_assert(TileDataDst::ValidRow <= TileDataDst::Rows,
+            "Number of valid rows must not be greater than number of tile rows.");
 
         PTO_ASSERT(src0.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
         PTO_ASSERT(src0.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");

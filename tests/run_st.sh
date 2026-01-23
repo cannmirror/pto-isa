@@ -189,6 +189,12 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadds -g TADDSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tand -g TANDTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tands -g TANDSTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tors -g TORSTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t txors -g TXORSTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t txor -g TXORTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tshls -g TSHLSTest.case_int16_64x64_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tshrs -g TSHRSTest.case_int16_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tci -g TCITest.case5
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolmax -g TCOLMAXTest.case01
@@ -269,6 +275,12 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadds
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tand
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tands
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tors
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t txors
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t txor
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tshls
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tshrs
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tci
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcmps
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tcolmax

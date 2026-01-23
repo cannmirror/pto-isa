@@ -118,11 +118,11 @@ namespace pto
         PTO_ASSERT(dst.data() != src.data() && dst.data() != tmp.data() && src.data() != tmp.data(),
             "dst, src, tmp must in different memory.");
 #endif
-        TORS_IMPL(dst, src, scalar);
+        TORS_IMPL(tmp, src, scalar);
         pipe_barrier(PIPE_V);
-        TANDS_IMPL(tmp, src, scalar);
+        TANDS_IMPL(dst, src, scalar);
         pipe_barrier(PIPE_V);
-        TNOT_IMPL(tmp, tmp);
+        TNOT_IMPL(dst, dst);
         pipe_barrier(PIPE_V);
         TAND_IMPL(dst, dst, tmp);
     }

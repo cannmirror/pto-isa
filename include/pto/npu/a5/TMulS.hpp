@@ -26,7 +26,8 @@ template <typename T> struct MulSOp {
     }
 };
 
-template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride, unsigned srcRowStride>
+template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem,
+    unsigned dstRowStride, unsigned srcRowStride>
 __tf__ PTO_INTERNAL OP_NAME(TMULS) OP_TYPE(element_wise)
 void TMulS(typename TileDataDst::TileDType __out__ dst, 
            typename TileDataSrc::TileDType __in__ src0, 
