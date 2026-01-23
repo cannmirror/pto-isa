@@ -186,6 +186,7 @@ set(ALL_TESTCASES
     trowexpand_trowsum
     trowsum_trowexpand
     trowexpand_tdiv
+    trems
     tscatter
     tneg
     tcolexpanddiv

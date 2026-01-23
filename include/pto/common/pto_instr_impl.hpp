@@ -96,6 +96,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TOrS.hpp"
 #include "pto/npu/a5/TXor.hpp"
 #include "pto/npu/a5/TXorS.hpp"
+#include "pto/npu/a5/TRemS.hpp"
 #include "pto/npu/a5/TShl.hpp"
 #include "pto/npu/a5/TShlS.hpp"
 #include "pto/npu/a5/TShr.hpp"

@@ -38,10 +38,7 @@ namespace pto {
                       "Fix: TCOLEXPAND input tile only support Nd fractal Tile");
         static_assert(TileDataOut::isRowMajor && TileDataOut::SFractal == SLayout::NoneBox,
                       "Fix: TCOLEXPAND output tile only support Nd fractal Tile");
-        static_assert(std::is_same_v<T, half> || std::is_same_v<T, float> ||
-                      std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t> ||
-                      std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> ||
-                      std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t>,
+        static_assert((sizeof(T) == 1) || (sizeof(T) == 2) || (sizeof(T) == 4),
                       "Fix: TCOLEXPAND input data type is not supported by this instruction.");
         static_assert(std::is_same_v<typename TileDataOut::DType, T>,
                       "Fix: TCOLEXPAND input data type must be consistent with the output data type.");
