@@ -32,6 +32,7 @@ PTO_INST RecordEvent TANDS(TileDataDst& dst, TileDataSrc& src, typename TileData
 
 - Intended for integral element types.
 - The op iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
+- Setting the source Tile and destination Tile to the same memory is **Unsupported**.
 
 ## Examples
 

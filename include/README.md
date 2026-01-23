@@ -40,7 +40,7 @@ This table tracks per-instruction backend availability:
 | [`TADDS`](../docs/isa/TADDS.md) | Yes | Yes | Yes | Yes |
 | [`TADDSC`](../docs/isa/TADDSC.md) | Yes | TODO | TODO | TODO |
 | [`TAND`](../docs/isa/TAND.md) | Yes | TODO | TODO | TODO |
-| [`TANDS`](../docs/isa/TANDS.md) | Yes | TODO | TODO | TODO |
+| [`TANDS`](../docs/isa/TANDS.md) | Yes | Yes | Yes | Yes |
 | [`TASSIGN`](../docs/isa/TASSIGN.md) | Yes | Yes | Yes | Yes |
 | [`TCI`](../docs/isa/TCI.md) | Yes | Yes | Yes | Yes |
 | [`TCMP`](../docs/isa/TCMP.md) | TODO | TODO | TODO | TODO |
@@ -75,12 +75,12 @@ This table tracks per-instruction backend availability:
 | [`TNEG`](../docs/isa/TNEG.md) | Yes | TODO | TODO | TODO |
 | [`TNOT`](../docs/isa/TNOT.md) | Yes | TODO | TODO | TODO |
 | [`TOR`](../docs/isa/TOR.md) | Yes | TODO | TODO | TODO |
-| [`TORS`](../docs/isa/TORS.md) | Yes | TODO | TODO | TODO |
+| [`TORS`](../docs/isa/TORS.md) | Yes | Yes | Yes | Yes |
 | [`TPARTADD`](../docs/isa/TPARTADD.md) | Yes | Yes | Yes | Yes |
 | [`TPARTMAX`](../docs/isa/TPARTMAX.md) | Yes | Yes | Yes | Yes |
 | [`TPARTMIN`](../docs/isa/TPARTMIN.md) | Yes | Yes | Yes | Yes |
 | [`TPRELU`](../docs/isa/TPRELU.md) | Yes | Yes | Yes | Yes |
-| [`TRECIP`](../docs/isa/TRECIP.md) | TODO | TODO | TODO | TODO |
+| [`TRECIP`](../docs/isa/TRECIP.md) | TODO | Yes | Yes | Yes |
 | [`TRELU`](../docs/isa/TRELU.md) | Yes | TODO | TODO | TODO |
 | [`TREM`](../docs/isa/TREM.md) | Yes | Yes | Yes | Yes |
 | [`TREMS`](../docs/isa/TREMS.md) | Yes | TODO | TODO | TODO |
@@ -97,7 +97,9 @@ This table tracks per-instruction backend availability:
 | [`TSEL`](../docs/isa/TSEL.md) | Yes | Yes | Yes | Yes |
 | [`TSELS`](../docs/isa/TSELS.md) | TODO | TODO | TODO | TODO |
 | [`TSHL`](../docs/isa/TSHL.md) | Yes | TODO | TODO | TODO |
+| [`TSHLS`](../docs/isa/TSHLS.md) | Yes | Yes | Yes | Yes |
 | [`TSHR`](../docs/isa/TSHR.md) | Yes | TODO | TODO | TODO |
+| [`TSHRS`](../docs/isa/TSHRS.md) | Yes | Yes | Yes | Yes |
 | [`TSORT32`](../docs/isa/TSORT32.md) | Yes | Yes | Yes | Yes |
 | [`TSQRT`](../docs/isa/TSQRT.md) | Yes | Yes | Yes | Yes |
 | [`TSTORE`](../docs/isa/TSTORE.md) | Yes | Yes | Yes | Yes |
@@ -108,5 +110,5 @@ This table tracks per-instruction backend availability:
 | [`TSUBSC`](../docs/isa/TSUBSC.md) | Yes | TODO | TODO | TODO |
 | [`TSYNC`](../docs/isa/TSYNC.md) | TODO | TODO | TODO | TODO |
 | [`TTRANS`](../docs/isa/TTRANS.md) | Yes | Yes | Yes | Yes |
-| [`TXOR`](../docs/isa/TXOR.md) | Yes | TODO | TODO | TODO |
-| [`TXORS`](../docs/isa/TXORS.md) | Yes | TODO | TODO | TODO |
+| [`TXOR`](../docs/isa/TXOR.md) | Yes | Yes | Yes | Yes |
+| [`TXORS`](../docs/isa/TXORS.md) | Yes | Yes | Yes | Yes |

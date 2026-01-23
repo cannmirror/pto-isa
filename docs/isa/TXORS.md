@@ -32,7 +32,9 @@ PTO_INST RecordEvent TXORS(TileDataDst& dst, TileDataSrc& src0, typename TileDat
 
 - Intended for integral element types.
 - The op iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
-- Temporary space is required by A3 for calculation, while not used by A5.
+- Individual temporary space is required by A3 for calculation, while not used by A5.
+- Setting the source Tile and destination Tile to the same memory is **Unsupported**.
+- For A3, do not set temporary space to the same memory as source Tile or destination Tile.
 
 ## Examples
 

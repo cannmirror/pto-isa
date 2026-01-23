@@ -237,9 +237,11 @@ namespace pto
         static_assert(TileDataDst::ValidCol <= TileDataDst::Cols, "Number of valid columns must not be greater than number of tile columns.");
         static_assert(TileDataDst::ValidRow <= TileDataDst::Rows, "Number of valid rows must not be greater than number of tile rows.");
 
-
         PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "Number of cols of src and dst must be the same.");
         PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
+#ifndef __PTO_AUTO__
+        PTO_ASSERT(dst.data() != src.data(), "Setting the source Tile and destination Tile to the same memory is unsupported");
+#endif
 
         unsigned dstValidRow = dst.GetValidRow();
         unsigned dstValidCol = dst.GetValidCol();
@@ -281,6 +283,9 @@ namespace pto
 
         PTO_ASSERT(src.GetValidRow() == dst.GetValidRow(), "Number of rows of src and dst must be the same.");
         PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(), "Number of columns of src and dst must be the same.");
+#ifndef __PTO_AUTO__
+        PTO_ASSERT(dst.data() != src.data(), "Setting the source Tile and destination Tile to the same memory is unsupported");
+#endif
 
         unsigned dstValidRow = dst.GetValidRow();
         unsigned dstValidCol = dst.GetValidCol();

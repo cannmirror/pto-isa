@@ -94,6 +94,9 @@ namespace pto
     template <typename TileDataDst, typename TileDataSrc>
     PTO_INTERNAL void TANDS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar)
     {
+#ifndef __PTO_AUTO__
+        PTO_ASSERT(dst.data() != src.data(), "Setting the source Tile and destination Tile to the same memory is unsupported");
+#endif
         TEXPANDS_IMPL(dst, scalar);
         TAND_IMPL(dst, src, dst);
     }
@@ -101,6 +104,9 @@ namespace pto
     template <typename TileDataDst, typename TileDataSrc>
     PTO_INTERNAL void TORS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar)
     {
+#ifndef __PTO_AUTO__
+        PTO_ASSERT(dst.data() != src.data(), "Setting the source Tile and destination Tile to the same memory is unsupported");
+#endif
         TEXPANDS_IMPL(dst, scalar);
         TOR_IMPL(dst, src, dst);
     }
@@ -108,6 +114,10 @@ namespace pto
     template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
     PTO_INTERNAL void TXORS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar, TileDataTmp &tmp)
     {
+#ifndef __PTO_AUTO__
+        PTO_ASSERT(dst.data() != src.data() && dst.data() != tmp.data() && src.data() != tmp.data(),
+            "dst, src, tmp must in different memory.");
+#endif
         TORS_IMPL(dst, src, scalar);
         pipe_barrier(PIPE_V);
         TANDS_IMPL(tmp, src, scalar);

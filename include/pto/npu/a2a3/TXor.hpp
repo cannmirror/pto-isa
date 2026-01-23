@@ -35,6 +35,11 @@ namespace pto {
             "Fix: TXOR input tile src1 valid shape mismatch with output tile dst shape.");
         PTO_ASSERT(tmp.GetValidRow() == validRows && tmp.GetValidCol() == validCols,
             "Fix: TXOR input tile tmp valid shape mismatch with output tile dst shape.");
+#ifndef __PTO_AUTO__
+        PTO_ASSERT(dst.data() != src0.data() && dst.data() != src1.data() && dst.data() != tmp.data() &&
+            src0.data() != tmp.data() && src1.data() != tmp.data(),
+            "dst, src0, src1, tmp must in different memory.");
+#endif
     }
 
     template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename TileDataTmp>

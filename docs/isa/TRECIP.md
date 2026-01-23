@@ -36,6 +36,7 @@ PTO_INST RecordEvent TRECIP(TileData& dst, TileData& src, WaitEvents&... events)
   - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`;
   - Runtime: `src.GetValidRow() == dst.GetValidRow()` and `src.GetValidCol() == dst.GetValidCol()`;
   - Tile layout must be row-major (`TileData::isRowMajor`).
+  - A3's TRECIP instruction does not support setting the source Tile and destination Tile to the same memory.
 - **Valid region**:
   - The op uses `dst.GetValidRow()` / `dst.GetValidCol()` as the iteration domain.
 - **Domain / NaN**:
