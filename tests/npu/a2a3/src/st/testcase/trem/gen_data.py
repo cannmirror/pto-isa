@@ -29,7 +29,10 @@ def gen_golden_data_trem(case_name, param):
 
     # Perform the operation
     golden = np.zeros([dst_tile_row, dst_tile_col]).astype(dtype)
-    golden[0:h_valid, 0:w_valid] = np.remainder(input1[0:h_valid, 0:w_valid], input2[0:h_valid, 0:w_valid]).astype(dtype)
+    if dtype in [np.float16, np.float32]:
+        golden[0:h_valid, 0:w_valid] = np.fmod(input1[0:h_valid, 0:w_valid], input2[0:h_valid, 0:w_valid]).astype(dtype)
+    else: # %
+        golden[0:h_valid, 0:w_valid] = np.mod(input1[0:h_valid, 0:w_valid], input2[0:h_valid, 0:w_valid]).astype(dtype)
 
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")

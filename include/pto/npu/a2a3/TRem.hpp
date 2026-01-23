@@ -46,18 +46,28 @@ struct RemOp {
 
     PTO_INTERNAL static void RemF16Instr(
         __ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, __ubuf__ T *tmp, unsigned rowStride) {
-        // tmporary buffer size: validCols*sizeof(float)*4
+        // tmporary buffer size: validCols*sizeof(float)*5
         __ubuf__ float *tmpPtr = (__ubuf__ float *)tmp;
         __ubuf__ float *tmpSrc0 = tmpPtr + rowStride;
         __ubuf__ float *tmpSrc1 = tmpPtr + rowStride * 2;
         __ubuf__ float *tmpShare = tmpPtr + rowStride * 3;
+        __ubuf__ float *tmpSign = tmpPtr + rowStride * 4;
         pipe_barrier(PIPE_V);
+        // get sign bits from src0
+        vector_dup((__ubuf__ uint16_t *)tmpSign, 0x8000, 1, 1, 1, 8, 0); // sign mask
+        pipe_barrier(PIPE_V);
+        vand((__ubuf__ uint16_t *)tmpSign, (__ubuf__ uint16_t *)src0, (__ubuf__ uint16_t *)tmpSign, 1, 1, 1, 1, 8, 8,
+            8); // src0 sign
+        // get module values
         vconv_f162f32(tmpSrc0, src0, 1, 1, 1, 8, 8);
         vconv_f162f32(tmpSrc1, src1, 1, 1, 1, 8, 8);
         pipe_barrier(PIPE_V);
         RemF32Instr(tmpPtr, tmpSrc0, tmpSrc1, tmpShare);
         pipe_barrier(PIPE_V);
         vconv_f322f16(dst, tmpPtr, 1, 1, 1, 8, 8);
+        pipe_barrier(PIPE_V);
+        // add sign back
+        vor((__ubuf__ uint16_t *)dst, (__ubuf__ uint16_t *)dst, (__ubuf__ uint16_t *)tmpSign, 1, 1, 1, 1, 8, 8, 8);
         pipe_barrier(PIPE_V);
     }
 
