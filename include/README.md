@@ -79,10 +79,10 @@ This table tracks per-instruction backend availability:
 | [`TPARTADD`](../docs/isa/TPARTADD.md) | Yes | Yes | Yes | Yes |
 | [`TPARTMAX`](../docs/isa/TPARTMAX.md) | Yes | Yes | Yes | Yes |
 | [`TPARTMIN`](../docs/isa/TPARTMIN.md) | Yes | Yes | Yes | Yes |
-| [`TPRELU`](../docs/isa/TPRELU.md) | Yes | TODO | TODO | TODO |
+| [`TPRELU`](../docs/isa/TPRELU.md) | Yes | Yes | Yes | Yes |
 | [`TRECIP`](../docs/isa/TRECIP.md) | TODO | TODO | TODO | TODO |
 | [`TRELU`](../docs/isa/TRELU.md) | Yes | TODO | TODO | TODO |
-| [`TREM`](../docs/isa/TREM.md) | Yes | TODO | TODO | TODO |
+| [`TREM`](../docs/isa/TREM.md) | Yes | Yes | Yes | Yes |
 | [`TREMS`](../docs/isa/TREMS.md) | Yes | TODO | TODO | TODO |
 | [`TRESHAPE`](../docs/isa/TRESHAPE.md) | TODO | TODO | TODO | TODO |
 | [`TROWEXPAND`](../docs/isa/TROWEXPAND.md) | Yes | Yes | Yes | Yes |

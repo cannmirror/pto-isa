@@ -79,10 +79,10 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TPARTADD`](../docs/isa/TPARTADD.md) | 是 | 是 | 是 | 是 |
 | [`TPARTMAX`](../docs/isa/TPARTMAX.md) | 是 | 是 | 是 | 是 |
 | [`TPARTMIN`](../docs/isa/TPARTMIN.md) | 是 | 是 | 是 | 是 |
-| [`TPRELU`](../docs/isa/TPRELU.md) | 是 | TODO | TODO | TODO |
+| [`TPRELU`](../docs/isa/TPRELU.md) | 是 | 是 | 是 | 是 |
 | [`TRECIP`](../docs/isa/TRECIP.md) | TODO | TODO | TODO | TODO |
 | [`TRELU`](../docs/isa/TRELU.md) | 是 | TODO | TODO | TODO |
-| [`TREM`](../docs/isa/TREM.md) | 是 | TODO | TODO | TODO |
+| [`TREM`](../docs/isa/TREM.md) | 是 | 是 | 是 | 是 |
 | [`TREMS`](../docs/isa/TREMS.md) | 是 | TODO | TODO | TODO |
 | [`TRESHAPE`](../docs/isa/TRESHAPE.md) | TODO | TODO | TODO | TODO |
 | [`TROWEXPAND`](../docs/isa/TROWEXPAND.md) | 是 | 是 | 是 | 是 |

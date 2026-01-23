@@ -134,6 +134,8 @@ set(ALL_TESTCASES
     tgather
     tcvt
     tsub
+    trem
+    tprelu
     tand
     tor
     tands

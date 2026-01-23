@@ -262,10 +262,10 @@ PTO_INST RecordEvent TRECIP(TileDataDst &dst, TileDataSrc &src, WaitEvents&... e
   return {};
 }
 
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TPRELU(TileData &dst, TileData &src0, TileData &src1, WaitEvents&... events) {
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename TileDataTmp, typename... WaitEvents>
+PTO_INST RecordEvent TPRELU(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1, TileDataTmp &tmp, WaitEvents&... events) {
   TSYNC(events...);
-  MAP_INSTR_IMPL(TPRELU, dst, src0, src1);
+  MAP_INSTR_IMPL(TPRELU, dst, src0, src1, tmp);
   return {};
 }
 

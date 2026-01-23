@@ -128,6 +128,7 @@ tcvt
 tmul
 tadd
 taddplus
+tprelu
 tand
 tor
 tshl

@@ -15,29 +15,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-
-class TMINTest : public testing::Test {
+class TREMTest : public testing::Test {
 protected:
     void SetUp() override
     {}
     void TearDown() override
     {}
 };
-
-template <typename T>
-bool ResultCmp1(const T* golden, const T* devFinal, int tileRow, int tileCol, int validRow, int validCol, float tolerance){
-    // Iterate over the valid region and compare elements
-    for (int h = 0; h < validRow; ++h) {
-        for (int w = 0; w < validCol; ++w) {
-            int index = h & validRow + w;
-            if (std::abs(golden[index] - devFinal[index]) > tolerance){
-                std::cerr << "Mismatch at (" << h << ", " << w << "): golden = " << golden[index] << ", devFinal = " << devFinal[index] << std::endl;
-                return false;
-            }
-        }
-    }
-    return true;
-}
 
 std::string GetGoldenDir() {
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
@@ -48,13 +32,12 @@ std::string GetGoldenDir() {
 }
 
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int padValueType>
-void LaunchTMin(T *out, T *src0, T *src1, void *stream);
+template <typename T, int kTRows_, int kTCols_, int vRows, int vCols, bool isHalf>
+void LaunchTRem(T *out, T *src0, T *src1, void *stream);
 
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int padValueType>
-void test_tmin() {
-
-    size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
+template<typename T, int kTRows_, int kTCols_, int vRows, int vCols, bool isHalf>
+void test_trem() {
+    size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -77,7 +60,7 @@ void test_tmin() {
 
     aclrtMemcpy(src0Device, fileSize, src0Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, fileSize, src1Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTMin<T, kGRows_, kGCols_, kTRows_, kTCols_, kVRows_, kVCols_, padValueType>(dstDevice, src0Device, src1Device, stream);
+    LaunchTRem<T, kTRows_, kTCols_, vRows, vCols, isHalf>(dstDevice, src0Device, src1Device, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -100,34 +83,43 @@ void test_tmin() {
     ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize);
     ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize);
 
-    bool ret = ResultCmp1<T>(golden.data(), devFinal.data(), kTRows_, kTCols_, kVRows_, kVCols_, 0.001f);
+    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TMINTest, case_float_64x64_64x64_64x64_PAD_VALUE_NULL) {
-    test_tmin<float, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
-}
-TEST_F(TMINTest, case_int32_64x64_64x64_64x64_PAD_VALUE_NULL) {
-    test_tmin<int32_t, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
-}
-TEST_F(TMINTest, case_half_64x64_64x64_64x64_PAD_VALUE_NULL) {
-    test_tmin<aclFloat16, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
-}
-TEST_F(TMINTest, case_int16_64x64_64x64_64x64_PAD_VALUE_NULL) {
-    test_tmin<int16_t, 64, 64, 64, 64, 64, 64, PAD_VALUE_NULL>();
+TEST_F(TREMTest, case1) {
+    test_trem<uint16_t, 64, 64, 64, 64, false>();
 }
 
+TEST_F(TREMTest, case2) {
+    test_trem<uint16_t, 64, 64, 63, 63, false>();
+}
 
-TEST_F(TMINTest, case_float_60x60_64x64_60x60_PAD_VALUE_MIN) {
-    test_tmin<float, 60, 60, 64, 64, 60, 60, PAD_VALUE_MIN>();
+TEST_F(TREMTest, case3) {
+    test_trem<uint16_t, 1, 16384, 1, 16384, false>();
 }
-TEST_F(TMINTest, case_int32_60x60_64x64_60x60_PAD_VALUE_MIN) {
-    test_tmin<int32_t, 60, 60, 64, 64, 60, 60, PAD_VALUE_MIN>();
+
+TEST_F(TREMTest, case4) {
+    test_trem<uint16_t, 2048, 16, 2048, 16, false>();
 }
-TEST_F(TMINTest, case_half_1x3600_2x4096_1x3600_PAD_VALUE_MIN) {
-    test_tmin<aclFloat16, 1, 3600, 2, 4096, 1, 3600, PAD_VALUE_MIN>();
+
+TEST_F(TREMTest, case5) {
+    test_trem<float, 32, 32, 32, 32, false>();
 }
-TEST_F(TMINTest, case_int16_16x200_20x512_16x200_PAD_VALUE_MIN) {
-    test_tmin<int16_t, 16, 200, 20, 512, 16, 200, PAD_VALUE_MIN>();
+
+TEST_F(TREMTest, case6) {
+    test_trem<uint32_t, 8, 8, 8, 8, false>();
+}
+
+TEST_F(TREMTest, case7) {
+    test_trem<aclFloat16, 32, 32, 31, 31, true>();
+}
+
+TEST_F(TREMTest, case8) {
+    test_trem<int16_t, 16, 16, 16, 16, false>();
+}
+
+TEST_F(TREMTest, case9) {
+    test_trem<int32_t, 8, 8, 8, 8, false>();
 }
