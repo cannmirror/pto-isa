@@ -124,7 +124,7 @@ void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
             vector_bool preg3;
             vector_bool preg4;
             uint32_t repeatElm = REPEAT_BYTE / sizeof(uint32_t);
-            uint16_t repeatTimes = CeilDivision(validCol * validRow, repeatElm);
+            uint16_t repeatTimes = CeilDivision(validCol * validRow, repeatElm) + 1; // for odd repeat number, add 1 to include remainder
             for (uint16_t i = 0; i < (uint16_t)(repeatTimes / 2); ++i) {
                 preg0 = plt_b32(sreg, POST_UPDATE);
                 vlds(vreg0, src0, i * 2 * repeatElm, NORM);
@@ -134,17 +134,6 @@ void TCmps_32B(typename TileDataDst::TileDType __out__ dst,
                 GenCmpCall<vector_bool, dataType0, T>(preg2, vreg2, src1, mode, preg0);
                 pdintlv_b8(preg3, preg4, preg1, preg2);
                 psts(preg3, ((__ubuf__ uint32_t *)dstPtr + i * 4), 0, PK);
-            }
-            vector_bool preg5;
-            vector_bool preg6;
-            uint32_t offset0 = (validRow / 2) * 2 * repeatElm;
-            uint32_t offset2 = (validRow / 2) * 4;
-            for (uint16_t i = 0; i < (uint16_t)(repeatTimes % 2); ++i) {
-                preg0 = plt_b32(sreg, POST_UPDATE);
-                vlds(vreg0, src0 + offset0, 0, NORM);
-                GenCmpCall<vector_bool, dataType0, T>(preg5, vreg0, src1, mode, preg0);
-                ppack(preg6, preg5, LOWER);
-                psts(preg6, ((__ubuf__ uint32_t *)dstPtr + offset2), 0, PK);
             }
         }
 }
