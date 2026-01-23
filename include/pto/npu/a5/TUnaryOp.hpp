@@ -137,53 +137,6 @@ namespace pto {
       "TUnaryOp: Invalid data type.");
   }
 
-  /* TRSQRT */
-  template <typename DstTile, typename SrcTile>
-  __tf__ PTO_INTERNAL void OP_NAME(TRSQRT) OP_TYPE(element_wise) TRsqrt(typename DstTile::TileDType __out__ dstData,
-    typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol) {
-    using T = typename DstTile::DType;
-    __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
-    __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
-
-    __VEC_SCOPE__
-    {
-      constexpr unsigned nRepeatElem = CCE_VL / sizeof(T);
-      uint16_t repeatTimes = CeilDivision(validCol, nRepeatElem);
-      uint32_t sReg = (uint32_t)validCol;
-
-      RegTensor<T> vreg0;
-      RegTensor<T> vreg1;
-      RegTensor<T> vreg2;
-      RegTensor<T> vreg3;
-      constexpr auto distValue =
-        std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
-      MaskReg pReg = CreatePredicate<T>(sReg);
-      vdup(vreg2, (T)1.0, pReg, MODE_MERGING);
-      for (uint16_t i = 0; i < (uint16_t)validRow; ++i) {
-        sReg = (uint32_t)validCol;
-        for(uint16_t j = 0; j < repeatTimes; ++j) {
-          pReg = CreatePredicate<T>(sReg);
-          vlds(vreg0, src, (i * SrcTile::RowStride + j * nRepeatElem), NORM);
-          vsqrt(vreg1, vreg0, pReg, MODE_ZEROING);
-          vdiv(vreg3, vreg2, vreg1, pReg);
-          vsts(vreg3, dst, (i * DstTile::RowStride + j * nRepeatElem), distValue, pReg);
-        }
-      }
-    }
-  }
-
-  template <typename DstTile, typename SrcTile>
-  PTO_INTERNAL void TRSQRT_IMPL(DstTile &dst, SrcTile &src) {
-    TUnaryCheck<DstTile, SrcTile>();
-    unsigned dstValidRow = dst.GetValidRow();
-    unsigned dstValidCol = dst.GetValidCol();
-    PTO_ASSERT(dstValidCol == src.GetValidCol(),
-      "TRSQRT: Number of columns of src and dst must be the same.");
-    PTO_ASSERT(dstValidRow == src.GetValidRow(),
-      "TRSQRT: Number of rows of src and dst must be the same.");
-    TRsqrt<DstTile, SrcTile>(dst.data(), src.data(), dstValidRow, dstValidCol);
-  }
-
   /* TEXP */
   template <typename T>
   struct ExpOp {

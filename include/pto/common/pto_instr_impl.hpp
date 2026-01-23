@@ -153,6 +153,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TPrint.hpp"
 #endif
 #include "pto/npu/a5/TGather.hpp"
+#include "pto/npu/a5/TRsqrt.hpp"
 #include "pto/npu/a5/TUnaryOp.hpp"
 #include "pto/npu/a5/TGatherB.hpp"
 #include "pto/npu/a5/TBinSOp.hpp"

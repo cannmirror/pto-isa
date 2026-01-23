@@ -16,16 +16,16 @@ using namespace pto;
 
 template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol, bool isInPlace>
 __global__ AICORE void runTRsqrt( __gm__ T __out__ *out, __gm__ T __in__ *src) {
-    using DynShapeDim5 = Shape<1, 1, 1, -1, -1>;
+    using DynShapeDim5 = Shape<1, 1, 1, validRow, validCol>;
     using DstGlobalData = GlobalTensor<T, DynShapeDim5, pto::Stride<1, 1, dstRow, dstCol, 1>>;
     using SrcGlobalData = GlobalTensor<T, DynShapeDim5, pto::Stride<1, 1, srcRow, srcCol, 1>>;
-    SrcGlobalData srcGlobal(src, DynShapeDim5(validRow, validCol));
-    DstGlobalData dstGlobal(out, DynShapeDim5(validRow, validCol));
+    SrcGlobalData srcGlobal(src);
+    DstGlobalData dstGlobal(out);
 
-    using SrcTileData = Tile<TileType::Vec, T, srcRow, srcCol, BLayout::RowMajor, -1, -1>;
-    using DstTileData = Tile<TileType::Vec, T, dstRow, dstCol, BLayout::RowMajor, -1, -1>;
-    SrcTileData srcTile(validRow, validCol);
-    DstTileData dstTile(validRow, validCol);
+    using SrcTileData = Tile<TileType::Vec, T, srcRow, srcCol, BLayout::RowMajor, validRow, validCol>;
+    using DstTileData = Tile<TileType::Vec, T, dstRow, dstCol, BLayout::RowMajor, validRow, validCol>;
+    SrcTileData srcTile;
+    DstTileData dstTile;
     TASSIGN(dstTile, 0x0);
     TASSIGN(srcTile, isInPlace ? 0x0 : dstRow * dstCol * sizeof(T));
 
