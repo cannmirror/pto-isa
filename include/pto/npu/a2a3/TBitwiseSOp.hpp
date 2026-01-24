@@ -41,7 +41,7 @@ namespace pto
     template <typename Op, typename TileDataDst, typename TileDataSrc>
     __tf__ PTO_INTERNAL void TShiftS(typename TileDataDst::TileDType __out__ dstData,
                                    typename TileDataSrc::TileDType __in__ srcData,
-                                   typename TileDataSrc::DType __in__ scalar,
+                                   typename TileDataSrc::DType scalar,
                                    unsigned validRow,
                                    unsigned validCol) {
         using T = typename TileDataSrc::DType;

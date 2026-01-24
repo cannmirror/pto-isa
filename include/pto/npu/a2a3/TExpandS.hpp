@@ -27,7 +27,7 @@ namespace pto
     };
     template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned stride>
     __tf__ PTO_INTERNAL void TExpandS(typename TileData::TileDType __out__ dst,
-                                typename TileData::DType __in__ scalar,
+                                typename TileData::DType scalar,
                                 unsigned validRow,
                                 unsigned validCol) 
     {

@@ -29,7 +29,7 @@ namespace pto
     template <typename T, typename TileDataDst, typename TileDataSrc>
     __tf__ PTO_INTERNAL void TMinS(typename TileDataDst::TileDType __out__ dstData,
                                    typename TileDataSrc::TileDType __in__ srcData,
-                                   T __in__ scalar,
+                                   T scalar,
                                    unsigned validRow,
                                    unsigned validCol) {
         __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);

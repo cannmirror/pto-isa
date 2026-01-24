@@ -208,7 +208,7 @@ namespace pto
     template <typename T, typename TileDataDst, typename TileDataSrc>
     __tf__ PTO_INTERNAL void TDivS(typename TileDataDst::TileDType __out__ dstData,
                                    typename TileDataSrc::TileDType __in__ srcData,
-                                   T __in__ scalar, unsigned validRow, unsigned validCol) {
+                                   T scalar, unsigned validRow, unsigned validCol) {
         __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
         __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
         constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
@@ -255,7 +255,7 @@ namespace pto
 
     template <typename T, typename TileDataDst, typename TileDataSrc>
     __tf__ PTO_INTERNAL void TSDiv(typename TileDataDst::TileDType __out__ dstData,
-        typename TileDataSrc::TileDType __in__ srcData, T __in__ scalar, unsigned validRow, unsigned validCol) {
+        typename TileDataSrc::TileDType __in__ srcData, T scalar, unsigned validRow, unsigned validCol) {
         __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
         __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
         constexpr unsigned elementsPerRepeat = pto::REPEAT_BYTE / sizeof(T);
