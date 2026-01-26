@@ -145,7 +145,7 @@ namespace pto{
 
         // Ping-pong is used to overlap TEXTRACT (L1->L0) with TMATMUL on alternating buffers.
         uint64_t pingpong = getPingPong(0);
-        const uint64_t Cube_K = calculateFittingCubeK(Cube_M, Cube_N);
+        const uint64_t Cube_K = calculateFittingCubeK(Cube_M, Cube_N) > Tile_K ? Tile_K : calculateFittingCubeK(Cube_M, Cube_N);
         const uint64_t kSegments = (uint64_t)(Tile_K / Cube_K);
         for (uint64_t k = 0 ; k < kSegments; k++){
             using LeftTile = TileLeft<half, Cube_M, Cube_K, Cube_M, Cube_K>;

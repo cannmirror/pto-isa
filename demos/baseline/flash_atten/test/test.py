@@ -45,7 +45,7 @@ def gen_case(s0, s1, head_size=HEAD_SIZE, cube_s1=128, tile_s1=TILE_S1_DEFAULT):
     # also produce softmax x_exp (per-row) saved as FP16 and tmp_float_exp saved as FP32
     # compute softmax in tiled fashion by TILE_S1 tiles (default 256)
     arr_f32 = golden.astype(np.float32)
-    scale = 1/np.sqrt(HEAD_SIZE)
+    scale = 1/np.sqrt(head_size)
     num_tiles = s1 // tile_s1
 
     # allocate full arrays to collect per-tile exponentials and per-tile global sums

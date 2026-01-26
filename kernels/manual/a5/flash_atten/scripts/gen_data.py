@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ def gen_case(path, s0, s1, head_size=HEAD_SIZE, cube_s1=128, tile_s1=TILE_S1_DEF
     # also produce softmax x_exp (per-row) saved as FP16 and tmp_float_exp saved as FP32
     # compute softmax in tiled fashion by TILE_S1 tiles (default 256)
     arr_f32 = golden.astype(np.float32)
-    scale = 1/np.sqrt(HEAD_SIZE)
+    scale = 1/np.sqrt(head_size)
     num_tiles = s1 // tile_s1
 
     # allocate full arrays to collect per-tile exponentials and per-tile global sums

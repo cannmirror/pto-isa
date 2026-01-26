@@ -302,8 +302,8 @@ AICORE inline void compute_qk(int tile_id, int sub_tile_id, __gm__ half *q, __gm
         #if UF_ENABLE
         pto_macro_matmul<Cube_S0, Cube_HEAD, Cube_S1>(qMatTile, kMatTile, qkAccTile, AccMode::InitFinalSum);
         #else
-        pto_macro_matmul<Cube_S0, Cube_HEAD, Cube_S1>(qMatTile, kMatTile, qkAccTile, AccMode::Init);
         wait_flag(PIPE_FIX, PIPE_M, accTileEvtID);
+        pto_macro_matmul<Cube_S0, Cube_HEAD, Cube_S1>(qMatTile, kMatTile, qkAccTile, AccMode::Init);
         #endif
 
         set_flag(PIPE_MTE1, PIPE_MTE2, qkMatTileEventId);
