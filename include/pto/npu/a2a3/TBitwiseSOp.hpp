@@ -98,6 +98,7 @@ namespace pto
         PTO_ASSERT(dst.data() != src.data(), "Setting the source Tile and destination Tile to the same memory is unsupported");
 #endif
         TEXPANDS_IMPL(dst, scalar);
+        pipe_barrier(PIPE_V);
         TAND_IMPL(dst, src, dst);
     }
 
@@ -108,6 +109,7 @@ namespace pto
         PTO_ASSERT(dst.data() != src.data(), "Setting the source Tile and destination Tile to the same memory is unsupported");
 #endif
         TEXPANDS_IMPL(dst, scalar);
+        pipe_barrier(PIPE_V);
         TOR_IMPL(dst, src, dst);
     }
 
