@@ -137,15 +137,15 @@ checkopts() {
 build_only() {
   echo $dotted_line
   echo "build only"
-  chmod +x ./tests/run_st.sh
   if [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "FALSE" ]; then
-    ./tests/run_st.sh a3 npu simple build_only
+    python3 tests/script/build_st.py -r npu -v a3 -t all
   elif [ "$ENABLE_A3" = "FALSE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
-    ./tests/run_st.sh a5 npu simple build_only
+    python3 tests/script/build_st.py -r npu -v a5 -t all
   elif [ "$ENABLE_A3" = "TRUE" ] && [ "$ENABLE_A5" = "TRUE" ]; then
-    ./tests/run_st.sh a3_a5 npu simple build_only
+    python3 tests/script/build_st.py -r npu -v a3 -t all
+    python3 tests/script/build_st.py -r npu -v a5 -t all
   else
-    ./tests/run_st.sh a5 npu simple build_only
+    python3 tests/script/build_st.py -r npu -v a5 -t all
   fi
 }
 

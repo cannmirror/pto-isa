@@ -16,7 +16,7 @@ ENABLE_A5=false
 ENABLE_SIM=false
 ENABLE_NPU=false
 RUN_TYPE=sim
-RUN_MODE=run_st.py
+RUN_MODE="run_st.py -w"
 
 if [ "$1" = "a3" ]; then
   ENABLE_A3=true
@@ -45,6 +45,7 @@ fi
 
 if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
   if [ "$ENABLE_SIMPLE" = "true" ]; then           # 单个用例
+    python3 tests/script/build_st.py -r $RUN_TYPE -v a3 -t all
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolexpand -g TCOLEXPANDTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolsum -g TCOLSUMTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolmax -g TCOLMAXTest.case1
@@ -117,6 +118,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
 
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
+    python3 tests/script/build_st.py -r $RUN_TYPE -v a3 -t all
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolexpand
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolsum
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcolmax
@@ -184,6 +186,7 @@ fi
 
 if [ "$ENABLE_A5" = "true" ]; then
   if [ "$ENABLE_SIMPLE" = "true" ]; then           # 单个用例
+    python3 tests/script/build_st.py -r $RUN_TYPE -v a5 -t all
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trems -g TREMSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tlrelu -g TLRELUTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd -g TADDTest.case_float_64x64_64x64_64x64_64x64
@@ -270,6 +273,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_acc2mat -g TMOVTest.case_nz2nz_insert
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
+    python3 tests/script/build_st.py -r $RUN_TYPE -v a5 -t all
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trems
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tlrelu
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tadd

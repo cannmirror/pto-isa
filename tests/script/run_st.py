@@ -171,6 +171,7 @@ def main():
     parser.add_argument("-t", "--testcase", required=True, help="需要执行的用例")
     parser.add_argument("-g", "--gtest_filter", required=False, help="可选 需要执行的具体case名")
     parser.add_argument("-d", "--debug-enable", action='store_true', help="开启debug检查")
+    parser.add_argument("-w", "--without-build", action='store_true', help="关闭编译（需要预先编译）")
 
     args = parser.parse_args()
     default_soc_version = "Ascend910B1"
@@ -199,7 +200,12 @@ def main():
         set_env_variables(args.run_mode, default_soc_version)
 
         # 执行构建
-        build_project(args.run_mode, default_soc_version, args.testcase, args.debug_enable)
+        if args.without_build:
+            subprocess.run(["rm", "-rf", "build/T*"],
+                cwd=original_dir,
+                check=True)
+        else:
+            build_project(args.run_mode, default_soc_version, args.testcase, args.debug_enable)
 
         # 生成标杆
         golden_path = "testcase/" + args.testcase + "/gen_data.py"
