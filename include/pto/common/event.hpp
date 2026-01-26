@@ -79,6 +79,7 @@ namespace pto {
     TSTORE_ACC,     /* Acc to GM */
     TSTORE_MAT,     /* Mat to GM */
     TMATMUL,
+    TGEMV,
     TMATMUL_MX,
     TEXTRACT_M2LR,  /* Mat to Left/Right */
     TANDS,

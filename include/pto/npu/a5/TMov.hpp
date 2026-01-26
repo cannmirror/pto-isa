@@ -335,18 +335,21 @@ AICORE void TMovToLeft(DstTileData &dst, SrcTileData &src)
     static_assert(
         DstTileData::SFractal == SLayout::RowMajor && !DstTileData::isRowMajor, "TMov: DstTile Invalid Fractal.");
     constexpr bool isFp4Type = std::is_same<typename SrcTileData::DType, float4_e2m1x2_t>::value ||
-        std::is_same<typename SrcTileData::DType, float4_e1m2x2_t>::value;
-    if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+                               std::is_same<typename SrcTileData::DType, float4_e1m2x2_t>::value;
+    if constexpr (SrcTileData::Rows == 1 && SrcTileData::isRowMajor) {
+        TExtractToAVector<DstTileData, SrcTileData, isFp4Type>(
+            dst.data(), src.data(), 0, 0, dst.GetValidCol());
+    } else if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
         if constexpr (DstTileData::Compact == CompactMode::Normal) {
-            TExtractToACompact<DstTileData, SrcTileData, isFp4Type>(dst.data(), src.data(), 0, 0,
-                dst.GetValidRow(), dst.GetValidCol());
+            TExtractToACompact<DstTileData, SrcTileData, isFp4Type>(
+                dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol());
         } else {
             TExtractToA<DstTileData, SrcTileData, false, isFp4Type>(dst.data(), src.data(), 0, 0);
         }
     } else {
         if constexpr (DstTileData::Compact == CompactMode::Normal || sizeof(typename SrcTileData::DType) == 1) {
-            TExtractToATransCompact<DstTileData, SrcTileData, isFp4Type>(dst.data(), src.data(), 0, 0,
-                dst.GetValidRow(), dst.GetValidCol());
+            TExtractToATransCompact<DstTileData, SrcTileData, isFp4Type>(
+                dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol());
         } else {
             TExtractToA<DstTileData, SrcTileData, true, isFp4Type>(dst.data(), src.data(), 0, 0);
         }

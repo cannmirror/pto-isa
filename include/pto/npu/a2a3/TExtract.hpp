@@ -100,6 +100,28 @@ __tf__ AICORE void TExtractToA(typename DstTileData::TileDType __out__ dst, type
     }
 }
 
+template <typename DstTileData, typename SrcTileData>
+__tf__ AICORE void TExtractToAVector(typename DstTileData::TileDType __out__ dst,
+    typename SrcTileData::TileDType __in__ src, uint16_t indexRow, uint16_t indexCol, uint16_t dstValidCol)
+{
+    using DataType = typename SrcTileData::DType;
+    __cbuf__ DataType *srcAddr = (__cbuf__ DataType *)__cce_get_tile_ptr(src);
+    __ca__ DataType *dstAddr = (__ca__ DataType *)__cce_get_tile_ptr(dst);
+
+    constexpr int32_t srcCol = SrcTileData::Cols;
+    constexpr int32_t dstCol = DstTileData::Cols;
+    constexpr int32_t fractalSize = CUBE_BLOCK_SIZE / sizeof(DataType);
+
+    static_assert((srcCol % fractalSize) == 0, "srcCol * sizeof(DataType) must be aligned to 512B");
+    static_assert((dstCol % fractalSize) == 0, "dstCol * sizeof(DataType) must be aligned to 512B");
+    PTO_ASSERT((indexCol % fractalSize) == 0, "indexCol * sizeof(DataType) must be aligned to 512B");
+
+    int32_t kAlign = (dstValidCol + fractalSize - 1) &~ (fractalSize - 1);
+    uint16_t baseIdx = indexCol * sizeof(DataType) >> SHIFT_FRACTAL_BYTE;
+    uint8_t repeatTimes = kAlign / fractalSize;
+    load_cbuf_to_ca(dstAddr, srcAddr, baseIdx, repeatTimes, 1, 0, false);
+}
+
 template <typename DstType, typename SrcType, int32_t srcRow, int32_t srcCol, int32_t dstRow, int32_t dstCol>
 PTO_INTERNAL void TExtractToBNonTranspose(
     __cb__ DstType *dstAddr, __cbuf__ SrcType *srcAddr, uint16_t indexRow, uint16_t indexCol)
@@ -414,7 +436,8 @@ PTO_INTERNAL void CheckTExtract()
                       std::is_same<DstType, float>::value,
         "TExtract: Invalid data type.");
     static_assert((SrcTileData::SFractal == SLayout::ColMajor && SrcTileData::isRowMajor) ||
-                      (SrcTileData::SFractal == SLayout::RowMajor && !SrcTileData::isRowMajor),
+                      (SrcTileData::SFractal == SLayout::RowMajor && !SrcTileData::isRowMajor) ||
+                      SrcTileData::isRowMajor,
         "TExtract: SrcTile Invalid Fractal.");
 }
 
@@ -422,14 +445,13 @@ template <typename DstTileData, typename SrcTileData>
 PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
 {
     CheckTExtract<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
-    PTO_ASSERT(indexRow + DstTileData::Rows <= SrcTileData::Rows,
-        "The sum of indexRow and dstRow should be less than srcRow!");
-    PTO_ASSERT(indexCol + DstTileData::Cols <= SrcTileData::Cols,
-        "The sum of indexCol and dstCol should be less than srcCol!");
+    PTO_ASSERT(indexRow + DstTileData::Rows <= SrcTileData::Rows, "The sum of indexRow and dstRow should be less than srcRow!");
+    PTO_ASSERT(indexCol + DstTileData::Cols <= SrcTileData::Cols, "The sum of indexCol and dstCol should be less than srcCol!");
     if constexpr (DstTileData::Loc == TileType::Left) {
-        static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor,
-            "TExtract: LeftTile Invalid Fractal.");
-        if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+        static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor, "TExtract: LeftTile Invalid Fractal.");
+        if constexpr (SrcTileData::Rows == 1 && SrcTileData::isRowMajor) {
+            TExtractToAVector<DstTileData, SrcTileData>(dst.data(), src.data(), indexRow, indexCol, dst.GetValidCol());
+        } else if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
             if constexpr (DstTileData::Compact == CompactMode::Normal) {
                 TExtractToACompact<DstTileData, SrcTileData, false>(
                     dst.data(), src.data(), indexRow, indexCol, dst.GetValidRow(), dst.GetValidCol(), dst.GetKAligned());
@@ -445,8 +467,7 @@ PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t ind
             }
         }
     } else if constexpr (DstTileData::Loc == TileType::Right) {
-        static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
-            "TExtract: RightTile Invalid Fractal.");
+        static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor, "TExtract: RightTile Invalid Fractal.");
         if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
             if constexpr (DstTileData::Compact == CompactMode::Normal) {
                 TExtractToBCompact<DstTileData, SrcTileData, false>(

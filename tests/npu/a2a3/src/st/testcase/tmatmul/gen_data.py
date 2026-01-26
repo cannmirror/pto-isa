@@ -22,8 +22,9 @@ def gen_golden_data(case_name, param):
     src_type = param.atype
     dst_type = param.ctype
     bias_type = param.bias_type
+    is_atrans = param.is_atrans
 
-    m, k, n, is_bias, is_atrans, is_btrans = param.m, param.k, param.n, param.is_bias, False, False
+    m, k, n, is_bias, is_btrans = param.m, param.k, param.n, param.is_bias, False
 
     x1_gm = np.random.randint(1, 5, [m, k]).astype(src_type)
     x2_gm = np.random.randint(1, 5, [k, n]).astype(src_type)
@@ -46,7 +47,7 @@ def gen_golden_data(case_name, param):
 
 
 class tmatmulParams:
-    def __init__(self, atype, btype, ctype, m, k, n, is_bias, bias_type=None):
+    def __init__(self, atype, btype, ctype, m, k, n, is_bias, is_atrans=False, bias_type=None):
         self.atype = atype
         self.btype = btype
         self.ctype = ctype
@@ -54,10 +55,12 @@ class tmatmulParams:
         self.k = k
         self.n = n 
         self.is_bias = is_bias
+        self.is_atrans = is_atrans
         if (bias_type):
             self.bias_type = bias_type
         else:
             self.bias_type = ctype
+
 
 
 if __name__ == "__main__":
@@ -67,6 +70,8 @@ if __name__ == "__main__":
         "TMATMULTest.case2",
         "TMATMULTest.case3",
         "TMATMULTest.case4",
+        "TMATMULTest.case5",
+        "TMATMULTest.case6",
         "TMATMULBIASTest.case1",
         "TMATMULBIASTest.case2",
         "TMATMULBIASTest.case3",
@@ -81,12 +86,14 @@ if __name__ == "__main__":
         tmatmulParams(np.int8, np.int8, np.int32, 65, 90, 89, False),
         tmatmulParams(np.float16, np.float16, np.float32, 5, 75, 11, False),
         tmatmulParams(np.float16, np.float16, np.float32, 1, 256, 64, False),
+        tmatmulParams(np.float16, np.float16, np.float32, 1, 16, 32, False),
+        tmatmulParams(np.float16, np.float16, np.float32, 1, 200, 32, False, True),
         # bias test
-        tmatmulParams(np.float16, np.float16, np.float32, 26, 100, 94, True, np.float32),
-        tmatmulParams(np.float16, np.float16, np.float32, 101, 288, 67, True, np.float32),
-        tmatmulParams(np.float32, np.float32, np.float32, 15, 16, 15, True, np.float32),
+        tmatmulParams(np.float16, np.float16, np.float32, 26, 100, 94, True),
+        tmatmulParams(np.float16, np.float16, np.float32, 101, 288, 67, True),
+        tmatmulParams(np.float32, np.float32, np.float32, 15, 16, 15, True),
         tmatmulParams(np.int8, np.int8, np.int32, 55, 127, 29, True),
-        tmatmulParams(bfloat16, bfloat16, np.float32, 11, 402, 30, True, np.float32),
+        tmatmulParams(bfloat16, bfloat16, np.float32, 11, 402, 30, True),
         tmatmulParams(np.int8, np.int8, np.int32, 150, 89, 50, True),
         # bias + acc test
         tmatmulParams(np.int8, np.int8, np.int32, 135, 64, 88, True),

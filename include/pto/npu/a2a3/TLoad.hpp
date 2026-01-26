@@ -360,8 +360,7 @@ __tf__ PTO_INTERNAL void TLoadGm2L1Nd2nz(typename TileData::TileDType __out__ ds
     typename GlobalData::DType *srcAddr = src;
     static_assert(GlobalData::staticShape[0] == 1 && GlobalData::staticShape[1] == 1 && GlobalData::staticShape[2] == 1,
         "Fix: GlobalTensor ony support 2 dim when ND2NZ!");
-    static_assert(TileData::SFractalSize == 512 || TileData::SFractalSize == 32,
-        "Fix: TileData ony support SFractalSize = 512Bytes or 32Bytes!");
+    static_assert(TileData::SFractalSize == 512, "Fix: TileData ony support SFractalSize = 512Bytes!");
     PTO_ASSERT(gShape3 > 0 && gShape3 <= 16384, "The Shape3 of GlobalTensor must be in range of [1, 16384]!");
     PTO_ASSERT(gShape4 > 0 && gShape4 <= 65535, "The Shape4 of GlobalTensor must be must be in range of [1, 65535]!");
     PTO_ASSERT(

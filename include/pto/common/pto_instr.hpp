@@ -378,6 +378,29 @@ PTO_INST RecordEvent TMATMUL_BIAS(
   return {};
 }
 
+template <typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
+PTO_INST RecordEvent TGEMV(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TGEMV, cMatrix, aMatrix, bMatrix);
+  return {};
+}
+
+template <typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
+PTO_INST RecordEvent TGEMV_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix,
+  WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TGEMV_ACC, cOutMatrix, cInMatrix, aMatrix, bMatrix);
+  return {};
+}
+
+template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias, typename... WaitEvents>
+PTO_INST RecordEvent TGEMV_BIAS(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData,
+  WaitEvents&... events) {
+  TSYNC(events...);
+  MAP_INSTR_IMPL(TGEMV_BIAS, cMatrix, aMatrix, bMatrix, biasData);
+  return {};
+}
+
 template <typename DstTileData, typename TmpTileData, typename Src0TileData,
           typename Src1TileData, typename Src2TileData, typename Src3TileData,
           bool exhausted, typename... WaitEvents>

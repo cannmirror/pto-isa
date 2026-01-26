@@ -19,6 +19,7 @@ constexpr int REPEAT_MAX = 255;
 constexpr const int BLOCK_BYTE_SIZE = 32;
 constexpr const uint32_t SHIFT_BLOCK_LEN = 4;
 constexpr const uint32_t SHIFT_BLOCK_BYTE = 5;
+constexpr const uint32_t SHIFT_FRACTAL_BYTE = 9;
 constexpr const int REPEAT_STRIDE_MAX = 255;
 constexpr const uint64_t BLOCK_MAX_PER_REPEAT = 8;
 constexpr const uint32_t TMP_UB_SIZE = 8 * 1024;

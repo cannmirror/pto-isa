@@ -109,7 +109,9 @@ __tf__ AICORE void TMovCcToCb(typename DstTileData::TileDType __out__ dst, typen
 template <typename DstTileData, typename SrcTileData>
 PTO_INTERNAL void TMovToLeft(DstTileData &dst, SrcTileData &src)
 {
-    if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+    if constexpr (SrcTileData::Rows == 1 && SrcTileData::isRowMajor) {
+            TExtractToAVector<DstTileData, SrcTileData>(dst.data(), src.data(), 0, 0, dst.GetValidCol());
+    } else if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
         if constexpr (DstTileData::Compact == CompactMode::Normal) {
             TExtractToACompact<DstTileData, SrcTileData, false>(
                 dst.data(), src.data(), 0, 0, dst.GetValidRow(), dst.GetValidCol(), dst.GetKAligned());
@@ -158,9 +160,9 @@ PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
                       (DstTileData::Loc == TileType::Mat && SrcTileData::Loc == TileType::Acc),
         "TMov: Invalid TileType.");
     if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Left) {
-        TMovToLeft<DstTileData, SrcTileData>(dst,src);
+        TMovToLeft<DstTileData, SrcTileData>(dst, src);
     } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Right) {
-        TMovToRight<DstTileData, SrcTileData>(dst,src);
+        TMovToRight<DstTileData, SrcTileData>(dst, src);
     } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Bias) {
         TMovToBt<DstTileData, SrcTileData>(dst.data(), src.data());
     } else if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Scaling) {

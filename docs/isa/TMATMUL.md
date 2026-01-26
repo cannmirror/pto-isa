@@ -56,7 +56,7 @@ PTO_INST RecordEvent TMATMUL(TileRes& cMatrix, TileLeft& aMatrix, TileRight& bMa
     - Left: `Loc == Left`, `!isRowMajor`, `SFractal == RowMajor`
     - Right: `Loc == Right`, `isRowMajor`, `SFractal == ColMajor`
     - Acc: `Loc == Acc`, `!isRowMajor`, `SFractal == RowMajor`
-  - No explicit runtime range checks on `m/k/n` are enforced in `TMATMUL_IMPL` on this target.
+    - Runtime: `m/k/n` (taken from `aMatrix.GetValidRow()`, `aMatrix.GetValidCol()`, `bMatrix.GetValidCol()`) must be in `[1, 4095]`.
 
 ## Examples
 

@@ -204,6 +204,7 @@ if __name__ == "__main__":
         "TMATMULTest.case8",
         "TMATMULTest.case9",
         "TMATMULTest.case10",
+        "TMATMULTest.case11",
 
         "TMATMULTest.case_bias_1",
         "TMATMULTest.case_bias_2",
@@ -228,6 +229,7 @@ if __name__ == "__main__":
         tmatmulParams(fp8_e5m2, fp8_e4m3fn, np.float32, 145, 115, 85, False),
         tmatmulParams(fp8_e5m2, fp8_e5m2, np.float32, 120, 90, 160, False),
         tmatmulParams(np.uint8, np.uint8, np.float32, 30, 90, 60, False),
+        tmatmulParams(np.float16, np.float16, np.float32, 1, 300, 60, False),
 
         tmatmulParams(np.int8, np.int8, np.int32, 8, 7, 6, True),
         tmatmulParams(np.float16, np.float16, np.float32, 16, 15, 16, True, np.float16),
