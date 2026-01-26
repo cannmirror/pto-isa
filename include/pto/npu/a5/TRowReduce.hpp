@@ -19,6 +19,27 @@ full text of the License.
 #include <type_traits>
 
 namespace pto {
+
+// ==========================================
+// FloatLimits: get max value for float types
+// ==========================================
+
+template <typename T> struct FloatLimits;
+
+template <> struct FloatLimits<float> {
+  static constexpr float max() { return __FLT_MAX__; }
+};
+
+template <> struct FloatLimits<half> {
+  static constexpr half max() { return static_cast<half>(65504.0f); }
+};
+
+template <typename T> struct FloatLimits {
+  static_assert(sizeof(T) == 0,
+                "FloatLimits<T> is not specialized for this type. "
+                "Supported types: float, half.");
+};
+
 template <typename T> struct ROWSUM {
   static constexpr T InitVal = 0;
   using RegType = typename TypeGet<T>::T;
@@ -32,7 +53,7 @@ template <typename T> struct ROWSUM {
 };
 
 template <typename T> struct ROWMAX {
-  static constexpr T InitVal = -INFINITY;
+  static constexpr T InitVal = -FloatLimits<T>::max();
   using RegType = typename TypeGet<T>::T;
   static PTO_INTERNAL void Accumulate(RegType &dst, RegType &src0,
                                       RegType &src1, MaskReg &pred) {
@@ -44,7 +65,7 @@ template <typename T> struct ROWMAX {
 };
 
 template <typename T> struct ROWMIN {
-  static constexpr T InitVal = INFINITY;
+  static constexpr T InitVal = FloatLimits<T>::max();
   using RegType = typename TypeGet<T>::T;
   static PTO_INTERNAL void Accumulate(RegType &dst, RegType &src0,
                                       RegType &src1, MaskReg &pred) {
