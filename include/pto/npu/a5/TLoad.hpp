@@ -36,7 +36,7 @@ PTO_INTERNAL void TLoadInstr(__ubuf__ typename TileData::DType *dst, typename Gl
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadVecND2ND(typename TileData::TileDType dstAddr, typename GlobalData::DType *srcAddr, int gShape0,
+PTO_INTERNAL void TLoadVecND2ND(__ubuf__ typename TileData::DType *dstAddr, typename GlobalData::DType *srcAddr, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol, bool enableUBPad) {
     typename GlobalData::DType *srcAddrP = srcAddr;
@@ -72,7 +72,7 @@ PTO_INTERNAL void TLoadVecND2ND(typename TileData::TileDType dstAddr, typename G
     }
 }
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadVecDN2DN(typename TileData::TileDType dstAddr, typename GlobalData::DType *srcAddr, int gShape0,
+PTO_INTERNAL void TLoadVecDN2DN(__ubuf__ typename TileData::DType *dstAddr, typename GlobalData::DType *srcAddr, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol, bool enableUBPad) {
     uint32_t nBurst = gShape4;
@@ -111,7 +111,7 @@ PTO_INTERNAL void TLoadVecDN2DN(typename TileData::TileDType dstAddr, typename G
     }
 }
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadVecNZ2NZ(typename TileData::TileDType dstAddr, typename GlobalData::DType *srcAddr, int gShape0,
+PTO_INTERNAL void TLoadVecNZ2NZ(__ubuf__ typename TileData::DType *dstAddr, typename GlobalData::DType *srcAddr, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
     uint32_t nBurst = gShape1;
@@ -213,7 +213,7 @@ PTO_INTERNAL void TLoadCubeCheck() {
 }
 
 template <typename TileData, typename GlobalData, Layout Layout = Layout::ND>
-PTO_INTERNAL void TLoadCubeInstr(typename TileData::TileDType dst, typename GlobalData::DType *src,
+PTO_INTERNAL void TLoadCubeInstr(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src,
     uint64_t loop1SrcStride, uint16_t nValue, uint32_t dValue) {
     if constexpr (Layout == Layout::ND) {
         if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
@@ -248,7 +248,7 @@ PTO_INTERNAL void TLoadCubeInstr(typename TileData::TileDType dst, typename Glob
     }
 }
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadCubeInstr(typename TileData::TileDType dst, typename GlobalData::DType *src, uint32_t nBurst,
+PTO_INTERNAL void TLoadCubeInstr(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, uint32_t nBurst,
     uint32_t lenBurst, uint64_t srcStride, uint32_t dstStride, uint32_t padCount) {
     if constexpr (std::is_same<typename TileData::DType, float4_e1m2x2_t>::value ||
                   std::is_same<typename TileData::DType, float4_e2m1x2_t>::value) {
@@ -275,7 +275,7 @@ PTO_INTERNAL void TLoadCubeInstr(typename TileData::TileDType dst, typename Glob
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadCubeND2NZ(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadCubeND2NZ(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
     uint16_t nValue = gShape3;
@@ -302,10 +302,10 @@ PTO_INTERNAL void TLoadCubeND2NZ(typename TileData::TileDType dst, typename Glob
     TLoadCubeInstr<TileData, GlobalData, GlobalData::layout>(dst, src, loop1SrcStride, nValue, dValue);
 }
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadCubeNZ2NZ(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadCubeNZ2NZ(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
-    typename TileData::TileDType dstAddrP = dst;
+    __cbuf__ typename TileData::DType *dstAddrP = dst;
     typename GlobalData::DType *srcAddrP = src;
     uint32_t nBurst = gShape1;
     uint32_t lenBurst = validRow * BLOCK_BYTE_SIZE;
@@ -327,10 +327,10 @@ PTO_INTERNAL void TLoadCubeNZ2NZ(typename TileData::TileDType dst, typename Glob
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadCubeND2ND(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadCubeND2ND(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
-    typename TileData::TileDType dstAddrP = dst;
+    __cbuf__ typename TileData::DType *dstAddrP = dst;
     typename GlobalData::DType *srcAddrP = src;
     uint32_t nBurst = gShape3;
     uint32_t lenBurst = GetByteSize<typename TileData::DType>(validCol);
@@ -375,10 +375,10 @@ PTO_INTERNAL void TLoadCubeND2ND(typename TileData::TileDType dst, typename Glob
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadCubeDN2DN(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadCubeDN2DN(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
-    typename TileData::TileDType dstAddrP = dst;
+    __cbuf__ typename TileData::DType *dstAddrP = dst;
     typename GlobalData::DType *srcAddrP = src;
     uint32_t nBurst = gShape4;
     uint32_t lenBurst = GetByteSize<typename TileData::DType>(validRow);
@@ -422,7 +422,7 @@ PTO_INTERNAL void TLoadCubeDN2DN(typename TileData::TileDType dst, typename Glob
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadCubeDN2ZN(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadCubeDN2ZN(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
     uint16_t nValue = gShape4;
@@ -550,12 +550,12 @@ PTO_INTERNAL void TLoadMxCubeCheck() {
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadMxCubeNN2NN(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadMxCubeNN2NN(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4) {
     // [0   1       2      3   4]
     // [1, N/16, scaleK/2, 16, 2]
-    typename TileData::TileDType dstAddrP = dst;
+    __cbuf__ typename TileData::DType *dstAddrP = dst;
     typename GlobalData::DType *srcAddrP = src;
     uint32_t nBurst = gShape1;
     uint32_t lenBurst = gShape2 * gShape4 * BLOCK_LEN;
@@ -572,12 +572,12 @@ PTO_INTERNAL void TLoadMxCubeNN2NN(typename TileData::TileDType dst, typename Gl
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadMxCubeZZ2ZZ(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadMxCubeZZ2ZZ(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4) {
     // [0   1       2      3   4]
     // [1, M/16, scaleK/2, 16, 2]
-    typename TileData::TileDType dstAddrP = dst;
+    __cbuf__ typename TileData::DType *dstAddrP = dst;
     typename GlobalData::DType *srcAddrP = src;
     uint32_t nBurst = gShape1;
     uint32_t lenBurst = BLOCK_LEN * gShape2 * gShape4;
@@ -596,7 +596,7 @@ PTO_INTERNAL void TLoadMxCubeZZ2ZZ(typename TileData::TileDType dst, typename Gl
 // DN for AND2ZZ && BDN2NN
 // ND for ADN2ZZ && BND2NN
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadMxCubeAND2ZZ(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadMxCubeAND2ZZ(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
     uint16_t nValue = validCol >> 1;
@@ -616,7 +616,7 @@ PTO_INTERNAL void TLoadMxCubeAND2ZZ(typename TileData::TileDType dst, typename G
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadMxCubeADN2ZZ(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadMxCubeADN2ZZ(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
     uint16_t nValue = validCol >> 1;
@@ -636,7 +636,7 @@ PTO_INTERNAL void TLoadMxCubeADN2ZZ(typename TileData::TileDType dst, typename G
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadMxCubeBND2NN(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadMxCubeBND2NN(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
     uint16_t nValue = validRow >> 1;
@@ -656,7 +656,7 @@ PTO_INTERNAL void TLoadMxCubeBND2NN(typename TileData::TileDType dst, typename G
 }
 
 template <typename TileData, typename GlobalData>
-PTO_INTERNAL void TLoadMxCubeBDN2NN(typename TileData::TileDType dst, typename GlobalData::DType *src, int gShape0,
+PTO_INTERNAL void TLoadMxCubeBDN2NN(__cbuf__ typename TileData::DType *dst, typename GlobalData::DType *src, int gShape0,
     int gShape1, int gShape2, int gShape3, int gShape4, int gStride0, int gStride1, int gStride2, int gStride3,
     int gStride4, int validRow, int validCol) {
     uint16_t nValue = validRow >> 1;
