@@ -91,8 +91,6 @@ PTO_INTERNAL void TRemSCheck(unsigned srcValidRow, unsigned srcValidCol, unsigne
     static_assert((TileDataDst::ValidCol <= TileDataDst::Cols) && (TileDataDst::ValidRow <= TileDataDst::Rows) &&
                   (TileDataSrc::ValidCol <= TileDataSrc::Cols) && (TileDataSrc::ValidRow <= TileDataSrc::Rows),
                   "Number of valid columns and rows must not be greater than number of tile columns and rows.");
-    PTO_ASSERT((src.GetValidCol() == dst.GetValidCol()) && (src.GetValidRow() == dst.GetValidRow()),
-                "Number of validColumns and validRows of src and dst must be the same.");
 }
 
 template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
@@ -103,6 +101,9 @@ PTO_INTERNAL void TREMS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDa
     unsigned validCol = dst.GetValidCol();
     constexpr unsigned dstRowStride = TileDataDst::RowStride;
     constexpr unsigned srcRowStride = TileDataSrc::RowStride;
+
+    PTO_ASSERT((src.GetValidCol() == validCol) && (src.GetValidRow() == validRow),
+                "Number of validColumns and validRows of src and dst must be the same.");
 
     TRemSCheck<TileDataDst, TileDataSrc>(src.GetValidRow(), src.GetValidCol(), validRow, validCol);
     TRemS<TileDataDst, TileDataSrc, dstRowStride, srcRowStride>(dst.data(), src.data(), scalar, validRow, validCol);
