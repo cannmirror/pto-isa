@@ -38,6 +38,7 @@ PTO_INST RecordEvent TREM(TileData& dst, TileData& src0, TileData& src1, WaitEve
 
 - The op iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
 - Division-by-zero behavior is target-defined; the CPU simulator asserts in debug builds.
+- Temporary space is required by A3 for calculation, while not used by A5.
 
 ## Examples
 
@@ -48,8 +49,8 @@ using namespace pto;
 
 void example() {
   using TileT = Tile<TileType::Vec, int32_t, 16, 16>;
-  TileT a, b, out;
-  TREM(out, a, b);
+  TileT a, b, out, tmp;
+  TREM(out, a, b, tmp);
 }
 ```
 

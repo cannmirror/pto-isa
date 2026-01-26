@@ -215,6 +215,12 @@ namespace pto {
         BinaryElementTileOp_Impl<tile_shape, ElementOp::OP_PRELU>(dst.data(), src0.data(), src1.data(), row, col);
     }
 
+    template <typename tile_shape>
+    PTO_INTERNAL void TPRELU_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1, tile_shape &tmp) {
+        (void)tmp;
+        TPRELU_IMPL(dst, src0, src1);
+    }
+
     template<typename tile_shape, ElementOp op>
     void ElementTileOpWithCarry_Impl(typename tile_shape::TileDType dst, typename tile_shape::TileDType src0,
                                   typename tile_shape::TileDType src1, typename tile_shape::TileDType src2,

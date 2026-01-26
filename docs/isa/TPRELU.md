@@ -31,6 +31,8 @@ PTO_INST RecordEvent TPRELU(TileData& dst, TileData& src0, TileData& src1, WaitE
 ## Constraints
 
 - The op iterates over `dst.GetValidRow()` / `dst.GetValidCol()`.
+- Temporary space is required by A3 for calculation, while not used by A5.
+- For A3, 2 source Tile, destination Tile, temporary space must in different memory range without overlapping.
 
 ## Examples
 
@@ -41,8 +43,8 @@ using namespace pto;
 
 void example() {
   using TileT = Tile<TileType::Vec, float, 16, 16>;
-  TileT x, slope, out;
-  TPRELU(out, x, slope);
+  TileT x, slope, out, tmp;
+  TPRELU(out, x, slope, tmp);
 }
 ```
 

@@ -53,11 +53,7 @@ struct RemOp {
             vsub(reg_tmp_odd2, reg_tmp_odd0, reg_tmp_odd2, preg, MODE_ZEROING);
             vcvt(reg_dst_odd, reg_tmp_odd2, preg, ROUND_Z, RS_ENABLE, PART_ODD);
 
-            RegTensor<uint16_t> reg_sign0;
-            vdup(reg_sign0, 0x8000, preg, MODE_ZEROING);
-            vand((RegTensor<T> &)reg_sign0, (RegTensor<T> &)reg_sign0, reg_src0, preg, MODE_ZEROING);
             vor(reg_dst, reg_dst_even, reg_dst_odd, preg);
-            vor(reg_dst, reg_dst, (RegTensor<T> &)reg_sign0, preg);
         } else {
             vmod(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
         }

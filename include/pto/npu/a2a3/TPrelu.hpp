@@ -42,11 +42,11 @@ namespace pto {
         TPreluCheck(dst, src0, src1, tmp);
         TMINS_IMPL(tmp, src0, 0);
         pipe_barrier(PIPE_V);
-        TDIV_IMPL(src1, tmp, src1);
+        TMUL_IMPL(dst, tmp, src1);
         pipe_barrier(PIPE_V);
-        TMAXS_IMPL(src0, src0, 0);
+        TMAXS_IMPL(tmp, src0, 0);
         pipe_barrier(PIPE_V);
-        TADD_IMPL(dst, src0, src1);
+        TADD_IMPL(dst, dst, tmp);
     }
 }
 

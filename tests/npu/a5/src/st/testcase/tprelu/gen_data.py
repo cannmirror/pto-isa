@@ -21,8 +21,8 @@ def gen_golden_data_tprelu(case_name, param):
     h_valid, w_valid = [param.valid_row, param.valid_col]
 
     # Generate random input arrays
-    input1 = np.random.randint(1, 16383, size=h_valid * w_valid).astype(dtype)
-    input2 = np.random.randint(1, 16383, size=h_valid * w_valid).astype(dtype)
+    input1 = np.random.uniform(-100, 100, size=h_valid * w_valid).astype(dtype)
+    input2 = np.random.uniform(-100, 100, size=h_valid * w_valid).astype(dtype)
 
     # Perform the andbtraction
     golden = np.where(input1 > 0, input1, input1 * input2).astype(dtype)
