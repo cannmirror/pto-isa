@@ -18,8 +18,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
 // lower-triangular
-template <typename T, int diagonal, unsigned rowStride>
-PTO_INTERNAL void TTril(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol) {
+template <typename T, unsigned rowStride>
+PTO_INTERNAL void TTril(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol, int diagonal) {
     T one = static_cast<T>(1);
     T zero = static_cast<T>(0);
     for (unsigned i = 0; i < validRow; ++i) {
@@ -43,8 +43,8 @@ PTO_INTERNAL void TTril(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol
 }
 
 // upper-triangular
-template <typename T, int diagonal, unsigned rowStride>
-PTO_INTERNAL void TTriu(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol) {
+template <typename T, unsigned rowStride>
+PTO_INTERNAL void TTriu(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol, int diagonal) {
     T one = static_cast<T>(1);
     T zero = static_cast<T>(0);
     for (unsigned i = 0; i < validRow; ++i) {
@@ -66,16 +66,16 @@ PTO_INTERNAL void TTriu(__ubuf__ T *dstPtr, unsigned validRow, unsigned validCol
     }
 }
 
-template <typename TileData, int isUpperOrLower, int diagonal, unsigned rowStride>
-__tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned validRow, unsigned validCol) {
+template <typename TileData, int isUpperOrLower, unsigned rowStride>
+__tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned validRow, unsigned validCol, int diagonal) {
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
 
     set_mask_count();
     if constexpr (isUpperOrLower == 0) {
-        TTril<T, diagonal, rowStride>(dstPtr, validRow, validCol);
+        TTril<T, rowStride>(dstPtr, validRow, validCol, diagonal);
     } else {
-        TTriu<T, diagonal, rowStride>(dstPtr, validRow, validCol);
+        TTriu<T, rowStride>(dstPtr, validRow, validCol, diagonal);
     }
     set_mask_norm();
     set_vector_mask(-1, -1);
@@ -94,14 +94,14 @@ PTO_INTERNAL void TTriCheck(const TileData &dst) {
     static_assert(TileData::isRowMajor, "Fix: TTRI only support row major layout.");
 }
 
-template <typename TileData, int isUpperOrLower, int diagonal>
-PTO_INTERNAL void TTRI_IMPL(TileData &dst) {
+template <typename TileData, int isUpperOrLower>
+PTO_INTERNAL void TTRI_IMPL(TileData &dst, int diagonal) {
     TTriCheck<TileData, isUpperOrLower>(dst);
     constexpr unsigned rowStride = TileData::RowStride;
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    TTri<TileData, isUpperOrLower, diagonal, rowStride>(dst.data(), validRow, validCol);
+    TTri<TileData, isUpperOrLower, rowStride>(dst.data(), validRow, validCol, diagonal);
 }
 
 } // namespace pto

@@ -25,7 +25,7 @@ __global__ AICORE void runTTri(__gm__ T __out__ *out) {
 
     GlobalData dstGlobal(out);
 
-    TTRI<TileData, isUpperOrLower, diagonal>(dstTile);
+    TTRI<TileData, isUpperOrLower>(dstTile, diagonal);
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);
