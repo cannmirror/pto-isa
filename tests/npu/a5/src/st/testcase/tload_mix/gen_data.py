@@ -23,19 +23,23 @@ class DataFormat(Enum):
     NZ2NZ = 4
     DN2DN = 5
     DN2ZN = 6
+    NC1HWC02NC1HWC0 = 7
+    FZ2FZ = 8
+    FZ4D2FZ4D = 9
 
 def gen_golden_data(case_name, param):
     src_type = param.atype
-    dst_type = param.ctype
-
     shape0 = param.shape0
     shape1 = param.shape1
     shape2 = param.shape2
+    shape3 = param.m
+    shape4 = param.k
     whole_shape0 = param.ws0
     whole_shape1 = param.ws1
     whole_shape2 = param.ws2
     whole_shape3 = param.ws3
     whole_shape4 = param.ws4
+    convtile_formats = {DataFormat["NC1HWC02NC1HWC0"].value, DataFormat["FZ2FZ"].value, DataFormat["FZ4D2FZ4D"].value}
 
     M, K, BASEM, BASEK, is_atrans = param.m, param.k, param.basem, param.basek, False
     x1_gm = np.random.randint(1, 5, [M, K]).astype(src_type)
@@ -45,7 +49,6 @@ def gen_golden_data(case_name, param):
         x1_gm = np.random.randint(
             1, 5, [whole_shape3, whole_shape4]).astype(src_type)
         golden = np.zeros([BASEM, BASEK]).astype(src_type)  # L1中Tile大小
-        # 先对golden赋值
         min_m = min(M, golden.shape[0])
         min_k = min(K, golden.shape[1])
         golden[:min_m, :min_k] = x1_gm[:min_m, :min_k]
@@ -67,9 +70,7 @@ def gen_golden_data(case_name, param):
         x1_gm = np.random.randint(
             1, 5, [whole_shape0, whole_shape1, whole_shape2, whole_shape3, whole_shape4]).astype(src_type)
         golden = np.zeros([BASEM, BASEK]).astype(src_type)  # L1中Tile大小
-        print(f"origin x1_gm shape: {x1_gm.shape}")
 
-        # 先对golden赋值
         submatrix = x1_gm[
             0:shape0,          # d0: 截取第shape0个元素（对应 shape[0]=1）
             0:shape1,          # d1: 截取前shape1个元素（对应目标 d1=2）
@@ -77,12 +78,7 @@ def gen_golden_data(case_name, param):
             0:M,         # d3: 截取前M个元素（对应目标 d3=64）
             0:K         # d4: 截取K个元素（对应目标 d4=128）
         ]
-        # 输出：(1, 2, 3, 64, 128)
-        print(f"select real global shape: {submatrix.shape}")
         flattened_submatrix = submatrix.reshape(BASEM, K)
-        # 输出：(384, 128)
-        print(f"flattened submatrix shape: {flattened_submatrix.shape}")
-
         min_m = min(flattened_submatrix.shape[0], golden.shape[0])
         min_k = min(flattened_submatrix.shape[1], golden.shape[1])
         golden[:min_m, :min_k] = flattened_submatrix[:min_m, :min_k]
@@ -90,9 +86,7 @@ def gen_golden_data(case_name, param):
         x1_gm = np.random.randint(
             1, 5, [whole_shape0, whole_shape1, whole_shape2, whole_shape4, whole_shape3]).astype(src_type)
         golden = np.zeros([BASEK, BASEM]).astype(src_type)
-        print(f"origin x1_gm shape: {x1_gm.shape}")
 
-        # 先对golden赋值
         submatrix = x1_gm[
             0:shape0,          # d0: 截取第shape0个元素（对应 shape[0]=1）
             0:shape1,          # d1: 截取前shape1个元素（对应目标 d1=2）
@@ -100,12 +94,8 @@ def gen_golden_data(case_name, param):
             0:K,         # d3: 截取前M个元素（对应目标 d3=64）
             0:M         # d4: 截取K个元素（对应目标 d4=128）
         ]
-        # 输出：(1, 2, 3, 128, 64)
-        print(f"select real global shape: {submatrix.shape}")
-        flattened_submatrix = submatrix.reshape(BASEK, M)
-        # 输出：(768, 64)
-        print(f"flattened submatrix shape: {flattened_submatrix.shape}")
 
+        flattened_submatrix = submatrix.reshape(BASEK, M)
         min_k = min(flattened_submatrix.shape[0], golden.shape[0])
         min_m = min(flattened_submatrix.shape[1], golden.shape[1])
         golden[:min_k, :min_m] = flattened_submatrix[:min_k, :min_m]
@@ -120,10 +110,8 @@ def gen_golden_data(case_name, param):
             0:M,         # d3: 截取前M个元素（对应目标 d3=16）
             0:K         # d4: 截取K个元素（对应目标 d4=8）
         ]
-        # 输出：(2, 2, 4, 16, 8)
-        print(f"select real global shape: {submatrix.shape}")
         new_submatrix = submatrix.reshape(
-            submatrix.shape[0] * submatrix.shape[1], submatrix.shape[2], submatrix.shape[3], submatrix.shape[4])  # (4, 4, 16, 8)
+            submatrix.shape[0] * submatrix.shape[1], submatrix.shape[2], submatrix.shape[3], submatrix.shape[4])
 
         golden = np.zeros([BASEM, BASEK]).astype(src_type)  # L1中Tile大小 [80,48]
         c0Size = 16
@@ -131,70 +119,61 @@ def gen_golden_data(case_name, param):
             c0Size = 8
         elif src_type == np.int8 or src_type == np.uint8:
             c0Size = 32
-        print("ND2NZ, c0Size=", c0Size)
-        assert (
-            BASEK % c0Size) == 0, "BASEK should be c0Size aligned when matrix is NZ format"
-        assert (BASEM %
-                16) == 0, "BASEM should be 16 aligned when matrix is NZ format"
+        assert (BASEK % c0Size) == 0, "BASEK should be c0Size aligned when matrix is NZ format"
+        assert (BASEM % 16) == 0, "BASEM should be 16 aligned when matrix is NZ format"
         golden = golden.reshape((int(BASEM / 16), 16, int(BASEK / c0Size), c0Size)
                                 ).transpose(2, 0, 1, 3).astype(src_type)  # [80,48] -> [6,5,16,8]
 
         golden[:new_submatrix.shape[0], :new_submatrix.shape[1],
                :new_submatrix.shape[2], :new_submatrix.shape[3]] = new_submatrix
+    elif param.load_type in convtile_formats:
+        x1_gm = np.random.randint(-5, 5, size=(whole_shape0, whole_shape1,
+                                    whole_shape2, whole_shape3, whole_shape4)).astype(src_type)
+        golden = np.zeros(shape=(shape0, shape1, shape2, shape3, shape4), dtype=src_type)
+        golden = x1_gm[0:shape0, 0:shape1, 0:shape2, 0:shape3, 0:shape4]
 
     x2_gm = np.random.randint(1, 5, [M, K]).astype(src_type)
-    # print("============x1_gm======",x1_gm)
-    print("============golden.shape======", golden.shape)
     if param.load_type == DataFormat['ND2NZ'].value:
-        assert (BASEM %
-                16) == 0, "BASEM should be 16 aligned when matrix A is NZ format"
+        assert (BASEM % 16) == 0, "BASEM should be 16 aligned when matrix A is NZ format"
         c0Size = 16
         if src_type == np.float32:
             c0Size = 8
         elif src_type == np.int8 or src_type == np.uint8:
             c0Size = 32
-        print("ND2NZ, c0Size=", c0Size)
-        assert (
-            BASEK % c0Size) == 0, "BASEK should be c0Size aligned when matrix A is NZ format"
+        assert (BASEK % c0Size) == 0, "BASEK should be c0Size aligned when matrix A is NZ format"
         golden = golden.reshape(
             (int(BASEM / 16), 16, int(BASEK / c0Size), c0Size)).transpose(2, 0, 1, 3).astype(src_type)
     elif param.load_type == DataFormat['DN2NZ'].value:
         golden = golden.transpose()
-        # print("=====after transpose=======golden.shape======",golden.shape)
         assert (BASEK % 16) == 0, "BASEK should be 16 aligned when matrix A is NZ format"
         c0Size = 16
         if src_type == np.float32:
             c0Size = 8
         elif src_type == np.int8 or src_type == np.uint8:
             c0Size = 32
-        print("DN2NZ, c0Size=", c0Size)
+
         assert (BASEM % c0Size) == 0, "BASEM should be c0Size aligned when matrix A is NZ format"
         golden = golden.reshape(
             (int(BASEM / 16), 16, int(BASEK / c0Size), c0Size)).transpose(2, 0, 1, 3).astype(src_type)
     elif param.load_type == DataFormat['DN2ZN'].value:
-        # print("=====after transpose=======golden.shape======",golden.shape)
         assert (BASEK % 16) == 0, "BASEK should be 16 aligned when matrix A is NZ format"
         c0Size = 16
         if src_type == np.float32:
             c0Size = 8
         elif src_type == np.int8 or src_type == np.uint8:
             c0Size = 32
-        print("DN2ZN, c0Size=", c0Size)
         assert (BASEM % c0Size) == 0, "BASEM should be c0Size aligned when matrix A is NZ format"
         golden = golden.reshape(
             (int(BASEK / 16), 16, int(BASEM / c0Size), c0Size)).transpose(2, 0, 1, 3).astype(src_type)
 
-
-    # print("============golden======",golden)
     x1_gm.tofile("./x1_gm.bin")
     x2_gm.tofile("./x2_gm.bin")
     golden.tofile("./golden.bin")
 
-class tmatmulParams:
-    def __init__(self, atype, btype, ctype, shape0, shape1, shape2, m, k,  ws0, ws1, ws2, ws3, ws4,  basem, basek, load_type):
+
+class TloadParams:
+    def __init__(self, atype, shape0, shape1, shape2, m, k, ws0, ws1, ws2, ws3, ws4, basem, basek, load_type):
         self.atype = atype
-        self.btype = btype
-        self.ctype = ctype
         self.m = m
         self.k = k
         self.shape0 = shape0
@@ -210,6 +189,7 @@ class tmatmulParams:
         self.basem = basem  # L1 row
         self.basek = basek  # L1 col
         self.load_type = load_type
+
 
 if __name__ == "__main__":
     # 用例名称
@@ -249,72 +229,80 @@ if __name__ == "__main__":
         "TLOADMIXTest.1_1_1_33_99_1_1_1_64_128_48_112_half_DN2ZN",
         "TLOADMIXTest.1_1_1_59_119_1_1_1_64_128_64_128_int8_t_DN2ZN",
         "TLOADMIXTest.1_1_1_59_119_1_1_1_64_128_64_128_fp4x2_e1m2_t_DN2ZN",
+
+        "TLOADMIXTest.NC1HWC02NC1HWC0_int8_t_1_3_16_128_32_3_4_1024_1024_32",  # cut N H
+        "TLOADMIXTest.NC1HWC02NC1HWC0_int8_t_3_2_128_8_32_3_2_128_128_32",  # cut W
+        "TLOADMIXTest.NC1HWC02NC1HWC0_int8_t_3_2_8_128_32_3_8_8_128_32",  # cut C1
+        "TLOADMIXTest.NC1HWC02NC1HWC0_bfloat16_1_6_10_100_16_1_6_100_100_16",  # cut H
+        "TLOADMIXTest.NC1HWC02NC1HWC0_bfloat16_10_16_16_2_16_256_16_100_16_16",  # cut N C1 W
+        "TLOADMIXTest.NC1HWC02NC1HWC0_bfloat16_1_1_1_8192_16_8_16_16_8192_16",  # cut N C1 H
+        "TLOADMIXTest.NC1HWC02NC1HWC0_float_1_1_56_112_8_2_3_224_224_8",  # cut N C1 H W
+
+        "TLOADMIXTest.FZ2FZ_bfloat16_1_7_7_20_16_3_7_7_100_16",  # cut N C1
+        "TLOADMIXTest.FZ2FZ_bfloat16_64_7_7_2_16_256_7_7_16_16",  # cut N C1
+        "TLOADMIXTest.FZ2FZ_bfloat16_96_3_3_8_16_256_3_3_8_16",  # cut C1
+        "TLOADMIXTest.FZ2FZ_int8_t_1_3_3_64_32_3_3_3_128_32",  # cut N C1
+        "TLOADMIXTest.FZ2FZ_int8_t_8_5_5_32_32_8_5_5_128_32",  # cut N
+        "TLOADMIXTest.FZ2FZ_float_70_7_7_2_8_256_7_7_256_8",  # cut C1 N
+
+        "TLOADMIXTest.FZ4D2FZ4D_bfloat16_1_49_7_16_16_1_980_32_16_16",  # cut C1HW N
+        "TLOADMIXTest.FZ4D2FZ4D_bfloat16_1_81_3_16_16_1_90_3_16_16",  # cut C1HW
+        "TLOADMIXTest.FZ4D2FZ4D_int8_t_1_63_3_16_32_1_63_9_16_32",  # cut N
+        "TLOADMIXTest.FZ4D2FZ4D_int8_t_1_125_3_16_32_1_250_5_16_32",  # cut C1HW N
+        "TLOADMIXTest.FZ4D2FZ4D_float_1_126_3_16_8_1_4704_7_16_8",  # cut C1HW N
     ]
 
     case_params_list = [
-        tmatmulParams(np.float16, np.float16, np.float32, 1, 1, 1, 128,
-                      128, 1, 1, 1, 128, 128, 128, 128, DataFormat['ND2NZ'].value),
-        tmatmulParams(np.int8, np.int8, np.int32, 1, 1, 1, 128, 128,
-                      1, 1, 1, 128, 128, 128, 128, DataFormat['ND2NZ'].value),
-        tmatmulParams(np.float32, np.float32,  np.float32, 1, 1, 1, 128,
-                      128, 1, 1, 1, 128, 128, 128, 128, DataFormat['ND2NZ'].value),
-        tmatmulParams(np.float16, np.float16,  np.float32, 1, 1, 1, 64,
-                      128, 1, 1, 1, 64, 128, 64, 128, DataFormat['DN2NZ'].value),
-        tmatmulParams(np.float16, np.float16,  np.float32, 1, 1, 1, 63,
-                      127, 1, 1, 1, 63, 127, 64, 128,  DataFormat['ND2NZ'].value),
-        tmatmulParams(np.float32, np.float32,  np.float32, 1, 1, 1, 128,
-                      128, 1, 1, 1, 128, 128,  128, 128,  DataFormat['ND2ND'].value),
-        tmatmulParams(np.int8, np.int8,  np.int32, 1, 1, 1, 37, 126,
-                      1, 1, 1, 37, 126, 37, 128, DataFormat['ND2ND'].value),
-        tmatmulParams(np.float16, np.float16,  np.float32, 1, 2, 3, 64,
-                      128, 1, 3, 4, 128, 128,  384, 128, DataFormat['ND2ND'].value),
-        tmatmulParams(np.int8, np.int8,  np.int32, 1, 2, 3, 33, 99,
-                      1, 2, 3, 33, 99, 198, 128, DataFormat['ND2ND'].value),
-
-        tmatmulParams(np.float16, np.float16,  np.float32, 1, 1, 1, 33,
-                      99, 1, 1, 1, 64, 128, 48, 112, DataFormat['ND2NZ'].value),
-        tmatmulParams(np.int8, np.int8,  np.int32, 1, 1, 1, 59, 119,
-                      1, 1, 1, 64, 128, 64, 128, DataFormat['ND2NZ'].value),
-
-        tmatmulParams(np.float32, np.float32,  np.float32, 1, 1, 1, 51,
-                      123, 1, 1, 1, 64, 128, 64, 128, DataFormat['DN2NZ'].value),
-        tmatmulParams(np.float16, np.float16,  np.float32, 1, 1, 1, 63,
-                      127, 1, 1, 1, 63, 127, 64, 128,  DataFormat['DN2NZ'].value),
-
-        tmatmulParams(np.float32, np.float32,  np.float32, 1, 1, 1, 128,
-                      128, 1, 1, 1, 128, 128, 128, 128, DataFormat['DN2DN'].value),
-        tmatmulParams(np.int8, np.int8,  np.int32, 1, 1, 1, 37, 126,
-                      1, 1, 1, 37, 126, 64, 126, DataFormat['DN2DN'].value),
-        tmatmulParams(np.float16, np.float16,  np.float32, 1, 2, 3, 64,
-                      128, 1, 3, 4, 96, 128, 64, 768, DataFormat['DN2DN'].value),
-
-        tmatmulParams(np.float32, np.float32,  np.float32, 2, 2, 4,
-                      16, 8, 2, 2, 4, 16, 8, 80, 48, DataFormat['NZ2NZ'].value),
-        tmatmulParams(np.float16, np.float16,  np.float32, 1, 10, 8, 16,
-                      16, 1, 11, 9, 16, 16, 128, 160, DataFormat['NZ2NZ'].value),
-        tmatmulParams(np.int8, np.int8, np.int32, 1, 8, 4, 16, 32,
-                      1, 9, 4, 16, 32, 80, 256, DataFormat['NZ2NZ'].value),
-
-        tmatmulParams(np.int64, np.int64,  np.int64, 1, 1, 1, 59,
-                      119, 1, 1, 1, 59, 124, 59, 120, DataFormat['ND2ND'].value),
-        tmatmulParams(np.uint64, np.uint64,  np.uint64, 1, 2, 1, 64,
-                      128, 1, 3, 4, 128, 128, 128, 128, DataFormat['ND2ND'].value),
+        TloadParams(np.float16, 1, 1, 1, 128, 128, 1, 1, 1, 128, 128, 128, 128, DataFormat["ND2NZ"].value),
+        TloadParams(np.int8, 1, 1, 1, 128, 128, 1, 1, 1, 128, 128, 128, 128, DataFormat["ND2NZ"].value),
+        TloadParams(np.float32, 1, 1, 1, 128, 128, 1, 1, 1, 128, 128, 128, 128, DataFormat["ND2NZ"].value),
+        TloadParams(np.float16, 1, 1, 1, 64, 128, 1, 1, 1, 64, 128, 64, 128, DataFormat["DN2NZ"].value),
+        TloadParams(np.float16, 1, 1, 1, 63, 127, 1, 1, 1, 63, 127, 64, 128, DataFormat["ND2NZ"].value),
+        TloadParams(np.float32, 1, 1, 1, 128, 128, 1, 1, 1, 128, 128, 128, 128, DataFormat["ND2ND"].value),
+        TloadParams(np.int8, 1, 1, 1, 37, 126, 1, 1, 1, 37, 126, 37, 128, DataFormat["ND2ND"].value),
+        TloadParams(np.float16, 1, 2, 3, 64, 128, 1, 3, 4, 128, 128, 384, 128, DataFormat["ND2ND"].value),
+        TloadParams(np.int8, 1, 2, 3, 33, 99, 1, 2, 3, 33, 99, 198, 128, DataFormat["ND2ND"].value),
+        TloadParams(np.float16, 1, 1, 1, 33, 99, 1, 1, 1, 64, 128, 48, 112, DataFormat["ND2NZ"].value),
+        TloadParams(np.int8, 1, 1, 1, 59, 119, 1, 1, 1, 64, 128, 64, 128, DataFormat["ND2NZ"].value),
+        TloadParams(np.float32, 1, 1, 1, 51, 123, 1, 1, 1, 64, 128, 64, 128, DataFormat["DN2NZ"].value),
+        TloadParams(np.float16, 1, 1, 1, 63, 127, 1, 1, 1, 63, 127, 64, 128, DataFormat["DN2NZ"].value),
+        TloadParams(np.float32, 1, 1, 1, 128, 128, 1, 1, 1, 128, 128, 128, 128, DataFormat["DN2DN"].value),
+        TloadParams(np.int8, 1, 1, 1, 37, 126, 1, 1, 1, 37, 126, 64, 126, DataFormat["DN2DN"].value),
+        TloadParams(np.float16, 1, 2, 3, 64, 128, 1, 3, 4, 96, 128, 64, 768, DataFormat["DN2DN"].value),
+        TloadParams(np.float32, 2, 2, 4, 16, 8, 2, 2, 4, 16, 8, 80, 48, DataFormat["NZ2NZ"].value),
+        TloadParams(np.float16, 1, 10, 8, 16, 16, 1, 11, 9, 16, 16, 128, 160, DataFormat["NZ2NZ"].value),
+        TloadParams(np.int8, 1, 8, 4, 16, 32, 1, 9, 4, 16, 32, 80, 256, DataFormat["NZ2NZ"].value),
+        TloadParams(np.int64, 1, 1, 1, 59, 119, 1, 1, 1, 59, 124, 59, 120, DataFormat["ND2ND"].value),
+        TloadParams(np.uint64, 1, 2, 1, 64, 128, 1, 3, 4, 128, 128, 128, 128, DataFormat["ND2ND"].value),
         # fp4 input use uint8 for test
-        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 2, 1, 64,
-                      128, 1, 3, 4, 128, 128, 128, 128, DataFormat['ND2ND'].value),
-        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 1, 1, 59, 119,
-                      1, 1, 1, 64, 128, 64, 128, DataFormat['ND2NZ'].value), 
-        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 8, 4, 16, 32,
-                      1, 9, 4, 16, 32, 80, 256, DataFormat['NZ2NZ'].value),
-        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 1, 1, 37, 126,
-                      1, 1, 1, 37, 126, 64, 126, DataFormat['DN2DN'].value),
+        TloadParams(np.uint8, 1, 2, 1, 64, 128, 1, 3, 4, 128, 128, 128, 128, DataFormat["ND2ND"].value),
+        TloadParams(np.uint8, 1, 1, 1, 59, 119, 1, 1, 1, 64, 128, 64, 128, DataFormat["ND2NZ"].value),
+        TloadParams(np.uint8, 1, 8, 4, 16, 32, 1, 9, 4, 16, 32, 80, 256, DataFormat["NZ2NZ"].value),
+        TloadParams(np.uint8, 1, 1, 1, 37, 126, 1, 1, 1, 37, 126, 64, 126, DataFormat["DN2DN"].value),
+        TloadParams(np.float16, 1, 1, 1, 33, 99, 1, 1, 1, 64, 128, 48, 112, DataFormat["DN2ZN"].value),
+        TloadParams(np.int8, 1, 1, 1, 59, 119, 1, 1, 1, 64, 128, 64, 128, DataFormat["DN2ZN"].value),
+        TloadParams(np.uint8, 1, 1, 1, 59, 119, 1, 1, 1, 64, 128, 64, 128, DataFormat["DN2ZN"].value),  # fp4
 
-        tmatmulParams(np.float16, np.float16, np.float32, 1, 1, 1, 33,
-                      99, 1, 1, 1, 64, 128, 48, 112, DataFormat['DN2ZN'].value),
-        tmatmulParams(np.int8, np.int8, np.int32, 1, 1, 1, 59, 119,
-                      1, 1, 1, 64, 128, 64, 128, DataFormat['DN2ZN'].value),
-        tmatmulParams(np.uint8, np.uint8, np.uint8, 1, 1, 1, 59, 119,
-                      1, 1, 1, 64, 128, 64, 128, DataFormat['DN2ZN'].value), # fp4
+        TloadParams(np.int8, 1, 3, 16, 128, 32, 3, 4, 1024, 1024, 32, 1, 1, DataFormat["NC1HWC02NC1HWC0"].value),
+        TloadParams(np.int8, 3, 2, 128, 8, 32, 3, 2, 128, 128, 32, 1, 1, DataFormat["NC1HWC02NC1HWC0"].value),
+        TloadParams(np.int8, 3, 2, 8, 128, 32, 3, 8, 8, 128, 32, 1, 1, DataFormat["NC1HWC02NC1HWC0"].value),
+        TloadParams(np.float16, 1, 6, 10, 100, 16, 1, 6, 100, 100, 16, 1, 1, DataFormat["NC1HWC02NC1HWC0"].value),
+        TloadParams(np.float16, 10, 16, 16, 2, 16, 256, 16, 100, 16, 16, 1, 1, DataFormat["NC1HWC02NC1HWC0"].value),
+        TloadParams(np.float16, 1, 1, 1, 8192, 16, 8, 16, 16, 8192, 16, 1, 1, DataFormat["NC1HWC02NC1HWC0"].value),
+        TloadParams(np.float32, 1, 1, 56, 112, 8, 2, 3, 224, 224, 8, 1, 1, DataFormat["NC1HWC02NC1HWC0"].value),
+
+        TloadParams(np.float16, 1, 7, 7, 20, 16, 3, 7, 7, 100, 16, 1, 1, DataFormat["FZ2FZ"].value),
+        TloadParams(np.float16, 64, 7, 7, 2, 16, 256, 7, 7, 16, 16, 1, 1, DataFormat["FZ2FZ"].value),
+        TloadParams(np.float16, 96, 3, 3, 8, 16, 256, 3, 3, 8, 16, 1, 1, DataFormat["FZ2FZ"].value),
+        TloadParams(np.int8, 2, 3, 3, 64, 32, 3, 3, 3, 128, 32, 1, 1, DataFormat["FZ2FZ"].value),
+        TloadParams(np.int8, 8, 5, 5, 32, 32, 8, 5, 5, 128, 32, 1, 1, DataFormat["FZ2FZ"].value),
+        TloadParams(np.float32, 70, 7, 7, 2, 8, 256, 7, 7, 256, 8, 1, 1, DataFormat["FZ2FZ"].value),
+
+        TloadParams(np.float16, 1, 49, 7, 16, 16, 1, 980, 32, 16, 16, 1, 1, DataFormat["FZ4D2FZ4D"].value),
+        TloadParams(np.float16, 1, 81, 3, 16, 16, 1, 90, 3, 16, 16, 1, 1, DataFormat["FZ4D2FZ4D"].value),
+        TloadParams(np.int8, 1, 63, 3, 16, 32, 1, 63, 9, 16, 32, 1, 1, DataFormat["FZ4D2FZ4D"].value),
+        TloadParams(np.int8, 1, 125, 3, 16, 32, 1, 250, 5, 16, 32, 1, 1, DataFormat["FZ4D2FZ4D"].value),
+        TloadParams(np.float32, 1, 126, 3, 16, 8, 1, 4704, 7, 16, 8, 1, 1, DataFormat["FZ4D2FZ4D"].value),
     ]
 
     for i, case_name in enumerate(case_name_list):
