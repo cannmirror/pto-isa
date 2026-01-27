@@ -114,6 +114,21 @@ namespace pto {
         GT = 4,
         GE = 5,
     };
+
+    // UF store phase encodes unit flag behavior for accumulator stores.
+    enum class STPhase : uint8_t {
+        Unspecified = 0x0,
+        Partial = 0x2,
+        Final = 0x3,
+    };
+
+    // Accumulate phase for unit-flag aware TMATMUL paths; Unknown is kept as an alias for compatibility.
+    enum class AccPhase : uint8_t {
+        Unspecified = 0x0,
+        Unknown = Unspecified,
+        Partial = 0x2,
+        Final = 0x3,
+    };
 }
 
 #if defined(__CPU_SIM)

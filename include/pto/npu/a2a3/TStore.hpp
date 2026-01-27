@@ -14,13 +14,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-// UF store phase encodes unit flag behavior for accumulator stores.
-enum class STPhase : uint8_t {
-    Unspecified = 0x0,
-    Partial = 0x2,
-    Final = 0x3,
-};
-
 template <typename GlobalData, typename TileData>
 PTO_INTERNAL void TStoreUb2gmInstr(typename GlobalData::DType *dst, __ubuf__ typename TileData::DType *src,
     uint16_t nBurst, uint32_t lenBurst, uint32_t gmGap, uint32_t ubGap)

@@ -13,12 +13,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "common.hpp"
 
 namespace pto {
-// UF store phase encodes unit flag behavior for accumulator stores.
-enum class STPhase : uint8_t {
-    Unspecified = 0x0,
-    Partial = 0x2,
-    Final = 0x3,
-};
+
 template <typename SrcType, typename DstType>
 PTO_INTERNAL constexpr QuantMode_t GetCastPreQuantModeGm()
 {

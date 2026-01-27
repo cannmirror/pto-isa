@@ -110,7 +110,8 @@ namespace pto {
     }
 
     template <typename tile_shape>
-    PTO_INTERNAL void TREMS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
+    PTO_INTERNAL void TREMS_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar, tile_shape &tmp) {
+        (void)tmp;
         unsigned row = dst.GetValidRow();
         unsigned col = dst.GetValidCol();
         UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_REMS>(dst.data(), src.data(), scalar, row, col);

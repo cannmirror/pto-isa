@@ -15,14 +15,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-// Accumulate phase for unit-flag aware TMATMUL paths; Unknown is kept as an alias for compatibility.
-enum class AccPhase : uint8_t {
-    Unspecified = 0x0,
-    Unknown = Unspecified,
-    Partial = 0x2,
-    Final = 0x3,
-};
-
 template <typename TileLeft>
 PTO_INTERNAL constexpr bool GetGemvCtrl()
 {
