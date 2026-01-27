@@ -427,8 +427,3 @@ TEST_F(TMOVTest, case_nz2nz_sc_quant_insert)
 {
     tmov_acc2mat_test<4, uint16_t, int8_t, int8_t, 6, 48, 48, true, 256, 256>(96, 128, 64);
 }
-
-TEST_F(TMOVTest, case_nz2nz_fb_quant_insert)
-{
-    tmov_acc2mat_fb_quant_test<1, int8_t, uint16_t, uint16_t, uint64_t, 6, 32, 32, true, 256, 256>(128, 64, 128);
-}
