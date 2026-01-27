@@ -27,9 +27,9 @@ namespace pto {
         }
     };
 
-    template <typename TileDataDst, typename TileDataSrc1, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned rowStride>
+    template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned elementsPerRepeat, unsigned blockSizeElem>
     __tf__ AICORE OP_NAME(TROWEXPANDADD) OP_TYPE(broadcast) void TRowExpandAdd(typename TileDataDst::TileDType __out__ dst, 
-                                typename TileDataDst::TileDType __in__ src0,
+                                typename TileDataSrc0::TileDType __in__ src0,
                                 typename TileDataSrc1::TileDType __in__ src1,
                                 unsigned validRow,
                                 unsigned validCol, unsigned version = VFImplKind::VFIMPL_DEFAULT) {
@@ -38,40 +38,45 @@ namespace pto {
         __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
         __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
 
-        RowExpandBinaryInstr<RowExpandAddOp<T>, TileDataDst, TileDataSrc1, elementsPerRepeat, blockSizeElem, rowStride>(
+        RowExpandBinaryInstr<RowExpandAddOp<T>, TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem>(
                                 dstPtr, src0Ptr, src1Ptr, validRow, validCol);
     }
 
     template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
     PTO_INTERNAL void TROWEXPANDADD_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
         using T = typename TileDataDst::DType;
-        static_assert(std::is_same_v<typename TileDataDst::DType, typename TileDataSrc0::DType> &&
-            std::is_same_v<typename TileDataDst::DType, typename TileDataSrc1::DType>,
+        static_assert(std::is_same_v<T, typename TileDataSrc0::DType> && std::is_same_v<T, typename TileDataSrc1::DType>,
             "Fix: TROWEXPANDADD src and dst data type is different!");
         static_assert(
-            std::is_same_v<typename TileDataDst::DType, half> || std::is_same_v<typename TileDataDst::DType, float>,
-            "Fix: TROWEXPANDADD Invalid data type.");
-        constexpr bool src0eqdst = std::is_same_v<TileDataDst, TileDataSrc0>;
-        constexpr bool src1eqdst = std::is_same_v<TileDataDst, TileDataSrc1>;
-        static_assert(TileDataDst::isRowMajor && (src0eqdst || src1eqdst), "Fix: TROWEXPANDADD Invalid tile shape.");
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType); 
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType); 
-        constexpr unsigned rowStride = TileDataDst::RowStride;
+            std::is_same_v<T, half> || std::is_same_v<T, float>, "Fix: TROWEXPANDADD Invalid data type.");
+        static_assert(TileDataDst::isRowMajor, "Fix: TROWEXPANDADD Invalid tile shape.");
+        
         unsigned validRow = dst.GetValidRow();
         unsigned validCol = dst.GetValidCol();
+        unsigned src0ValidRow = src0.GetValidRow();
+        unsigned src0ValidCol = src0.GetValidCol();
+        unsigned src1ValidRow = src1.GetValidRow();
+        unsigned src1ValidCol = src1.GetValidCol();
+        bool src0eqdst = (validRow == src0ValidRow) && (validCol == src0ValidCol);
+        bool src1eqdst = (validRow == src1ValidRow) && (validCol == src1ValidCol);
+        PTO_ASSERT((src0eqdst && TileDataSrc0::isRowMajor) || (src1eqdst && TileDataSrc1::isRowMajor), 
+            "TROWEXPANDADD: the validShape of src0 or src1 should be equal to dst");
+        
+        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileDataDst::DType); 
+        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileDataDst::DType);
 
-        if constexpr (src0eqdst) {
+        if (src0eqdst) {
             unsigned src1ValidCol = src1.GetValidCol();
             PTO_ASSERT(((TileDataSrc1::isRowMajor && src1ValidCol == 32 / sizeof(T)) ||
                         (!TileDataSrc1::isRowMajor && src1ValidCol == 1)) &&
                         src1.GetValidRow() == validRow, "TROWEXPANDADD: invalid src1 shape.");
-            TRowExpandAdd<TileDataDst, TileDataSrc1, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1.data(), validRow, validCol);
+            TRowExpandAdd<TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem>(dst.data(), src0.data(), src1.data(), validRow, validCol);
         } else  {
             unsigned src0ValidCol = src0.GetValidCol();
             PTO_ASSERT(((TileDataSrc0::isRowMajor && src0ValidCol == 32 / sizeof(T)) ||
                         (!TileDataSrc0::isRowMajor && src0ValidCol == 1)) &&
                         src0.GetValidRow() == validRow, "TROWEXPANDADD: invalid src0 shape.");
-            TRowExpandAdd<TileDataDst, TileDataSrc0, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src1.data(), src0.data(), validRow, validCol);
+            TRowExpandAdd<TileDataDst, TileDataSrc1, TileDataSrc0, elementsPerRepeat, blockSizeElem>(dst.data(), src1.data(), src0.data(), validRow, validCol);
         }
     }
 }
