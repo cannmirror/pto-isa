@@ -1038,5 +1038,14 @@ PTO_INST RecordEvent TREM(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &sr
   return {};
 }
 
+template <typename TileDataSrc, typename TileDataExp, typename TileDataOut, 
+          typename TileDataMax, int mode, typename... WaitEvents>
+PTO_INST RecordEvent TQUANT(TileDataSrc &src, TileDataExp &exp, TileDataOut &dst, 
+                            TileDataMax &max, TileDataSrc &scaling, WaitEvents&... events) {
+  TSYNC(events...);
+  TQUANT_IMPL<TileDataSrc, TileDataExp, TileDataOut, TileDataMax, mode>(src, exp, dst, max, scaling);
+  return {};
+}
+
 } // namespace pto
 #endif

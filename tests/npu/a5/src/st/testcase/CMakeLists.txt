@@ -200,6 +200,7 @@ set(ALL_TESTCASES
     tcolexpand
     tnot
     trelu
+    tquant
 )
 
 if((TEST_CASE IN_LIST ALL_TESTCASES) OR (TEST_CASE STREQUAL "all"))
