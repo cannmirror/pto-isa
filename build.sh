@@ -147,6 +147,7 @@ build_only() {
   else
     python3 tests/script/build_st.py -r npu -v a5 -t all
   fi
+  echo "build end"
 }
 
 run_simple_st() {
