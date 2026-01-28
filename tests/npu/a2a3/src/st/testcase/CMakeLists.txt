@@ -104,6 +104,7 @@ trowsum
 trowmax
 trowmin
 textract
+timg2col
 tmov
 tload
 ttrans

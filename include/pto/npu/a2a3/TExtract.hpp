@@ -406,6 +406,38 @@ __tf__ AICORE void TExtractToBCompact(typename DstTileData::TileDType __out__ ds
     }
 }
 
+template <typename DstTileData, typename SrcTileData>
+__tf__ AICORE void TExtractToBConv(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
+    uint16_t srcCol, uint16_t dstValidRow, uint16_t dstValidCol, uint16_t indexRow, uint16_t indexCol)
+{
+    using SrcType = typename SrcTileData::DType;
+    using DstType = typename DstTileData::DType;
+    __cbuf__ SrcType *srcAddr = (__cbuf__ SrcType *)__cce_get_tile_ptr(src);
+    __cb__ DstType *dstAddr = (__cb__ DstType *)__cce_get_tile_ptr(dst);
+
+    constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(SrcType);
+    uint16_t dstValidRowAlign = CeilDivision(dstValidRow, c0Size) * c0Size;
+    uint16_t dstValidColAlign = CeilDivision(dstValidCol, FRACTAL_NZ_ROW) * FRACTAL_NZ_ROW;
+    uint16_t dstRowNum = (dstValidRowAlign * sizeof(DstType)) >> SHIFT_BLOCK_BYTE;
+    uint16_t dstColNum = dstValidColAlign >> SHIFT_BLOCK_LEN;
+    uint16_t srcColNum = srcCol >> SHIFT_BLOCK_LEN;
+    uint16_t blockNum = CUBE_BLOCK_SIZE / sizeof(SrcType);
+    uint16_t startIdx0 =
+        (indexRow * sizeof(SrcType) * srcColNum >> SHIFT_BLOCK_BYTE) + (indexCol >> SHIFT_BLOCK_LEN);
+    for (uint16_t i = 0; i < dstRowNum; i++) {
+        load_cbuf_to_cb(dstAddr, srcAddr, startIdx0 + i * srcColNum, dstColNum, 1, 0, 0, false, addr_cal_mode_t(0));
+        dstAddr += dstValidColAlign * c0Size;
+    }
+}
+
+template <typename DstTileData, typename SrcTileData>
+PTO_INTERNAL void TEXTRACT_CONVTILE_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol)
+{
+    if constexpr (SrcTileData::layout == pto::Layout::FRACTAL_Z) { // C1HWNC0, dst dim4 is c0Size
+        TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(), src.GetShape(3), dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+    }
+}
+
 template <typename DstTileData, typename SrcTileData, QuantMode_t QuantPre, ReluPreMode reluMode>
 __tf__ AICORE void TExtractAccToMat(typename DstTileData::TileDType __out__ dst, typename SrcTileData::TileDType __in__ src,
     uint16_t validRow, uint16_t validCol, uint16_t indexRow, uint16_t indexCol)
@@ -442,7 +474,7 @@ PTO_INTERNAL void CheckTExtract()
 }
 
 template <typename DstTileData, typename SrcTileData>
-PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
+PTO_INTERNAL void TEXTRACT_TILE_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
 {
     CheckTExtract<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
     PTO_ASSERT(indexRow + DstTileData::Rows <= SrcTileData::Rows, "The sum of indexRow and dstRow should be less than srcRow!");
@@ -489,6 +521,16 @@ PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t ind
             GetCastPreQuantMode<typename SrcTileData::DType, typename DstTileData::DType>(); 
         TExtractAccToMat<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data(),
             dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+    }
+}
+
+template <typename DstTileData, typename SrcTileData>
+PTO_INTERNAL void TEXTRACT_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
+{
+    if constexpr (is_conv_tile_v<SrcTileData>) {
+        TEXTRACT_CONVTILE_IMPL(dst, src, indexRow, indexCol);
+    } else {
+        TEXTRACT_TILE_IMPL(dst, src, indexRow, indexCol);
     }
 }
 

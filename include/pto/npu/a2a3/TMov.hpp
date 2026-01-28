@@ -147,17 +147,23 @@ PTO_INTERNAL void TMovToRight(DstTileData &dst, SrcTileData &src)
         }
     }
 }
-
 template <typename DstTileData, typename SrcTileData>
-PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
+PTO_INTERNAL void TMOV_CONVTILE_IMPL(DstTileData &dst, SrcTileData &src)
+{
+    if constexpr (SrcTileData::layout == pto::Layout::FRACTAL_Z) { // C1HWNC0, dst dim4 is c0Size
+        TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(), src.GetShape(3), dst.GetValidRow(), dst.GetValidCol(), 0, 0);
+    }
+}
+template <typename DstTileData, typename SrcTileData>
+PTO_INTERNAL void TMOV_TILE_IMPL(DstTileData &dst, SrcTileData &src)
 {
     static_assert((SrcTileData::Rows == DstTileData::Rows) && ((SrcTileData::Cols == DstTileData::Cols)),
         "TMov: The shape of src needs to be the same as that of dst.");
     static_assert((SrcTileData::Loc == TileType::Mat &&
-                      (DstTileData::Loc == TileType::Left || DstTileData::Loc == TileType::Right ||
-                          DstTileData::Loc == TileType::Bias || DstTileData::Loc == TileType::Scaling)) ||
-                      (DstTileData::Loc == TileType::Vec && SrcTileData::Loc == TileType::Vec) ||
-                      (DstTileData::Loc == TileType::Mat && SrcTileData::Loc == TileType::Acc),
+                    (DstTileData::Loc == TileType::Left || DstTileData::Loc == TileType::Right ||
+                        DstTileData::Loc == TileType::Bias || DstTileData::Loc == TileType::Scaling)) ||
+                    (DstTileData::Loc == TileType::Vec && SrcTileData::Loc == TileType::Vec) ||
+                    (DstTileData::Loc == TileType::Mat && SrcTileData::Loc == TileType::Acc),
         "TMov: Invalid TileType.");
     if constexpr (SrcTileData::Loc == TileType::Mat && DstTileData::Loc == TileType::Left) {
         TMovToLeft<DstTileData, SrcTileData>(dst, src);
@@ -178,7 +184,15 @@ PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
         TMovCcToCb<DstTileData, SrcTileData, quantPre, ReluPreMode::NoRelu>(dst.data(), src.data(), m, n);
     }
 }
-
+template <typename DstTileData, typename SrcTileData>
+PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)
+{
+    if constexpr (is_conv_tile_v<SrcTileData>) {
+        TMOV_CONVTILE_IMPL(dst, src);
+    } else {
+        TMOV_TILE_IMPL(dst, src);
+    }
+}
 // relu
 template <typename DstTileData, typename SrcTileData, ReluPreMode reluMode>
 PTO_INTERNAL void TMOV_IMPL(DstTileData &dst, SrcTileData &src)

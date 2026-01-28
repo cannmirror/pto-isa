@@ -84,6 +84,13 @@ enum class CompactMode {
     Normal,
 };
 
+enum class SetFmatrixMode {
+    FMATRIX_A_AUTO,
+    FMATRIX_B_AUTO,
+    FMATRIX_A_MANUAL,
+    FMATRIX_B_MANUAL,
+};
+
 template <typename DType, PadValue PadVal>
 struct PadValueMap {
     PTO_STATIC_ASSERT(sizeof(DType) < 0, "TLOAD: Unsupported DType for PadValue!");
