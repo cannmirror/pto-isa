@@ -70,10 +70,10 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tcmps -g TCMPSTest.case_float_8x64_8x64_8x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowsum -g TROWSUMTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpand -g TROWEXPANDTest.case0
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandadd -g TROWEXPANDDIVTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandadd -g TROWEXPANDADDTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpanddiv -g TROWEXPANDDIVTest.case2
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandmax -g TROWEXPANDDIVTest.case3
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandmin -g TROWEXPANDDIVTest.case4
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandmax -g TROWEXPANDMAXTest.case3
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandmin -g TROWEXPANDMINTest.case4
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandmul -g TROWEXPANDMULTest.case5
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t trowexpandsub -g TROWEXPANDSUBTest.case6
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tgather -g TGATHERTest.case1_float_P0101

@@ -48,13 +48,13 @@ PTO_INTERNAL void TROWEXPANDMAX_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileD
         PTO_ASSERT(((TileDataSrc1::isRowMajor && src1ValidCol == 32 / sizeof(T)) ||
                     (!TileDataSrc1::isRowMajor && src1ValidCol == 1)) &&
                     src1ValidRow == validRow, "TROWEXPANDMAX: invalid src1 shape.");
-        TRowExpandBin<RowExpandAddOp<T>, TileDataDst, TileDataSrc0, TileDataSrc1>(
+        TRowExpandBin<RowExpandMaxOp<T>, TileDataDst, TileDataSrc0, TileDataSrc1>(
             dst.data(), src0.data(), src1.data(), validRow, validCol);
     } else {
         PTO_ASSERT(((TileDataSrc0::isRowMajor && src0ValidCol == 32 / sizeof(T)) ||
                     (!TileDataSrc0::isRowMajor && src0ValidCol == 1)) &&
                     src0ValidRow == validRow, "TROWEXPANDMAX: invalid src0 shape.");
-        TRowExpandBin<RowExpandAddOp<T>, TileDataDst, TileDataSrc1, TileDataSrc0>(
+        TRowExpandBin<RowExpandMaxOp<T>, TileDataDst, TileDataSrc1, TileDataSrc0>(
             dst.data(), src1.data(), src0.data(), validRow, validCol);
     }
 }
