@@ -385,6 +385,14 @@ PTO_INST RecordEvent TGEMV(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatr
   return {};
 }
 
+template <AccPhase Phase, typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
+PTO_INST RecordEvent TGEMV(
+  TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, WaitEvents&... events) {
+  TSYNC(events...);
+  TGEMV_IMPL<Phase>(cMatrix, aMatrix, bMatrix);
+  return {};
+}
+
 template <typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
 PTO_INST RecordEvent TGEMV_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix,
   WaitEvents&... events) {
@@ -393,11 +401,41 @@ PTO_INST RecordEvent TGEMV_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft
   return {};
 }
 
+template <AccPhase Phase, typename TileRes, typename TileLeft, typename TileRight, typename... WaitEvents>
+PTO_INST RecordEvent TGEMV_ACC(TileRes &cOutMatrix, TileRes &cInMatrix, TileLeft &aMatrix, TileRight &bMatrix,
+  WaitEvents&... events) {
+  TSYNC(events...);
+  TGEMV_ACC_IMPL<Phase>(cOutMatrix, cInMatrix, aMatrix, bMatrix);
+  return {};
+}
+
 template <typename TileRes, typename TileLeft, typename TileRight, typename TileBias, typename... WaitEvents>
 PTO_INST RecordEvent TGEMV_BIAS(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData,
   WaitEvents&... events) {
   TSYNC(events...);
   MAP_INSTR_IMPL(TGEMV_BIAS, cMatrix, aMatrix, bMatrix, biasData);
+  return {};
+}
+
+template <AccPhase Phase, typename TileRes, typename TileLeft, typename TileRight, typename TileBias, typename... WaitEvents>
+PTO_INST RecordEvent TGEMV_BIAS(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMatrix, TileBias &biasData,
+  WaitEvents&... events) {
+  TSYNC(events...);
+  TGEMV_BIAS_IMPL<Phase>(cMatrix, aMatrix, bMatrix, biasData);
+  return {};
+}
+
+template<bool isEnable, RoundMode hf32TransMode= RoundMode::CAST_ROUND, typename... WaitEvents>
+PTO_INST RecordEvent TSETHF32MODE(WaitEvents&... events) {
+  TSYNC(events...);
+  TSETHF32MODE_IMPL<isEnable, hf32TransMode>();
+  return {};
+}
+
+template<bool isEnable, RoundMode tf32TransMode= RoundMode::CAST_ROUND, typename... WaitEvents>
+PTO_INST RecordEvent TSETTF32MODE(WaitEvents&... events) {
+  TSYNC(events...);
+  TSETTF32MODE_IMPL<isEnable, tf32TransMode>();
   return {};
 }
 

@@ -13,6 +13,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
+inline namespace TMatmulInternel {
+    constexpr const int MMAD_MAX_SUPPORT_LENGTH = 4095;
+    constexpr const int HF32_MODE_BIT = 46;
+    constexpr const int HF32_TRANS_MODE_BIT = 47;
+}
+
 template <typename TileLeft, typename TileRight>
 PTO_INTERNAL bool GetKDirectionAlign(TileLeft &aMatrix, TileRight &bMatrix)
 {
@@ -85,10 +91,9 @@ PTO_INTERNAL void CheckStaticMad()
 
 PTO_INTERNAL void CheckDynamicMad(uint16_t aMatrixRow, uint16_t aMatrixCol, uint16_t bMatrixCol)
 {
-    constexpr uint16_t elementSize = 4095;
-    PTO_ASSERT(aMatrixRow >= 1 && aMatrixRow <= elementSize, "ERROR: The range of valid aMatrixRow is [1, 4095].");
-    PTO_ASSERT(aMatrixCol >= 1 && aMatrixCol <= elementSize, "ERROR: The range of valid aMatrixCol is [1, 4095].");
-    PTO_ASSERT(bMatrixCol >= 1 && bMatrixCol <= elementSize, "ERROR: The range of valid bMatrixCol is [1, 4095].");
+    PTO_ASSERT(aMatrixRow >= 1 && aMatrixRow <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid aMatrixRow is [1, 4095].");
+    PTO_ASSERT(aMatrixCol >= 1 && aMatrixCol <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid aMatrixCol is [1, 4095].");
+    PTO_ASSERT(bMatrixCol >= 1 && bMatrixCol <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid bMatrixCol is [1, 4095].");
 }
 
 template <AccPhase Phase = AccPhase::Unspecified, typename TileRes, typename TileLeft, typename TileRight>
@@ -98,8 +103,8 @@ PTO_INTERNAL void TGEMV_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight &bMa
     uint16_t k = bMatrix.GetValidRow();
     uint16_t n = bMatrix.GetValidCol();
     bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
-    PTO_ASSERT(k >= 1 && k <= elementSize, "ERROR: The range of valid aMatrixCol is [1, 4095].");
-    PTO_ASSERT(n >= 1 && n <= elementSize, "ERROR: The range of valid bMatrixCol is [1, 4095].");
+    PTO_ASSERT(k >= 1 && k <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid aMatrixCol is [1, 4095].");
+    PTO_ASSERT(n >= 1 && n <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid bMatrixCol is [1, 4095].");
 
     TMatmul<Phase, TileRes, TileLeft, TileRight, false, true, true>(
         cMatrix.data(), aMatrix.data(), bMatrix.data(), 1, k, n, kDirectionAlign);
@@ -112,8 +117,8 @@ PTO_INTERNAL void TGEMV_ACC_IMPL(TileRes &cOutMatrix, TileRes &cInMatrix, TileLe
     uint16_t k = bMatrix.GetValidRow();
     uint16_t n = bMatrix.GetValidCol();
     bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
-    PTO_ASSERT(k >= 1 && k <= elementSize, "ERROR: The range of valid aMatrixCol is [1, 4095].");
-    PTO_ASSERT(n >= 1 && n <= elementSize, "ERROR: The range of valid bMatrixCol is [1, 4095].");
+    PTO_ASSERT(k >= 1 && k <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid aMatrixCol is [1, 4095].");
+    PTO_ASSERT(n >= 1 && n <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid bMatrixCol is [1, 4095].");
 
     TMatmul<Phase, TileRes, TileLeft, TileRight, false, false, true>(
         cOutMatrix.data(), aMatrix.data(), bMatrix.data(), 1, k, n, kDirectionAlign);
@@ -130,8 +135,8 @@ PTO_INTERNAL void TGEMV_BIAS_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRight
     uint16_t n = bMatrix.GetValidCol();
     bool kDirectionAlign = GetKDirectionAlign(aMatrix, bMatrix);
 
-    PTO_ASSERT(k >= 1 && k <= elementSize, "ERROR: The range of valid aMatrixCol is [1, 4095].");
-    PTO_ASSERT(n >= 1 && n <= elementSize, "ERROR: The range of valid bMatrixCol is [1, 4095].");
+    PTO_ASSERT(k >= 1 && k <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid aMatrixCol is [1, 4095].");
+    PTO_ASSERT(n >= 1 && n <= MMAD_MAX_SUPPORT_LENGTH, "ERROR: The range of valid bMatrixCol is [1, 4095].");
 
     TMatmulBias<Phase, TileRes, TileLeft, TileRight, true, false, true>(
         cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), 1, k, n, kDirectionAlign);
@@ -184,6 +189,23 @@ PTO_INTERNAL void TMATMUL_BIAS_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileRig
 
     TMatmulBias<Phase, TileRes, TileLeft, TileRight, true, false, false>(
         cMatrix.data(), aMatrix.data(), bMatrix.data(), biasData.data(), m, k, n, kDirectionAlign);
+}
+
+template <bool isEnable, RoundMode hf32TransMode = RoundMode::CAST_ROUND>
+PTO_INTERNAL void TSETHF32MODE_IMPL()
+{
+    if constexpr (isEnable) {
+        static_assert(hf32TransMode == RoundMode::CAST_ROUND || hf32TransMode == RoundMode::CAST_RINT,
+            "Unsupported RoundMode for HF32.");
+        set_ctrl(sbitset1(get_ctrl(), HF32_MODE_BIT));
+        if constexpr (hf32TransMode == RoundMode::CAST_ROUND) {
+            set_ctrl(sbitset1(get_ctrl(), HF32_TRANS_MODE_BIT));
+        } else if constexpr (hf32TransMode == RoundMode::CAST_RINT) {
+            set_ctrl(sbitset0(get_ctrl(), HF32_TRANS_MODE_BIT));
+        }
+    } else {
+        set_ctrl(sbitset0(get_ctrl(), HF32_MODE_BIT));
+    }
 }
 } // namespace pto
 #endif

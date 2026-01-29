@@ -87,7 +87,7 @@ void tmatmul_test(uint32_t M, uint32_t K, uint32_t N)
     ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
+    bool ret = ResultCmp(golden, devFinal, 0.0001f);
 
     EXPECT_TRUE(ret);
 }
@@ -149,6 +149,16 @@ TEST_F(TMATMULTest, case10)
 TEST_F(TMATMULTest, case11)
 {
     tmatmul_test<float, uint16_t, uint16_t, 11>(1, 300, 60);
+}
+
+TEST_F(TMATMULTest, case12)
+{
+    tmatmul_test<float, float, float, 12>(16, 32, 64);
+}
+
+TEST_F(TMATMULTest, case13)
+{
+    tmatmul_test<float, float, float, 13>(128, 96, 64);
 }
 
 template <typename T, typename U, typename S, typename B, int32_t key>
@@ -267,4 +277,9 @@ TEST_F(TMATMULTest, case_bias_9)
 TEST_F(TMATMULTest, case_bias_10)
 {
     tmatmul_bias_test<float, uint8_t, uint8_t, float, 10>(145, 115, 85);
+}
+
+TEST_F(TMATMULTest, case_bias_11)
+{
+    tmatmul_bias_test<float, uint16_t, uint16_t, float, 11>(1, 512, 85);
 }

@@ -92,6 +92,8 @@ namespace pto {
     TINSERT_A2M,
     TIMG2COl,
     TSETFMATRIX,
+    TSETHF32MODE,
+    TSETTF32MODE,
     OP_COUNT, // The Total number of operations, please add new operations before OP_COUNT
   };
 

@@ -231,7 +231,8 @@ PTO_INTERNAL constexpr void CommonCheck()
         "TMov: Destination and Source tile data types must be the same.");
 
     static_assert((SrcTileData::SFractal == SLayout::ColMajor && SrcTileData::isRowMajor) ||
-                      (SrcTileData::SFractal == SLayout::RowMajor && !SrcTileData::isRowMajor),
+                      (SrcTileData::SFractal == SLayout::RowMajor && !SrcTileData::isRowMajor) ||
+                      (SrcTileData::isRowMajor),
         "TMov: SrcTile Invalid Fractal.");
 }
 
