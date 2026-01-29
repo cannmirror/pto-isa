@@ -16,42 +16,52 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto
 {
+    PTO_INTERNAL static void prepare_s32_data(__ubuf__ int32_t *dst, __ubuf__ int32_t *src0, int32_t src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
+        vector_dup(dst, src1, repeats, 1, 1, dstRepeatStride, 0);
+        pipe_barrier(PIPE_V);
+        vconv_s322f32(reinterpret_cast<__ubuf__ float *>(dst), dst, repeats, 1, 1, dstRepeatStride, dstRepeatStride);
+        pipe_barrier(PIPE_V);
+        vconv_s322f32(reinterpret_cast<__ubuf__ float *>(src0), src0, repeats, 1, 1, srcRepeatStride, srcRepeatStride);
+        pipe_barrier(PIPE_V);
+    }
+    
+    PTO_INTERNAL static void complate_s32_data(__ubuf__ int32_t *dst, uint8_t repeats, uint8_t dstRepeatStride) {
+        pipe_barrier(PIPE_V);
+        vconv_f322s32z(dst, reinterpret_cast<__ubuf__ float *>(dst), repeats, 1, 1, dstRepeatStride, dstRepeatStride);
+        pipe_barrier(PIPE_V);
+    }
+
+    PTO_INTERNAL static void prepare_s16_data(__ubuf__ int16_t *dst, __ubuf__ int16_t *src0, int16_t src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
+        vector_dup(dst, src1, repeats, 1, 1, dstRepeatStride, 0);
+        pipe_barrier(PIPE_V);
+        vconv_s162f16(reinterpret_cast<__ubuf__ half *>(dst), dst, repeats, 1, 1, dstRepeatStride, dstRepeatStride);
+        pipe_barrier(PIPE_V);
+        vconv_s162f16(reinterpret_cast<__ubuf__ half *>(src0), src0, repeats, 1, 1, srcRepeatStride, srcRepeatStride);
+        pipe_barrier(PIPE_V);
+    }
+
+    PTO_INTERNAL static void complate_s16_data(__ubuf__ int16_t *dst, uint8_t repeats, uint8_t dstRepeatStride) {
+        pipe_barrier(PIPE_V);
+        vconv_f162s16z(dst, reinterpret_cast<__ubuf__ half *>(dst), repeats, 1, 1, dstRepeatStride, dstRepeatStride);
+        pipe_barrier(PIPE_V);
+    }
+
     template <typename T>
     struct SDivOp {
         PTO_INTERNAL static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats) {
             if constexpr (std::is_same<T, int32_t>::value)
             {
-                vector_dup(dst, src1, repeats, 1, 1, 8, 0);
-                pipe_barrier(PIPE_V);
-                vconv_s322f32(reinterpret_cast<__ubuf__ float *>(dst), dst, repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
-                vconv_s322f32(reinterpret_cast<__ubuf__ float *>(src0), src0, repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
-                vdiv(reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(src0), repeats, 1, 1, 1, 8, 8, 8);
-                pipe_barrier(PIPE_V);
-                vconv_f322s32z(dst, reinterpret_cast<__ubuf__ float *>(dst), repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
+                prepare_s32_data(dst, src0, src1, repeats, 8, 8); 
+                vdiv(reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(src0), repeats, 1, 1, 1, 8, 8, 8);   
+                complate_s32_data(dst, repeats, 8);
             }
             else if constexpr (std::is_same<T, int16_t>::value)
             {
-                vector_dup(dst, src1, repeats, 1, 1, 8, 0);
-                pipe_barrier(PIPE_V);
-                vconv_s162f16(reinterpret_cast<__ubuf__ half *>(dst), dst, repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
-                vconv_s162f16(reinterpret_cast<__ubuf__ half *>(src0), src0, repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
+                prepare_s16_data(dst, src0, src1, repeats, 8, 8);
                 vdiv(reinterpret_cast<__ubuf__ half *>(dst), reinterpret_cast<__ubuf__ half *>(dst), reinterpret_cast<__ubuf__ half *>(src0), repeats, 1, 1, 1, 8, 8, 8);
-                pipe_barrier(PIPE_V);
-                vconv_f162s16z(dst, reinterpret_cast<__ubuf__ half *>(dst), repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
+                complate_s16_data(dst, repeats, 8);
             }
-            else if constexpr (std::is_same<T, float>::value)
-            {
-                vector_dup(dst, src1, repeats, 1, 1, 8, 0);
-                pipe_barrier(PIPE_V);
-                vdiv(dst, dst, src0, repeats, 1, 1, 1, 8, 8, 8);
-            }
-            else if constexpr (std::is_same<T, half>::value)
+            else if constexpr (std::is_same<T, float>::value || std::is_same<T, half>::value)
             {
                 vector_dup(dst, src1, repeats, 1, 1, 8, 0);
                 pipe_barrier(PIPE_V);
@@ -61,37 +71,17 @@ namespace pto
         PTO_INTERNAL static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
             if constexpr (std::is_same<T, int32_t>::value)
             {
-                vector_dup(dst, src1, repeats, 1, 1, dstRepeatStride, 0);
-                pipe_barrier(PIPE_V);
-                vconv_s322f32(reinterpret_cast<__ubuf__ float *>(dst), dst, repeats, 1, 1, dstRepeatStride, dstRepeatStride);
-                pipe_barrier(PIPE_V);
-                vconv_s322f32(reinterpret_cast<__ubuf__ float *>(src0), src0, repeats, 1, 1, srcRepeatStride, srcRepeatStride);
-                pipe_barrier(PIPE_V);
+                prepare_s32_data(dst, src0, src1, repeats, dstRepeatStride, srcRepeatStride);
                 vdiv(reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(src0), repeats, 1, 1, 1, dstRepeatStride, dstRepeatStride, srcRepeatStride);
-                pipe_barrier(PIPE_V);
-                vconv_f322s32z(dst, reinterpret_cast<__ubuf__ float *>(dst), repeats, 1, 1, dstRepeatStride, dstRepeatStride);
-                pipe_barrier(PIPE_V);
+                complate_s32_data(dst, repeats, dstRepeatStride);
             }
             else if constexpr (std::is_same<T, int16_t>::value)
             {
-                vector_dup(dst, src1, repeats, 1, 1, dstRepeatStride, 0);
-                pipe_barrier(PIPE_V);
-                vconv_s162f16(reinterpret_cast<__ubuf__ half *>(dst), dst, repeats, 1, 1, dstRepeatStride, dstRepeatStride);
-                pipe_barrier(PIPE_V);
-                vconv_s162f16(reinterpret_cast<__ubuf__ half *>(src0), src0, repeats, 1, 1, srcRepeatStride, srcRepeatStride);
-                pipe_barrier(PIPE_V);
+                prepare_s16_data(dst, src0, src1, repeats, dstRepeatStride, srcRepeatStride);
                 vdiv(reinterpret_cast<__ubuf__ half *>(dst), reinterpret_cast<__ubuf__ half *>(dst), reinterpret_cast<__ubuf__ half *>(src0), repeats, 1, 1, 1, dstRepeatStride, dstRepeatStride, srcRepeatStride);
-                pipe_barrier(PIPE_V);
-                vconv_f162s16z(dst, reinterpret_cast<__ubuf__ half *>(dst), repeats, 1, 1, dstRepeatStride, dstRepeatStride);
-                pipe_barrier(PIPE_V);
+                complate_s16_data(dst, repeats, dstRepeatStride);
             }
-            else if constexpr (std::is_same<T, float>::value)
-            {
-                vector_dup(dst, src1, repeats, 1, 1, dstRepeatStride, 0);
-                pipe_barrier(PIPE_V);
-                vdiv(dst, dst, src0, repeats, 1, 1, 1, dstRepeatStride, dstRepeatStride, srcRepeatStride);
-            }
-            else if constexpr (std::is_same<T, half>::value)
+            else if constexpr (std::is_same<T, float>::value || std::is_same<T, half>::value)
             {
                 vector_dup(dst, src1, repeats, 1, 1, dstRepeatStride, 0);
                 pipe_barrier(PIPE_V);
@@ -103,81 +93,43 @@ namespace pto
     template <typename T> 
     struct DivSOp {
         PTO_INTERNAL static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats) {
-            float divider = static_cast<float>(src1);
-            if (divider != 0.0f)
-            {
-                divider = 1.0f / divider;
-            }
-            else
-            {
-                divider = 1.0 / 0.0;
-            }
             if constexpr (std::is_same<T, int32_t>::value)
-            {
-                vconv_s322f32(reinterpret_cast<__ubuf__ float *>(dst), src0, repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
-                vmuls(reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(dst), divider, repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
-                vconv_f322s32z(dst, reinterpret_cast<__ubuf__ float *>(dst), repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
+            {   
+                prepare_s32_data(dst, src0, src1, repeats, 8, 8);
+                vdiv(reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(src0),  reinterpret_cast<__ubuf__ float *>(dst),  repeats, 1, 1, 1, 8, 8, 8);
+                complate_s32_data(dst, repeats, 8);
             }
             else if constexpr (std::is_same<T, int16_t>::value)
             {
-                vconv_s162f16(reinterpret_cast<__ubuf__ half *>(dst), src0, repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
-                vmuls(reinterpret_cast<__ubuf__ half *>(dst), reinterpret_cast<__ubuf__ half *>(dst), static_cast<half>(divider), repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
-                vconv_f162s16z(dst, reinterpret_cast<__ubuf__ half *>(dst), repeats, 1, 1, 8, 8);
-                pipe_barrier(PIPE_V);
+                prepare_s16_data(dst, src0, src1, repeats, 8, 8);
+                vdiv(reinterpret_cast<__ubuf__ half *>(dst),  reinterpret_cast<__ubuf__ half *>(src0), reinterpret_cast<__ubuf__ half *>(dst), repeats, 1, 1, 1, 8, 8, 8);
+                complate_s16_data(dst, repeats, 8);
             }
-            else if constexpr (std::is_same<T, half>::value)
+            else if constexpr (std::is_same<T, float>::value || std::is_same<T, half>::value)
             {
                 vector_dup(dst, src1, repeats, 1, 1, 8, 0);
                 pipe_barrier(PIPE_V);
                 vdiv(dst, src0, dst, repeats, 1, 1, 1, 8, 8, 8);
-            }
-            else
-            {
-                vmuls(dst, src0, divider, repeats, 1, 1, 8, 8);
-            }
+            } 
         }
         PTO_INTERNAL static void BinSInstr(__ubuf__ T *dst, __ubuf__ T *src0, T src1, uint8_t repeats, uint8_t dstRepeatStride, uint8_t srcRepeatStride) {
-            float divider = static_cast<float>(src1);
-            if (divider != 0.0f)
-            {
-                divider = 1.0f / divider;
-            }
-            else
-            {
-                divider = 1.0 / 0.0;
-            }
             if constexpr (std::is_same<T, int32_t>::value)
             {
-                vconv_s322f32(reinterpret_cast<__ubuf__ float *>(dst), src0, repeats, 1, 1, dstRepeatStride, srcRepeatStride);
-                pipe_barrier(PIPE_V);
-                vmuls(reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(dst), divider, repeats, 1, 1, dstRepeatStride, dstRepeatStride);
-                pipe_barrier(PIPE_V);
-                vconv_f322s32z(dst, reinterpret_cast<__ubuf__ float *>(dst), repeats, 1, 1, dstRepeatStride, dstRepeatStride);
-                pipe_barrier(PIPE_V);
+                prepare_s32_data(dst, src0, src1, repeats, dstRepeatStride, srcRepeatStride);
+                vdiv(reinterpret_cast<__ubuf__ float *>(dst), reinterpret_cast<__ubuf__ float *>(src0), reinterpret_cast<__ubuf__ float *>(dst), repeats, 1, 1, 1, dstRepeatStride, srcRepeatStride, dstRepeatStride);
+                complate_s32_data(dst, repeats, dstRepeatStride);
             }
             else if constexpr (std::is_same<T, int16_t>::value)
             {
-                vconv_s162f16(reinterpret_cast<__ubuf__ half *>(dst), src0, repeats, 1, 1, dstRepeatStride, srcRepeatStride);
-                pipe_barrier(PIPE_V);
-                vmuls(reinterpret_cast<__ubuf__ half *>(dst), reinterpret_cast<__ubuf__ half *>(dst), static_cast<half>(divider), repeats, 1, 1, dstRepeatStride, dstRepeatStride);
-                pipe_barrier(PIPE_V);
-                vconv_f162s16z(dst, reinterpret_cast<__ubuf__ half *>(dst), repeats, 1, 1, dstRepeatStride, dstRepeatStride);
-                pipe_barrier(PIPE_V);
+                prepare_s16_data(dst, src0, src1, repeats, dstRepeatStride, srcRepeatStride);
+                vdiv(reinterpret_cast<__ubuf__ half *>(dst), reinterpret_cast<__ubuf__ half *>(src0), reinterpret_cast<__ubuf__ half *>(dst), repeats, 1, 1, 1, dstRepeatStride, srcRepeatStride, dstRepeatStride);
+                complate_s16_data(dst, repeats, dstRepeatStride);
             }
-            else if constexpr (std::is_same<T, half>::value)
+            else if constexpr (std::is_same<T, float>::value || std::is_same<T, half>::value)
             {
                 vector_dup(dst, src1, repeats, 1, 1, dstRepeatStride, 0);
                 pipe_barrier(PIPE_V);
                 vdiv(dst, src0, dst, repeats, 1, 1, 1, dstRepeatStride, srcRepeatStride, dstRepeatStride);
-            }
-            else
-            {
-                vmuls(dst, src0, divider, repeats, 1, 1, dstRepeatStride, srcRepeatStride);
             }
         }
     };

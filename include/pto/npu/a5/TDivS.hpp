@@ -33,7 +33,8 @@ namespace pto {
             }
             if constexpr (std::is_same<T, float>::value)
             {
-                vmuls(vregdst, vregsrc, divider, preg);
+                vdup(vregdst, src1, preg, MODE_ZEROING);
+                vdiv(vregdst, vregsrc, vregdst, preg);
             }
             else if constexpr (std::is_same<T, half>::value)
             {
