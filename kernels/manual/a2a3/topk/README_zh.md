@@ -69,7 +69,18 @@ Topk 实现： 从GM上加载数据和索引到ub上，使用TSort对每32个数
 
 ### 流水线调度
 
-本示例通过在 L1 上使用双缓冲来重叠数据搬运与计算，以提高利用率。每次循环执行两组操作，TLOAD->TSORT32->TMRGSORT(含MRGSORT和MOV)->TSTORE。单组操作的依赖顺序是MTE2->V->MTE1->V->MTE3。第二组的TLOAD不需要等第一组操作全部执行完再开始执行，这样增加了流水并行度。增加了循环之间的从V->MTE2的反向依赖，以保证下一个循环的TLOAD是在对应的VEC操作执行完后再开始的。
+本示例通过在 UB 上使用双缓冲来重叠数据搬运与计算，以提高利用率。每次循环执行两组操作，TLOAD->TSORT32->TMRGSORT(含MRGSORT和MOV)->TSTORE。单组操作的依赖顺序是MTE2->V->MTE1->V->MTE3。第二组的TLOAD不需要等第一组操作全部执行完再开始执行，这样增加了流水并行度。增加了循环之间的从V->MTE2的反向依赖，以保证下一个循环的TLOAD是在对应的VEC操作执行完后再开始的。
+
+## 实测性能（参考）
+
+以下数据在 Ascend A3（48个VEC核）上测得，覆盖多个尺寸以及不同类型。
+
+| 参数 | aiv_vec_ratio | aiv_scalar_ratio | aiv_mte2_ratio | aiv_mte3_ratio | task_duration(us) |
+| --- | --- | --- | --- | --- | --- |
+| `type=float` `validRow=rows=4800` `validCol=1024` `cols=1280` `topk=1000` | 94% | 3.2% | 11.7% | 10.4% | 324.106 |
+| `type=float` `validRow=rows=3456` `validCol=1024` `cols=1280` `topk=1000` | 91.5% | 4.6% | 12.3% | 10.5% | 238.819 |
+| `type=float` `validRow=rows=2304` `validCol=1024` `cols=1280` `topk=1000` | 88.7% | 6% | 12.4% | 10.1% | 161.375 |
+| `type=half` `validRow=rows=4800` `validCol=1024` `cols=1280` `topk=1008` | 93.7% | 2.4% | 11.5% | 9.6% | 326.886 |
 
 ## 构建与运行
 

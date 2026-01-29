@@ -37,8 +37,7 @@ def gen_golden_data(param):
     
     new_data = np.zeros((rows, cols)).astype(src_type)
     for i in range(valid_row):
-        sequence = np.arange(i, i + valid_col)
-        data = np.random.permutation(sequence).astype(src_type)
+        data = np.random.uniform(i, i + valid_col, size=valid_col).astype(src_type)
         new_data[i, :valid_col] = data
 
     x1_gm = np.zeros((rows, cols * 2)) 
@@ -52,16 +51,16 @@ def gen_golden_data(param):
 
     topk_values = np.zeros((rows, topk)).astype(src_type)
     topk_indices = np.zeros((rows, topk)).astype(index_type)
+    idx = np.arange(valid_col).astype(np.uint32)
     for i in range(valid_row):
         row = new_data[i, :valid_col]
-        indices = np.argpartition(row, -topk)[-topk:]
-        indices_sorted = indices[np.argsort(-row[indices])]
+        sorted_indices = np.lexsort((idx, -row))
+        indices_sorted = sorted_indices[:topk]
         values = row[indices_sorted]
 
         topk_values[i] = values
         topk_indices[i] = indices_sorted
 
-    idx = np.arange(valid_col).astype(np.uint32)
     os.makedirs("input", exist_ok=True)
     os.makedirs("output", exist_ok=True)
     new_data.tofile("./input/x1_gm.bin")

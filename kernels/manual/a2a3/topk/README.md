@@ -69,7 +69,18 @@ The implementation defines topk representations. Load input data and index in GM
 
 ### Pipeline scheduling
 
-This example overlaps data movement and compute using double buffering in L1 to improve utilization. In each iteration, two sets of operation are performed，TLOAD->TSORT32->TMRGSORT(include MRGSORT and MOV operation)->TSTORE. The pipeline dependece in each set is `MTE2->V->MTE1->V->MTE3`. TLOAD in the second sets can be performed before TSTORE in the first set is finished, so as others. Extra dependence `V->MTE2`is added to ensure that TLOAD in next iteration is performed after VEC operation is done in corresonding set.
+This example overlaps data movement and compute using double buffering in UB to improve utilization. In each iteration, two sets of operation are performed，TLOAD->TSORT32->TMRGSORT(include MRGSORT and MOV operation)->TSTORE. The pipeline dependece in each set is `MTE2->V->MTE1->V->MTE3`. TLOAD in the second sets can be performed before TSTORE in the first set is finished, so as others. Extra dependence `V->MTE2`is added to ensure that TLOAD in next iteration is performed after VEC operation is done in corresonding set.
+
+## Measured Performance (Reference)
+
+The following measurements were collected on Ascend A3 (48 VEC core) for several sizes and different type.
+
+| Parameter | aiv_vec_ratio | aiv_scalar_ratio | aiv_mte2_ratio | aiv_mte3_ratio | task_duration(us) |
+| --- | --- | --- | --- | --- | --- |
+| `type=float` `validRow=rows=4800` `validCol=1024` `cols=1280` `topk=1000` | 94% | 3.2% | 11.7% | 10.4% | 324.106 |
+| `type=float` `validRow=rows=3456` `validCol=1024` `cols=1280` `topk=1000` | 91.5% | 4.6% | 12.3% | 10.5% | 238.819 |
+| `type=float` `validRow=rows=2304` `validCol=1024` `cols=1280` `topk=1000` | 88.7% | 6% | 12.4% | 10.1% | 161.375 |
+| `type=half` `validRow=rows=4800` `validCol=1024` `cols=1280` `topk=1008` | 93.7% | 2.4% | 11.5% | 9.6% | 326.886 |
 
 ## Build and Run
 
