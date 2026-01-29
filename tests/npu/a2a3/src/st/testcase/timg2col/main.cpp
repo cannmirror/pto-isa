@@ -94,7 +94,11 @@ void timg2col_test(uint32_t FMN, uint32_t FMC1, uint32_t FMH, uint32_t FMW, uint
 
     std::vector<T> golden(cFileSize);
     std::vector<T> devFinal(cFileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
+    if ((key == 4) || (key == 8)) {
+        ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
+    } else {
+        ReadFile(GetGoldenDir() + "/golden_NC1HWC0.bin", cFileSize, golden.data(), cFileSize);
+    }
     ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
 
     bool ret = ResultCmp(golden, devFinal, 0.001f);
