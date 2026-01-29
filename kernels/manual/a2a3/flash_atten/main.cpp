@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2025 Huawei Technologies Co., Ltd.
+Copyright (c) 2026 Huawei Technologies Co., Ltd.
 This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 CANN Open Software License Agreement Version 2.0 (the "License").
 Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ static bool g_enable_intermediate = false;
 static thread_local std::string g_fifo_summary;
 static int g_chip_id = 0; // device id selected via CLI
 static const std::string kReportCsv = "./report.csv";
+static double g_sys_cnt_multiple = 20.0; // Default A2/A3
 
 static void AppendReportRow(const std::string &case_name, int head, int s0, int s1, int cube_s0, int cube_s1,
     int tile_s1, uint64_t start_time, uint64_t end_time, double duration_us, double avg_block_us, double gops,
@@ -113,7 +114,7 @@ std::string GetGoldenDir() {
  *   run_tfa<float, 64, 128, 256, true>(); // enable intermediate checks
  */
 template <typename T, int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD,
-    bool INTERMEDIATE_CHECK>
+    bool INTERMEDIATE_CHECK, bool CAUSAL_MASK>
 void run_tfa() {
     constexpr int tile_factor = TILE_S1 / CUBE_S1;
     constexpr size_t qk_fifo_stride = static_cast<size_t>(kFaCvFifoSize) * static_cast<size_t>(CUBE_S0) *
@@ -240,7 +241,7 @@ void run_tfa() {
     }
 
     // Launch kernel, pass ffts ctrl addr and device-side log buffer, and xexp/tmp_float_exp device ptrs
-    LaunchTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, kFaCvFifoSize, INTERMEDIATE_CHECK,
+    LaunchTFA<S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, kFaCvFifoSize, INTERMEDIATE_CHECK, CAUSAL_MASK,
         kFaCvFifoConsSyncPeriod>((uint16_t *)ffts, (aclFloat16 *)qDevice, (aclFloat16 *)kDevice, (aclFloat16 *)vDevice,
         (aclFloat16 *)xexpDevice, (float *)expMaxIfifoDevice, (float *)gSumDevice, (float *)expMaxDevice,
         (float *)oDevice, (float *)oPartsDevice, (float *)outDevice, (float *)out2Device, profileDevice, stream,
@@ -476,6 +477,10 @@ void run_tfa() {
                 got_pv.size() * sizeof(float));
 
             for (int ti = fifo_start_tile; ti < num_tiles; ++ti) {
+                const uint32_t s0_index = b * CUBE_S0;
+                const uint32_t s1_index = ti * TILE_S1;
+                const bool skip_for_causal_mask = CAUSAL_MASK && (s1_index > s0_index);
+
                 const uint32_t buf_idx = static_cast<uint32_t>(ti % kFaCvFifoSize);
                 const size_t qk_off = static_cast<size_t>(buf_idx) * static_cast<size_t>(CUBE_S0) *
                                       static_cast<size_t>(tile_factor) * static_cast<size_t>(CUBE_S1);
@@ -490,7 +495,8 @@ void run_tfa() {
                 const size_t pv_tile_elems = static_cast<size_t>(CUBE_S0) * static_cast<size_t>(HEAD_SIZE);
 
                 const std::string blk_tile = " block " + std::to_string(b) + " tile " + std::to_string(ti);
-                const bool tile_qk_ok = cmp_buf(&exp_qk[qk_off], &got_qk[qk_off], qk_tile_elems, "qk_fifo" + blk_tile);
+                const bool tile_qk_ok = skip_for_causal_mask ? true : cmp_buf(&exp_qk[qk_off], &got_qk[qk_off],
+                                                                              qk_tile_elems, "qk_fifo" + blk_tile);
                 const bool tile_p_ok = cmp_buf(&exp_p[p_off], &got_p[p_off], p_tile_elems, "p_fifo" + blk_tile);
                 block_qk_ok = block_qk_ok && tile_qk_ok;
                 block_p_ok = block_p_ok && tile_p_ok;
@@ -612,7 +618,7 @@ void run_tfa() {
         }
         if (block_start != std::numeric_limits<uint64_t>::max() && block_end >= block_start) {
             uint64_t block_ticks = block_end - block_start;
-            double block_us = static_cast<double>(block_ticks) * 20.0 / 1000.0;
+            double block_us = static_cast<double>(block_ticks) * g_sys_cnt_multiple / 1000.0;
             block_duration_us_sum += block_us;
             block_duration_count += 1;
         }
@@ -622,7 +628,7 @@ void run_tfa() {
     }
     bool valid_times = (start_min != 0 || end_max != 0) && (end_max >= start_min);
     uint64_t duration_ticks = valid_times ? (end_max - start_min) : 0;
-    double duration_ns = static_cast<double>(duration_ticks) * 20.0;
+    double duration_ns = static_cast<double>(duration_ticks) * g_sys_cnt_multiple;
     double duration_us = duration_ns / 1000.0;
     double gops = static_cast<double>(S0) * static_cast<double>(S1) * static_cast<double>(HEAD_SIZE) * 4.0 / 1e6;
     std::string tflops_str;
@@ -663,13 +669,14 @@ void run_tfa() {
     aclFinalize();
 }
 
-template <typename T, int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD>
+template <typename T, int S0, int HEAD_SIZE, int S1, int CUBE_S0, int CUBE_S1, int TILE_S1, int QK_PRELOAD,
+          bool CAUSAL_MASK>
 void run_case(const std::string &case_name) {
     g_case_name = case_name;
     if (g_enable_intermediate) {
-        run_tfa<T, S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, true>();
+        run_tfa<T, S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, true, CAUSAL_MASK>();
     } else {
-        run_tfa<T, S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, false>();
+        run_tfa<T, S0, HEAD_SIZE, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, false, CAUSAL_MASK>();
     }
 }
 
@@ -680,10 +687,10 @@ int main(int argc, char **argv) {
     };
 
     std::vector<CaseEntry> cases = {
-#define TFA_CASE_ENTRY(S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD)    \
-    {"case_float_H_" #HEAD "_S0_" #S0 "_S1_" #S1, []() {                       \
-         run_case<float, S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD>( \
-             "case_float_H_" #HEAD "_S0_" #S0 "_S1_" #S1);                     \
+#define TFA_CASE_ENTRY(S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, CAUSAL_MASK)    \
+    {"case_float_H_" #HEAD "_S0_" #S0 "_S1_" #S1, []() {                                    \
+         run_case<float, S0, HEAD, S1, CUBE_S0, CUBE_S1, TILE_S1, QK_PRELOAD, CAUSAL_MASK>( \
+             "case_float_H_" #HEAD "_S0_" #S0 "_S1_" #S1);                                  \
      }},
         TFA_FOR_EACH_CASE(TFA_CASE_ENTRY)
 #undef TFA_CASE_ENTRY
@@ -697,6 +704,7 @@ int main(int argc, char **argv) {
         const std::string prefix_cases = "--cases=";
         const std::string prefix_chip = "--chip=";
         const std::string prefix_npu = "--npu=";
+        const std::string prefix_sys_cnt_mtp = "--sys_cnt_multiple=";
 
         if (arg.rfind(prefix_case, 0) == 0) {
             filter_arg = arg.substr(prefix_case.size());
@@ -712,6 +720,10 @@ int main(int argc, char **argv) {
         }
         if (arg.rfind(prefix_npu, 0) == 0) {
             g_chip_id = std::stoi(arg.substr(prefix_npu.size()));
+            continue;
+        }
+        if (arg.rfind(prefix_sys_cnt_mtp, 0) == 0) {
+            g_sys_cnt_multiple = std::atof(arg.substr(prefix_sys_cnt_mtp.size()).c_str());
             continue;
         }
         if ((arg == "--case" || arg == "--cases") && (i + 1) < argc) {
@@ -734,6 +746,10 @@ int main(int argc, char **argv) {
             std::string val = arg.substr(std::strlen("--intermediate="));
             std::transform(val.begin(), val.end(), val.begin(), ::tolower);
             g_enable_intermediate = (val == "1" || val == "true" || val == "yes");
+            continue;
+        }
+        if ((arg == "--sys_cnt_multiple") && (i + 1) < argc) {
+            g_sys_cnt_multiple = std::atof(argv[++i]);
             continue;
         }
     }
