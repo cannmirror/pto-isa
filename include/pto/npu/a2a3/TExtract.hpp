@@ -434,7 +434,17 @@ template <typename DstTileData, typename SrcTileData>
 PTO_INTERNAL void TEXTRACT_CONVTILE_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol)
 {
     if constexpr (SrcTileData::layout == pto::Layout::FRACTAL_Z) { // C1HWNC0, dst dim4 is c0Size
-        TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(), src.GetShape(3), dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+        constexpr uint32_t c0ElemCount = C0_SIZE_BYTE / sizeof(typename SrcTileData::DType);
+        if constexpr (SrcTileData::totalDimCount == 4) { // ConvTile layout is [C1HW,N/16,16,C0]
+            static_assert(SrcTileData::staticShape[2] == FRACTAL_NZ_ROW && SrcTileData::staticShape[3] == c0ElemCount,
+                "Fix: The SrcTileData last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
+            int srcCol = src.GetShape(1) * src.GetShape(2);
+            TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(),
+                srcCol, dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+        } else { //  [C1,H,W,N,C0]
+            TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(),
+                src.GetShape(3), dst.GetValidRow(), dst.GetValidCol(), indexRow, indexCol);
+        }
     }
 }
 

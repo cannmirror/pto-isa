@@ -26,7 +26,8 @@ class ConvTestParams:
         stride: Tuple[int, int],  # (stride_h, stride_w)
         dilation: Tuple[int, int],  # (dilation_h, dilation_w)
         padding: Tuple[int, int, int, int],  # (top, bottom, left, right)
-        dtype: type = np.float32
+        dtype: type = np.float32,
+        weight_output_format: str = "5d"  # 新增参数：权重输出格式，"5d"或"4d"
     ):
         self.input_shape_nc1hwc0 = input_shape_nc1hwc0
         self.weight_shape = weight_shape
@@ -34,7 +35,8 @@ class ConvTestParams:
         self.dilation = dilation
         self.padding = padding
         self.dtype = dtype
-
+        self.weight_output_format = weight_output_format
+        
         n, c1, h, w, c0_input = input_shape_nc1hwc0
         if dtype == np.float32:
             dtype_size = 4
@@ -184,7 +186,7 @@ def save_matrix_bin(matrix, filepath):
 
 
 def gen_golden_data(case_name: str, params: ConvTestParams):
-    #input
+    # input
     n, c1_input, h, w, c0_input = params.input_shape_nc1hwc0
     c_in = c1_input * c0_input
     
@@ -208,9 +210,17 @@ def gen_golden_data(case_name: str, params: ConvTestParams):
         weight = np.random.randint(-128, 128, size=params.weight_shape, dtype=np.int8)
     else:
         weight = np.random.uniform(-5, 5, size=params.weight_shape).astype(dtype)
+    
+    if params.weight_output_format == "5d":
+        weight_to_save = weight
+    else:
+        if n_out % 16 != 0:
+            raise ValueError(f"4维权重格式要求N({n_out})必须是16的倍数")
+        weight_reshaped = weight.reshape(c1_weight * h_k * w_k, n_out, c0_weight)
+        weight_to_save = weight_reshaped.reshape(c1_weight * h_k * w_k, n_out // 16, 16, c0_weight)
+    
     weight_path_bin = "x2_gm.bin"
-    save_matrix_bin(weight, weight_path_bin)
-
+    save_matrix_bin(weight_to_save, weight_path_bin)
     # 3. Convert the input from NC1HWC0 format to NHWC format for convolution computation.
     input_nhwc_temp = input_nc1hwc0.transpose(0, 2, 3, 1, 4)
     input_nhwc = input_nhwc_temp.reshape(n, h, w, c_in)
@@ -266,6 +276,10 @@ if __name__ == "__main__":
         "TIMG2COLTest.case6_float16_splitk", 
         "TIMG2COLTest.case7_float32_splitk",
         "TIMG2COLTest.case8_int8_splitk",
+        "TIMG2COLTest.case9_bfloat16_fractalZ4d", 
+        "TIMG2COLTest.case10_float16_fractalZ4d", 
+        "TIMG2COLTest.case11_float32_fractalZ4d",
+        "TIMG2COLTest.case12_int8_fractalZ4d",
     ]
     # Define the parameters for the test cases.
     case_params_list = [
@@ -332,6 +346,42 @@ if __name__ == "__main__":
             dilation=(2, 2),
             padding=(1, 1, 1, 0),
             dtype=np.int8
+        ),
+        ConvTestParams(
+            input_shape_nc1hwc0=(1, 4, 13, 57, 16),  # NC1HWC0
+            weight_shape=(4, 3, 3, 48, 16),  # C1HWNC0
+            stride=(2, 2),
+            dilation=(2, 2),
+            padding=(1, 2, 1, 2),
+            dtype=bfloat16,
+            weight_output_format="4d"
+        ),
+        ConvTestParams(
+            input_shape_nc1hwc0=(1, 4, 25, 9, 16),  # NC1HWC0
+            weight_shape=(4, 3, 3, 64, 16),  # C1HWNC0
+            stride=(2, 1),
+            dilation=(1, 2),
+            padding=(1, 1, 1, 1),
+            dtype=np.float16,
+            weight_output_format="4d"
+        ),
+        ConvTestParams(
+            input_shape_nc1hwc0=(1, 2, 14, 30, 8),  # NC1HWC0
+            weight_shape=(2, 4, 4, 32, 8),  # C1HWNC0
+            stride=(2, 2),
+            dilation=(1, 1),
+            padding=(1, 2, 3, 0),
+            dtype=np.float32,
+            weight_output_format="4d"
+        ),
+        ConvTestParams(
+            input_shape_nc1hwc0=(1, 2, 29, 60, 32),  # NC1HWC0
+            weight_shape=(2, 2, 2, 64, 32),  # C1HWNC0
+            stride=(2, 2),
+            dilation=(2, 2),
+            padding=(1, 1, 1, 0),
+            dtype=np.int8,
+            weight_output_format="4d"
         ),
     ]
     for i, case_name in enumerate(case_name_list):

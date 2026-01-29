@@ -105,7 +105,76 @@ void timg2col_test(uint32_t FMN, uint32_t FMC1, uint32_t FMH, uint32_t FMW, uint
 
     EXPECT_TRUE(ret);
 }
+template <int32_t key, typename T, typename U>
+void timg2col_test_fractal4d(uint32_t FMN, uint32_t FMC1, uint32_t FMH, uint32_t FMW, uint32_t FMC0,
+        uint32_t FTDIM3, uint32_t FTDIM2, uint32_t FTDIM1, uint32_t FTDIM0, uint32_t FTH, uint32_t FTW,
+        uint8_t dilationH = 1, uint8_t dilationW = 1, uint8_t strideH = 1, uint8_t strideW = 1,
+        uint8_t padTop = 1, uint8_t padBottom = 1, uint8_t padLeft = 1, uint8_t padRight = 1)
+{
+    uint32_t widthOut = 0;
+    uint32_t heightOut = 0;
+    if (strideH != 0 && strideW != 0) {
+        heightOut = (FMH + padTop + padBottom - dilationH * (FTH - 1) - 1) / strideH + 1;
+        widthOut = (FMW + padLeft + padRight - dilationW * (FTW - 1) - 1) / strideW + 1;
+    }
+    uint32_t M = FMN * heightOut * widthOut;
+    uint32_t N = FTDIM2 * FTDIM1;
+    size_t aFileSize = FMN * FMC1 * FMH * FMW * FMC0 * sizeof(U);
+    size_t bFileSize = FTDIM3 * FTDIM2 * FTDIM1 * FTDIM0 * sizeof(U);
+    size_t cFileSize = M * N * sizeof(T);
 
+    aclInit(nullptr);
+    aclrtSetDevice(0);
+    aclrtStream stream;
+    aclrtCreateStream(&stream);
+
+    uint8_t *dstHost, *src0Host, *src1Host;
+    uint8_t *dstDevice, *src0Device, *src1Device;
+
+    aclrtMallocHost((void **)(&dstHost), cFileSize);
+    aclrtMallocHost((void **)(&src0Host), aFileSize);
+    aclrtMallocHost((void **)(&src1Host), bFileSize);
+
+    aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
+    ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
+
+    aclrtMemcpy(src0Device, aFileSize, src0Host, aFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(src1Device, bFileSize, src1Host, bFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    launchTIMG2COL<key>(dstDevice, src0Device, src1Device, stream);
+
+    aclrtSynchronizeStream(stream);
+    aclrtMemcpy(dstHost, cFileSize, dstDevice, cFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+
+    WriteFile(GetGoldenDir() + "/output_z.bin", dstHost, cFileSize);
+
+    aclrtFree(dstDevice);
+    aclrtFree(src0Device);
+    aclrtFree(src1Device);
+
+    aclrtFreeHost(dstHost);
+    aclrtFreeHost(src0Host);
+    aclrtFreeHost(src1Host);
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(0);
+    aclFinalize();
+
+    std::vector<T> golden(cFileSize);
+    std::vector<T> devFinal(cFileSize);
+    if (key == 12) {
+        ReadFile(GetGoldenDir() + "/golden.bin", cFileSize, golden.data(), cFileSize);
+    } else {
+        ReadFile(GetGoldenDir() + "/golden_NC1HWC0.bin", cFileSize, golden.data(), cFileSize);
+    }
+    ReadFile(GetGoldenDir() + "/output_z.bin", cFileSize, devFinal.data(), cFileSize);
+
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
+
+    EXPECT_TRUE(ret);
+}
 TEST_F(TIMG2COLTest, case1_bfloat16)
 {
     timg2col_test<1, float, uint16_t>(1, 2, 4, 16, 16, 2, 3, 3, 16, 16);
@@ -137,4 +206,20 @@ TEST_F(TIMG2COLTest, case7_float32_splitk)
 TEST_F(TIMG2COLTest, case8_int8_splitk)
 {
     timg2col_test<8, int32_t, int8_t>(1, 2, 29, 60, 32, 2, 2, 2, 64, 32, 2, 2, 2, 2, 1, 1, 1, 0);
+}
+TEST_F(TIMG2COLTest, case9_bfloat16_fractalZ4d)//C1HWNC0  -->C1HW  N/ 16 16 C0
+{
+    timg2col_test_fractal4d<9, float, uint16_t>(1, 4, 13, 57, 16, 36, 3, 16, 16, 3, 3, 2, 2, 2, 2, 1, 2, 1, 2);
+}
+TEST_F(TIMG2COLTest, case10_float16_fractalZ4d)
+{
+    timg2col_test_fractal4d<10, float, uint16_t>(1, 4, 25, 9, 16, 36, 4, 16, 16, 3, 3, 1, 2, 2, 1);
+}
+TEST_F(TIMG2COLTest, case11_float32_fractalZ4d)
+{
+    timg2col_test_fractal4d<11, float, float>(1, 2, 14, 30, 8, 32, 2, 16, 8, 4, 4, 1, 1, 2, 2, 1, 2, 3, 0);
+}
+TEST_F(TIMG2COLTest, case12_int8_fractalZ4d)
+{
+    timg2col_test_fractal4d<12, int32_t, int8_t>(1, 2, 29, 60, 32, 8, 4, 16, 32, 2, 2, 2, 2, 2, 2, 1, 1, 1, 0);
 }
