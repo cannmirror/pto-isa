@@ -39,7 +39,7 @@ __global__ AICORE void runTSel( __gm__ T __out__ *out, __gm__ uint8_t __in__ *ma
     TileData dstTile(ValidRows, ValidCols);
     MaskTile maskTile(maskVRow, maskVCol);
     constexpr uint64_t tileSize = Rows*Cols*sizeof(T);
-    constexpr uint64_t maskSize = maskVRow*maskVCol;
+    constexpr uint64_t maskSize = maskRow*maskCol;
     constexpr uint64_t totalSize = tileSize * 3 + maskSize;
     static_assert(totalSize <= 184*1024, "UB size overflow, should be less than 192KB.");
 
