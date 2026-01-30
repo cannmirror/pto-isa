@@ -425,19 +425,23 @@ PTO_INST RecordEvent TGEMV_BIAS(TileRes &cMatrix, TileLeft &aMatrix, TileRight &
   return {};
 }
 
+#ifdef MEMORY_BASE
 template<bool isEnable, RoundMode hf32TransMode= RoundMode::CAST_ROUND, typename... WaitEvents>
 PTO_INST RecordEvent TSETHF32MODE(WaitEvents&... events) {
   TSYNC(events...);
   TSETHF32MODE_IMPL<isEnable, hf32TransMode>();
   return {};
 }
+#endif
 
+#ifdef REGISTER_BASE
 template<bool isEnable, RoundMode tf32TransMode= RoundMode::CAST_ROUND, typename... WaitEvents>
 PTO_INST RecordEvent TSETTF32MODE(WaitEvents&... events) {
   TSYNC(events...);
   TSETTF32MODE_IMPL<isEnable, tf32TransMode>();
   return {};
 }
+#endif
 
 template <typename DstTileData, typename TmpTileData, typename Src0TileData,
           typename Src1TileData, typename Src2TileData, typename Src3TileData,
@@ -519,6 +523,7 @@ PTO_INST RecordEvent TEXTRACT_FP(DstTileData &dst, SrcTileData &src, FpTileData 
   return {};
 }
 
+#ifdef MEMORY_BASE
 template <typename TileData, typename ConvTileData,
           SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_MANUAL,
           typename T = uint64_t, typename... WaitEvents>
@@ -536,6 +541,7 @@ PTO_INST RecordEvent TSETFMATRIX(const Img2colTileConfig<T> &cfg = Img2colTileCo
   TSETFMATRIX_IMPL<FmatrixMode, T>(cfg);
   return {};
 }
+#endif
 
 template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
 PTO_INST RecordEvent TINSERT(DstTileData &dst, SrcTileData &src,
@@ -1094,6 +1100,7 @@ PTO_INST RecordEvent TREM(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &sr
   return {};
 }
 
+#ifdef REGISTER_BASE
 template <typename TileDataSrc, typename TileDataExp, typename TileDataOut, 
           typename TileDataMax, int mode, typename... WaitEvents>
 PTO_INST RecordEvent TQUANT(TileDataSrc &src, TileDataExp &exp, TileDataOut &dst, 
@@ -1102,6 +1109,7 @@ PTO_INST RecordEvent TQUANT(TileDataSrc &src, TileDataExp &exp, TileDataOut &dst
   TQUANT_IMPL<TileDataSrc, TileDataExp, TileDataOut, TileDataMax, mode>(src, exp, dst, max, scaling);
   return {};
 }
+#endif
 
 } // namespace pto
 #endif
