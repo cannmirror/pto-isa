@@ -87,6 +87,10 @@ class CPPLibBuild(build_clib, object):
             '-DTORCH_NPU_PATH=' + os.path.realpath(os.path.dirname(torch_npu.__file__)),
             ]
 
+        soc_version = os.getenv('SOC_VERSION')
+        if soc_version:
+            cmake_args.append('-DSOC_VERSION=' + soc_version)
+
         if torch.compiled_with_cxx11_abi():
             cmake_args.append('-DGLIBCXX_USE_CXX11_ABI=1')
         else:

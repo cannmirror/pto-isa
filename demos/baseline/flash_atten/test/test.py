@@ -21,7 +21,7 @@ S0_BASE = 64
 HEAD_SIZE = 128
 TILE_S1_DEFAULT = 256
 
-def gen_case(s0, s1, head_size=HEAD_SIZE, cube_s1=128, tile_s1=TILE_S1_DEFAULT):
+def gen_case(s0, s1, head_size=HEAD_SIZE, cube_s1=128, tile_s1=TILE_S1_DEFAULT, is_causal=False):
     # generate inputs in FP16, compute golden in FP32
     q_fp32 = (np.random.randn(s0, head_size).astype(np.float16) * 1.5).astype(np.float32)
     k_fp32 = (np.random.randn(head_size, s1).astype(np.float16) * 1.5).astype(np.float32)
@@ -45,6 +45,9 @@ def gen_case(s0, s1, head_size=HEAD_SIZE, cube_s1=128, tile_s1=TILE_S1_DEFAULT):
     # also produce softmax x_exp (per-row) saved as FP16 and tmp_float_exp saved as FP32
     # compute softmax in tiled fashion by TILE_S1 tiles (default 256)
     arr_f32 = golden.astype(np.float32)
+    if is_causal:
+        mask = np.triu((np.ones(arr_f32.shape) * float(-3.40282e+38)).astype(np.float32), 1)
+        arr_f32 += mask
     scale = 1/np.sqrt(head_size)
     num_tiles = s1 // tile_s1
 
@@ -156,20 +159,22 @@ class TestCustomFA(TestCase):
     def test_fa_custom_ops(self):
 
         for seq_len in [1024, 2048, 4096, 8192, 16384, 32768]:
-            print("Testing for sequence length: " + str(seq_len))
-            # Define the tensor size
-            s0 = seq_len
-            s1 = seq_len
-            q, k, v, cpuout, intermediate_result = gen_case(s0, s1)
+            for head_size in [64, 128]:
+                for is_causal in [False, True]:
+                    print(f"Testing for sequence length: {seq_len}, head_size: {head_size}, causal: {is_causal}")
+                    # Define the tensor size
+                    s0 = seq_len
+                    s1 = seq_len
+                    q, k, v, cpuout, intermediate_result = gen_case(s0, s1, head_size=head_size, is_causal=is_causal)
 
-            q_npu = q.npu()
-            k_npu = k.npu()
-            v_npu = v.npu()
-            # Call the custom my_fa operator
-            output = torch.ops.npu.my_fa(q_npu, k_npu, v_npu)
+                    q_npu = q.npu()
+                    k_npu = k.npu()
+                    v_npu = v.npu()
+                    # Call the custom my_fa operator
+                    output = torch.ops.npu.my_fa(q_npu, k_npu, v_npu, is_causal)
 
-            # Validate the results
-            self.assertRtolEqual(output, cpuout, prec=1.e-3)
+                    # Validate the results
+                    self.assertRtolEqual(output, cpuout, prec=1.e-3)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ namespace ascendc_path {
 
 #define CEIL(x, y) ((((x) + (y) - 1) / (y)) * y)
 
-at::Tensor run_fa_custom(const at::Tensor &q, const at::Tensor &k, const at::Tensor &v) {
+at::Tensor run_fa_custom(const at::Tensor &q, const at::Tensor &k, const at::Tensor &v, bool is_causal) {
 
     at::Tensor out = 
         at::empty(q.sizes(), at::TensorOptions().dtype(at::kFloat).device(q.options().device()));
@@ -32,17 +32,31 @@ at::Tensor run_fa_custom(const at::Tensor &q, const at::Tensor &k, const at::Ten
     constexpr int CUBE_S0 = kFaCubeS0;
     constexpr int CUBE_S1 = kFaCubeS1;
 
-    assert(head_size == 128 && "Head Size has to be 128 for now");
+    assert((head_size == 64 || head_size == 128) && "Head Size has to be 64 or 128 for now");
     assert(s0 % CUBE_S0 == 0 && "S0 has to be CUBE_S0 multiple");
-    assert(s1 % kFaTileS1 == 0 && "S1 has to be Tile_S1 multiple");
 
-    size_t tile_factor = kFaTileS1 / CUBE_S1;
+    // Dynamic tiling selection logic
+    int tile_s1 = kFaTileS1; // Default
+    if (s1 >= 256 && s1 <= 1024) {
+        tile_s1 = 256;
+    } else if (s1 >= 1024 && s1 <= 8192) {
+        tile_s1 = 512;
+    } else if (s1 >= 8192) {
+        tile_s1 = 1024;
+    } else {
+        tile_s1 = 128;
+    }
+    
+    // Verify tiling constraint
+    assert(s1 % tile_s1 == 0 && "S1 has to be Tile_S1 multiple");
+
+    size_t tile_factor = tile_s1 / CUBE_S1;
     size_t blockRow = s0 / CUBE_S0;
-    size_t qk_fifo_stride = kFaCvFifoSize * CUBE_S0 * kFaTileS1;
+    size_t qk_fifo_stride = kFaCvFifoSize * CUBE_S0 * tile_s1;
     size_t qk_fifo_size = CEIL(qk_fifo_stride * blockRow * sizeof(float), 512);
     size_t p_fifo_half_size = CEIL(qk_fifo_stride * blockRow * 2, 512);
     size_t p_fifo_float_size = CEIL(kFaCvFifoSize * CUBE_S0 * blockRow * sizeof(float), 512);
-    size_t num_tiles = s1 / kFaTileS1;
+    size_t num_tiles = s1 / tile_s1;
     size_t gsum_size = CEIL(s0 * num_tiles * sizeof(float), 512);
     size_t pvPart_size = s0 * head_size * sizeof(float);
     size_t oPartsTotal_size =  CEIL(pvPart_size * num_tiles, 512);
@@ -56,8 +70,8 @@ at::Tensor run_fa_custom(const at::Tensor &q, const at::Tensor &k, const at::Ten
     size_t workspace_size = user_workspace_size + system_workspace_size;
     auto workspace_tensor =
         at::empty({workspace_size}, at::TensorOptions().dtype(at::kByte).device(q.options().device()));
-    // Launch the custom kernel
-    EXEC_KERNEL_CMD(fa_custom, blockRow, q, k, v, out, s0, s1, workspace_tensor);
+
+    EXEC_KERNEL_CMD(fa_custom, blockRow, q, k, v, out, s0, s1, head_size, is_causal, tile_s1, workspace_tensor);
     return out;
 }
 } // namespace ascendc_path
@@ -65,7 +79,7 @@ at::Tensor run_fa_custom(const at::Tensor &q, const at::Tensor &k, const at::Ten
 namespace {
 TORCH_LIBRARY_FRAGMENT(npu, m) {
     // Declare the custom operator schema
-    m.def("my_fa(Tensor q, Tensor k, Tensor v) -> Tensor");
+    m.def("my_fa(Tensor q, Tensor k, Tensor v, bool is_causal=False) -> Tensor");
 }
 } // namespace
 
