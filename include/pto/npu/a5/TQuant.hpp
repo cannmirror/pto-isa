@@ -236,7 +236,7 @@ __tf__ PTO_INTERNAL void TQuant(typename TileDataSrc::TileDType __in__  src,
     __ubuf__ T *maxPtr = (__ubuf__ T *)__cce_get_tile_ptr(max);
     __ubuf__ T *maxPtr_backup = (__ubuf__ T *)__cce_get_tile_ptr(max);
     __ubuf__ T *scalingPtr = (__ubuf__ T *)__cce_get_tile_ptr(scaling);
-    set_ctrl(1<<50); // set SPR.CTRL[50] to 1, to allow data clipping into MAX_NORM range for VCVTf32->f8 conversion
+    set_ctrl(static_cast<uint64_t>(1)<<50); // set SPR.CTRL[50] to 1, to allow data clipping into MAX_NORM range for VCVTf32->f8 conversion
     __VEC_SCOPE__ {
         constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
         unsigned numRepeatPerRow = CeilDivision(validCols, elementsPerRepeat);
