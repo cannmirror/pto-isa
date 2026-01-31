@@ -251,6 +251,8 @@ __global__ AICORE void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S 
         GlobalDataSrc1 src1Global(src1 + validN * i * BASEK);
 
         /******************************TLOAD*****************************/
+        TFILLPAD(aMatTile, aMatTile);
+        TFILLPAD(bMatTile, bMatTile);
         TLOAD(aMatTile, src0Global);
         TLOAD(bMatTile, src1Global);
 
