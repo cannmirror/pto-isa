@@ -16,6 +16,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #endif
 
 
+#include <pto/common/arch_macro.hpp>
 #include <pto/common/pto_tile.hpp>
 #include "pto/common/pto_instr.hpp"
 

@@ -731,7 +731,6 @@ static constexpr int fixedMxColSize = 2;
 static constexpr int fractalABSize = 512;
 static constexpr int fractalCSize = 1024;
 static constexpr int fractalMxSize = 32;
-static constexpr int cElemSize = 4;
 } // namespace TileConfig
 
 namespace ConvTileDetail {
@@ -935,8 +934,6 @@ struct Tile {
 
     static constexpr int getInnerRow() {
       if constexpr (SFractalSize_ == TileConfig::fractalCSize) {
-        static_assert(sizeof(DType) == TileConfig::cElemSize,
-                      "Size of datatype != 4");
         return TileConfig::fixedRowSize;
       } else if constexpr (SFractalSize_ == TileConfig::fractalMxSize) {
         return TileConfig::fixedMxRowSize;
@@ -950,8 +947,6 @@ struct Tile {
 
     static constexpr int getInnerCol() {
       if constexpr (SFractalSize_ == TileConfig::fractalCSize) {
-        static_assert(sizeof(DType) == TileConfig::cElemSize,
-                      "Size of datatype != 4");
         return TileConfig::fixedColSize;
       } else if constexpr (SFractalSize_ == TileConfig::fractalMxSize) {
         return TileConfig::fixedMxColSize;

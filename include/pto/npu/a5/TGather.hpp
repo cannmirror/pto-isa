@@ -279,7 +279,7 @@ __tf__ AICORE void TGather(typename DstTileData::TileDType __out__ dst, typename
         MaskReg executeMask;
         UnalignReg ureg;
 
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
+        constexpr unsigned elementsPerRepeat = CCE_VL / sizeof(T);
         uint16_t innerRepeatTimes = CeilDivision(validCol, elementsPerRepeat);
 
         for (uint16_t i = 0; i < validRow; ++i) {

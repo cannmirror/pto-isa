@@ -17,6 +17,7 @@ namespace pto {
 constexpr int REPEAT_BYTE = 256;
 constexpr int REPEAT_MAX = 255;
 constexpr const int BLOCK_BYTE_SIZE = 32;
+constexpr const int FIXP_BURST_UNIT_LEN = 64;
 constexpr const uint32_t SHIFT_BLOCK_LEN = 4;
 constexpr const uint32_t SHIFT_BLOCK_BYTE = 5;
 constexpr const uint32_t SHIFT_FRACTAL_BYTE = 9;
@@ -260,7 +261,7 @@ struct PadValueMap<uint8_t, PadValue::Max> {
     static constexpr auto value = uint8_t(0xff);
 };
 
-#if defined(REGISTER_BASE)
+#if defined(REGISTER_BASE) && !defined(PTO_NPU_ARCH_KIRIN9030)
 template <PadValue PadVal>
 struct PadValueMap<float4_e1m2x2_t, PadVal> {
     static constexpr auto value = uint8_t(0);
