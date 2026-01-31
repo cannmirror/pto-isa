@@ -52,7 +52,8 @@ PTO_INTERNAL void TMULS_IMPL(TileDataDst &dst, TileDataSrc &src0, typename TileD
                       std::is_same<T, half>::value ||
                       std::is_same<T, float16_t>::value ||
                       std::is_same<T, float>::value ||
-                      std::is_same<T, float32_t>::value,
+                      std::is_same<T, float32_t>::value ||
+                      std::is_same<T, bfloat16_t>::value,
                       "TMULS: Invalid data type");
     static_assert(TileDataDst::Loc == TileType::Vec, "TileType of dst tiles must be TileType::Vec.");
     static_assert(TileDataDst::ValidCol <= TileDataDst::Cols,
