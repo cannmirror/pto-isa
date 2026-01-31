@@ -122,13 +122,10 @@ constexpr const int B8_DATA_TYPE_OFFSET = 8;
     int srcValidCol = src.GetValidCol();
     int dstValidRow = dst.GetValidRow();
     int dstValidCol = dst.GetValidCol();
-    PTO_ASSERT((TileDataSrc::isRowMajor && (srcValidRow == dstValidRow)) ||
-               (!TileDataSrc::isRowMajor && (srcValidCol == dstValidRow)),
-               "Fix: TROWEXPAND row major src tile's valid row must be consistent with dst tile's valid row, or "
-               "col major src tile's valid col must be consistent with dst tile's valid row!");
-    if (dstValidRow == 0 || dstValidCol == 0 || srcValidRow == 0 || srcValidCol == 0) {
-      return;
-    }
+    PTO_ASSERT(srcValidRow == dstValidRow,
+               "Fix: TROWEXPAND src tile's valid row must be consistent with dst tile's valid row!");
+    PTO_ASSERT(srcValidRow != 0 && srcValidCol != 0 && dstValidRow != 0 && dstValidCol != 0,
+        "Fix: TROWEXPAND input/output shape is invalid, validCol or validRow is 0.");
 
     constexpr bool isBroadcastSupportType = (sizeof(T) == 2 || sizeof(T) == 4);
 
