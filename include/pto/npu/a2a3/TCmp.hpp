@@ -17,6 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
 constexpr const uint64_t BITS_IN_BYTE = 8;
+constexpr const uint64_t TCMP_REPEAT_MAX = 240;
 
     template <typename TileDataDst, typename TileDataSrc>
     AICORE void CmpCall(
@@ -80,23 +81,23 @@ constexpr const uint64_t BITS_IN_BYTE = 8;
         __ubuf__ typename TileDataSrc::DType *src0Ptr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src0);
         __ubuf__ typename TileDataSrc::DType *src1Ptr = (__ubuf__ typename TileDataSrc::DType *)__cce_get_tile_ptr(src1);
         
-        size_t numLoop = numRepeatPerLine / REPEAT_MAX;
-        int numRemainPerLine = numRepeatPerLine % REPEAT_MAX;
+        size_t numLoop = numRepeatPerLine / TCMP_REPEAT_MAX;
+        int numRemainPerLine = numRepeatPerLine % TCMP_REPEAT_MAX;
         constexpr int srcAlignCols = TileDataSrc::Cols;
         constexpr int dstAlignCols = TileDataDst::Cols;
-        constexpr int srcOffset = REPEAT_MAX * REPEAT_BYTE / sizeof(T);
-        constexpr int dstOffset = REPEAT_MAX * REPEAT_BYTE / sizeof(T) / BITS_IN_BYTE;
+        constexpr int srcOffset = TCMP_REPEAT_MAX * REPEAT_BYTE / sizeof(T);
+        constexpr int dstOffset = TCMP_REPEAT_MAX * REPEAT_BYTE / sizeof(T) / BITS_IN_BYTE;
 
         set_mask_norm();
         set_vector_mask(-1, -1);
-        for(size_t i = 0; i< validRow; i++) {
-            for (size_t j = 0; i < numLoop; j++) {
+        for(size_t i = 0; i < validRow; i++) {
+            for (size_t j = 0; j < numLoop; j++) {
                 CmpCall<TileDataDst, TileDataSrc>(
                     dstPtr + i * dstAlignCols + j * dstOffset,
                     src0Ptr + i * srcAlignCols + j * srcOffset,
                     src1Ptr + i * srcAlignCols + j * srcOffset,
                     mode, 
-                    REPEAT_MAX,
+                    TCMP_REPEAT_MAX,
                     1,
                     1,
                     8,
