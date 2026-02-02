@@ -17,6 +17,16 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/npu/a5/utils.hpp>
 
 namespace pto {
+
+template<typename T>
+struct IndexVectorFor {
+    static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4,
+        "Fix: Unsupported DType size for index vector.");
+    using Scalar = std::conditional_t<sizeof(T) == 4, int32_t,
+                  std::conditional_t<sizeof(T) == 2, int16_t, int8_t>>;
+    using type = RegTensor<Scalar>;
+};
+
 template <typename TileData, unsigned rowStride, int upperOrLower>
 __tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned validRows, unsigned validCols, int diagonal) {
     using T = typename TileData::DType;
@@ -27,7 +37,8 @@ __tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned
     const int start_num = diagonal + start_offset; // (upperOrLower == 0) ? (diagonal + 1) : diagonal
     __VEC_SCOPE__ {
         RegTensor<T> v_ones, v_zeros, vreg_out;
-        vector_s32  vreg_idx;
+        using IndexScalar = typename IndexVectorFor<T>::Scalar;
+        typename IndexVectorFor<T>::type vreg_idx;
         vector_bool preg_cmp;
         vbr(v_ones, (T)1);
         vbr(v_zeros, (T)0);
@@ -37,7 +48,7 @@ __tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned
             uint32_t num_elements = validCols;
             for (uint16_t j = 0; j < (uint16_t) numRepeatPerRow; ++j){
                 vector_bool preg_st = CreatePredicate<T>(num_elements);
-                vci(vreg_idx, j * elementsPerRepeat);
+                vci((RegTensor<IndexScalar> &)vreg_idx, (IndexScalar)(j * elementsPerRepeat), INC_ORDER);
                 vcmps_lt(preg_cmp, vreg_idx, (int)(i+start_num), preg_st);
                 if constexpr (upperOrLower == 0)
                     vsel(vreg_out, v_ones, v_zeros, preg_cmp);

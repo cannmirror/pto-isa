@@ -70,6 +70,12 @@ void test_ttri() {
     EXPECT_TRUE(ret);
 }
 
+TEST_F(TTRITest, case_fp16_20x32_lower_diag_0) {
+    test_ttri<aclFloat16, 20, 32, 0, 0>();
+}
+TEST_F(TTRITest, case_uint8_20x32_lower_diag_0) {
+    test_ttri<uint8_t, 20, 32, 0, 0>();
+}
 TEST_F(TTRITest, case_float_32x91_lower_diag_0) {
     test_ttri<float, 32, 91, 0, 0>();
 }

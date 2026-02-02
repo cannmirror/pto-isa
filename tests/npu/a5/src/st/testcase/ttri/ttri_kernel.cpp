@@ -44,6 +44,8 @@ void LaunchTTri(T *out, void *stream) {
     }
 }
 
+template void LaunchTTri<aclFloat16, 20, 32, 0, 0>(aclFloat16 *out, void *stream);
+template void LaunchTTri<uint8_t, 20, 32, 0, 0>(uint8_t *out, void *stream);
 template void LaunchTTri<float, 32, 91, 0, 0>(float *out, void *stream);
 template void LaunchTTri<float, 128, 128, 0, 0>(float *out, void *stream);
 template void LaunchTTri<float, 32, 91, 0, 3>(float *out, void *stream);
