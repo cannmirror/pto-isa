@@ -12,19 +12,23 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TREMS_HPP
 
 #include <pto/common/constants.hpp>
-#include <pto/npu/a2a3/TExpandS.hpp>
 
 namespace pto {
+// Formula: rem(a, b) = a - trunc(a/b) * b
 struct RemSOp {
   PTO_INTERNAL static void RemSF32Instr(__ubuf__ float *dst, __ubuf__ float *src, float x) {
     vector_dup(dst, x, 1, 1, 1, 8, 8);
     pipe_barrier(PIPE_V);
+
     vdiv(dst, src, dst, 1, 1, 1, 1, 8, 8, 8);
     pipe_barrier(PIPE_V);
+
     vconv_f322f32z(dst, dst, 1, 1, 1, 8, 8);
     pipe_barrier(PIPE_V);
+
     vmuls(dst, dst, x, 1, 1, 1, 8, 8);
     pipe_barrier(PIPE_V);
+
     vsub(dst, src, dst, 1, 1, 1, 1, 8, 8, 8);
     pipe_barrier(PIPE_V);
   }
@@ -32,14 +36,18 @@ struct RemSOp {
   PTO_INTERNAL static void RemSF16Instr(__ubuf__ half *dst, __ubuf__ half *src, half x) {
     vector_dup(dst, x, 1, 1, 1, 8, 8);
     pipe_barrier(PIPE_V);
+
     vdiv(dst, src, dst, 1, 1, 1, 1, 8, 8, 8);
     pipe_barrier(PIPE_V);
+
     vconv_f162s16z((__ubuf__ int16_t *)dst, dst, 1, 1, 1, 8, 8);
     pipe_barrier(PIPE_V);
     vconv_s162f16(dst, (__ubuf__ int16_t *)dst, 1, 1, 1, 8, 8);
     pipe_barrier(PIPE_V);
+
     vmuls(dst, dst, x, 1, 1, 1, 8, 8);
     pipe_barrier(PIPE_V);
+    
     vsub(dst, src, dst, 1, 1, 1, 1, 8, 8, 8);
     pipe_barrier(PIPE_V);
   }

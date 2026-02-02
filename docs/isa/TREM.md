@@ -49,8 +49,8 @@ using namespace pto;
 
 void example() {
   using TileT = Tile<TileType::Vec, int32_t, 16, 16>;
-  TileT a, b, out, tmp;
-  TREM(out, a, b, tmp);
+  TileT out, a, b;
+  TREM(out, a, b);
 }
 ```
 

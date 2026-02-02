@@ -23,11 +23,9 @@ __global__ AICORE void runTRem( __gm__ T __out__ *out, __gm__ T __in__ *src0,  _
     TileData src0Tile(vRows, vCols);
     TileData src1Tile(vRows, vCols);
     TileData dstTile(vRows, vCols);
-    TileData tmpTile(vRows, vCols);
     TASSIGN(src0Tile, 0x0);
     TASSIGN(src1Tile, 0x10000);
     TASSIGN(dstTile, 0x20000);
-    TASSIGN(tmpTile, 0x0);
 
     GlobalData src0Global(src0);
     GlobalData src1Global(src1);
@@ -38,7 +36,7 @@ __global__ AICORE void runTRem( __gm__ T __out__ *out, __gm__ T __in__ *src0,  _
 
     TLOAD(src0Tile, src0Global);
     event0 = TLOAD(src1Tile, src1Global);
-    event1 = TREM(dstTile, src0Tile, src1Tile, tmpTile, event0);
+    event1 = TREM(dstTile, src0Tile, src1Tile, event0);
     TSTORE(dstGlobal, dstTile, event1);
     out = dstGlobal.data();
 }

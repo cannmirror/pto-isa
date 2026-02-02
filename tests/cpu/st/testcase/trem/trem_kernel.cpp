@@ -22,7 +22,6 @@ AICORE void runTRem( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __i
     TileData src0Tile(kTRows_, kTCols_);
     TileData src1Tile(kTRows_, kTCols_);
     TileData dstTile(kTRows_, kTCols_);
-    TileData tmpTile(kTRows_, kTCols_);
 
     GlobalData src0Global(src0);
     GlobalData src1Global(src1);
@@ -30,7 +29,7 @@ AICORE void runTRem( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __i
 
     TLOAD(src0Tile, src0Global);
     TLOAD(src1Tile, src1Global);
-    TREM(dstTile, src0Tile, src1Tile, tmpTile);
+    TREM(dstTile, src0Tile, src1Tile);
     TSTORE(dstGlobal, dstTile);
     out = dstGlobal.data();
 }
