@@ -71,8 +71,20 @@
 - [`TCOLMIN`](TCOLMIN.md) — 对每列按行取最小值。
 - [`TCOLEXPAND`](TCOLEXPAND.md) — 将源 tile 每列的第一个元素广播到目标列。
 
+- [`TROWEXPANDADD`](TROWEXPANDADD.md) — 行级广播加法：对 `src0` 的每一行加上每行标量向量 `src1`。
+- [`TROWEXPANDMAX`](TROWEXPANDMAX.md) — 行级广播 max：将 `src1` 作为每行标量与 `src0` 逐元素取 max。
+- [`TROWEXPANDMIN`](TROWEXPANDMIN.md) — 行级广播 min：将 `src1` 作为每行标量与 `src0` 逐元素取 min。
+- [`TROWEXPANDEXPDIF`](TROWEXPANDEXPDIF.md) — 行级 exp-diff：计算 `exp(src0 - src1)`（`src1` 为每行标量）。
+- [`TCOLEXPANDDIV`](TCOLEXPANDDIV.md) — 列级广播除法：对 `src0` 的每一列除以每列标量向量 `src1`。
+- [`TCOLEXPANDMUL`](TCOLEXPANDMUL.md) — 列级广播乘法：对 `src0` 的每一列乘以每列标量向量 `src1`。
+- [`TCOLEXPANDSUB`](TCOLEXPANDSUB.md) — 列级广播减法：对 `src0` 的每一列减去每列标量向量 `src1`。
+- [`TCOLEXPANDEXPDIF`](TCOLEXPANDEXPDIF.md) — 列级 exp-diff：计算 `exp(src0 - src1)`（`src1` 为每列标量）。
+
 ## Padding
 - [`TFILLPAD`](TFILLPAD.md) — 将源 tile 拷贝到目标 tile，并用 `TileDataDst::PadVal` 选择的编译期 pad 值填充剩余（padding）元素（例如 `PadValue::Min` / `PadValue::Max`）。
+
+- [`TFILLPAD_INPLACE`](TFILLPAD_INPLACE.md) — TFILLPAD 的就地（in-place）变体（实现定义）。
+- [`TFILLPAD_EXPAND`](TFILLPAD_EXPAND.md) — TFILLPAD 的扩展（expand）变体（允许 dst 大于 src，实现定义）。
 
 ## 内存（GM <-> Tile）
 - [`TLOAD`](TLOAD.md) — 从 GlobalTensor（GM）加载到 Tile。
@@ -81,11 +93,17 @@
 - [`MGATHER`](MGATHER.md) — 使用逐元素索引从 GM gather-load 到 tile。
 - [`MSCATTER`](MSCATTER.md) — 使用逐元素索引从 tile scatter-store 到 GM。
 
+- [`TPREFETCH`](TPREFETCH.md) — 从 GM 预取数据到 tile 缓存/缓冲（实现定义的 hint）。
+
 ## 矩阵乘
 - [`TMATMUL`](TMATMUL.md) — 矩阵乘（GEMM），产生 accumulator / 输出 tile。
 - [`TMATMUL_MX`](TMATMUL_MX.md) — 带额外缩放 tiles 的矩阵乘（用于支持目标上的混合精度/量化 matmul）。
 - [`TMATMUL_ACC`](TMATMUL_ACC.md) — 带 accumulator 输入的矩阵乘（融合 accumulate）。
 - [`TMATMUL_BIAS`](TMATMUL_BIAS.md) — 带 bias add 的矩阵乘。
+
+- [`TGEMV`](TGEMV.md) — 矩阵-向量乘（GEMV），产生 accumulator / 输出 tile。
+- [`TGEMV_ACC`](TGEMV_ACC.md) — 带显式 accumulator 输入的 GEMV（融合 accumulate）。
+- [`TGEMV_BIAS`](TGEMV_BIAS.md) — 带 bias add 的 GEMV。
 
 ## 数据搬运 / 布局
 - [`TMOV`](TMOV.md) — tile 间搬运/拷贝，可选实现定义的转换模式。
@@ -94,6 +112,12 @@
 - [`TEXTRACT`](TEXTRACT.md) — 从源 tile 提取 sub-tile。
 - [`TRESHAPE`](TRESHAPE.md) — 在保持底层字节不变的前提下，将 tile 解释为另一种 tile 类型/形状。
 - [`TASSIGN`](TASSIGN.md) — 将 Tile 对象绑定到实现定义的片上地址（手动 placement）。
+
+- [`TEXTRACT_FP`](TEXTRACT_FP.md) — 带 `fp`（scaling）tile 的 `TEXTRACT` 变体（向量量化参数）。
+- [`TINSERT`](TINSERT.md) — 将源 sub-tile 按 `(indexRow, indexCol)` 插入到目标 tile。
+- [`TINSERT_FP`](TINSERT_FP.md) — 带 `fp`（scaling）tile 的 `TINSERT` 变体（向量量化参数）。
+- [`TIMG2COL`](TIMG2COL.md) — IMG2COL（im2col）变换，用于卷积类 workload（实现定义）。
+- [`TSETFMATRIX`](TSETFMATRIX.md) — 设置 IMG2COL 使用的 FMATRIX 配置（实现定义）。
 
 ## 复杂指令
 - [`TCI`](TCI.md) — 在目标 tile 中生成连续的整数序列。
@@ -105,6 +129,10 @@
 - [`TPARTADD`](TPARTADD.md) — 部分逐元素 add（有效区域不一致时的处理为实现定义）。
 - [`TPARTMAX`](TPARTMAX.md) — 部分逐元素 max（有效区域不一致时的处理为实现定义）。
 - [`TPARTMIN`](TPARTMIN.md) — 部分逐元素 min（有效区域不一致时的处理为实现定义）。
+
+- [`TTRI`](TTRI.md) — 生成三角（下三角/上三角）mask tile（由编译期参数控制）。
+- [`TQUANT`](TQUANT.md) — 量化（例如 FP32->FP8），产生 exp/scaling/max 等输出（实现定义）。
+- [`TPRINT`](TPRINT.md) — Debug/打印 tile 内容（实现定义）。
 
 ## 同步
 - [`TSYNC`](TSYNC.md) — PTO 执行同步（等待事件或插入 per-op 的 pipeline barrier）。

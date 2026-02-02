@@ -9,7 +9,6 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - Source of truth (C++ intrinsics): `include/pto/common/pto_instr.hpp`
 - Common conventions (operands, events, modifiers): `docs/isa/conventions.md`
 
-
 ## Elementwise (Tile-Tile)
 - `TADD`: `docs/isa/TADD.md`
 - `TABS`: `docs/isa/TABS.md`
@@ -72,6 +71,20 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TCOLMIN`: `docs/isa/TCOLMIN.md`
 - `TCOLEXPAND`: `docs/isa/TCOLEXPAND.md`
 
+- `TROWEXPANDADD`: `docs/isa/TROWEXPANDADD.md`
+- `TROWEXPANDMAX`: `docs/isa/TROWEXPANDMAX.md`
+- `TROWEXPANDMIN`: `docs/isa/TROWEXPANDMIN.md`
+- `TROWEXPANDEXPDIF`: `docs/isa/TROWEXPANDEXPDIF.md`
+- `TCOLEXPANDDIV`: `docs/isa/TCOLEXPANDDIV.md`
+- `TCOLEXPANDMUL`: `docs/isa/TCOLEXPANDMUL.md`
+- `TCOLEXPANDSUB`: `docs/isa/TCOLEXPANDSUB.md`
+- `TCOLEXPANDEXPDIF`: `docs/isa/TCOLEXPANDEXPDIF.md`
+
+## Padding
+- `TFILLPAD`: `docs/isa/TFILLPAD.md`
+- `TFILLPAD_INPLACE`: `docs/isa/TFILLPAD_INPLACE.md`
+- `TFILLPAD_EXPAND`: `docs/isa/TFILLPAD_EXPAND.md`
+
 ## Memory (GM <-> Tile)
 - `TLOAD`: `docs/isa/TLOAD.md`
 - `TSTORE`: `docs/isa/TSTORE.md`
@@ -79,11 +92,17 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `MGATHER`: `docs/isa/MGATHER.md`
 - `MSCATTER`: `docs/isa/MSCATTER.md`
 
+- `TPREFETCH`: `docs/isa/TPREFETCH.md`
+
 ## Matrix Multiply
 - `TMATMUL`: `docs/isa/TMATMUL.md`
 - `TMATMUL_MX`: `docs/isa/TMATMUL_MX.md`
 - `TMATMUL_ACC`: `docs/isa/TMATMUL_ACC.md`
 - `TMATMUL_BIAS`: `docs/isa/TMATMUL_BIAS.md`
+
+- `TGEMV`: `docs/isa/TGEMV.md`
+- `TGEMV_ACC`: `docs/isa/TGEMV_ACC.md`
+- `TGEMV_BIAS`: `docs/isa/TGEMV_BIAS.md`
 
 ## Data Movement / Layout
 - `TMOV`: `docs/isa/TMOV.md`
@@ -92,6 +111,12 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TEXTRACT`: `docs/isa/TEXTRACT.md`
 - `TRESHAPE`: `docs/isa/TRESHAPE.md`
 - `TASSIGN`: `docs/isa/TASSIGN.md`
+
+- `TEXTRACT_FP`: `docs/isa/TEXTRACT_FP.md`
+- `TINSERT`: `docs/isa/TINSERT.md`
+- `TINSERT_FP`: `docs/isa/TINSERT_FP.md`
+- `TIMG2COL`: `docs/isa/TIMG2COL.md`
+- `TSETFMATRIX`: `docs/isa/TSETFMATRIX.md`
 
 ## Complex
 - `TCI`: `docs/isa/TCI.md`
@@ -103,6 +128,9 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TPARTADD`: `docs/isa/TPARTADD.md`
 - `TPARTMAX`: `docs/isa/TPARTMAX.md`
 - `TPARTMIN`: `docs/isa/TPARTMIN.md`
+
+- `TTRI`: `docs/isa/TTRI.md`
+- `TQUANT`: `docs/isa/TQUANT.md`
 
 ## Synchronization
 - `TSYNC`: `docs/isa/TSYNC.md`

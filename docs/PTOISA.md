@@ -59,6 +59,7 @@ This table covers all PTO instructions exposed by `include/pto/common/pto_instr.
 |---|---|---|
 | Synchronization | [`TSYNC`](isa/TSYNC.md) | Synchronize PTO execution (wait on events or insert a per-op pipeline barrier). |
 | Manual / Resource Binding | [`TASSIGN`](isa/TASSIGN.md) | Bind a Tile object to an implementation-defined on-chip address (manual placement). |
+| Manual / Resource Binding | [`TSETFMATRIX`](isa/TSETFMATRIX.md) | Set FMATRIX register(s) for IMG2COL-like ops. |
 | Elementwise (Tile-Tile) | [`TABS`](isa/TABS.md) | Elementwise absolute value of a tile. |
 | Elementwise (Tile-Tile) | [`TADD`](isa/TADD.md) | Elementwise add of two tiles. |
 | Elementwise (Tile-Tile) | [`TADDC`](isa/TADDC.md) | Elementwise ternary add: `src0 + src1 + src2`. |
@@ -115,20 +116,39 @@ This table covers all PTO instructions exposed by `include/pto/common/pto_instr.
 | Axis Reduce / Expand | [`TROWMAX`](isa/TROWMAX.md) | Reduce each row by taking the maximum across columns. |
 | Axis Reduce / Expand | [`TROWMIN`](isa/TROWMIN.md) | Reduce each row by taking the minimum across columns. |
 | Axis Reduce / Expand | [`TROWSUM`](isa/TROWSUM.md) | Reduce each row by summing across columns. |
+| Axis Reduce / Expand | [`TCOLEXPANDDIV`](isa/TCOLEXPANDDIV.md) | Column-wise broadcast divide: divide each column by a per-column scalar vector. |
+| Axis Reduce / Expand | [`TCOLEXPANDEXPDIF`](isa/TCOLEXPANDEXPDIF.md) | Column-wise exp-diff: compute exp(src0 - src1) with per-column scalars. |
+| Axis Reduce / Expand | [`TCOLEXPANDMUL`](isa/TCOLEXPANDMUL.md) | Column-wise broadcast multiply: multiply each column by a per-column scalar vector. |
+| Axis Reduce / Expand | [`TCOLEXPANDSUB`](isa/TCOLEXPANDSUB.md) | Column-wise broadcast subtract: subtract a per-column scalar vector from each column. |
+| Axis Reduce / Expand | [`TROWEXPANDADD`](isa/TROWEXPANDADD.md) | Row-wise broadcast add: add a per-row scalar vector. |
+| Axis Reduce / Expand | [`TROWEXPANDEXPDIF`](isa/TROWEXPANDEXPDIF.md) | Row-wise exp-diff: compute exp(src0 - src1) with per-row scalars. |
+| Axis Reduce / Expand | [`TROWEXPANDMAX`](isa/TROWEXPANDMAX.md) | Row-wise broadcast max with a per-row scalar vector. |
+| Axis Reduce / Expand | [`TROWEXPANDMIN`](isa/TROWEXPANDMIN.md) | Row-wise broadcast min with a per-row scalar vector. |
 | Memory (GM <-> Tile) | [`MGATHER`](isa/MGATHER.md) | Gather-load elements from global memory into a tile using per-element indices. |
 | Memory (GM <-> Tile) | [`MSCATTER`](isa/MSCATTER.md) | Scatter-store elements from a tile into global memory using per-element indices. |
 | Memory (GM <-> Tile) | [`TLOAD`](isa/TLOAD.md) | Load data from a GlobalTensor (GM) into a Tile. |
 | Memory (GM <-> Tile) | [`TSTORE`](isa/TSTORE.md) | Store data from a Tile into a GlobalTensor (GM), optionally using atomic write or quantization parameters. |
 | Memory (GM <-> Tile) | [`TSTORE_FP`](isa/TSTORE_FP.md) | Store an accumulator tile into global memory using a scaling (`fp`) tile for vector quantization parameters. |
+| Memory (GM <-> Tile) | [`TPREFETCH`](isa/TPREFETCH.md) | Prefetch data from global memory into a tile-local cache/buffer (hint). |
 | Matrix Multiply | [`TMATMUL`](isa/TMATMUL.md) | Matrix multiply (GEMM) producing an accumulator/output tile. |
 | Matrix Multiply | [`TMATMUL_ACC`](isa/TMATMUL_ACC.md) | Matrix multiply with accumulator input (fused accumulate). |
 | Matrix Multiply | [`TMATMUL_BIAS`](isa/TMATMUL_BIAS.md) | Matrix multiply with bias add. |
 | Matrix Multiply | [`TMATMUL_MX`](isa/TMATMUL_MX.md) | Matrix multiply (GEMM) with additional scaling tiles for mixed-precision / quantized matmul on supported targets. |
+| Matrix Multiply | [`TGEMV`](isa/TGEMV.md) | General Matrix-Vector multiplication producing an accumulator/output tile. |
+| Matrix Multiply | [`TGEMV_ACC`](isa/TGEMV_ACC.md) | GEMV with explicit accumulator input/output tiles. |
+| Matrix Multiply | [`TGEMV_BIAS`](isa/TGEMV_BIAS.md) | GEMV with bias add. |
 | Data Movement / Layout | [`TEXTRACT`](isa/TEXTRACT.md) | Extract a sub-tile from a source tile. |
 | Data Movement / Layout | [`TMOV`](isa/TMOV.md) | Move/copy between tiles, optionally applying implementation-defined conversion modes. |
 | Data Movement / Layout | [`TMOV_FP`](isa/TMOV_FP.md) | Move/convert from an accumulator tile into a destination tile, using a scaling (`fp`) tile for vector quantization parameters. |
 | Data Movement / Layout | [`TRESHAPE`](isa/TRESHAPE.md) | Reinterpret a tile as another tile type/shape while preserving the underlying bytes. |
 | Data Movement / Layout | [`TTRANS`](isa/TTRANS.md) | Transpose with an implementation-defined temporary tile. |
+| Data Movement / Layout | [`TEXTRACT_FP`](isa/TEXTRACT_FP.md) | Extract with fp/scaling tile (vector-quantization parameters). |
+| Data Movement / Layout | [`TFILLPAD`](isa/TFILLPAD.md) | Copy+pad a tile outside the valid region with a compile-time pad value. |
+| Data Movement / Layout | [`TFILLPAD_EXPAND`](isa/TFILLPAD_EXPAND.md) | Fill/pad while allowing dst to be larger than src. |
+| Data Movement / Layout | [`TFILLPAD_INPLACE`](isa/TFILLPAD_INPLACE.md) | In-place fill/pad variant. |
+| Data Movement / Layout | [`TIMG2COL`](isa/TIMG2COL.md) | Image-to-column transform for convolution-like workloads. |
+| Data Movement / Layout | [`TINSERT`](isa/TINSERT.md) | Insert a sub-tile into a destination tile at an (indexRow, indexCol) offset. |
+| Data Movement / Layout | [`TINSERT_FP`](isa/TINSERT_FP.md) | Insert with fp/scaling tile (vector-quantization parameters). |
 | Complex | [`TCI`](isa/TCI.md) | Generate a contiguous integer sequence into a destination tile. |
 | Complex | [`TGATHER`](isa/TGATHER.md) | Gather/select elements using either an index tile or a compile-time mask pattern. |
 | Complex | [`TGATHERB`](isa/TGATHERB.md) | Gather elements using byte offsets. |
@@ -138,3 +158,6 @@ This table covers all PTO instructions exposed by `include/pto/common/pto_instr.
 | Complex | [`TPARTMIN`](isa/TPARTMIN.md) | Partial elementwise min with implementation-defined handling of mismatched valid regions. |
 | Complex | [`TSCATTER`](isa/TSCATTER.md) | Scatter rows of a source tile into a destination tile using per-element row indices. |
 | Complex | [`TSORT32`](isa/TSORT32.md) | Sort a fixed-size 32-element block and produce an index mapping. |
+| Complex | [`TPRINT`](isa/TPRINT.md) | Debug/print elements from a tile (implementation-defined). |
+| Complex | [`TQUANT`](isa/TQUANT.md) | Quantize a tile (e.g. FP32 to FP8) producing exponent/scaling/max outputs. |
+| Complex | [`TTRI`](isa/TTRI.md) | Generate a triangular (lower/upper) mask tile. |
