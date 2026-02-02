@@ -77,7 +77,7 @@ AICORE void TIMG2COL_IMPL(TileData &dst, ConvTileData &src,
         SetFmatrix<FmatrixMode>(cfg);
     }
     constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
-    uint16_t stepM = CeilAlignment(dst.GetValidRow(), FRACTAL_NZ_ROW);
+    uint16_t stepM = dst.GetValidRow();
     uint16_t stepK = CeilAlignment(dst.GetValidCol(), c0Size);
 
     TImg2col<TileData, ConvTileData, FmatrixMode>(dst.data(), src.data(), stepM, stepK, posM, posK, cfg.strideW, cfg.strideH,

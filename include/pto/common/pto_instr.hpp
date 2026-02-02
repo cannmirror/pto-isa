@@ -525,7 +525,6 @@ PTO_INST RecordEvent TEXTRACT_FP(DstTileData &dst, SrcTileData &src, FpTileData 
   return {};
 }
 
-#ifdef MEMORY_BASE
 template <typename TileData, typename ConvTileData,
           SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_MANUAL,
           typename T = uint64_t, typename... WaitEvents>
@@ -543,7 +542,6 @@ PTO_INST RecordEvent TSETFMATRIX(const Img2colTileConfig<T> &cfg = Img2colTileCo
   TSETFMATRIX_IMPL<FmatrixMode, T>(cfg);
   return {};
 }
-#endif
 
 template <typename DstTileData, typename SrcTileData, typename... WaitEvents>
 PTO_INST RecordEvent TINSERT(DstTileData &dst, SrcTileData &src,
