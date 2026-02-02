@@ -93,8 +93,8 @@ PTO_INTERNAL void TRemSCheck(unsigned srcValidRow, unsigned srcValidCol, unsigne
                   "Number of valid columns and rows must not be greater than number of tile columns and rows.");
 }
 
-template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
-PTO_INTERNAL void TREMS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar, TileDataTmp &tmp)
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TREMS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar)
 {
     using T = typename TileDataDst::DType;
     unsigned validRow = dst.GetValidRow();

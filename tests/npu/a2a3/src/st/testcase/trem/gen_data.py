@@ -85,6 +85,7 @@ if __name__ == "__main__":
         TremParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 31),
         TremParams(np.int16, 16, 32, 16, 64, 16, 32, 16, 31),
         TremParams(np.int16, 16, 64, 16, 128, 16, 128, 16, 63),
+        TremParams(np.float16, 1, 8192, 1, 8192, 1, 8192, 1, 8192),
     ]
 
     for param in case_params_list:

@@ -36,9 +36,9 @@ __global__ AICORE void runTRem(
     TileDataSrc1 src1Tile(vRows, vCols);
     TileDataDst tmpTile(vRows, vCols);
     TASSIGN(src0Tile, 0x0);
-    TASSIGN(src1Tile, 0x10000);
-    TASSIGN(dstTile, 0x20000);
-    TASSIGN(tmpTile, 0x2e000); // tmp buffer
+    TASSIGN(src1Tile, src0TileH * src0TileW * sizeof(T));
+    TASSIGN(dstTile, src0TileH * src0TileW * sizeof(T) + src1TileH * src1TileW * sizeof(T));
+    TASSIGN(tmpTile, src0TileH * src0TileW * sizeof(T) + src1TileH * src1TileW * sizeof(T) + dstTileH * dstTileW * sizeof(T));
 
     TLOAD(src0Tile, src0Global);
     TLOAD(src1Tile, src1Global);
@@ -77,3 +77,5 @@ template void LaunchTREM<int16_t, 16, 32, 16, 64, 16, 32, 16, 31>(
     int16_t *out, int16_t *src0, int16_t *src1, void *stream);
 template void LaunchTREM<int16_t, 16, 64, 16, 128, 16, 128, 16, 63>(
     int16_t *out, int16_t *src0, int16_t *src1, void *stream);
+template void LaunchTREM<aclFloat16, 1, 8192, 1, 8192, 1, 8192, 1, 8192>(
+    aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);

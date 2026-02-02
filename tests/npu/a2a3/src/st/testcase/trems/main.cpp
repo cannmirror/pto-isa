@@ -89,7 +89,7 @@ void TREMSTestFramework() {
 
 TEST_F(TREMSTest, case1) { TREMSTestFramework<1, float, 32, 64, 32, 32, 64, 64>(); }
 
-// TEST_F(TREMSTest, case2) { TREMSTestFramework<2, _Float16, 63, 64, 63, 63, 64, 64>(); }
+TEST_F(TREMSTest, case2) { TREMSTestFramework<2, _Float16, 63, 64, 63, 63, 64, 64>(); }
 
 TEST_F(TREMSTest, case3) { TREMSTestFramework<3, int32_t, 31, 128, 31, 31, 128, 128>(); }
 
@@ -101,7 +101,7 @@ TEST_F(TREMSTest, case6) { TREMSTestFramework<6, float, 256, 16, 256, 256, 16, 1
 
 TEST_F(TREMSTest, case7) { TREMSTestFramework<7, float, 32, 128, 32, 32, 64, 64>(); }
 
-// TEST_F(TREMSTest, case8) { TREMSTestFramework<8, _Float16, 63, 128, 63, 63, 64, 64>(); }
+TEST_F(TREMSTest, case8) { TREMSTestFramework<8, _Float16, 63, 128, 63, 63, 64, 64>(); }
 
 TEST_F(TREMSTest, case9) { TREMSTestFramework<9, int32_t, 31, 256, 31, 31, 128, 128>(); }
 
@@ -110,3 +110,11 @@ TEST_F(TREMSTest, case10) { TREMSTestFramework<10, int16_t, 15, 192, 15, 15, 192
 TEST_F(TREMSTest, case11) { TREMSTestFramework<11, float, 7, 512, 7, 7, 448, 448>(); }
 
 TEST_F(TREMSTest, case12) { TREMSTestFramework<12, float, 256, 32, 256, 256, 16, 16>(); }
+
+TEST_F(TREMSTest, case13) { TREMSTestFramework<13, _Float16, 1, 8192, 1, 1, 8192, 8192>(); }
+
+TEST_F(TREMSTest, case14) { TREMSTestFramework<14, int16_t, 1, 8192, 1, 1, 8192, 8192>(); }
+
+TEST_F(TREMSTest, case15) { TREMSTestFramework<15, int32_t, 1, 8192, 1, 1, 8192, 8192>(); }
+
+TEST_F(TREMSTest, case16) { TREMSTestFramework<16, float, 1, 8192, 1, 1, 8192, 8192>(); }

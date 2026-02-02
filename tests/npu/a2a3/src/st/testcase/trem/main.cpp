@@ -83,7 +83,7 @@ void test_trem() {
     ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
     ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, devFinal.data(), dstFileSize);
 
-    bool ret = ResultCmp<T>(golden, devFinal, 0.001f);
+    bool ret = ResultCmp<T>(golden, devFinal, 0.001f, 0, 1000, false, true);
 
     EXPECT_TRUE(ret);
 }
@@ -122,4 +122,8 @@ TEST_F(TREMTest, case_int16_16x32_16x64_16x32_16x31) {
 
 TEST_F(TREMTest, case_int16_16x64_16x128_16x128_16x63) {
     test_trem<int16_t, 16, 64, 16, 128, 16, 128, 16, 63>();
+}
+
+TEST_F(TREMTest, case_half_1x8192_1x8192_1x8192_1x8192) {
+    test_trem<aclFloat16, 1, 8192, 1, 8192, 1, 8192, 1, 8192>();
 }

@@ -25,20 +25,17 @@ PTO_INTERNAL void runTREMS(__gm__ T *out, __gm__  T *src, T scalar) {
 
     using dstTileData = Tile<TileType::Vec, T, dstTileRow, dstTileCol, BLayout::RowMajor, -1, -1>;
     using srcTileData = Tile<TileType::Vec, T, row, col, BLayout::RowMajor, -1, -1>;
-    using tmpTileData = Tile<TileType::Vec, T, 10, col, BLayout::RowMajor, -1, -1>;
     srcTileData srcTile(validRow, validCol);
     dstTileData dstTile(validRow, validCol);
-    tmpTileData tmpTile(10, validCol);
     TASSIGN(srcTile, 0x0);
-    TASSIGN(dstTile, 0x10000);
-    TASSIGN(tmpTile, 0x20000); // tmp buffer
+    TASSIGN(dstTile, row * col * sizeof(T));
 
     TLOAD(srcTile, srcGlobal);
 
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
 
-    TREMS(dstTile, srcTile, scalar, tmpTile);
+    TREMS(dstTile, srcTile, scalar);
 
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
@@ -95,6 +92,22 @@ extern "C" __global__ AICORE void launchTREMSCase12(__gm__ float *out, __gm__ fl
 {
     runTREMS<float, 256, 32, 256, 256, 16, 16>(out, src, scalar);
 }
+extern "C" __global__ AICORE void launchTREMSCase13(__gm__ aclFloat16 *out, __gm__ aclFloat16 *src, float scalar)
+{
+    runTREMS<half, 1, 8192, 1, 1, 8192, 8192>((__gm__ half*)out, (__gm__ half*)src, (half)scalar);
+}
+extern "C" __global__ AICORE void launchTREMSCase14(__gm__ int16_t *out, __gm__ int16_t *src, int16_t scalar)
+{
+    runTREMS<int16_t, 1, 8192, 1, 1, 8192, 8192>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTREMSCase15(__gm__ int32_t *out, __gm__ int32_t *src, int32_t scalar)
+{
+    runTREMS<int32_t, 1, 8192, 1, 1, 8192, 8192>(out, src, scalar);
+}
+extern "C" __global__ AICORE void launchTREMSCase16(__gm__ float *out, __gm__ float *src, float scalar)
+{
+    runTREMS<float, 1, 8192, 1, 1, 8192, 8192>(out, src, scalar);
+}
 
 template <uint32_t caseId>
 void launchTREMSTestCase(void *out, void *src, float scalar, aclrtStream stream) {
@@ -147,6 +160,22 @@ void launchTREMSTestCase(void *out, void *src, float scalar, aclrtStream stream)
             launchTREMSCase12<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
             break;
         }
+        case 13: {
+            launchTREMSCase13<<<1, nullptr, stream>>>((aclFloat16 *)out, (aclFloat16 *)src, scalar);
+            break;
+        }
+        case 14: {
+            launchTREMSCase14<<<1, nullptr, stream>>>((int16_t *)out, (int16_t *)src, scalar);
+            break;
+        }
+        case 15: {
+            launchTREMSCase15<<<1, nullptr, stream>>>((int32_t *)out, (int32_t *)src, scalar);
+            break;
+        }
+        case 16: {
+            launchTREMSCase16<<<1, nullptr, stream>>>((float *)out, (float *)src, scalar);
+            break;
+        }
         default: {
         }
     }
@@ -165,3 +194,7 @@ template void launchTREMSTestCase<9>(void *out, void *src, float scalar, aclrtSt
 template void launchTREMSTestCase<10>(void *out, void *src, float scalar, aclrtStream stream);
 template void launchTREMSTestCase<11>(void *out, void *src, float scalar, aclrtStream stream);
 template void launchTREMSTestCase<12>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTREMSTestCase<13>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTREMSTestCase<14>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTREMSTestCase<15>(void *out, void *src, float scalar, aclrtStream stream);
+template void launchTREMSTestCase<16>(void *out, void *src, float scalar, aclrtStream stream);

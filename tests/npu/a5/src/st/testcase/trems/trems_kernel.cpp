@@ -25,16 +25,14 @@ PTO_INTERNAL void runTRemS(__gm__ T *out, __gm__  T *src, T scalar) {
     GlobalData srcGlobal(src, DynDim2Shape(validRow, validCol), DynDim2Stride(row, col));
     GlobalData dstGlobal(out, DynDim2Shape(validRow, validCol), DynDim2Stride(dstTileRow, dstTileCol));
     srcTileData srcTile(validRow, validCol);
-    srcTileData tmpTile(validRow, validCol);
     dstTileData dstTile(validRow, validCol);
     TASSIGN(srcTile, 0x0);
-    TASSIGN(tmpTile, row * col * sizeof(T));
-    TASSIGN(dstTile, (row * col + dstTileRow * dstTileCol) * sizeof(T));
+    TASSIGN(dstTile, row * col * sizeof(T));
     TLOAD(dstTile, dstGlobal);
     TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
-    TREMS(dstTile, srcTile, scalar, tmpTile);
+    TREMS(dstTile, srcTile, scalar);
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     TSTORE(dstGlobal, dstTile);

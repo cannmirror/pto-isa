@@ -45,19 +45,22 @@ struct RemOp {
     }
 
     PTO_INTERNAL static void RemF16Instr(
-        __ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, __ubuf__ T *tmp, unsigned rowStride) {
-        // tmporary buffer size: validCols*sizeof(float)*4
-        __ubuf__ float *tmpPtr = (__ubuf__ float *)tmp;
-        __ubuf__ float *tmpSrc0 = tmpPtr + rowStride;
-        __ubuf__ float *tmpSrc1 = tmpPtr + rowStride * 2;
-        __ubuf__ float *tmpShare = tmpPtr + rowStride * 3;
+        __ubuf__ half *dst, __ubuf__ half *src0, __ubuf__ half *src1, __ubuf__ half *tmp) {
+        // tmporary buffer size: validCols*sizeof(half)
+        __ubuf__ int16_t *tmpPtr = (__ubuf__ int16_t *)tmp;
+        // qf = s0 / s1
         pipe_barrier(PIPE_V);
-        vconv_f162f32(tmpSrc0, src0, 1, 1, 1, 8, 8);
-        vconv_f162f32(tmpSrc1, src1, 1, 1, 1, 8, 8);
+        vdiv(dst, src0, src1, 1, 1, 1, 1, 8, 8, 8);
         pipe_barrier(PIPE_V);
-        RemF32Instr(tmpPtr, tmpSrc0, tmpSrc1, tmpShare);
+        vconv_f162s16z(tmpPtr, dst, 1, 1, 1, 8, 8);
         pipe_barrier(PIPE_V);
-        vconv_f322f16(dst, tmpPtr, 1, 1, 1, 8, 8);
+        vconv_s162f16(dst, tmpPtr, 1, 1, 1, 8, 8);
+        pipe_barrier(PIPE_V);
+        // prod = qf * s1
+        vmul(dst, dst, src1, 1, 1, 1, 1, 8, 8, 8);
+        pipe_barrier(PIPE_V);
+        // dst = s0 - prod
+        vsub(dst, src0, dst, 1, 1, 1, 1, 8, 8, 8);
         pipe_barrier(PIPE_V);
     }
 
@@ -154,7 +157,7 @@ __tf__ PTO_INTERNAL void TRem(typename TileData::TileDType __out__ dst, typename
         if constexpr (std::is_same_v<T, float> || std::is_same_v<T, float32_t>) {
             RemOp<T>::RemF32Instr(dstNext, s0Next, s1Next, tmpPtr);
         } else if constexpr (std::is_same_v<T, half> || std::is_same_v<T, float16_t>) {
-            RemOp<T>::RemF16Instr(dstNext, s0Next, s1Next, tmpPtr, dstRowStride);
+            RemOp<T>::RemF16Instr(dstNext, s0Next, s1Next, tmpPtr);
         } else if constexpr (std::is_same_v<T, int32_t>) {
             RemOp<T>::RemInt32Instr(dstNext, s0Next, s1Next, tmpPtr, dstRowStride);
         } else if constexpr (std::is_same_v<T, int16_t>) {
