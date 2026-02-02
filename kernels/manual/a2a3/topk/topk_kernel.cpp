@@ -326,14 +326,17 @@ __global__ AICORE void Topk(__gm__ uint8_t *out, __gm__ uint8_t *index, __gm__ u
     }
 }
 
-template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
-    int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk>
+template <typename T>
 void launchTopk(uint8_t *out, uint8_t *index, uint8_t *src, uint8_t *inIdx, void *stream)
 {
     constexpr int blockDim = 48;
-    Topk<T, gShape0, gShape1, gShape2, gShape3, gShape4,
-        gWholeShape0, gWholeShape1, gWholeShape2, gWholeShape3, gWholeShape4,
+    constexpr int gShape3 = 4800;
+    constexpr int gShape4 = 1024;
+    constexpr int gWholeShape3 = 4800;
+    constexpr int gWholeShape4 = 1280;
+    constexpr int topk = 1000;
+    Topk<T, 1, 1, 1, gShape3, gShape4, 1, 1, 1, gWholeShape3, gWholeShape4,
         topk, blockDim><<<blockDim, nullptr, stream>>>(out, index, src, inIdx);
 }
 
-template void launchTopk<float, 1, 1, 1, 4800, 1024, 1, 1, 1, 4800, 1280, 1000>(uint8_t *out, uint8_t *index, uint8_t *src, uint8_t *inIdx, void *stream);
+template void launchTopk<float>(uint8_t *out, uint8_t *index, uint8_t *src, uint8_t *inIdx, void *stream);

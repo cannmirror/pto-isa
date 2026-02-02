@@ -14,8 +14,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
-    int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk>
+template <typename T>
 void launchTopk(uint8_t *out, uint8_t *index, uint8_t *src, uint8_t *inIdx, void *stream);
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
@@ -55,9 +54,7 @@ void Topk()
 
     aclrtMemcpy(srcDevice, inFileSize, srcHost, inFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(inIdxDevice, inIdxSize, inIdxHost, inIdxSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTopk<T, gShape0, gShape1, gShape2, gShape3, gShape4,
-        gWholeShape0, gWholeShape1, gWholeShape2, gWholeShape3, gWholeShape4,
-        topk>(dstDevice, indexDevice, srcDevice, inIdxDevice, stream);
+    launchTopk<T>(dstDevice, indexDevice, srcDevice, inIdxDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, outFileSize, dstDevice, outFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
