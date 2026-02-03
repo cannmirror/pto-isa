@@ -63,50 +63,46 @@ template <typename T> struct RemSOp {
     }
 };
 
-template <typename TileDataDst, typename TileDataSrc, unsigned dstRowStride, unsigned srcRowStride>
+template <typename TileDataDst, typename TileDataSrc>
 __tf__ PTO_INTERNAL OP_NAME(TREMS) OP_TYPE(element_wise)
-void TRemS(typename TileDataDst::TileDType __out__ dst, 
-           typename TileDataSrc::TileDType __in__ src, 
-           typename TileDataSrc::DType scalar,
-           unsigned kValidRows,
-           unsigned kValidCols,
-           VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+void TRemS(typename TileDataDst::TileDType __out__ dst, typename TileDataSrc::TileDType __in__ src, 
+    typename TileDataSrc::DType scalar, unsigned kValidRows, unsigned kValidCols,
+    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
     using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
-    BinaryInstr<RemSOp<T>, TileDataDst, TileDataSrc, T, elementsPerRepeat, blockSizeElem, dstRowStride, srcRowStride>
-        (dstPtr, srcPtr, scalar, kValidRows, kValidCols, version);
+    constexpr unsigned elementsPerRepeat = CCE_VL / sizeof(T);
+    BinaryInstr<RemSOp<T>, TileDataDst, TileDataSrc, T, elementsPerRepeat, blockSizeElem,
+        TileDataDst::RowStride, TileDataSrc::RowStride>(dstPtr, srcPtr, scalar, kValidRows, kValidCols, version);
 }
 
 template <typename TileDataDst, typename TileDataSrc>
-PTO_INTERNAL void TRemSCheck(unsigned srcValidRow, unsigned srcValidCol, unsigned dstValidRow, unsigned dstValidCol)
+PTO_INTERNAL void TRemSCheck()
 {
     using T = typename TileDataDst::DType;
-    static_assert(std::is_same<T, typename TileDataSrc::DType>::value, "The data type must be same of src and dst");
-    static_assert((sizeof(T) == 2) || (sizeof(T) == 4), "TREMS: Invalid data type");
+    static_assert(std::is_same_v<T, typename TileDataSrc::DType>,
+        "Fix: The TREMS data type must be same of src and dst");
+    static_assert(std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, int16_t> ||
+        std::is_same_v<T, uint16_t> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t>,
+        "Fix: TREMS Invalid data type");
     static_assert((TileDataDst::Loc == TileType::Vec) && (TileDataSrc::Loc == TileType::Vec),
-                  "TileType of dst and src tiles must be TileType::Vec.");
+        "Fix: TileType of dst and src tiles must be TileType::Vec.");
     static_assert((TileDataDst::ValidCol <= TileDataDst::Cols) && (TileDataDst::ValidRow <= TileDataDst::Rows) &&
-                  (TileDataSrc::ValidCol <= TileDataSrc::Cols) && (TileDataSrc::ValidRow <= TileDataSrc::Rows),
-                  "Number of valid columns and rows must not be greater than number of tile columns and rows.");
+        (TileDataSrc::ValidCol <= TileDataSrc::Cols) && (TileDataSrc::ValidRow <= TileDataSrc::Rows),
+        "Fix: Number of valid columns and rows must not be greater than number of tile columns and rows.");
 }
 
-template <typename TileDataDst, typename TileDataSrc, typename TileDataTmp>
-PTO_INTERNAL void TREMS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar, TileDataTmp &tmp)
+template <typename TileDataDst, typename TileDataSrc>
+PTO_INTERNAL void TREMS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar)
 {
     using T = typename TileDataDst::DType;
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
-    constexpr unsigned dstRowStride = TileDataDst::RowStride;
-    constexpr unsigned srcRowStride = TileDataSrc::RowStride;
-
+    TRemSCheck<TileDataDst, TileDataSrc>();
     PTO_ASSERT((src.GetValidCol() == validCol) && (src.GetValidRow() == validRow),
                 "Number of validColumns and validRows of src and dst must be the same.");
-
-    TRemSCheck<TileDataDst, TileDataSrc>(src.GetValidRow(), src.GetValidCol(), validRow, validCol);
-    TRemS<TileDataDst, TileDataSrc, dstRowStride, srcRowStride>(dst.data(), src.data(), scalar, validRow, validCol);
+    TRemS<TileDataDst, TileDataSrc>(dst.data(), src.data(), scalar, validRow, validCol);
 }
 }  // namespace pto
 #endif

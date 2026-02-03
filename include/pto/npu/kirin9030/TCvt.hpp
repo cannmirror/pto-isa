@@ -1226,7 +1226,6 @@ void implTCVT(typename TileDataD::TileDType __out__ dst,
                     break;
             }
         }
-        
     }
 }
 

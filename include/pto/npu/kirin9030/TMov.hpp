@@ -249,12 +249,10 @@ __tf__ PTO_INTERNAL void TMovToVecNd2Nz(typename DstTileData::TileDType __out__ 
     {
         RegTensor<T> vreg;
         MaskReg preg;
-        // uint32_t sreg = validCol;
         for (uint16_t j = 0; j < (uint16_t)repeatTimes; ++j) {
             uint32_t count = ((j + 1) * elementsPerRepeat >= validCol ?
                 (validCol - j * elementsPerRepeat) : elementsPerRepeat);
             preg = CreatePredicate<T>(count);
-            // preg = CreatePredicate<T>(sreg);
             for (uint16_t i = 0; i < (uint16_t)innerLoopNum; ++i) {
                 vlds(vreg, srcPtr, (i * SrcTileData::RowStride + j * elementsPerRepeat), NORM);
                 vsstb(vreg, dstPtr, (blockStride << 16u) | (1 & 0xFFFFU), preg, POST_UPDATE);

@@ -79,10 +79,12 @@ PTO_INTERNAL void TRemCheck(const TileDataDst &dst, const TileDataSrc0 &src0, co
     using T = typename TileDataDst::DType;
     static_assert(std::is_same<T, half>::value || std::is_same<T, float>::value ||
         std::is_same<T, uint16_t>::value || std::is_same<T, int16_t>::value ||
-        std::is_same<T, uint32_t>::value || std::is_same<T, int32_t>::value, "Fix: TREM has invalid data type.");
+        std::is_same<T, uint32_t>::value || std::is_same<T, int32_t>::value,
+        "Fix: TREM has invalid data type.");
     static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
         "Fix: TREM only support row major layout.");
-    static_assert(std::is_same<T, typename TileDataSrc0::DType>::value && std::is_same<T, typename TileDataSrc1::DType>::value,
+    static_assert(std::is_same<T, typename TileDataSrc0::DType>::value &&
+        std::is_same<T, typename TileDataSrc1::DType>::value,
         "Fix: TREM input tile src0, src1 and dst tile data type mismatch.");
     unsigned validRows = dst.GetValidRow();
     unsigned validCols = dst.GetValidCol();
@@ -97,10 +99,10 @@ PTO_INTERNAL void TREM_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &
     using T = typename TileDataDst::DType;
     TRemCheck<TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1);
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
-    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
+    constexpr unsigned elementsPerRepeat = CCE_VL / sizeof(T);
 
-    TRem<TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem>(
-        dst.data(), src0.data(), src1.data(), dst.GetValidRow(), dst.GetValidCol());
+    TRem<TileDataDst, TileDataSrc0, TileDataSrc1, elementsPerRepeat, blockSizeElem>(dst.data(), src0.data(),
+        src1.data(), dst.GetValidRow(), dst.GetValidCol());
 }
 } // namespace pto
 #endif

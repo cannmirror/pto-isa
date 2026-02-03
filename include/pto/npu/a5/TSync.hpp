@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2025 Huawei Technologies Co., Ltd.
+Copyright (c) 2026 Huawei Technologies Co., Ltd.
 This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 CANN Open Software License Agreement Version 2.0 (the "License").
 Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -47,14 +47,17 @@ namespace pto {
   // single pipeline wait, only support MTE3 or ALL pipeline
   template <Op OpCode>
   PTO_INTERNAL void TSYNC_IMPL() {
+#ifndef __PTO_AUTO__
     constexpr pipe_t pipe = GetPipeByOp<OpCode>();
     PTO_STATIC_ASSERT(pipe == PIPE_MTE3 || OpCode == Op::OP_COUNT,
       "Single Op TSYNC only supports MTE3 or ALL pipeline.");
     pipe_barrier((pipe_t)pipe);
+#endif
   }
 
   template <Op SrcOp, Op DstOp, bool AutoToken = true, event_t EventID = EVENT_ID0>
   struct Event {
+#ifndef __PTO_AUTO__
     static constexpr Op dstOp = DstOp;
     static constexpr Op srcOp = SrcOp;
     static constexpr pipe_t dstPipe = GetPipeByOp<dstOp>();
@@ -76,6 +79,7 @@ namespace pto {
 #else
     const event_t token = AutoToken ? EventIdCounter<srcPipe, dstPipe>::GetNextId() : EventID;
 #endif
+#endif
 
     PTO_INTERNAL Event& InitAddr(uint64_t fftsAddr) {
       return *this;
@@ -83,6 +87,7 @@ namespace pto {
 
     template <uint8_t CrossCoreId = 0xff>
     PTO_INTERNAL Event& Wait() {
+#ifndef __PTO_AUTO__
       if constexpr (IsCrossCore) {
         PTO_STATIC_ASSERT(CrossCoreId != 0xff,
           "The cross-core id must be assigned by user when the event is a cross-core event.");
@@ -94,11 +99,13 @@ namespace pto {
         wait_flag((pipe_t)srcPipe, (pipe_t)dstPipe, token);
 #endif
       }
+#endif
       return *this;
     }
 
     template <uint8_t CrossCoreId = 0xff>
     PTO_INTERNAL Event& Init() {
+#ifndef __PTO_AUTO__
       if constexpr (IsCrossCore) {
         PTO_STATIC_ASSERT(CrossCoreId != 0xff,
           "The cross-core id must be assigned by user when the event is a cross-core event.");
@@ -111,12 +118,15 @@ namespace pto {
         set_flag((pipe_t)srcPipe, (pipe_t)dstPipe, token);
 #endif
       }
+#endif
       return *this;
     }
 
     PTO_INTERNAL Event& operator=(RecordEvent) {
+#ifndef __PTO_AUTO__
       PTO_STATIC_ASSERT(!IsCrossCore,
         "Fix: The cross-core event must be manually initialized and specify the cross-core ID.");
+#endif
       return Init();
     }
 
