@@ -270,6 +270,22 @@ template <PadValue PadVal>
 struct PadValueMap<float4_e2m1x2_t, PadVal> {
     static constexpr auto value = uint8_t(0);
 };
+template <PadValue PadVal>
+struct PadValueMap<float8_e8m0_t, PadVal> {
+    static constexpr auto value = uint8_t(0);
+};
+template <PadValue PadVal>
+struct PadValueMap<float8_e4m3_t, PadVal> {
+    static constexpr auto value = uint8_t(0);
+};
+template <PadValue PadVal>
+struct PadValueMap<float8_e5m2_t, PadVal> {
+    static constexpr auto value = uint8_t(0);
+};
+template <PadValue PadVal>
+struct PadValueMap<hifloat8_t, PadVal> {
+    static constexpr auto value = uint8_t(0);
+};
 #endif
 
 template <typename TileData>

@@ -22,6 +22,8 @@ constexpr const int SHIFT_M_STEP_B4 = 2;      // 2^2 = 4
 
 constexpr const int SHIFT_MX_COL = 1;         // 2^1 = 2
 constexpr const int SHIFT_MX_ROW = 4;         // 2^4 = 16
+constexpr const int CO_SIZE_SCALE = 2;
+constexpr const int SCALE_CUBE_BLOCK_SIZE = 32;
 
 template <typename DstTileData, typename SrcTileData>
 __tf__ AICORE void TExtractToAmx(typename DstTileData::TileDType __out__ dst,
@@ -38,7 +40,15 @@ __tf__ AICORE void TExtractToAmx(typename DstTileData::TileDType __out__ dst,
     uint16_t rowStartPosition = indexRow >> SHIFT_MX_ROW;
     uint16_t colStartPosition = (indexCol * sizeof(DataType)) >> SHIFT_MX_COL;
 
-    if constexpr(DstTileData::Compact == CompactMode::Normal) {
+    if constexpr (DstTileData::Rows == 1) {
+        uint8_t shiftCol = CeilDivision(validCol * sizeof(DataType), SCALE_CUBE_BLOCK_SIZE) * CO_SIZE_SCALE;
+        uint8_t colStep = (shiftCol * sizeof(DataType)) >> SHIFT_MX_COL;
+        uint16_t srcStride = shiftCol >> SHIFT_MX_COL;
+        uint16_t dstStride = shiftCol >> SHIFT_MX_COL;
+
+        load_cbuf_to_ca_mx(dstAddr, static_cast<__cbuf__ void *>(srcAddr), rowStartPosition, colStartPosition, 1,
+            colStep, srcStride, dstStride);
+    } else if constexpr (DstTileData::Compact == CompactMode::Normal) {
         uint16_t validRowAlign = CeilDivision(validRow, FRACTAL_NZ_ROW) * FRACTAL_NZ_ROW;
         uint8_t rowStep = validRowAlign >> SHIFT_MX_ROW;
         uint8_t colStep = (validCol * sizeof(DataType)) >> SHIFT_MX_COL;
@@ -147,7 +157,7 @@ __tf__ AICORE void TExtractToAVector(typename DstTileData::TileDType __out__ dst
 {
     using DataType = typename SrcTileData::DType;
     constexpr int typeSize = sizeof(DataType);
-    constexpr int32_t fractalSize = isFp4Type ? CUBE_BLOCK_SIZE * KHALF / typeSize : CUBE_BLOCK_SIZE / typeSize;
+    constexpr int32_t fractalSize = isFp4Type ? CUBE_BLOCK_SIZE * KHALF : CUBE_BLOCK_SIZE / typeSize;
     int32_t kAlign = (dstValidCol + fractalSize - 1) & ~(fractalSize - 1);
 
     static_assert((SrcTileData::Cols % fractalSize) == 0, "srcCol * sizeof(DataType) must be aligned to 512B");
@@ -159,7 +169,7 @@ __tf__ AICORE void TExtractToAVector(typename DstTileData::TileDType __out__ dst
     uint16_t kStartPosition = (indexCol * typeSize) >> SHIFT_FRACTAL_BYTE;
     uint8_t kStep = kAlign / fractalSize;
     if constexpr (isFp4Type) {
-        load_cbuf_to_ca_s4(dstAddr, srcAddr, 0, kStartPosition / KHALF, 1, kStep / KHALF, 1, 1, 0);
+        load_cbuf_to_ca_s4(dstAddr, srcAddr, 0, kStartPosition / KHALF, 1, kStep, 1, 1, 0);
     } else {
         load_cbuf_to_ca(dstAddr, srcAddr, 0, kStartPosition, 1, kStep, 1, 1, 0);
     }

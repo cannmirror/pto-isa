@@ -276,20 +276,19 @@ __global__ AICORE void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S 
 
         if (i == 0) {
             if constexpr (isBias) {
-                TMATMUL_BIAS<AccPhase::Partial>(cTile, aTile, bTile, biasTile);
+                TMATMUL_BIAS(cTile, aTile, bTile, biasTile);
             } else {
-                TMATMUL<AccPhase::Partial>(cTile, aTile, bTile);
+                TMATMUL(cTile, aTile, bTile);
             }
-        } else if ( i == iter - 1) {
-            TMATMUL_ACC<AccPhase::Final>(cTile, cTile, aTile, bTile);
         } else {
-            TMATMUL_ACC<AccPhase::Partial>(cTile, cTile, aTile, bTile);
+            TMATMUL_ACC(cTile, cTile, aTile, bTile);
         }
         set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
         wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
     }
-
-    TSTORE<STPhase::Final>(dstGlobal, cTile);
+    set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    TSTORE(dstGlobal, cTile);
     out = dstGlobal.data();
 }
 
@@ -518,20 +517,19 @@ __global__ AICORE void RunTGEMVSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S *s
 
         if (i == 0) {
             if constexpr (isBias) {
-                TGEMV_BIAS<AccPhase::Partial>(cTile, aTile, bTile, biasTile);
+                TGEMV_BIAS(cTile, aTile, bTile, biasTile);
             } else {
-                TGEMV<AccPhase::Partial>(cTile, aTile, bTile);
+                TGEMV(cTile, aTile, bTile);
             }
-        } else if ( i == iter - 1) {
-            TGEMV_ACC<AccPhase::Final>(cTile, cTile, aTile, bTile);
         } else {
-            TGEMV_ACC<AccPhase::Partial>(cTile, cTile, aTile, bTile);
+            TGEMV_ACC(cTile, cTile, aTile, bTile);
         }
         set_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
         wait_flag(PIPE_M, PIPE_MTE2, EVENT_ID0);
     }
-
-    TSTORE<STPhase::Final>(dstGlobal, cTile);
+    set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
+    TSTORE(dstGlobal, cTile);
     out = dstGlobal.data();
 }
 

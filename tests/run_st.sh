@@ -222,7 +222,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_mx_gmtensor -g TLOADMXTest.1_1_1_64_128_uint8_ADN2ZZ
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tload_shape2d -g TLOADSHAPE2DTest.1_1_1_59_119_1_1_1_64_128_64_128_int8_t_ND2NZ
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmatmul -g TMATMULTest.case1
-    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmatmul_mx -g TMATMULMXTest.case_e5m2_e5m2_128_64_64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmatmul_mx -g TMATMULMXTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmax -g TMAXTest.case_float_64x64_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmin -g TMINTest.case_float_64x64_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmins -g TMINSTest.case_float_60x128_64x64_60x60
