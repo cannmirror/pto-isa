@@ -10,10 +10,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 // Modified from demos/baseline/add/csrc/kernel/add_custom.cpp
 
-#include "kernel_operator.h"
-
-#if __CCE_AICORE__ == 220 && defined(__DAV_C220_VEC__)
-#define MEMORY_BASE
 #include <pto/pto-inst.hpp>
 using namespace pto;
 
@@ -33,6 +29,8 @@ constexpr uint32_t tileNum = 2;                        // tile number on one vec
 
 template <typename T, unsigned tileRows, unsigned tileCols>
 AICORE void runTAdd(__gm__ T *z, __gm__ T *x, __gm__ T *y, uint32_t totalLength) {
+    #if __CCE_AICORE__ == 220 && defined(__DAV_C220_VEC__)
+
     set_mask_norm();
     set_vector_mask(-1, -1);
     static_assert(BLOCK_ROWS * BLOCK_COLS == BLOCK_DIM, "Wrong block tilling!");
@@ -54,9 +52,9 @@ AICORE void runTAdd(__gm__ T *z, __gm__ T *x, __gm__ T *y, uint32_t totalLength)
 
     // define TileData on UB buffer with static shape and dynamic mask
     using TileData = Tile<TileType::Vec, T, tileSRows, tileSCols, BLayout::RowMajor, -1, -1>;
-    unsigned bLength = totalLength / AscendC::GetBlockNum();
+    unsigned bLength = totalLength / block_num;
     // valid mask(vRows, vCols) of each tile
-    unsigned vRows = tileRows / AscendC::GetBlockNum();
+    unsigned vRows = tileRows / block_num;
     unsigned vCols = bLength / tileNum / BUFFER_NUM;
     // define ping-pong buffer for related tiles
     TileData xTiles[BUFFER_NUM] = {TileData(vRows, vCols), TileData(vRows, vCols)};
@@ -114,22 +112,20 @@ AICORE void runTAdd(__gm__ T *z, __gm__ T *x, __gm__ T *y, uint32_t totalLength)
     wait_flag(PIPE_MTE3, PIPE_V, EVENT_ID1);
     TASSIGN(zGlobal, z);
     z = zGlobal.data();
+
+    #else  // else branch for `#if defined(__DAV_C220_VEC__)`
+    // do nothing for Cube branch
+    #endif
+
 }
 
 // kernel entry
-__global__ AICORE void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z, uint32_t totalLength) {
+__global__ AICORE void add_custom(__gm__ void* x, __gm__ void* y, __gm__ void* z, uint32_t totalLength) {
     // Define the tile size
     constexpr unsigned tileRows = 20;
     constexpr unsigned tileCols = 2048;
     // main kernel, totalLength is dynamic input
     runTAdd<half, tileRows, tileCols>((__gm__ half *)z, (__gm__ half *)x, (__gm__ half *)y, totalLength);
-}
-
-#else  // else branch for `#if defined(__DAV_C220_VEC__)`
-
-// NOTE: `AICORE` is not recognized here
-__global__ [aicore] void add_custom(GM_ADDR x, GM_ADDR y, GM_ADDR z, uint32_t totalLength) {
-    // do nothing for Cube branch, just ensure `add_custom` is defined globally
 }
 
 extern "C" void call_kernel(
@@ -138,5 +134,3 @@ extern "C" void call_kernel(
 {
     add_custom<<<blockDim, nullptr, stream>>>(x, y, z, N);
 }
-
-#endif

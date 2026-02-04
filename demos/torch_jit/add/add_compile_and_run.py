@@ -13,7 +13,7 @@
 import torch
 import torch_npu
 
-from jit_util import jit_compile
+from jit_util_add import jit_compile
 
 
 def test_add():
@@ -31,7 +31,8 @@ def test_add():
 
     z_ref = x + y
     torch.testing.assert_close(z, z_ref)
-    print("test pass!")
+    print("ADD test pass!")
+
 
 if __name__ == "__main__":
     test_add()

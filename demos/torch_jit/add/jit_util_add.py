@@ -16,12 +16,12 @@ import ctypes
 
 import torch
 
+BLOCK_DIM = 20  # 910B4, TODO: query platform information
 
-def compile_cpp(src_path, verbose=False, timeout=10):
-    assert src_path.endswith(".cpp")
-    lib_path = src_path.removesuffix(".cpp") + ".so"
 
-    ASCEND_TOOLKIT_HOME = os.environ["ASCEND_TOOLKIT_HOME"]
+def compile_cpp(kernel_cpp: str, verbose: bool = False, timeout: int = 120) -> str:
+    lib_path = os.path.join(os.path.dirname(kernel_cpp), "gemm_jit.so")
+
     PTO_LIB_PATH = os.environ["PTO_LIB_PATH"]
 
     flags = [
@@ -29,22 +29,18 @@ def compile_cpp(src_path, verbose=False, timeout=10):
         "-shared",
         "-xcce",
         "--npu-arch=dav-2201",
+        "-DMEMORY_BASE",  # here hardcoded for A2A3; TODO: expose this option to jit interface
         "-O2",
         "-std=c++17",
-        f"-I{ASCEND_TOOLKIT_HOME}/compiler/tikcpp/tikcfw",
-        f"-I{ASCEND_TOOLKIT_HOME}/compiler/tikcpp/tikcfw/impl",
-        f"-I{ASCEND_TOOLKIT_HOME}/compiler/tikcpp/tikcfw/interface",
-        f"-I{ASCEND_TOOLKIT_HOME}/include",
         f"-I{PTO_LIB_PATH}/include",
-        f"-I{PTO_LIB_PATH}/include/common",
     ]
 
-    command = ["bisheng", *flags, src_path, "-o", lib_path]
+    command = ["bisheng", *flags, kernel_cpp, "-o", lib_path]
     if verbose:
-        print(f"compile {src_path} with command: \n", command)
+        print(f"compile {kernel_cpp} with command: \n", command)
 
     try:
-        ret = subprocess.run(command, timeout=timeout)
+        subprocess.run(command, timeout=timeout)
     except Exception as e:
         raise RuntimeError(f"Compile failed: {e}") from e
 
@@ -58,6 +54,7 @@ def torch_to_ctypes(tensor):
 
 
 def load_lib(lib_path, check_type=True):
+    lib_path = os.path.abspath(lib_path)
     lib = ctypes.CDLL(lib_path)
 
     if check_type:  # otherwise will get segfault for mismatched type
@@ -68,20 +65,14 @@ def load_lib(lib_path, check_type=True):
             ctypes.c_void_p,  # x
             ctypes.c_void_p,  # y
             ctypes.c_void_p,  # z
-            ctypes.c_int,     # N
+            ctypes.c_int,  # N
         ]
         lib.call_kernel.restype = None
 
-    default_block_dim = 20  # 910B4, TODO: query platform information
+    default_block_dim = BLOCK_DIM
     default_stream_ptr = torch.npu.current_stream()._as_parameter_
 
-    def add_func(
-        x,
-        y,
-        z,
-        block_dim=default_block_dim,
-        stream_ptr=default_stream_ptr
-        ):
+    def add_func(x, y, z, block_dim=default_block_dim, stream_ptr=default_stream_ptr):
         N = x.numel()
         # TODO: customize call args according to cpp `void call_kernel` signature
         lib.call_kernel(
@@ -90,7 +81,7 @@ def load_lib(lib_path, check_type=True):
             torch_to_ctypes(x),
             torch_to_ctypes(y),
             torch_to_ctypes(z),
-            N
+            N,
         )
 
     return add_func
