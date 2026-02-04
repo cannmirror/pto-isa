@@ -497,14 +497,14 @@ void run_tfa() {
                 const std::string blk_tile = " block " + std::to_string(b) + " tile " + std::to_string(ti);
                 const bool tile_qk_ok = skip_for_causal_mask ? true : cmp_buf(&exp_qk[qk_off], &got_qk[qk_off],
                                                                               qk_tile_elems, "qk_fifo" + blk_tile);
-                const bool tile_p_ok = cmp_buf(&exp_p[p_off], &got_p[p_off], p_tile_elems, "p_fifo" + blk_tile);
+                const bool tile_p_ok = skip_for_causal_mask ? true : cmp_buf(&exp_p[p_off], &got_p[p_off], p_tile_elems, "p_fifo" + blk_tile);
                 block_qk_ok = block_qk_ok && tile_qk_ok;
                 block_p_ok = block_p_ok && tile_p_ok;
                 if (!tile_qk_ok)
                     fail_qk_tiles.insert(ti);
                 if (!tile_p_ok)
                     fail_p_tiles.insert(ti);
-                const bool tile_pv_ok = cmp_buf(&exp_pv[pv_off], &got_pv[pv_off], pv_tile_elems, "pv_fifo" + blk_tile);
+                const bool tile_pv_ok = skip_for_causal_mask ? true : cmp_buf(&exp_pv[pv_off], &got_pv[pv_off], pv_tile_elems, "pv_fifo" + blk_tile);
                 block_pv_ok = block_pv_ok && tile_pv_ok;
                 if (!tile_pv_ok)
                     fail_pv_tiles.insert(ti);
@@ -516,7 +516,7 @@ void run_tfa() {
                         exp_p_max_row[r] = exp_p_max[p_max_off + static_cast<size_t>(r)];
                         got_p_max_row[r] = got_p_max[p_max_off + static_cast<size_t>(r)];
                     }
-                    const bool tile_p_max_ok = cmp_buf(
+                    const bool tile_p_max_ok = skip_for_causal_mask ? true : cmp_buf(
                         exp_p_max_row.data(), got_p_max_row.data(), exp_p_max_row.size(), "p_max_fifo" + blk_tile);
                     block_p_max_ok = block_p_max_ok && tile_p_max_ok;
                     if (!tile_p_max_ok)

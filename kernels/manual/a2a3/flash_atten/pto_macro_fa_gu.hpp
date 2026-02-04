@@ -46,5 +46,10 @@ AICORE inline void pto_macro_fa_gu_last(svTileData __out__ prev_sv_tile, svTileD
     // pto::TCVT(prev_sv_nd_tile, prev_sv_tile, RoundMode::CAST_RINT);
 }
 
+template <typename reducedTileData, typename svTileData>
+AICORE inline void pto_macro_fa_gu_single_and_last_tile(svTileData __out__ sv_tile, reducedTileData __in__ new_global_sum) {
+    pto::TROWEXPANDDIV(sv_tile, sv_tile, new_global_sum);
+}
+
 } // namespace pto
 #endif // TGU_PTO_H
