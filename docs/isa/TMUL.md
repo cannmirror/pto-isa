@@ -19,6 +19,7 @@ Synchronous form:
 ```text
 %dst = tmul %src0, %src1 : !pto.tile<...>
 ```
+
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
@@ -37,7 +38,7 @@ PTO_INST RecordEvent TMUL(TileData& dst, TileData& src0, TileData& src1, WaitEve
   - Tile layout must be row-major (`TileData::isRowMajor`).
   - Runtime: `src0`, `src1` and `dst` tiles should have the same `validRow/validCol`.
 - **Implementation checks (A5)**:
-  - `TileData::DType` must be one of: `int32_t`, `uint32_t`, `float`, `int16_t`, `uint16_t`, `half`, `uint8_t`, `int8_t`.
+  - `TileData::DType` must be one of: `int32_t`, `uint32_t`, `float`, `int16_t`, `uint16_t`, `half`.
   - Tile location must be vector (`TileData::Loc == TileType::Vec`).
   - Static valid bounds: `TileData::ValidRow <= TileData::Rows` and `TileData::ValidCol <= TileData::Cols`.
   - Tile layout must be row-major (`TileData::isRowMajor`).
