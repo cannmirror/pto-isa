@@ -110,7 +110,7 @@ void TCmp_32B(
         vector_bool preg3;
         vector_bool preg4;
         uint32_t repeatElm = REPEAT_BYTE / sizeof(uint32_t);
-        uint16_t repeatTimes = CeilDivision(validCol * validRow, repeatElm);
+        uint16_t repeatTimes = CeilDivision(validCol * validRow, repeatElm) + 1;
         for (uint16_t i = 0; i < (uint16_t)(repeatTimes / 2); ++i) {
             preg0 = plt_b32(sreg, POST_UPDATE);
             vlds(vreg0, src0, i * 2 * repeatElm, NORM);
@@ -122,18 +122,6 @@ void TCmp_32B(
             CmpCall<vector_bool, dataType0>(preg2, vreg2, vreg3, mode, preg0);
             pdintlv_b8(preg3, preg4, preg1, preg2);
             psts(preg3, ((__ubuf__ uint32_t *)dstPtr + i * 4), 0, PK);
-        }
-        vector_bool preg5;
-        vector_bool preg6;
-        uint32_t offset0 = (validRow / 2) * 2 * repeatElm;
-        uint32_t offset2 = (validRow / 2) * 4;
-        for (uint16_t i = 0; i < (uint16_t)(repeatTimes % 2); ++i) {
-            preg0 = plt_b32(sreg, POST_UPDATE);
-            vlds(vreg0, src0 + offset0, 0, NORM);
-            vlds(vreg1, src1 + offset0, 0, NORM);
-            CmpCall<vector_bool, dataType0>(preg5, vreg0, vreg1, mode, preg0);
-            ppack(preg6, preg5, LOWER);
-            psts(preg6, ((__ubuf__ uint32_t *)dstPtr + offset2), 0, PK);
         }
     }
 }
