@@ -263,7 +263,7 @@ Before using this project, make sure the following basic dependencies and the NP
 
    The driver and firmware are required to run operators. If you only need to build, you can skip this step.
    For installation guidance, see:
-   [NPU Driver and Firmware Installation Guide](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_0005.html?Mode=VmIns&OS=Ubuntu&Software=cannToolKit).
+   [NPU Driver and Firmware Installation Guide](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_0001.html?Mode=VmIns&OS=Ubuntu&Software=cannToolKit).
 
 ## Install Software Packages
 
