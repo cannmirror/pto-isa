@@ -60,9 +60,9 @@ using namespace pto;
 
 void example_auto() {
   using TileT = Tile<TileType::Vec, float, 16, 16>;
-  using MaskT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  using MaskT = Tile<TileType::Vec, uint8_t, 16, 32, BLayout::RowMajor, -1, -1>;
   TileT src0, src1, dst;
-  MaskT mask;
+  MaskT mask(16, 2);
   TSEL(dst, mask, src0, src1);
 }
 ```
@@ -76,9 +76,9 @@ using namespace pto;
 
 void example_manual() {
   using TileT = Tile<TileType::Vec, float, 16, 16>;
-  using MaskT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  using MaskT = Tile<TileType::Vec, uint8_t, 16, 32, BLayout::RowMajor, -1, -1>;
   TileT src0, src1, dst;
-  MaskT mask;
+  MaskT mask(16, 2);
   TASSIGN(src0, 0x1000);
   TASSIGN(src1, 0x2000);
   TASSIGN(dst,  0x3000);

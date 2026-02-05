@@ -53,9 +53,9 @@ using namespace pto;
 
 void example_auto() {
   using SrcT = Tile<TileType::Vec, float, 16, 16>;
-  using DstT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  using DstT = Tile<TileType::Vec, uint8_t, 16, 32, BLayout::RowMajor, -1, -1>;
   SrcT src;
-  DstT dst;
+  DstT dst(16, 2);
   TCMPS(dst, src, 0.0f, CmpMode::GT);
 }
 ```
@@ -69,9 +69,9 @@ using namespace pto;
 
 void example_manual() {
   using SrcT = Tile<TileType::Vec, float, 16, 16>;
-  using DstT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  using DstT = Tile<TileType::Vec, uint8_t, 16, 32, BLayout::RowMajor, -1, -1>;
   SrcT src;
-  DstT dst;
+  DstT dst(16, 2);
   TASSIGN(src, 0x1000);
   TASSIGN(dst, 0x2000);
   TCMPS(dst, src, 0.0f, CmpMode::GT);

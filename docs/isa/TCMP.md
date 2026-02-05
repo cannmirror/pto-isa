@@ -60,9 +60,9 @@ using namespace pto;
 
 void example_auto() {
   using SrcT = Tile<TileType::Vec, float, 16, 16>;
-  using MaskT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  using MaskT = Tile<TileType::Vec, uint8_t, 16, 32, BLayout::RowMajor, -1, -1>;
   SrcT src0, src1;
-  MaskT mask;
+  MaskT mask(16, 2);
   TCMP(mask, src0, src1, CmpMode::GT);
 }
 ```
@@ -76,9 +76,9 @@ using namespace pto;
 
 void example_manual() {
   using SrcT = Tile<TileType::Vec, float, 16, 16>;
-  using MaskT = Tile<TileType::Vec, uint8_t, 16, 16>;
+  using MaskT = Tile<TileType::Vec, uint8_t, 16, 32, BLayout::RowMajor, -1, -1>;
   SrcT src0, src1;
-  MaskT mask;
+  MaskT mask(16, 2);
   TASSIGN(src0, 0x1000);
   TASSIGN(src1, 0x2000);
   TASSIGN(mask, 0x3000);
