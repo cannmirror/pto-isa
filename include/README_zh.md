@@ -46,11 +46,11 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TCMP`](../docs/isa/TCMP.md) | 是 | 是 | 是 | 是 |
 | [`TCMPS`](../docs/isa/TCMPS.md) | 是 | 是 | 是 | 是 |
 | [`TCOLEXPAND`](../docs/isa/TCOLEXPAND.md) | 是 | TODO | TODO | TODO |
-| [`TCOLEXPANDADD`]() | TODO | TODO | TODO | TODO |
+| [`TCOLEXPANDADD`]() | TODO | 是 | 是 | 是 |
 | [`TCOLEXPANDDIV`]() | TODO | 是 | 是 | 是 |
 | [`TCOLEXPANDEXPDIF`]() | TODO | 是 | 是 | 是 |
-| [`TCOLEXPANDMAX`]() | TODO | TODO | TODO | TODO |
-| [`TCOLEXPANDMIN`]() | TODO | TODO | TODO | TODO |
+| [`TCOLEXPANDMAX`]() | TODO | 是 | 是 | 是 |
+| [`TCOLEXPANDMIN`]() | TODO | 是 | 是 | 是 |
 | [`TCOLEXPANDMUL`]() | TODO | 是 | 是 | 是 |
 | [`TCOLEXPANDSUB`]() | TODO | 是 | 是 | 是 |
 | [`TCOLMAX`](../docs/isa/TCOLMAX.md) | 是 | 是 | 是 | 是 |
@@ -99,7 +99,7 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TROWEXPAND`](../docs/isa/TROWEXPAND.md) | 是 | 是 | 是 | 是 |
 | [`TROWEXPANDADD `]() | TODO | 是 | 是 | 是 |
 | [`TROWEXPANDDIV`](../docs/isa/TROWEXPANDDIV.md) | 是 | 是 | 是 | 是 |
-| [`TROWEXPANDEXPDIF`]() | TODO | TODO | TODO | 是 |
+| [`TROWEXPANDEXPDIF`]() | TODO | 是 | 是 | 是 |
 | [`TROWEXPANDMAX`](../docs/isa/TROWEXPANDMUL.md) | 是 | 是 | 是 | 是 |
 | [`TROWEXPANDMIN`]() | TODO | 是 | 是 | 是 |
 | [`TROWEXPANDMUL`]() | TODO | 是 | 是 | 是 |

@@ -46,11 +46,11 @@ This table tracks per-instruction backend availability:
 | [`TCMP`](../docs/isa/TCMP.md) | Yes | Yes | Yes | Yes |
 | [`TCMPS`](../docs/isa/TCMPS.md) | Yes | Yes | Yes | Yes |
 | [`TCOLEXPAND`](../docs/isa/TCOLEXPAND.md) | Yes | TODO | TODO | TODO |
-| [`TCOLEXPANDADD`]() | TODO | TODO | TODO | TODO |
+| [`TCOLEXPANDADD`]() | TODO | Yes | Yes | Yes |
 | [`TCOLEXPANDDIV`]() | TODO | Yes | Yes | Yes |
 | [`TCOLEXPANDEXPDIF`]() | TODO | Yes | Yes | Yes |
-| [`TCOLEXPANDMAX`]() | TODO | TODO | TODO | TODO |
-| [`TCOLEXPANDMIN`]() | TODO | TODO | TODO | TODO |
+| [`TCOLEXPANDMAX`]() | TODO | Yes | Yes | Yes |
+| [`TCOLEXPANDMIN`]() | TODO | Yes | Yes | Yes |
 | [`TCOLEXPANDMUL`]() | TODO | Yes | Yes | Yes |
 | [`TCOLEXPANDSUB`]() | TODO | Yes | Yes | Yes |
 | [`TCOLMAX`](../docs/isa/TCOLMAX.md) | Yes | Yes | Yes | Yes |
@@ -99,7 +99,7 @@ This table tracks per-instruction backend availability:
 | [`TROWEXPAND`](../docs/isa/TROWEXPAND.md) | Yes | Yes | Yes | Yes |
 | [`TROWEXPANDADD `]() | TODO | Yes | Yes | Yes |
 | [`TROWEXPANDDIV`](../docs/isa/TROWEXPANDDIV.md) | Yes | Yes | Yes | Yes |
-| [`TROWEXPANDEXPDIF`]() | TODO | TODO | TODO | Yes |
+| [`TROWEXPANDEXPDIF`]() | TODO | Yes | Yes | Yes |
 | [`TROWEXPANDMAX`](../docs/isa/TROWEXPANDMUL.md) | Yes | Yes | Yes | Yes |
 | [`TROWEXPANDMIN`]() | TODO | Yes | Yes | Yes |
 | [`TROWEXPANDMUL`]() | TODO | Yes | Yes | Yes |

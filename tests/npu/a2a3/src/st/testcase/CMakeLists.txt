@@ -179,6 +179,10 @@ tshls
 tshrs
 txor
 txors
+trowexpandexpdif
+tcolexpandadd
+tcolexpandmax
+tcolexpandmin
 tcolexpanddiv
 tcolexpandexpdif
 tcolexpandmul

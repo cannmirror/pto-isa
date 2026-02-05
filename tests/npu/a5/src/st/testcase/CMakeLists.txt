@@ -190,6 +190,9 @@ set(ALL_TESTCASES
     trems
     tscatter
     tneg
+    tcolexpandadd
+    tcolexpandmax
+    tcolexpandmin
     tcolexpanddiv
     tcolexpandmul
     tcolexpandsub

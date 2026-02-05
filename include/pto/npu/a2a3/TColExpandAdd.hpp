@@ -8,8 +8,8 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#ifndef TCOLEXPANDEXPDIF_HPP
-#define TCOLEXPANDEXPDIF_HPP
+#ifndef TCOLEXPANDADD_HPP
+#define TCOLEXPANDADD_HPP
 
 #include <pto/common/constants.hpp>
 #include <pto/common/utils.hpp>
@@ -18,38 +18,34 @@ See LICENSE in the root of the software repository for the full text of the Lice
 namespace pto {
 
 template <typename T>
-struct ColExpandExpdifOp {
+struct ColExpandAddOp {
     PTO_INTERNAL static void ColExpandBinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
     {
-        vsub(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
-        pipe_barrier(PIPE_V);
-        vexp(dst, dst, repeats, 1, 1, 8, 8);
+        vadd(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
     }
     PTO_INTERNAL static void ColExpandBinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
                                                uint8_t dstRepeatStride, uint8_t src0RepeatStride,
                                                uint8_t src1RepeatStride)
     {
-        vsub(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, 0);
-        pipe_barrier(PIPE_V);
-        vexp(dst, dst, repeats, 1, 1, dstRepeatStride, dstRepeatStride);
+        vadd(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, 0);
     }
 };
 
 template <typename TileData, typename TileDataSrc>
-PTO_INTERNAL void TCOLEXPANDEXPDIF_IMPL(TileData &dst, TileData &src0, TileDataSrc &src1)
+PTO_INTERNAL void TCOLEXPANDADD_IMPL(TileData &dst, TileData &src0, TileDataSrc &src1)
 {
     using T = typename TileData::DType;
     static_assert(
         std::is_same<typename TileData::DType, float>::value || std::is_same<typename TileData::DType, half>::value,
-        "Fix: TCOLEXPANDEXPDIF Invalid data type.");
-    static_assert(TileData::isRowMajor, "Fix: TCOLEXPANDEXPDIF not supported Layout type");
+        "Fix: TCOLEXPANDADD Invalid data type.");
+    static_assert(TileData::isRowMajor, "Fix: TCOLEXPANDADD not supported Layout type");
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     constexpr unsigned rowStride = TileData::RowStride;
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    ColExpandBinaryInstr<ColExpandExpdifOp<T>, TileData, TileDataSrc, elementsPerRepeat, blockSizeElem, rowStride>(
+    ColExpandBinaryInstr<ColExpandAddOp<T>, TileData, TileDataSrc, elementsPerRepeat, blockSizeElem, rowStride>(
         dst.data(), src0.data(), src1.data(), validRow, validCol);
 }
 } // namespace pto
