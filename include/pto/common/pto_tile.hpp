@@ -564,161 +564,189 @@ struct BaseShape2D<T, rows, cols, Layout::DN>
 
 template <typename T, int rows, int cols>
 struct BaseShape2D<T, rows, cols, Layout::MX_A_ZZ>
-    : public Stride<GetBaseShape2DStride0<T, rows, cols>(), (cols == DYNAMIC) ? DYNAMIC : cols * 16, 32, 2, 1> {
-    static constexpr int FractalSize = 32;
-    using Parent =
-        Stride<GetBaseShape2DStride0<T, rows, cols>(), (cols == DYNAMIC) ? DYNAMIC : cols * 16, FractalSize, 2, 1>;
+    : public Stride<GetBaseShape2DStride0<T, rows, cols>(), (cols == DYNAMIC) ? DYNAMIC : cols * MX_ROW_LEN,
+                    MX_BLOCK_SIZE, MX_COL_LEN, 1> {
+    using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(), (cols == DYNAMIC) ? DYNAMIC : cols * MX_ROW_LEN,
+                          MX_BLOCK_SIZE, MX_COL_LEN, 1>;
 
-    PTO_INTERNAL BaseShape2D() : Parent() {}
+    PTO_INTERNAL BaseShape2D() : Parent()
+    {}
 
     PTO_INTERNAL BaseShape2D(int dynamicRows, int dynamicCols)
-        : Parent(dynamicCols * dynamicRows, dynamicCols * 16, FractalSize, 2, 1)
-    {
-    }
+        : Parent(dynamicCols * dynamicRows, dynamicCols * MX_ROW_LEN, MX_BLOCK_SIZE, MX_COL_LEN, 1)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct TileShape2D<T, rows, cols, Layout::MX_A_ZZ>
-    : public Shape<1, rows == DYNAMIC ? DYNAMIC : rows / 16, cols == DYNAMIC ? DYNAMIC : cols / 2, 16, 2> {
-    using Parent = Shape<1, rows == DYNAMIC ? DYNAMIC : rows / 16, cols == DYNAMIC ? DYNAMIC : cols / 2, 16, 2>;
+    : public Shape<1, rows == DYNAMIC ? DYNAMIC : rows / MX_ROW_LEN, cols == DYNAMIC ? DYNAMIC : cols / MX_COL_LEN,
+                   MX_ROW_LEN, MX_COL_LEN> {
+    using Parent = Shape<1, rows == DYNAMIC ? DYNAMIC : rows / MX_ROW_LEN,
+                         cols == DYNAMIC ? DYNAMIC : cols / MX_COL_LEN, MX_ROW_LEN, MX_COL_LEN>;
     static constexpr int C0Size = 2;
     static_assert((cols == DYNAMIC) || (cols % C0Size == 0), "cols must be divisible by C0Size for Layout::MX_A_ZZ");
-    PTO_INTERNAL TileShape2D() : Parent() {}
-    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols) : Parent(1, dynamicRows / 16, dynamicCols / 2, 16, 2) {}
+    PTO_INTERNAL TileShape2D() : Parent()
+    {}
+    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols)
+        : Parent(1, dynamicRows / MX_ROW_LEN, dynamicCols / MX_COL_LEN, MX_ROW_LEN, MX_COL_LEN)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct BaseShape2D<T, rows, cols, Layout::MX_A_ND>
-    : public Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(), cols, 2, 1> {
-    using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(), cols, 2, 1>;
+    : public Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(), cols, MX_COL_LEN,
+                    1> {
+    using Parent =
+        Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(), cols, MX_COL_LEN, 1>;
 
-    PTO_INTERNAL BaseShape2D() : Parent() {}
+    PTO_INTERNAL BaseShape2D() : Parent()
+    {}
     PTO_INTERNAL BaseShape2D(int dynamicRows, int dynamicCols)
-        : Parent(dynamicCols * dynamicRows, dynamicCols * dynamicRows, dynamicCols, 2, 1)
-    {
-    }
+        : Parent(dynamicCols * dynamicRows, dynamicCols * dynamicRows, dynamicCols, MX_COL_LEN, 1)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct TileShape2D<T, rows, cols, Layout::MX_A_ND>
-    : public Shape<1, 1, rows == DYNAMIC ? DYNAMIC : rows, cols == DYNAMIC ? DYNAMIC : cols / 2, 2> {
-    using Parent = Shape<1, 1, rows == DYNAMIC ? DYNAMIC : rows, cols == DYNAMIC ? DYNAMIC : cols / 2, 2>;
+    : public Shape<1, 1, rows == DYNAMIC ? DYNAMIC : rows, cols == DYNAMIC ? DYNAMIC : cols / MX_COL_LEN, MX_COL_LEN> {
+    using Parent =
+        Shape<1, 1, rows == DYNAMIC ? DYNAMIC : rows, cols == DYNAMIC ? DYNAMIC : cols / MX_COL_LEN, MX_COL_LEN>;
     static constexpr int C0Size = 2;
     static_assert((cols == DYNAMIC) || (cols % C0Size == 0), "cols must be divisible by C0Size for Layout::MX_A_ND");
 
-    PTO_INTERNAL TileShape2D() : Parent() {}
-    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols) : Parent(1, 1, dynamicRows, dynamicCols / 2, 2) {}
+    PTO_INTERNAL TileShape2D() : Parent()
+    {}
+    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols)
+        : Parent(1, 1, dynamicRows, dynamicCols / MX_COL_LEN, MX_COL_LEN)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct BaseShape2D<T, rows, cols, Layout::MX_A_DN>
     : public Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(),
-          rows == DYNAMIC ? DYNAMIC : rows * 2, 2, 1> {
+                    rows == DYNAMIC ? DYNAMIC : rows * MX_COL_LEN, MX_COL_LEN, 1> {
     using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(),
-        rows == DYNAMIC ? DYNAMIC : rows * 2, 2, 1>;
+                          rows == DYNAMIC ? DYNAMIC : rows * MX_COL_LEN, MX_COL_LEN, 1>;
 
-    PTO_INTERNAL BaseShape2D() : Parent() {}
+    PTO_INTERNAL BaseShape2D() : Parent()
+    {}
     PTO_INTERNAL BaseShape2D(int dynamicRows, int dynamicCols)
-        : Parent(dynamicCols * dynamicRows, dynamicCols * dynamicRows, dynamicRows * 2, 2, 1)
-    {
-    }
+        : Parent(dynamicCols * dynamicRows, dynamicCols * dynamicRows, dynamicRows * MX_COL_LEN, MX_COL_LEN, 1)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct TileShape2D<T, rows, cols, Layout::MX_A_DN>
-    : public Shape<1, 1, cols == DYNAMIC ? DYNAMIC : cols / 2, rows == DYNAMIC ? DYNAMIC : rows, 2> {
-    using Parent = Shape<1, 1, cols == DYNAMIC ? DYNAMIC : cols / 2, rows == DYNAMIC ? DYNAMIC : rows, 2>;
+    : public Shape<1, 1, cols == DYNAMIC ? DYNAMIC : cols / MX_COL_LEN, rows == DYNAMIC ? DYNAMIC : rows, MX_COL_LEN> {
+    using Parent =
+        Shape<1, 1, cols == DYNAMIC ? DYNAMIC : cols / MX_COL_LEN, rows == DYNAMIC ? DYNAMIC : rows, MX_COL_LEN>;
     static constexpr int C0Size = 2;
     static_assert((cols == DYNAMIC) || (cols % C0Size == 0), "cols must be divisible by C0Size for Layout::MX_A_DN");
 
-    PTO_INTERNAL TileShape2D() : Parent() {}
-    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols) : Parent(1, 1, dynamicCols / 2, dynamicRows, 2) {}
+    PTO_INTERNAL TileShape2D() : Parent()
+    {}
+    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols)
+        : Parent(1, 1, dynamicCols / MX_COL_LEN, dynamicRows, MX_COL_LEN)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct BaseShape2D<T, rows, cols, Layout::MX_B_NN>
-    : public Stride<GetBaseShape2DStride0<T, rows, cols>(), (rows == DYNAMIC) ? DYNAMIC : rows * 16, 32, 2, 1> {
-    static constexpr int FractalSize = 32;
-    using Parent =
-        Stride<GetBaseShape2DStride0<T, rows, cols>(), (rows == DYNAMIC) ? DYNAMIC : rows * 16, FractalSize, 2, 1>;
+    : public Stride<GetBaseShape2DStride0<T, rows, cols>(), (rows == DYNAMIC) ? DYNAMIC : rows * MX_ROW_LEN,
+                    MX_BLOCK_SIZE, MX_COL_LEN, 1> {
+    using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(), (rows == DYNAMIC) ? DYNAMIC : rows * MX_ROW_LEN,
+                          MX_BLOCK_SIZE, MX_COL_LEN, 1>;
 
-    PTO_INTERNAL BaseShape2D() : Parent() {}
+    PTO_INTERNAL BaseShape2D() : Parent()
+    {}
     PTO_INTERNAL BaseShape2D(int dynamicRows, int dynamicCols)
-        : Parent(dynamicCols * dynamicRows, dynamicRows * 16, FractalSize, 2, 1)
-    {
-    }
+        : Parent(dynamicCols * dynamicRows, dynamicRows * MX_ROW_LEN, MX_BLOCK_SIZE, MX_COL_LEN, 1)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct TileShape2D<T, rows, cols, Layout::MX_B_NN>
-    : public Shape<1, cols == DYNAMIC ? DYNAMIC : cols / 16, rows == DYNAMIC ? DYNAMIC : rows / 2, 16, 2> {
-    using Parent = Shape<1, cols == DYNAMIC ? DYNAMIC : cols / 16, rows == DYNAMIC ? DYNAMIC : rows / 2, 16, 2>;
+    : public Shape<1, cols == DYNAMIC ? DYNAMIC : cols / MX_ROW_LEN, rows == DYNAMIC ? DYNAMIC : rows / MX_COL_LEN,
+                   MX_ROW_LEN, MX_COL_LEN> {
+    using Parent = Shape<1, cols == DYNAMIC ? DYNAMIC : cols / MX_ROW_LEN,
+                         rows == DYNAMIC ? DYNAMIC : rows / MX_COL_LEN, MX_ROW_LEN, MX_COL_LEN>;
     static constexpr int C0Size = 2;
     static_assert((rows == DYNAMIC) || (rows % C0Size == 0), "rows must be divisible by C0Size for Layout::MX_B_NN");
 
-    PTO_INTERNAL TileShape2D() : Parent() {}
-    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols) : Parent(1, dynamicCols / 16, dynamicRows / 2, 16, 2) {}
+    PTO_INTERNAL TileShape2D() : Parent()
+    {}
+    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols)
+        : Parent(1, dynamicCols / MX_ROW_LEN, dynamicRows / MX_COL_LEN, MX_ROW_LEN, MX_COL_LEN)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct BaseShape2D<T, rows, cols, Layout::MX_B_ND>
     : public Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(),
-          cols == DYNAMIC ? DYNAMIC : cols * 2, 2, 1> {
+                    cols == DYNAMIC ? DYNAMIC : cols * MX_COL_LEN, MX_COL_LEN, 1> {
     using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(),
-        cols == DYNAMIC ? DYNAMIC : cols * 2, 2, 1>;
+                          cols == DYNAMIC ? DYNAMIC : cols * MX_COL_LEN, MX_COL_LEN, 1>;
 
-    PTO_INTERNAL BaseShape2D() : Parent() {}
+    PTO_INTERNAL BaseShape2D() : Parent()
+    {}
     PTO_INTERNAL BaseShape2D(int dynamicRows, int dynamicCols)
-        : Parent(dynamicCols * dynamicRows, dynamicCols * dynamicRows, dynamicCols * 2, 2, 1)
-    {
-    }
+        : Parent(dynamicCols * dynamicRows, dynamicCols * dynamicRows, dynamicCols * MX_COL_LEN, MX_COL_LEN, 1)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct TileShape2D<T, rows, cols, Layout::MX_B_ND>
-    : public Shape<1, 1, rows == DYNAMIC ? DYNAMIC : rows / 2, cols == DYNAMIC ? DYNAMIC : cols, 2> {
-    using Parent = Shape<1, 1, rows == DYNAMIC ? DYNAMIC : rows / 2, cols == DYNAMIC ? DYNAMIC : cols, 2>;
+    : public Shape<1, 1, rows == DYNAMIC ? DYNAMIC : rows / MX_COL_LEN, cols == DYNAMIC ? DYNAMIC : cols, MX_COL_LEN> {
+    using Parent =
+        Shape<1, 1, rows == DYNAMIC ? DYNAMIC : rows / MX_COL_LEN, cols == DYNAMIC ? DYNAMIC : cols, MX_COL_LEN>;
     static constexpr int C0Size = 2;
     static_assert((rows == DYNAMIC) || (rows % C0Size == 0), "rows must be divisible by C0Size for Layout::MX_B_ND");
 
-    PTO_INTERNAL TileShape2D() : Parent() {}
-    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols) : Parent(1, 1, dynamicRows / 2, dynamicCols, 2) {}
+    PTO_INTERNAL TileShape2D() : Parent()
+    {}
+    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols)
+        : Parent(1, 1, dynamicRows / MX_COL_LEN, dynamicCols, MX_COL_LEN)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct BaseShape2D<T, rows, cols, Layout::MX_B_DN>
     : public Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(),
-          rows == DYNAMIC ? DYNAMIC : rows, 2, 1> {
+                    rows == DYNAMIC ? DYNAMIC : rows, MX_COL_LEN, 1> {
     using Parent = Stride<GetBaseShape2DStride0<T, rows, cols>(), GetBaseShape2DStride0<T, rows, cols>(),
-        rows == DYNAMIC ? DYNAMIC : rows, 2, 1>;
+                          rows == DYNAMIC ? DYNAMIC : rows, MX_COL_LEN, 1>;
 
-    PTO_INTERNAL BaseShape2D() : Parent() {}
+    PTO_INTERNAL BaseShape2D() : Parent()
+    {}
     PTO_INTERNAL BaseShape2D(int dynamicRows, int dynamicCols)
-        : Parent(dynamicCols * dynamicRows, dynamicCols * dynamicRows, dynamicRows, 2, 1)
-    {
-    }
+        : Parent(dynamicCols * dynamicRows, dynamicCols * dynamicRows, dynamicRows, MX_COL_LEN, 1)
+    {}
     using Parent::Parent;
 };
 
 template <typename T, int rows, int cols>
 struct TileShape2D<T, rows, cols, Layout::MX_B_DN>
-    : public Shape<1, 1, cols == DYNAMIC ? DYNAMIC : cols, rows == DYNAMIC ? DYNAMIC : rows / 2, 2> {
-    using Parent = Shape<1, 1, cols == DYNAMIC ? DYNAMIC : cols, rows == DYNAMIC ? DYNAMIC : rows / 2, 2>;
+    : public Shape<1, 1, cols == DYNAMIC ? DYNAMIC : cols, rows == DYNAMIC ? DYNAMIC : rows / MX_COL_LEN, MX_COL_LEN> {
+    using Parent =
+        Shape<1, 1, cols == DYNAMIC ? DYNAMIC : cols, rows == DYNAMIC ? DYNAMIC : rows / MX_COL_LEN, MX_COL_LEN>;
     static constexpr int C0Size = 2;
     static_assert((rows == DYNAMIC) || (rows % C0Size == 0), "rows must be divisible by C0Size for Layout::MX_B_DN");
 
-    PTO_INTERNAL TileShape2D() : Parent() {}
-    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols) : Parent(1, 1, dynamicCols, dynamicRows / 2, 2) {}
+    PTO_INTERNAL TileShape2D() : Parent()
+    {}
+    PTO_INTERNAL TileShape2D(int dynamicRows, int dynamicCols)
+        : Parent(1, 1, dynamicCols, dynamicRows / MX_COL_LEN, MX_COL_LEN)
+    {}
     using Parent::Parent;
 };
 
