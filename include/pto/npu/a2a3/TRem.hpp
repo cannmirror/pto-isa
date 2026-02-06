@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2025 Huawei Technologies Co., Ltd.
+Copyright (c) 2026 Huawei Technologies Co., Ltd.
 This program is free software, you can redistribute it and/or modify it under
 the terms and conditions of CANN Open Software License Agreement Version 2.0
 (the "License"). Please refer to the License for details. You may not use this
@@ -16,15 +16,16 @@ full text of the License.
 #include <pto/common/constants.hpp>
 
 namespace pto {
-// Formula: rem(a, b) = a - trunc(a/b) * b
+// Formula: remainder(a, b) = a - floor(a/b) * b
 struct RemOp {
-    PTO_INTERNAL static void RemF32Instr(__ubuf__ float *dst, __ubuf__ float *src0, __ubuf__ float *src1) {
+    PTO_INTERNAL static void RemF32Instr(__ubuf__ float *dst, __ubuf__ float *src0, __ubuf__ float *src1)
+    {
         vdiv(dst, src0, src1, 1, 1, 1, 1, 8, 8, 8);
         pipe_barrier(PIPE_V);
 
-        vconv_f322f32z(dst, dst, 1, 1, 1, 8, 8);
+        vconv_f322f32f(dst, dst, 1, 1, 1, 8, 8);
         pipe_barrier(PIPE_V);
-        
+
         vmul(dst, dst, src1, 1, 1, 1, 1, 8, 8, 8);
         pipe_barrier(PIPE_V);
 
@@ -32,11 +33,12 @@ struct RemOp {
         pipe_barrier(PIPE_V);
     }
 
-    PTO_INTERNAL static void RemF16Instr(__ubuf__ half *dst, __ubuf__ half *src0, __ubuf__ half *src1) {
+    PTO_INTERNAL static void RemF16Instr(__ubuf__ half *dst, __ubuf__ half *src0, __ubuf__ half *src1)
+    {
         vdiv(dst, src0, src1, 1, 1, 1, 1, 8, 8, 8);
         pipe_barrier(PIPE_V);
 
-        vconv_f162s16z((__ubuf__ int16_t *)dst, dst, 1, 1, 1, 8, 8);
+        vconv_f162s16f((__ubuf__ int16_t *)dst, dst, 1, 1, 1, 8, 8);
         pipe_barrier(PIPE_V);
         vconv_s162f16(dst, (__ubuf__ int16_t *)dst, 1, 1, 1, 8, 8);
         pipe_barrier(PIPE_V);
@@ -48,7 +50,8 @@ struct RemOp {
         pipe_barrier(PIPE_V);
     }
 
-    PTO_INTERNAL static void RemInt32Instr(__ubuf__ int32_t *dst, __ubuf__ int32_t *src0, __ubuf__ int32_t *src1) {
+    PTO_INTERNAL static void RemInt32Instr(__ubuf__ int32_t *dst, __ubuf__ int32_t *src0, __ubuf__ int32_t *src1)
+    {
         __ubuf__ float *dst_f = reinterpret_cast<__ubuf__ float *>(dst);
         __ubuf__ float *src0_f = reinterpret_cast<__ubuf__ float *>(src0);
         __ubuf__ float *src1_f = reinterpret_cast<__ubuf__ float *>(src1);
@@ -65,7 +68,8 @@ struct RemOp {
         pipe_barrier(PIPE_V);
     }
 
-    PTO_INTERNAL static void RemInt16Instr(__ubuf__ int16_t *dst, __ubuf__ int16_t *src0, __ubuf__ int16_t *src1) {
+    PTO_INTERNAL static void RemInt16Instr(__ubuf__ int16_t *dst, __ubuf__ int16_t *src0, __ubuf__ int16_t *src1)
+    {
         __ubuf__ half *dst_f = reinterpret_cast<__ubuf__ half *>(dst);
         __ubuf__ half *src0_f = reinterpret_cast<__ubuf__ half *>(src0);
         __ubuf__ half *src1_f = reinterpret_cast<__ubuf__ half *>(src1);
@@ -84,9 +88,10 @@ struct RemOp {
 };
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem, unsigned dstRowStride,
-    unsigned src0RowStride = dstRowStride, unsigned src1RowStride = dstRowStride>
+          unsigned src0RowStride = dstRowStride, unsigned src1RowStride = dstRowStride>
 __tf__ PTO_INTERNAL void TRem(typename TileData::TileDType __out__ dst, typename TileData::TileDType __in__ src0,
-    typename TileData::TileDType __in__ src1, unsigned validRows, unsigned validCols) {
+                              typename TileData::TileDType __in__ src1, unsigned validRows, unsigned validCols)
+{
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
@@ -116,23 +121,25 @@ __tf__ PTO_INTERNAL void TRem(typename TileData::TileDType __out__ dst, typename
 }
 
 template <typename T, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-PTO_INTERNAL void TRemCheck(const TileDataDst &dst, const TileDataSrc0 &src0, const TileDataSrc1 &src1) {
+PTO_INTERNAL void TRemCheck(const TileDataDst &dst, const TileDataSrc0 &src0, const TileDataSrc1 &src1)
+{
     static_assert(std::is_same<T, half>::value || std::is_same<T, float16_t>::value || std::is_same<T, float>::value ||
                       std::is_same<T, float32_t>::value || std::is_same<T, int32_t>::value ||
                       std::is_same<T, int16_t>::value,
-        "Fix: TREM currently supports half/float and 16/32-bit integer data types.");
+                  "Fix: TREM currently supports half/float and 16/32-bit integer data types.");
     static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
-        "Fix: TREM only support row major layout.");
+                  "Fix: TREM only support row major layout.");
     unsigned validRows = dst.GetValidRow();
     unsigned validCols = dst.GetValidCol();
     PTO_ASSERT(src0.GetValidRow() == validRows && src0.GetValidCol() == validCols,
-        "Fix: TREM input tile src0 valid shape mismatch with output tile dst shape.");
+               "Fix: TREM input tile src0 valid shape mismatch with output tile dst shape.");
     PTO_ASSERT(src1.GetValidRow() == validRows && src1.GetValidCol() == validCols,
-        "Fix: TREM input tile src1 valid shape mismatch with output tile dst shape.");
+               "Fix: TREM input tile src1 valid shape mismatch with output tile dst shape.");
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-PTO_INTERNAL void TREM_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
+PTO_INTERNAL void TREM_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
+{
     using T = typename TileDataDst::DType;
     TRemCheck<T, TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1);
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);

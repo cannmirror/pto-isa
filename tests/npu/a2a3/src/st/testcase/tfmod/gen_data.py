@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # coding=utf-8
 # --------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@ import numpy as np
 np.random.seed(19)
 
 
-def gen_golden_data_trem(param):
+def gen_golden_data_tfmod(param):
     dtype = param.dtype
 
     dst_tile_row, dst_tile_col = param.dst_tile_row, param.dst_tile_col
@@ -29,7 +29,7 @@ def gen_golden_data_trem(param):
 
     # Perform the operation
     golden = np.zeros([dst_tile_row, dst_tile_col]).astype(dtype)
-    golden[0:h_valid, 0:w_valid] = np.remainder(input1[0:h_valid, 0:w_valid], input2[0:h_valid, 0:w_valid]).astype(dtype)
+    golden[0:h_valid, 0:w_valid] = np.fmod(input1[0:h_valid, 0:w_valid], input2[0:h_valid, 0:w_valid]).astype(dtype)
 
     # Save the input and golden data to binary files
     input1.tofile("input1.bin")
@@ -39,7 +39,7 @@ def gen_golden_data_trem(param):
     return golden, input1, input2
 
 
-class TremParams:
+class TfmodParams:
     def __init__(self, dtype, dst_tileR, dst_tileC, src0_tileR, src0_tileC, src1_tileR, src1_tileC, valid_row, valid_col):
         self.dtype = dtype
         self.dst_tile_row = dst_tileR
@@ -61,7 +61,7 @@ def generate_case_name(param):
     }[param.dtype]
     tileStr = f"{param.dst_tile_row}x{param.dst_tile_col}_{param.src0_tile_row}x{param.src0_tile_col}_" \
               f"{param.src1_tile_row}x{param.src1_tile_col}_{param.valid_row}x{param.valid_col}"
-    return f"TREMTest.case_{dtype_str}_{tileStr}"
+    return f"TFMODTest.case_{dtype_str}_{tileStr}"
 
 if __name__ == "__main__":
     # Get the absolute path of the script
@@ -73,16 +73,16 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TremParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 64),
-        TremParams(np.float32, 16, 32, 16, 64, 16, 32, 16, 32),
-        TremParams(np.int32, 4, 32, 4, 32, 4, 32, 4, 32),
-        TremParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 32),
-        TremParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 63),
-        TremParams(np.float32, 2, 32, 2, 64, 2, 32, 2, 31),
-        TremParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 31),
-        TremParams(np.int16, 16, 32, 16, 64, 16, 32, 16, 31),
-        TremParams(np.int16, 16, 64, 16, 128, 16, 128, 16, 63),
-        TremParams(np.float16, 1, 8192, 1, 8192, 1, 8192, 1, 8192),
+        TfmodParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 64),
+        TfmodParams(np.float32, 16, 32, 16, 64, 16, 32, 16, 32),
+        TfmodParams(np.int32, 4, 32, 4, 32, 4, 32, 4, 32),
+        TfmodParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 32),
+        TfmodParams(np.float16, 16, 64, 16, 128, 16, 128, 16, 63),
+        TfmodParams(np.float32, 2, 32, 2, 64, 2, 32, 2, 31),
+        TfmodParams(np.int32, 16, 32, 16, 64, 16, 32, 16, 31),
+        TfmodParams(np.int16, 16, 32, 16, 64, 16, 32, 16, 31),
+        TfmodParams(np.int16, 16, 64, 16, 128, 16, 128, 16, 63),
+        TfmodParams(np.float16, 1, 8192, 1, 8192, 1, 8192, 1, 8192),
     ]
 
     for param in case_params_list:
@@ -91,5 +91,5 @@ if __name__ == "__main__":
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data_trem(param)
+        gen_golden_data_tfmod(param)
         os.chdir(original_dir)

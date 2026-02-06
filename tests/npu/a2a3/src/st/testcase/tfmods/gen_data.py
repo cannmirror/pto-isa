@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # coding=utf-8
 # --------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ def gen_golden_data(param):
     output_arr = np.zeros((dst_tile_row, dst_tile_col), dtype=data_type)
     for i in range(rows):
         for j in range(cols):
-            output_arr[i, j] = np.remainder(input_arr[i, j], scalar[0, 0]).astype(data_type)
+            output_arr[i, j] = np.fmod(input_arr[i, j], scalar[0, 0]).astype(data_type)
 
     input_arr.tofile("input.bin")
     with open("scalar.bin", "wb") as f:
@@ -44,7 +44,7 @@ def gen_golden_data(param):
     print(output_arr[0][:10], end='\n\n')
 
 
-class TREMSParams:
+class TFMODSParams:
     def __init__(self, name, data_type, dst_tile_row, dst_tile_col, row, col):
         self.name = name
         self.data_type = data_type
@@ -56,22 +56,22 @@ class TREMSParams:
 
 if __name__ == "__main__":
     case_params_list = [
-        TREMSParams("TREMSTest.case1", np.float32, 32, 64, 32, 64),
-        TREMSParams("TREMSTest.case2", np.float16, 63, 64, 63, 64),
-        TREMSParams("TREMSTest.case3", np.int32, 31, 128, 31, 128),
-        TREMSParams("TREMSTest.case4", np.int16, 3, 256, 3, 256),
-        TREMSParams("TREMSTest.case5", np.float32, 7, 64 * 7, 7, 64 * 7),
-        TREMSParams("TREMSTest.case6", np.float32, 256, 16, 256, 16),
-        TREMSParams("TREMSTest.case7", np.float32, 32, 128, 32, 64),
-        TREMSParams("TREMSTest.case8", np.float16, 63, 128, 63, 64),
-        TREMSParams("TREMSTest.case9", np.int32, 31, 256, 31, 128),
-        TREMSParams("TREMSTest.case10", np.int16, 15, 192, 15, 64 * 3),
-        TREMSParams("TREMSTest.case11", np.float32, 7, 512, 7, 64 * 7),
-        TREMSParams("TREMSTest.case12", np.float32, 256, 32, 256, 16),
-        TREMSParams("TREMSTest.case13", np.float16, 1, 8192, 1, 8192),
-        TREMSParams("TREMSTest.case14", np.int16, 1, 8192, 1, 8192),
-        TREMSParams("TREMSTest.case15", np.int32, 1, 8192, 1, 8192),
-        TREMSParams("TREMSTest.case16", np.float32, 1, 8192, 1, 8192),
+        TFMODSParams("TFMODSTest.case1", np.float32, 32, 64, 32, 64),
+        TFMODSParams("TFMODSTest.case2", np.float16, 63, 64, 63, 64),
+        TFMODSParams("TFMODSTest.case3", np.int32, 31, 128, 31, 128),
+        TFMODSParams("TFMODSTest.case4", np.int16, 3, 256, 3, 256),
+        TFMODSParams("TFMODSTest.case5", np.float32, 7, 64 * 7, 7, 64 * 7),
+        TFMODSParams("TFMODSTest.case6", np.float32, 256, 16, 256, 16),
+        TFMODSParams("TFMODSTest.case7", np.float32, 32, 128, 32, 64),
+        TFMODSParams("TFMODSTest.case8", np.float16, 63, 128, 63, 64),
+        TFMODSParams("TFMODSTest.case9", np.int32, 31, 256, 31, 128),
+        TFMODSParams("TFMODSTest.case10", np.int16, 15, 192, 15, 64 * 3),
+        TFMODSParams("TFMODSTest.case11", np.float32, 7, 512, 7, 64 * 7),
+        TFMODSParams("TFMODSTest.case12", np.float32, 256, 32, 256, 16),
+        TFMODSParams("TFMODSTest.case13", np.float16, 1, 8192, 1, 8192),
+        TFMODSParams("TFMODSTest.case14", np.int16, 1, 8192, 1, 8192),
+        TFMODSParams("TFMODSTest.case15", np.int32, 1, 8192, 1, 8192),
+        TFMODSParams("TFMODSTest.case16", np.float32, 1, 8192, 1, 8192),
     ]
 
     for case in case_params_list:

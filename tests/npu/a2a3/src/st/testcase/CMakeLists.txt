@@ -142,6 +142,8 @@ tsub
 tsubs
 trem
 trems
+tfmod
+tfmods
 tlrelu
 tmaxs
 tmins

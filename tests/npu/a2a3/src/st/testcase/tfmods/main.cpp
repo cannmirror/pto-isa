@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2025 Huawei Technologies Co., Ltd.
+Copyright (c) 2026 Huawei Technologies Co., Ltd.
 This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 CANN Open Software License Agreement Version 2.0 (the "License").
 Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@ using namespace std;
 using namespace PtoTestCommon;
 
 template <uint32_t caseId>
-void launchTREMSTestCase(void *out, void *src, float scalar, aclrtStream stream);
+void launchTFMODSTestCase(void *out, void *src, float scalar, aclrtStream stream);
 
-class TREMSTest : public testing::Test {
+class TFMODSTest : public testing::Test {
 public:
 protected:
     void SetUp() override
@@ -37,7 +37,7 @@ std::string GetGoldenDir()
 }
 
 template <uint32_t caseId, typename T, int dstTileRow, int dstTileCol, int row, int vaildRow, int col, int srcVaildCol>
-void TREMSTestFramework()
+void TFMODSTestFramework()
 {
     aclInit(nullptr);
     aclrtSetDevice(0);
@@ -66,7 +66,7 @@ void TREMSTestFramework()
     file.read(reinterpret_cast<char *>(&scalar), 4);
     file.close();
     aclrtMemcpy(srcDevice, srcByteSize, srcHost, srcByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    launchTREMSTestCase<caseId>(dstDevice, srcDevice, scalar, stream);
+    launchTFMODSTestCase<caseId>(dstDevice, srcDevice, scalar, stream);
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstByteSize, dstDevice, dstByteSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
@@ -91,82 +91,82 @@ void TREMSTestFramework()
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TREMSTest, case1)
+TEST_F(TFMODSTest, case1)
 {
-    TREMSTestFramework<1, float, 32, 64, 32, 32, 64, 64>();
+    TFMODSTestFramework<1, float, 32, 64, 32, 32, 64, 64>();
 }
 
-TEST_F(TREMSTest, case2)
+TEST_F(TFMODSTest, case2)
 {
-    TREMSTestFramework<2, _Float16, 63, 64, 63, 63, 64, 64>();
+    TFMODSTestFramework<2, _Float16, 63, 64, 63, 63, 64, 64>();
 }
 
-TEST_F(TREMSTest, case3)
+TEST_F(TFMODSTest, case3)
 {
-    TREMSTestFramework<3, int32_t, 31, 128, 31, 31, 128, 128>();
+    TFMODSTestFramework<3, int32_t, 31, 128, 31, 31, 128, 128>();
 }
 
-TEST_F(TREMSTest, case4)
+TEST_F(TFMODSTest, case4)
 {
-    TREMSTestFramework<4, int16_t, 3, 256, 3, 3, 256, 256>();
+    TFMODSTestFramework<4, int16_t, 3, 256, 3, 3, 256, 256>();
 }
 
-TEST_F(TREMSTest, case5)
+TEST_F(TFMODSTest, case5)
 {
-    TREMSTestFramework<5, float, 7, 448, 7, 7, 448, 448>();
+    TFMODSTestFramework<5, float, 7, 448, 7, 7, 448, 448>();
 }
 
-TEST_F(TREMSTest, case6)
+TEST_F(TFMODSTest, case6)
 {
-    TREMSTestFramework<6, float, 256, 16, 256, 256, 16, 16>();
+    TFMODSTestFramework<6, float, 256, 16, 256, 256, 16, 16>();
 }
 
-TEST_F(TREMSTest, case7)
+TEST_F(TFMODSTest, case7)
 {
-    TREMSTestFramework<7, float, 32, 128, 32, 32, 64, 64>();
+    TFMODSTestFramework<7, float, 32, 128, 32, 32, 64, 64>();
 }
 
-TEST_F(TREMSTest, case8)
+TEST_F(TFMODSTest, case8)
 {
-    TREMSTestFramework<8, _Float16, 63, 128, 63, 63, 64, 64>();
+    TFMODSTestFramework<8, _Float16, 63, 128, 63, 63, 64, 64>();
 }
 
-TEST_F(TREMSTest, case9)
+TEST_F(TFMODSTest, case9)
 {
-    TREMSTestFramework<9, int32_t, 31, 256, 31, 31, 128, 128>();
+    TFMODSTestFramework<9, int32_t, 31, 256, 31, 31, 128, 128>();
 }
 
-TEST_F(TREMSTest, case10)
+TEST_F(TFMODSTest, case10)
 {
-    TREMSTestFramework<10, int16_t, 15, 192, 15, 15, 192, 192>();
+    TFMODSTestFramework<10, int16_t, 15, 192, 15, 15, 192, 192>();
 }
 
-TEST_F(TREMSTest, case11)
+TEST_F(TFMODSTest, case11)
 {
-    TREMSTestFramework<11, float, 7, 512, 7, 7, 448, 448>();
+    TFMODSTestFramework<11, float, 7, 512, 7, 7, 448, 448>();
 }
 
-TEST_F(TREMSTest, case12)
+TEST_F(TFMODSTest, case12)
 {
-    TREMSTestFramework<12, float, 256, 32, 256, 256, 16, 16>();
+    TFMODSTestFramework<12, float, 256, 32, 256, 256, 16, 16>();
 }
 
-TEST_F(TREMSTest, case13)
+TEST_F(TFMODSTest, case13)
 {
-    TREMSTestFramework<13, _Float16, 1, 8192, 1, 1, 8192, 8192>();
+    TFMODSTestFramework<13, _Float16, 1, 8192, 1, 1, 8192, 8192>();
 }
 
-TEST_F(TREMSTest, case14)
+TEST_F(TFMODSTest, case14)
 {
-    TREMSTestFramework<14, int16_t, 1, 8192, 1, 1, 8192, 8192>();
+    TFMODSTestFramework<14, int16_t, 1, 8192, 1, 1, 8192, 8192>();
 }
 
-TEST_F(TREMSTest, case15)
+TEST_F(TFMODSTest, case15)
 {
-    TREMSTestFramework<15, int32_t, 1, 8192, 1, 1, 8192, 8192>();
+    TFMODSTestFramework<15, int32_t, 1, 8192, 1, 1, 8192, 8192>();
 }
 
-TEST_F(TREMSTest, case16)
+TEST_F(TFMODSTest, case16)
 {
-    TREMSTestFramework<16, float, 1, 8192, 1, 1, 8192, 8192>();
+    TFMODSTestFramework<16, float, 1, 8192, 1, 1, 8192, 8192>();
 }
