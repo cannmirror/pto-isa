@@ -23,7 +23,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -31,12 +32,12 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, bool isInPlace = false>
 void LaunchTRsqrt(T *out, T *src, void *stream);
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, bool isInPlace = false>
-void test_trsqrt() {
+void test_trsqrt()
+{
     size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
 
     aclInit(nullptr);
@@ -96,15 +97,19 @@ void test_trsqrt() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TRSQRTTest, case_float_64x64_64x64_64x64_inPlace_True) {
+TEST_F(TRSQRTTest, case_float_64x64_64x64_64x64_inPlace_True)
+{
     test_trsqrt<float, 64, 64, 64, 64, true>();
 }
-TEST_F(TRSQRTTest, case_float_64x64_64x64_64x64_inPlace_False) {
+TEST_F(TRSQRTTest, case_float_64x64_64x64_64x64_inPlace_False)
+{
     test_trsqrt<float, 64, 64, 64, 64, false>();
 }
-TEST_F(TRSQRTTest, case_half_64x64_64x64_64x64_inPlace_True) {
+TEST_F(TRSQRTTest, case_half_64x64_64x64_64x64_inPlace_True)
+{
     test_trsqrt<aclFloat16, 64, 64, 64, 64, true>();
 }
-TEST_F(TRSQRTTest, case_half_64x64_64x64_64x64_inPlace_False) {
+TEST_F(TRSQRTTest, case_half_64x64_64x64_64x64_inPlace_False)
+{
     test_trsqrt<aclFloat16, 64, 64, 64, 64, false>();
 }

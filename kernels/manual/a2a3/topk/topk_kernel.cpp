@@ -55,8 +55,8 @@ PTO_INTERNAL void SortTailBlock(DstTileData &dstTile, SrcTileData &srcTile, int 
         TASSIGN(src0Tile, (uint64_t)srcTile.data());
         TASSIGN(src1Tile, (uint64_t)srcTile.data() + mrgSortedLen * sizeof(T));
         TASSIGN(curDstTile, (uint64_t)srcTile.data());
-        TMRGSORT<DstTileData, TmpTileData, SrcTileData, SrcTileData, 0>(
-            curDstTile, executedNumList, tmp1Tile, src0Tile, src1Tile);
+        TMRGSORT<DstTileData, TmpTileData, SrcTileData, SrcTileData, 0>(curDstTile, executedNumList, tmp1Tile, src0Tile,
+                                                                        src1Tile);
         pipe_barrier(PIPE_V);
     }
 }
@@ -97,7 +97,7 @@ PTO_INTERNAL void MrgsortSingleRow(DstTileData &dstTile, SrcTileData &srcTile, u
 }
 
 template <typename T, typename DstTileData, typename SrcTileData, typename RowTile, int kTRows_, int kTCols_,
-    int validRow, int validCol, int topk>
+          int validRow, int validCol, int topk>
 PTO_INTERNAL void MrgsortSingleTile(DstTileData &dstTile, SrcTileData &srcTile, uint64_t tmpAddr)
 {
     for (int i = 0; i < validRow; i++) {
@@ -109,8 +109,8 @@ PTO_INTERNAL void MrgsortSingleTile(DstTileData &dstTile, SrcTileData &srcTile, 
     }
 }
 
-template <typename T, typename DstTileData, typename SrcTileData, typename IdxTileData, typename RowTile, int kTRows_, int kTCols_,
-    int validRow, int validCol>
+template <typename T, typename DstTileData, typename SrcTileData, typename IdxTileData, typename RowTile, int kTRows_,
+          int kTCols_, int validRow, int validCol>
 PTO_INTERNAL void SortEachGroup(DstTileData &dst, SrcTileData &src, IdxTileData &inIdx)
 {
     using indexT = uint32_t;
@@ -157,7 +157,7 @@ PTO_INTERNAL void ExtractDataOrIndex(DstTileData &dstTile, SrcTileData &srcTile)
 }
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
-    int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk, int blockDim>
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk, int blockDim>
 AICORE inline void runTOPK(__gm__ T *origOut, __gm__ uint32_t *origIndex, __gm__ T *origSrc, __gm__ uint32_t *origInIdx)
 {
     using indexT = uint32_t;
@@ -251,13 +251,13 @@ AICORE inline void runTOPK(__gm__ T *origOut, __gm__ uint32_t *origIndex, __gm__
         wait_flag(PIPE_MTE2, PIPE_V, (event_t)cur);
 
         SortEachGroup<T, DstTileData, SrcTileData, IndexTileData, SingleRowTileData, singleLoopRow, validCol,
-            singleLoopRow, validCol>(sort32DstTile[cur], srcTile[cur], indexTile);
+                      singleLoopRow, validCol>(sort32DstTile[cur], srcTile[cur], indexTile);
 
         set_flag(PIPE_V, PIPE_MTE2, EVENT_ID0); // reverse 0
 
         pipe_barrier(PIPE_V);
         MrgsortSingleTile<T, DstTileData, DstTileData, SingleRowTileData, singleLoopRow, dstCols, singleLoopRow,
-            dstCols, topk * 2 * TYPE_COEF>(mrgDstTile[cur], sort32DstTile[cur], tmpAddr);
+                          dstCols, topk * 2 * TYPE_COEF>(mrgDstTile[cur], sort32DstTile[cur], tmpAddr);
 
         pipe_barrier(PIPE_V);
         ExtractDataOrIndex<T, DstDataTileData, DstTileData, SingleRowTileData, 0>(dTile[cur], mrgDstTile[cur]);
@@ -282,13 +282,13 @@ AICORE inline void runTOPK(__gm__ T *origOut, __gm__ uint32_t *origIndex, __gm__
         wait_flag(PIPE_MTE2, PIPE_V, (event_t)next);
 
         SortEachGroup<T, DstTileData, SrcTileData, IndexTileData, SingleRowTileData, singleLoopRow, validCol,
-            singleLoopRow, validCol>(sort32DstTile[next], srcTile[next], indexTile);
+                      singleLoopRow, validCol>(sort32DstTile[next], srcTile[next], indexTile);
 
         set_flag(PIPE_V, PIPE_MTE2, EVENT_ID1); // reverse 1
 
         pipe_barrier(PIPE_V);
         MrgsortSingleTile<T, DstTileData, DstTileData, SingleRowTileData, singleLoopRow, dstCols, singleLoopRow,
-            dstCols, topk * 2 * TYPE_COEF>(mrgDstTile[next], sort32DstTile[next], nextTmpAddr);
+                          dstCols, topk * 2 * TYPE_COEF>(mrgDstTile[next], sort32DstTile[next], nextTmpAddr);
 
         pipe_barrier(PIPE_V);
         ExtractDataOrIndex<T, DstDataTileData, DstTileData, SingleRowTileData, 0>(dTile[next], mrgDstTile[next]);
@@ -309,20 +309,20 @@ AICORE inline void runTOPK(__gm__ T *origOut, __gm__ uint32_t *origIndex, __gm__
 }
 
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
-    int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk, int blockDim>
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk, int blockDim>
 __global__ AICORE void Topk(__gm__ uint8_t *out, __gm__ uint8_t *index, __gm__ uint8_t *src, __gm__ uint8_t *inIdx)
 {
     using indexT = uint32_t;
     if constexpr (std::is_same_v<T, uint16_t>) {
-        runTOPK<half, gShape0, gShape1, gShape2, gShape3, gShape4,
-            gWholeShape0, gWholeShape1, gWholeShape2, gWholeShape3, gWholeShape4,
-            topk, blockDim>(reinterpret_cast<__gm__ half *>(out),
-            reinterpret_cast<__gm__ indexT *>(index), reinterpret_cast<__gm__ half *>(src), reinterpret_cast<__gm__ indexT *>(inIdx));
+        runTOPK<half, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+                gWholeShape3, gWholeShape4, topk, blockDim>(
+            reinterpret_cast<__gm__ half *>(out), reinterpret_cast<__gm__ indexT *>(index),
+            reinterpret_cast<__gm__ half *>(src), reinterpret_cast<__gm__ indexT *>(inIdx));
     } else {
-        runTOPK<float, gShape0, gShape1, gShape2, gShape3, gShape4,
-            gWholeShape0, gWholeShape1, gWholeShape2, gWholeShape3, gWholeShape4,
-            topk, blockDim>(reinterpret_cast<__gm__ float *>(out),
-            reinterpret_cast<__gm__ indexT *>(index), reinterpret_cast<__gm__ float *>(src), reinterpret_cast<__gm__ indexT *>(inIdx));
+        runTOPK<float, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+                gWholeShape3, gWholeShape4, topk, blockDim>(
+            reinterpret_cast<__gm__ float *>(out), reinterpret_cast<__gm__ indexT *>(index),
+            reinterpret_cast<__gm__ float *>(src), reinterpret_cast<__gm__ indexT *>(inIdx));
     }
 }
 
@@ -335,8 +335,8 @@ void launchTopk(uint8_t *out, uint8_t *index, uint8_t *src, uint8_t *inIdx, void
     constexpr int gWholeShape3 = 4800;
     constexpr int gWholeShape4 = 1280;
     constexpr int topk = 1000;
-    Topk<T, 1, 1, 1, gShape3, gShape4, 1, 1, 1, gWholeShape3, gWholeShape4,
-        topk, blockDim><<<blockDim, nullptr, stream>>>(out, index, src, inIdx);
+    Topk<T, 1, 1, 1, gShape3, gShape4, 1, 1, 1, gWholeShape3, gWholeShape4, topk, blockDim>
+        <<<blockDim, nullptr, stream>>>(out, index, src, inIdx);
 }
 
 template void launchTopk<float>(uint8_t *out, uint8_t *index, uint8_t *src, uint8_t *inIdx, void *stream);

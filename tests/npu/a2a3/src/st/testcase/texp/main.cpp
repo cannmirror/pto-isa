@@ -23,7 +23,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -31,12 +32,12 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, bool isInPlace = false>
 void LaunchTExp(T *out, T *src, void *stream);
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, bool isInPlace = false>
-void test_texp() {
+void test_texp()
+{
     size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
 
     aclInit(nullptr);
@@ -88,15 +89,19 @@ void test_texp() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TEXPTest, case_float_64x64_64x64_64x64_inPlace_True) {
+TEST_F(TEXPTest, case_float_64x64_64x64_64x64_inPlace_True)
+{
     test_texp<float, 64, 64, 64, 64, true>();
 }
-TEST_F(TEXPTest, case_float_64x64_64x64_64x64_inPlace_False) {
+TEST_F(TEXPTest, case_float_64x64_64x64_64x64_inPlace_False)
+{
     test_texp<float, 64, 64, 64, 64, false>();
 }
-TEST_F(TEXPTest, case_half_64x64_64x64_64x64_inPlace_True) {
+TEST_F(TEXPTest, case_half_64x64_64x64_64x64_inPlace_True)
+{
     test_texp<aclFloat16, 64, 64, 64, 64, true>();
 }
-TEST_F(TEXPTest, case_half_64x64_64x64_64x64_inPlace_False) {
+TEST_F(TEXPTest, case_half_64x64_64x64_64x64_inPlace_False)
+{
     test_texp<aclFloat16, 64, 64, 64, 64, false>();
 }

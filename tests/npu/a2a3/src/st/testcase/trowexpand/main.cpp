@@ -16,7 +16,7 @@ using namespace std;
 using namespace PtoTestCommon;
 
 template <typename T, int rows, int src_col, int src_validCol, int dst_col, int dst_validCol>
-void launchTROWEXPAND(T *out, T *src,void *stream);
+void launchTROWEXPAND(T *out, T *src, void *stream);
 
 class TROWEXPANDTest : public testing::Test {
 protected:
@@ -26,7 +26,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -100,7 +101,6 @@ TEST_F(TROWEXPANDTest, case2)
     bool ret = TRowExpandFramework<uint32_t, 16, 8, 1, 128, 128>();
     EXPECT_TRUE(ret);
 }
-
 
 TEST_F(TROWEXPANDTest, case3)
 {

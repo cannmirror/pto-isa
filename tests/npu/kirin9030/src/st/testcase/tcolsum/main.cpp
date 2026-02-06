@@ -18,7 +18,8 @@ using namespace PtoTestCommon;
 template <uint32_t caseId>
 void launchTCOLSUMTestCase(void *out, void *src, aclrtStream stream);
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();

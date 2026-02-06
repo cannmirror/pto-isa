@@ -35,8 +35,10 @@ void LaunchTStoreAcc2gmVectorNz2nz(uint8_t *out, uint8_t *src0, uint8_t *src1, u
 
 class TStoreAcc2gmTest : public testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
 std::string GetGoldenDir()

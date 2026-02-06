@@ -25,7 +25,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -33,12 +34,12 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-
 template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
 void LaunchTShr(T *out, T *src0, T *src1, void *stream);
 
-template<typename T, int kTRows_, int kTCols_, int vRows, int vCols>
-void test_tshr() {
+template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
+void test_tshr()
+{
     size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
 
     aclInit(nullptr);
@@ -90,38 +91,47 @@ void test_tshr() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TSHRTest, case1) {
+TEST_F(TSHRTest, case1)
+{
     test_tshr<uint16_t, 64, 64, 64, 64>();
 }
 
-TEST_F(TSHRTest, case2) {
+TEST_F(TSHRTest, case2)
+{
     test_tshr<uint16_t, 64, 64, 63, 63>();
 }
 
-TEST_F(TSHRTest, case3) {
+TEST_F(TSHRTest, case3)
+{
     test_tshr<uint16_t, 1, 16384, 1, 16384>();
 }
 
-TEST_F(TSHRTest, case4) {
+TEST_F(TSHRTest, case4)
+{
     test_tshr<uint16_t, 2048, 16, 2048, 16>();
 }
 
-TEST_F(TSHRTest, case5) {
+TEST_F(TSHRTest, case5)
+{
     test_tshr<uint8_t, 32, 32, 32, 32>();
 }
 
-TEST_F(TSHRTest, case6) {
+TEST_F(TSHRTest, case6)
+{
     test_tshr<uint32_t, 8, 8, 8, 8>();
 }
 
-TEST_F(TSHRTest, case7) {
+TEST_F(TSHRTest, case7)
+{
     test_tshr<int8_t, 32, 32, 32, 32>();
 }
 
-TEST_F(TSHRTest, case8) {
+TEST_F(TSHRTest, case8)
+{
     test_tshr<int16_t, 16, 16, 16, 16>();
 }
 
-TEST_F(TSHRTest, case9) {
+TEST_F(TSHRTest, case9)
+{
     test_tshr<int32_t, 8, 8, 8, 8>();
 }

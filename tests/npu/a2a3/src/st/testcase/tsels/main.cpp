@@ -23,7 +23,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -34,8 +35,9 @@ std::string GetGoldenDir() {
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void LaunchTSels(T *out, T *src0, T *src1, uint8_t selectMode, void *stream);
 
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
-void test_tsels() {
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
+void test_tsels()
+{
     size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
     size_t scalarFileSize = sizeof(uint8_t);
 
@@ -93,33 +95,43 @@ void test_tsels() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TSELSTest, case_float_64x64_64x64_64x64) {
+TEST_F(TSELSTest, case_float_64x64_64x64_64x64)
+{
     test_tsels<float, 64, 64, 64, 64>();
 }
-TEST_F(TSELSTest, case_float_16x256_16x256_16x256) {
+TEST_F(TSELSTest, case_float_16x256_16x256_16x256)
+{
     test_tsels<float, 16, 256, 16, 256>();
 }
-TEST_F(TSELSTest, case_float_2x128_2x128_2x128) {
+TEST_F(TSELSTest, case_float_2x128_2x128_2x128)
+{
     test_tsels<float, 2, 128, 2, 128>();
 }
-TEST_F(TSELSTest, case_float_2x32_2x32_2x32) {
+TEST_F(TSELSTest, case_float_2x32_2x32_2x32)
+{
     test_tsels<float, 2, 32, 2, 32>();
 }
-TEST_F(TSELSTest, case_float_2x160_2x160_2x160) {
+TEST_F(TSELSTest, case_float_2x160_2x160_2x160)
+{
     test_tsels<float, 2, 160, 2, 160>();
 }
-TEST_F(TSELSTest, case_half_64x64_64x64_64x64) {
+TEST_F(TSELSTest, case_half_64x64_64x64_64x64)
+{
     test_tsels<aclFloat16, 64, 64, 64, 64>();
 }
-TEST_F(TSELSTest, case_half_16x256_16x256_16x256) {
+TEST_F(TSELSTest, case_half_16x256_16x256_16x256)
+{
     test_tsels<aclFloat16, 16, 256, 16, 256>();
 }
-TEST_F(TSELSTest, case_half_2x128_2x128_2x128) {
+TEST_F(TSELSTest, case_half_2x128_2x128_2x128)
+{
     test_tsels<aclFloat16, 2, 128, 2, 128>();
 }
-TEST_F(TSELSTest, case_half_2x32_2x32_2x32) {
+TEST_F(TSELSTest, case_half_2x32_2x32_2x32)
+{
     test_tsels<aclFloat16, 2, 32, 2, 32>();
 }
-TEST_F(TSELSTest, case_half_2x160_2x160_2x160) {
+TEST_F(TSELSTest, case_half_2x160_2x160_2x160)
+{
     test_tsels<aclFloat16, 2, 160, 2, 160>();
 }

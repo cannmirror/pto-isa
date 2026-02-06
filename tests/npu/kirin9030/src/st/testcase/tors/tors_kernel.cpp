@@ -15,7 +15,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
-__global__ AICORE void runTorS( __gm__ T __out__ *out, __gm__ T __in__ *src0,  T src1) {
+__global__ AICORE void runTorS(__gm__ T __out__ *out, __gm__ T __in__ *src0, T src1)
+{
     using DynShapeDim5 = Shape<1, 1, 1, vRows, vCols>;
     using DynStridDim5 = pto::Stride<1, 1, 1, vCols, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;

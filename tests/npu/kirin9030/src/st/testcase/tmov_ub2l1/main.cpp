@@ -16,9 +16,9 @@ using namespace std;
 using namespace PtoTestCommon;
 
 template <int32_t testKey>
-void launchTmovUb2l1(uint64_t *out, uint64_t *src, void* stream);
+void launchTmovUb2l1(uint64_t *out, uint64_t *src, void *stream);
 
-class TMovUb2l1Test : public testing::Test{
+class TMovUb2l1Test : public testing::Test {
 protected:
     void SetUp() override
     {}
@@ -26,7 +26,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -46,10 +47,10 @@ void testTMovUb2L1(int32_t srcRows, int32_t srcCols, int32_t dstRows, int32_t ds
     size_t dstByteSize = dstRows * dstCols * sizeof(dType);
     uint64_t *dstHost, *srcHost, *dstDevice, *srcDevice;
 
-    aclrtMallocHost((void**)(&dstHost), dstByteSize);
-    aclrtMallocHost((void**)(&srcHost), srcByteSize);
-    aclrtMalloc((void**)&dstDevice, dstByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void**)&srcDevice, srcByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMallocHost((void **)(&dstHost), dstByteSize);
+    aclrtMallocHost((void **)(&srcHost), srcByteSize);
+    aclrtMalloc((void **)&dstDevice, dstByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, srcByteSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     ReadFile(GetGoldenDir() + "/input_arr.bin", srcByteSize, srcHost, srcByteSize);
     aclrtMemcpy(srcDevice, srcByteSize, srcHost, srcByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
@@ -58,7 +59,7 @@ void testTMovUb2L1(int32_t srcRows, int32_t srcCols, int32_t dstRows, int32_t ds
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstByteSize, dstDevice, dstByteSize, ACL_MEMCPY_DEVICE_TO_HOST);
-    WriteFile(GetGoldenDir()+"/output.bin", dstHost, dstByteSize);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstByteSize);
 
     aclrtFree(dstDevice);
     aclrtFree(srcDevice);

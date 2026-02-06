@@ -15,7 +15,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol, bool isInPlace>
-__global__ AICORE void runTRsqrt( __gm__ T __out__ *out, __gm__ T __in__ *src) {
+__global__ AICORE void runTRsqrt(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
     using DynShapeDim5 = Shape<1, 1, 1, validRow, validCol>;
     using DstGlobalData = GlobalTensor<T, DynShapeDim5, pto::Stride<1, 1, dstRow, dstCol, 1>>;
     using SrcGlobalData = GlobalTensor<T, DynShapeDim5, pto::Stride<1, 1, srcRow, srcCol, 1>>;
@@ -41,10 +42,10 @@ __global__ AICORE void runTRsqrt( __gm__ T __out__ *out, __gm__ T __in__ *src) {
 template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol, bool isInPlace>
 void LaunchTRsqrt(T *out, T *src, void *stream)
 {
-    if constexpr ( std::is_same_v<T, aclFloat16> )
+    if constexpr (std::is_same_v<T, aclFloat16>)
         runTRsqrt<half, dstRow, dstCol, srcRow, srcCol, validRow, validCol, isInPlace>
-            <<<1, nullptr, stream>>>((half*)(out), (half*)(src));
-    else 
+            <<<1, nullptr, stream>>>((half *)(out), (half *)(src));
+    else
         runTRsqrt<T, dstRow, dstCol, srcRow, srcCol, validRow, validCol, isInPlace><<<1, nullptr, stream>>>(out, src);
 }
 

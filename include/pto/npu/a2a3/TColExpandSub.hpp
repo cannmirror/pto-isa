@@ -17,30 +17,36 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-    template <typename T> struct ColExpandSubOp {
-        PTO_INTERNAL static void ColExpandBinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats) {
-            vsub(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
-        }
-        PTO_INTERNAL static void ColExpandBinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
-            uint8_t dstRepeatStride, uint8_t src0RepeatStride, uint8_t src1RepeatStride) {
-            vsub(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, 0);
-        }
-    };
-
-    template <typename TileData, typename TileDataSrc>
-    PTO_INTERNAL void TCOLEXPANDSUB_IMPL(TileData &dst, TileData &src0, TileDataSrc &src1) {
-        using T = typename TileData::DType;
-        static_assert(std::is_same<typename TileData::DType, float>::value ||
-                      std::is_same<typename TileData::DType, half>::value,
-                      "Fix: TCOLEXPANDSUB Invalid data type.");
-        static_assert(TileData::isRowMajor, "Fix: TCOLEXPANDSUB not supported Layout type");
-        constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType); 
-        constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType); 
-        constexpr unsigned rowStride = TileData::RowStride;
-        unsigned validRow = dst.GetValidRow();
-        unsigned validCol = dst.GetValidCol();
-
-        ColExpandBinaryInstr<ColExpandSubOp<T>, TileData, TileDataSrc, elementsPerRepeat, blockSizeElem, rowStride>(dst.data(), src0.data(), src1.data(), validRow, validCol);
+template <typename T>
+struct ColExpandSubOp {
+    PTO_INTERNAL static void ColExpandBinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
+    {
+        vsub(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
     }
+    PTO_INTERNAL static void ColExpandBinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
+                                               uint8_t dstRepeatStride, uint8_t src0RepeatStride,
+                                               uint8_t src1RepeatStride)
+    {
+        vsub(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, 0);
+    }
+};
+
+template <typename TileData, typename TileDataSrc>
+PTO_INTERNAL void TCOLEXPANDSUB_IMPL(TileData &dst, TileData &src0, TileDataSrc &src1)
+{
+    using T = typename TileData::DType;
+    static_assert(
+        std::is_same<typename TileData::DType, float>::value || std::is_same<typename TileData::DType, half>::value,
+        "Fix: TCOLEXPANDSUB Invalid data type.");
+    static_assert(TileData::isRowMajor, "Fix: TCOLEXPANDSUB not supported Layout type");
+    constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
+    constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
+    constexpr unsigned rowStride = TileData::RowStride;
+    unsigned validRow = dst.GetValidRow();
+    unsigned validCol = dst.GetValidCol();
+
+    ColExpandBinaryInstr<ColExpandSubOp<T>, TileData, TileDataSrc, elementsPerRepeat, blockSizeElem, rowStride>(
+        dst.data(), src0.data(), src1.data(), validRow, validCol);
+}
 } // namespace pto
 #endif

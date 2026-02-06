@@ -18,7 +18,8 @@ constexpr uint32_t M = 512;
 constexpr uint32_t K = 2048;
 constexpr uint32_t N = 1536;
 
-at::Tensor run_gemm_basic_custom(const at::Tensor &a, const at::Tensor &b_dn) {
+at::Tensor run_gemm_basic_custom(const at::Tensor &a, const at::Tensor &b_dn)
+{
     TORCH_CHECK(a.device().type() == DEVICE_TYPE, "a must be a NPU tensor (PrivateUse1)");
     TORCH_CHECK(b_dn.device().type() == DEVICE_TYPE, "b_dn must be a NPU tensor (PrivateUse1)");
     TORCH_CHECK(a.scalar_type() == at::kHalf, "a must be float16");
@@ -38,14 +39,15 @@ at::Tensor run_gemm_basic_custom(const at::Tensor &a, const at::Tensor &b_dn) {
 } // namespace pto_path
 
 namespace {
-TORCH_LIBRARY_FRAGMENT(npu, m) {
+TORCH_LIBRARY_FRAGMENT(npu, m)
+{
     m.def("pto_gemm_basic(Tensor a, Tensor b_dn) -> Tensor");
 }
 } // namespace
 
 namespace {
-TORCH_LIBRARY_IMPL(npu, PrivateUse1, m) {
+TORCH_LIBRARY_IMPL(npu, PrivateUse1, m)
+{
     m.impl("pto_gemm_basic", TORCH_FN(pto_path::run_gemm_basic_custom));
 }
 } // namespace
-

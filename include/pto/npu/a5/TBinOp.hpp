@@ -18,10 +18,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename Op, typename T, unsigned ElementsPerRepeat, unsigned BlockSizeElem>
-PTO_INTERNAL void TBinOps_1D_NoPostUpdate(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRows, unsigned validCols) {
+PTO_INTERNAL void TBinOps_1D_NoPostUpdate(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
+                                          unsigned validRows, unsigned validCols)
+{
     uint16_t repeatTimes = CeilDivision(validRows * validCols, ElementsPerRepeat);
-    __VEC_SCOPE__ {
+    __VEC_SCOPE__
+    {
         RegTensor<T> vreg0, vreg1, vreg2;
         MaskReg preg;
 
@@ -39,10 +41,12 @@ PTO_INTERNAL void TBinOps_1D_NoPostUpdate(
 }
 
 template <typename Op, typename T, unsigned ElementsPerRepeat, unsigned BlockSizeElem>
-PTO_INTERNAL void TBinOps_1D_PostUpdate(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRows, unsigned validCols) {
+PTO_INTERNAL void TBinOps_1D_PostUpdate(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
+                                        unsigned validRows, unsigned validCols)
+{
     uint16_t repeatTimes = CeilDivision(validRows * validCols, ElementsPerRepeat);
-    __VEC_SCOPE__ {
+    __VEC_SCOPE__
+    {
         RegTensor<T> vreg0_PU, vreg1_PU, vreg2_PU;
         MaskReg preg;
 
@@ -60,12 +64,14 @@ PTO_INTERNAL void TBinOps_1D_PostUpdate(
 }
 
 template <typename Op, typename T, unsigned ElementsPerRepeat, unsigned BlockSizeElem, unsigned DstRowStride,
-    unsigned Src0RowStride = DstRowStride, unsigned Src1RowStride = DstRowStride>
-PTO_INTERNAL void TBinOps_2D_NoPostUpdate(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRows, unsigned validCols) {
+          unsigned Src0RowStride = DstRowStride, unsigned Src1RowStride = DstRowStride>
+PTO_INTERNAL void TBinOps_2D_NoPostUpdate(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
+                                          unsigned validRows, unsigned validCols)
+{
     uint16_t repeatTimes = CeilDivision(validCols, ElementsPerRepeat);
 
-    __VEC_SCOPE__ {
+    __VEC_SCOPE__
+    {
         RegTensor<T> vreg0, vreg1, vreg2;
         MaskReg preg;
         constexpr auto distValue =
@@ -84,12 +90,14 @@ PTO_INTERNAL void TBinOps_2D_NoPostUpdate(
 }
 
 template <typename Op, typename T, unsigned ElementsPerRepeat, unsigned BlockSizeElem, unsigned DstRowStride,
-    unsigned Src0RowStride = DstRowStride, unsigned Src1RowStride = DstRowStride>
-PTO_INTERNAL void TBinOps_2D_PostUpdate(
-    __ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, unsigned validRows, unsigned validCols) {
+          unsigned Src0RowStride = DstRowStride, unsigned Src1RowStride = DstRowStride>
+PTO_INTERNAL void TBinOps_2D_PostUpdate(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr,
+                                        unsigned validRows, unsigned validCols)
+{
     uint16_t repeatTimes = CeilDivision(validCols, ElementsPerRepeat);
 
-    __VEC_SCOPE__ {
+    __VEC_SCOPE__
+    {
         RegTensor<T> vreg0_PU, vreg1_PU, vreg2_PU;
         MaskReg preg;
         constexpr auto distValue =
@@ -109,16 +117,17 @@ PTO_INTERNAL void TBinOps_2D_PostUpdate(
 }
 
 template <typename Op, typename T, unsigned ElementsPerRepeat, unsigned BlockSizeElem, unsigned DstRowStride,
-    unsigned Src0RowStride, unsigned Src1RowStride>
-PTO_INTERNAL void TBinOp1DSwitch(
-    __ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, unsigned validRows, unsigned validCols, VFImplKind version) {
+          unsigned Src0RowStride, unsigned Src1RowStride>
+PTO_INTERNAL void TBinOp1DSwitch(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, unsigned validRows,
+                                 unsigned validCols, VFImplKind version)
+{
     switch (version) {
         case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
             TBinOps_1D_NoPostUpdate<Op, T, ElementsPerRepeat, BlockSizeElem>(dst, src0, src1, validRows, validCols);
             break;
         case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
             TBinOps_2D_NoPostUpdate<Op, T, ElementsPerRepeat, BlockSizeElem, DstRowStride, Src0RowStride,
-                Src1RowStride>(dst, src0, src1, validRows, validCols);
+                                    Src1RowStride>(dst, src0, src1, validRows, validCols);
             break;
         case VFImplKind::VFIMPL_2D_POST_UPDATE:
             TBinOps_2D_PostUpdate<Op, T, ElementsPerRepeat, BlockSizeElem, DstRowStride, Src0RowStride, Src1RowStride>(
@@ -133,14 +142,15 @@ PTO_INTERNAL void TBinOp1DSwitch(
 }
 
 template <typename Op, typename T, unsigned ElementsPerRepeat, unsigned BlockSizeElem, unsigned DstRowStride,
-    unsigned Src0RowStride, unsigned Src1RowStride>
-PTO_INTERNAL void TBinOp2DSwitch(
-    __ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, unsigned validRows, unsigned validCols, VFImplKind version) {
+          unsigned Src0RowStride, unsigned Src1RowStride>
+PTO_INTERNAL void TBinOp2DSwitch(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, unsigned validRows,
+                                 unsigned validCols, VFImplKind version)
+{
     switch (version) {
         case VFImplKind::VFIMPL_1D_NO_POST_UPDATE:
         case VFImplKind::VFIMPL_2D_NO_POST_UPDATE:
             TBinOps_2D_NoPostUpdate<Op, T, ElementsPerRepeat, BlockSizeElem, DstRowStride, Src0RowStride,
-                Src1RowStride>(dst, src0, src1, validRows, validCols);
+                                    Src1RowStride>(dst, src0, src1, validRows, validCols);
             break;
         case VFImplKind::VFIMPL_1D_POST_UPDATE:
         case VFImplKind::VFIMPL_2D_POST_UPDATE:
@@ -150,23 +160,25 @@ PTO_INTERNAL void TBinOp2DSwitch(
         case VFImplKind::VFIMPL_DEFAULT:
         default:
             TBinOps_2D_NoPostUpdate<Op, T, ElementsPerRepeat, BlockSizeElem, DstRowStride, Src0RowStride,
-                Src1RowStride>(dst, src0, src1, validRows, validCols);
+                                    Src1RowStride>(dst, src0, src1, validRows, validCols);
             break;
     }
 }
 
 // implement the template for tileshape of src0, src1 and dst are different
 template <typename Op, typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned ElementsPerRepeat,
-    unsigned BlockSizeElem>
+          unsigned BlockSizeElem>
 PTO_INTERNAL void BinaryInstr(__ubuf__ typename TileDataDst::DType *dst, __ubuf__ typename TileDataSrc0::DType *src0,
-    __ubuf__ typename TileDataSrc1::DType *src1, unsigned validRows, unsigned validCols, VFImplKind version) {
+                              __ubuf__ typename TileDataSrc1::DType *src1, unsigned validRows, unsigned validCols,
+                              VFImplKind version)
+{
     using T = typename TileDataDst::DType;
     constexpr unsigned dstRowStride = TileDataDst::RowStride;
     constexpr unsigned src0RowStride = TileDataSrc0::RowStride;
     constexpr unsigned src1RowStride = TileDataSrc1::RowStride;
     constexpr bool isContiguous =
         (((TileDataDst::ValidCol == TileDataDst::Cols) && (TileDataSrc0::ValidCol == TileDataSrc0::Cols)) &&
-            (TileDataSrc1::ValidCol == TileDataSrc1::Cols)) ||
+         (TileDataSrc1::ValidCol == TileDataSrc1::Cols)) ||
         ((TileDataDst::Rows == 1) && (TileDataSrc0::Rows == 1) && (TileDataSrc1::Rows == 1));
 
     if constexpr (isContiguous) {

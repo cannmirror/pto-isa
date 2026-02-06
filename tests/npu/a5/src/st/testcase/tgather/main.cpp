@@ -23,13 +23,16 @@ void launchTGATHER_demo_int16(int16_t *out, int16_t *src0, int16_t *src1, aclrtS
 constexpr int HALF_SIZE = 2;
 constexpr int QUARTER_SIZE = 4;
 
-template <typename srcT, typename dstT, int kGRows_, int kGCols_, int kTRows_, int kTCols_, pto::MaskPattern maskPattern>
+template <typename srcT, typename dstT, int kGRows_, int kGCols_, int kTRows_, int kTCols_,
+          pto::MaskPattern maskPattern>
 void LaunchTGATHER(dstT *out, srcT *src, void *stream);
 
 class TGATHERTest : public testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
 std::string GetGoldenDir()

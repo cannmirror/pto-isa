@@ -36,10 +36,10 @@ std::string GetGoldenDir()
 }
 
 template <int32_t key, typename T, typename U>
-void timg2col_test(uint32_t FMN, uint32_t FMC1, uint32_t FMH, uint32_t FMW, uint32_t FMC0,
-        uint32_t FTC1, uint32_t FTH, uint32_t FTW, uint32_t FTN, uint32_t FTC0,
-        uint8_t dilationH = 1, uint8_t dilationW = 1, uint8_t strideH = 1, uint8_t strideW = 1,
-        uint8_t padTop = 1, uint8_t padBottom = 1, uint8_t padLeft = 1, uint8_t padRight = 1)
+void timg2col_test(uint32_t FMN, uint32_t FMC1, uint32_t FMH, uint32_t FMW, uint32_t FMC0, uint32_t FTC1, uint32_t FTH,
+                   uint32_t FTW, uint32_t FTN, uint32_t FTC0, uint8_t dilationH = 1, uint8_t dilationW = 1,
+                   uint8_t strideH = 1, uint8_t strideW = 1, uint8_t padTop = 1, uint8_t padBottom = 1,
+                   uint8_t padLeft = 1, uint8_t padRight = 1)
 {
     uint32_t heightOut = 0;
     uint32_t widthOut = 0;
@@ -106,10 +106,10 @@ void timg2col_test(uint32_t FMN, uint32_t FMC1, uint32_t FMH, uint32_t FMW, uint
     EXPECT_TRUE(ret);
 }
 template <int32_t key, typename T, typename U>
-void timg2col_test_fractal4d(uint32_t FMN, uint32_t FMC1, uint32_t FMH, uint32_t FMW, uint32_t FMC0,
-        uint32_t FTDIM3, uint32_t FTDIM2, uint32_t FTDIM1, uint32_t FTDIM0, uint32_t FTH, uint32_t FTW,
-        uint8_t dilationH = 1, uint8_t dilationW = 1, uint8_t strideH = 1, uint8_t strideW = 1,
-        uint8_t padTop = 1, uint8_t padBottom = 1, uint8_t padLeft = 1, uint8_t padRight = 1)
+void timg2col_test_fractal4d(uint32_t FMN, uint32_t FMC1, uint32_t FMH, uint32_t FMW, uint32_t FMC0, uint32_t FTDIM3,
+                             uint32_t FTDIM2, uint32_t FTDIM1, uint32_t FTDIM0, uint32_t FTH, uint32_t FTW,
+                             uint8_t dilationH = 1, uint8_t dilationW = 1, uint8_t strideH = 1, uint8_t strideW = 1,
+                             uint8_t padTop = 1, uint8_t padBottom = 1, uint8_t padLeft = 1, uint8_t padRight = 1)
 {
     uint32_t widthOut = 0;
     uint32_t heightOut = 0;
@@ -207,7 +207,7 @@ TEST_F(TIMG2COLTest, case8_int8_splitk)
 {
     timg2col_test<8, int32_t, int8_t>(1, 2, 29, 60, 32, 2, 2, 2, 64, 32, 2, 2, 2, 2, 1, 1, 1, 0);
 }
-TEST_F(TIMG2COLTest, case9_bfloat16_fractalZ4d)//C1HWNC0  -->C1HW  N/ 16 16 C0
+TEST_F(TIMG2COLTest, case9_bfloat16_fractalZ4d) // C1HWNC0  -->C1HW  N/ 16 16 C0
 {
     timg2col_test_fractal4d<9, float, uint16_t>(1, 4, 13, 57, 16, 36, 3, 16, 16, 3, 3, 2, 2, 2, 2, 1, 2, 1, 2);
 }

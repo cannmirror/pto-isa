@@ -16,7 +16,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int dstTRows, int dstTCols, int srcTRows, int srcTCols>
-__global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols) {
+__global__ AICORE void runTTRANS(__gm__ T __out__ *out, __gm__ T __in__ *src, int vRows, int vCols)
+{
     using DynShapeSrc = pto::Shape<-1, -1, -1, -1, -1>;
     using DynStrideSrc = pto::Stride<-1, -1, -1, -1, -1>;
     using GlobalDataSrc = GlobalTensor<T, DynShapeSrc, DynStrideSrc>;
@@ -58,8 +59,8 @@ void LaunchTTRANS(T *out, T *src, void *stream)
 template <int dstTRows, int dstTCols, int srcTRows, int srcTCols, int vRows, int vCols>
 void LaunchTTRANSHalf(aclFloat16 *out, aclFloat16 *src, void *stream)
 {
-    runTTRANS<half, dstTRows, dstTCols, srcTRows, srcTCols><<<1, nullptr, stream>>>
-        ((half *)(out), (half *)(src), vRows, vCols);
+    runTTRANS<half, dstTRows, dstTCols, srcTRows, srcTCols>
+        <<<1, nullptr, stream>>>((half *)(out), (half *)(src), vRows, vCols);
 }
 
 template void LaunchTTRANS<float, 8, 8, 2, 8, 2, 8>(float *out, float *src, void *stream);

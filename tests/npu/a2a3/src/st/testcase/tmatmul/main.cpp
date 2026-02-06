@@ -23,14 +23,18 @@ void LaunchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2
 
 class TMATMULTest : public testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
 class TMATMULBIASTest : public testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
 std::string GetGoldenDir()

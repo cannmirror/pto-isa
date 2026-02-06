@@ -16,8 +16,9 @@ using namespace std;
 using namespace pto;
 
 template <typename T, int srcRow, int srcValidRow, int dstRow, int col, int validCol>
-PTO_INTERNAL void runTColSum(__gm__ T __out__ *out, __gm__ T __in__ *src, bool isBinary) {
-    using DynDim2Shape  = Shape<1, 1, 1, -1, -1>;
+PTO_INTERNAL void runTColSum(__gm__ T __out__ *out, __gm__ T __in__ *src, bool isBinary)
+{
+    using DynDim2Shape = Shape<1, 1, 1, -1, -1>;
     using DynDim2Stride = pto::Stride<1, 1, -1, -1, 1>;
     using GlobalData = GlobalTensor<T, DynDim2Shape, DynDim2Stride>;
     GlobalData srcGlobal(src, DynDim2Shape(srcValidRow, validCol), DynDim2Stride(srcRow, col));
@@ -107,7 +108,8 @@ extern "C" __global__ AICORE void launchTCOLSUMCase25(__gm__ int8_t *out, __gm__
 }
 
 template <uint32_t caseId>
-void launchTCOLSUMTestCase(void *out, void *src, aclrtStream stream) {
+void launchTCOLSUMTestCase(void *out, void *src, aclrtStream stream)
+{
     switch (caseId) {
         case 1: {
             launchTCOLSUMCase01<<<1, nullptr, stream>>>((float *)out, (float *)src);

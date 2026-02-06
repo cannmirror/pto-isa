@@ -16,13 +16,15 @@ using namespace std;
 using namespace PtoTestCommon;
 
 template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
-    int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
 void LaunchTLoad(T *out, T *src, void *stream);
 
 class TLoadGM2L1Test : public testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
 std::string GetGoldenDir()
@@ -35,7 +37,7 @@ std::string GetGoldenDir()
 }
 
 template <int format, typename DataType, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
-    int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+          int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
 void TestTload()
 {
     // format = 0: ND2ND
@@ -74,7 +76,7 @@ void TestTload()
     ReadFile(GetGoldenDir() + "/input.bin", srcDataSize, srcHost, srcDataSize);
     aclrtMemcpy(srcDevice, srcDataSize, srcHost, srcDataSize, ACL_MEMCPY_HOST_TO_DEVICE);
     LaunchTLoad<format, DataType, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
-        gWholeShape3, gWholeShape4>(dstDevice, srcDevice, stream);
+                gWholeShape3, gWholeShape4>(dstDevice, srcDevice, stream);
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstDataSize, dstDevice, dstDataSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
@@ -316,7 +318,7 @@ TEST_F(TLoadGM2L1Test, FZ4D2FZ4D_bfloat16_1_49_7_16_16_1_980_32_16_16)
 }
 TEST_F(TLoadGM2L1Test, FZ4D2FZ4D_bfloat16_1_81_3_16_16_1_90_3_16_16)
 {
-    TestTload<7, uint16_t, 1, 81,3, 16, 16, 1, 90, 3, 16, 16>();
+    TestTload<7, uint16_t, 1, 81, 3, 16, 16, 1, 90, 3, 16, 16>();
 }
 TEST_F(TLoadGM2L1Test, FZ4D2FZ4D_int8_t_1_63_3_16_32_1_63_9_16_32)
 {

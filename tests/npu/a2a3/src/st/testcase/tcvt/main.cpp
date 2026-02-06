@@ -26,7 +26,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -89,11 +90,22 @@ void test_tcvt()
 
 // Macro to generate test cases for all shapes for a given type pair
 #define GENERATE_TCVT_TESTS(dst_type, src_type, type_name) \
-    TEST_F(TCVTTest, case_##type_name##_2x128) { test_tcvt<dst_type, src_type, 2, 128, 2, 128>(); } \
-    TEST_F(TCVTTest, case_##type_name##_2x32) { test_tcvt<dst_type, src_type, 2, 32, 2, 32>(); } \
-    TEST_F(TCVTTest, case_##type_name##_1x64) { test_tcvt<dst_type, src_type, 1, 64, 1, 64>(); } \
-    TEST_F(TCVTTest, case_##type_name##_4x64) { test_tcvt<dst_type, src_type, 4, 64, 4, 64>(); }
-
+    TEST_F(TCVTTest, case_##type_name##_2x128)             \
+    {                                                      \
+        test_tcvt<dst_type, src_type, 2, 128, 2, 128>();   \
+    }                                                      \
+    TEST_F(TCVTTest, case_##type_name##_2x32)              \
+    {                                                      \
+        test_tcvt<dst_type, src_type, 2, 32, 2, 32>();     \
+    }                                                      \
+    TEST_F(TCVTTest, case_##type_name##_1x64)              \
+    {                                                      \
+        test_tcvt<dst_type, src_type, 1, 64, 1, 64>();     \
+    }                                                      \
+    TEST_F(TCVTTest, case_##type_name##_4x64)              \
+    {                                                      \
+        test_tcvt<dst_type, src_type, 4, 64, 4, 64>();     \
+    }
 
 // FP32 Source
 GENERATE_TCVT_TESTS(float, float, fp32_fp32)

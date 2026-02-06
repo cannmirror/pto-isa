@@ -19,10 +19,10 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define MEMORY_BASE
 #include "kernel_operator.h"
 #include <pto/common/type.hpp>
-extern "C" __global__ AICORE void gemm_basic_custom(GM_ADDR a, GM_ADDR b_dn, GM_ADDR out) {}
+extern "C" __global__ AICORE void gemm_basic_custom(GM_ADDR a, GM_ADDR b_dn, GM_ADDR out)
+{}
 
-
-#elif(__CHECK_FEATURE_AT_PRECOMPILE) || (__CCE_AICORE__ == 220 && defined(__DAV_C220_CUBE__))
+#elif (__CHECK_FEATURE_AT_PRECOMPILE) || (__CCE_AICORE__ == 220 && defined(__DAV_C220_CUBE__))
 
 #define MEMORY_BASE
 
@@ -33,7 +33,8 @@ extern "C" __global__ AICORE void gemm_basic_custom(GM_ADDR a, GM_ADDR b_dn, GM_
 using namespace pto;
 
 template <typename T, typename U, typename S, int M, int K, int N, uint32_t baseM, uint32_t baseK, uint32_t baseN>
-AICORE inline void ProcessKIteration(uint32_t kIter, __gm__ U *currentSrc0, __gm__ S *currentSrc1,
+AICORE inline void ProcessKIteration(
+    uint32_t kIter, __gm__ U *currentSrc0, __gm__ S *currentSrc1,
     Tile<TileType::Mat, U, baseM, baseK, BLayout::ColMajor, baseM, baseK, SLayout::RowMajor> aMatTile[2],
     Tile<TileType::Mat, S, baseK, baseN, BLayout::RowMajor, baseK, baseN, SLayout::ColMajor> bMatTile[2],
     TileLeft<U, baseM, baseK, baseM, baseK> aTile[2], TileRight<S, baseK, baseN, baseK, baseN> bTile[2],
@@ -75,7 +76,7 @@ AICORE inline void ProcessKIteration(uint32_t kIter, __gm__ U *currentSrc0, __gm
 }
 
 template <typename T, typename U, typename S, int M, int K, int N, uint32_t singleCoreM, uint32_t singleCoreK,
-    uint32_t singleCoreN, uint16_t baseM, uint16_t baseK, uint16_t baseN>
+          uint32_t singleCoreN, uint16_t baseM, uint16_t baseK, uint16_t baseN>
 AICORE inline void runGEMMBASIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
 {
     constexpr uint32_t mIter = M / singleCoreM;
@@ -122,8 +123,8 @@ AICORE inline void runGEMMBASIC(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     set_flag(PIPE_M, PIPE_MTE1, EVENT_ID0);
     set_flag(PIPE_M, PIPE_MTE1, EVENT_ID1);
     for (uint32_t kIter = 0; kIter < kLoop; kIter++) {
-        ProcessKIteration<T, U, S, M, K, N, baseM, baseK, baseN>(
-            kIter, currentSrc0, currentSrc1, aMatTile, bMatTile, aTile, bTile, cTile);
+        ProcessKIteration<T, U, S, M, K, N, baseM, baseK, baseN>(kIter, currentSrc0, currentSrc1, aMatTile, bMatTile,
+                                                                 aTile, bTile, cTile);
     }
     wait_flag(PIPE_MTE1, PIPE_MTE2, EVENT_ID0);
     wait_flag(PIPE_MTE1, PIPE_MTE2, EVENT_ID1);

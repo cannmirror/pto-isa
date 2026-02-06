@@ -15,8 +15,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH, int src1TileW>
-__global__ AICORE void runTRem(
-    __gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1, int vRows, int vCols) {
+__global__ AICORE void runTRem(__gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1, int vRows,
+                               int vCols)
+{
     using DynShape = pto::Shape<-1, -1, -1, -1, -1>;
     using DynStride = pto::Stride<-1, -1, -1, -1, -1>;
     using GlobalData = GlobalTensor<T, DynShape, DynStride>;
@@ -50,8 +51,9 @@ __global__ AICORE void runTRem(
 }
 
 template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH, int src1TileW, int vRows,
-    int vCols>
-void LaunchTREM(T *out, T *src0, T *src1, void *stream) {
+          int vCols>
+void LaunchTREM(T *out, T *src0, T *src1, void *stream)
+{
     if constexpr (std::is_same_v<T, aclFloat16>)
         runTRem<half, dstTileH, dstTileW, src0TileH, src0TileW, src1TileH, src1TileW>
             <<<1, nullptr, stream>>>((half *)(out), (half *)(src0), (half *)(src1), vRows, vCols);
@@ -60,20 +62,20 @@ void LaunchTREM(T *out, T *src0, T *src1, void *stream) {
             <<<1, nullptr, stream>>>(out, src0, src1, vRows, vCols);
 }
 
-template void LaunchTREM<aclFloat16, 16, 64, 16, 128, 16, 128, 16, 64>(
-    aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTREM<aclFloat16, 16, 64, 16, 128, 16, 128, 16, 64>(aclFloat16 *out, aclFloat16 *src0,
+                                                                       aclFloat16 *src1, void *stream);
 template void LaunchTREM<float, 16, 32, 16, 64, 16, 32, 16, 32>(float *out, float *src0, float *src1, void *stream);
 template void LaunchTREM<int32_t, 4, 32, 4, 32, 4, 32, 4, 32>(int32_t *out, int32_t *src0, int32_t *src1, void *stream);
-template void LaunchTREM<int32_t, 16, 32, 16, 64, 16, 32, 16, 32>(
-    int32_t *out, int32_t *src0, int32_t *src1, void *stream);
-template void LaunchTREM<aclFloat16, 16, 64, 16, 128, 16, 128, 16, 63>(
-    aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTREM<int32_t, 16, 32, 16, 64, 16, 32, 16, 32>(int32_t *out, int32_t *src0, int32_t *src1,
+                                                                  void *stream);
+template void LaunchTREM<aclFloat16, 16, 64, 16, 128, 16, 128, 16, 63>(aclFloat16 *out, aclFloat16 *src0,
+                                                                       aclFloat16 *src1, void *stream);
 template void LaunchTREM<float, 2, 32, 2, 64, 2, 32, 2, 31>(float *out, float *src0, float *src1, void *stream);
-template void LaunchTREM<int32_t, 16, 32, 16, 64, 16, 32, 16, 31>(
-    int32_t *out, int32_t *src0, int32_t *src1, void *stream);
-template void LaunchTREM<int16_t, 16, 32, 16, 64, 16, 32, 16, 31>(
-    int16_t *out, int16_t *src0, int16_t *src1, void *stream);
-template void LaunchTREM<int16_t, 16, 64, 16, 128, 16, 128, 16, 63>(
-    int16_t *out, int16_t *src0, int16_t *src1, void *stream);
-template void LaunchTREM<aclFloat16, 1, 8192, 1, 8192, 1, 8192, 1, 8192>(
-    aclFloat16 *out, aclFloat16 *src0, aclFloat16 *src1, void *stream);
+template void LaunchTREM<int32_t, 16, 32, 16, 64, 16, 32, 16, 31>(int32_t *out, int32_t *src0, int32_t *src1,
+                                                                  void *stream);
+template void LaunchTREM<int16_t, 16, 32, 16, 64, 16, 32, 16, 31>(int16_t *out, int16_t *src0, int16_t *src1,
+                                                                  void *stream);
+template void LaunchTREM<int16_t, 16, 64, 16, 128, 16, 128, 16, 63>(int16_t *out, int16_t *src0, int16_t *src1,
+                                                                    void *stream);
+template void LaunchTREM<aclFloat16, 1, 8192, 1, 8192, 1, 8192, 1, 8192>(aclFloat16 *out, aclFloat16 *src0,
+                                                                         aclFloat16 *src1, void *stream);

@@ -15,7 +15,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace pto;
 
 template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
-__global__ AICORE void runTXor( __gm__ T __out__ *out, __gm__ T __in__ *src0,  __gm__ T __in__ *src1) {
+__global__ AICORE void runTXor(__gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1)
+{
     using DynShapeDim5 = Shape<1, 1, 1, vRows, vCols>;
     using DynStridDim5 = pto::Stride<1, 1, 1, vCols, 1>;
     using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
@@ -36,7 +37,7 @@ __global__ AICORE void runTXor( __gm__ T __out__ *out, __gm__ T __in__ *src0,  _
 
     TLOAD(src0Tile, src0Global);
     event0 = TLOAD(src1Tile, src1Global);
-    event1 = TXOR(dstTile, src0Tile, src1Tile, dstTile/*not used*/, event0);
+    event1 = TXOR(dstTile, src0Tile, src1Tile, dstTile /*not used*/, event0);
     TSTORE(dstGlobal, dstTile, event1);
     out = dstGlobal.data();
 }

@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-namespace TRowExpandTest{
+namespace TRowExpandTest {
 template <typename T, uint32_t rows, uint32_t srcCols, uint32_t dstValidCols, uint32_t dstCols>
 void launchTROWEXPAND(T *out, T *src, void *stream);
 
@@ -27,7 +27,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -36,7 +37,8 @@ std::string GetGoldenDir() {
 }
 
 template <typename T, uint32_t rows, uint32_t srcCols, uint32_t dstValidCols, uint32_t dstCols>
-void test_trowexpand() {
+void test_trowexpand()
+{
     size_t inputFileSize = rows * srcCols * sizeof(T);
     size_t outputFileSize = rows * dstCols * sizeof(T);
 
@@ -107,4 +109,4 @@ TEST_F(TROWEXPANDTest, case5_float_16_8_16_127)
 {
     test_trowexpand<float, 16, 8, 127, 128>();
 }
-}
+} // namespace TRowExpandTest

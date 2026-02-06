@@ -23,7 +23,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -35,7 +36,8 @@ template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows
 void LaunchTMins(T *out, T *src0, T *scalar, void *stream);
 
 template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows_, int kVCols_, int kPadValue_>
-void test_tmins() {
+void test_tmins()
+{
     size_t srcfileSize = srcRow * srcCol * sizeof(T);
     size_t dstfileSize = dstRow * dstCol * sizeof(T);
     size_t scalarFileSize = sizeof(T);
@@ -61,7 +63,8 @@ void test_tmins() {
 
     aclrtMemcpy(src0Device, srcfileSize, src0Host, srcfileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, scalarFileSize, src1Host, scalarFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTMins<T, dstRow, dstCol, srcRow, srcCol, kVRows_, kVCols_, kPadValue_>(dstDevice, src0Device, src1Device, stream);
+    LaunchTMins<T, dstRow, dstCol, srcRow, srcCol, kVRows_, kVCols_, kPadValue_>(dstDevice, src0Device, src1Device,
+                                                                                 stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstfileSize, dstDevice, dstfileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -89,39 +92,51 @@ void test_tmins() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TMINSTest, case_float_64x64_32x32_32x32) {
+TEST_F(TMINSTest, case_float_64x64_32x32_32x32)
+{
     test_tmins<float, 64, 64, 32, 32, 32, 32, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_float_128x128_64x64_64x64) {
+TEST_F(TMINSTest, case_float_128x128_64x64_64x64)
+{
     test_tmins<float, 128, 128, 64, 64, 64, 64, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_float_60x128_64x64_60x60) {
+TEST_F(TMINSTest, case_float_60x128_64x64_60x60)
+{
     test_tmins<float, 60, 128, 64, 64, 60, 60, PAD_VALUE_MAX>();
 }
-TEST_F(TMINSTest, case_float_16x200_20x512_16x200) {
+TEST_F(TMINSTest, case_float_16x200_20x512_16x200)
+{
     test_tmins<float, 16, 200, 20, 512, 16, 200, PAD_VALUE_MAX>();
 }
-TEST_F(TMINSTest, case_float_1x3600_2x4096_1x3600) {
+TEST_F(TMINSTest, case_float_1x3600_2x4096_1x3600)
+{
     test_tmins<float, 1, 3600, 2, 4096, 1, 3600, PAD_VALUE_MAX>();
 }
-TEST_F(TMINSTest, case_int32_32x32_32x32_32x32) {
+TEST_F(TMINSTest, case_int32_32x32_32x32_32x32)
+{
     test_tmins<int32_t, 32, 32, 32, 32, 32, 32, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_uint32_32x32_32x32_32x32) {
+TEST_F(TMINSTest, case_uint32_32x32_32x32_32x32)
+{
     test_tmins<uint32_t, 32, 32, 32, 32, 32, 32, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_int16_32x128_32x128_32x128) {
+TEST_F(TMINSTest, case_int16_32x128_32x128_32x128)
+{
     test_tmins<int16_t, 32, 128, 32, 128, 32, 128, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_uint16_32x128_32x128_32x128) {
+TEST_F(TMINSTest, case_uint16_32x128_32x128_32x128)
+{
     test_tmins<uint16_t, 32, 128, 32, 128, 32, 128, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_int8_32x128_32x128_32x128) {
+TEST_F(TMINSTest, case_int8_32x128_32x128_32x128)
+{
     test_tmins<int8_t, 32, 128, 32, 128, 32, 128, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_uint8_32x128_32x128_32x128) {
+TEST_F(TMINSTest, case_uint8_32x128_32x128_32x128)
+{
     test_tmins<uint8_t, 32, 128, 32, 128, 32, 128, PAD_VALUE_NULL>();
 }
-TEST_F(TMINSTest, case_half_16x256_20x224_16x200) {
+TEST_F(TMINSTest, case_half_16x256_20x224_16x200)
+{
     test_tmins<aclFloat16, 16, 256, 20, 224, 16, 200, PAD_VALUE_MAX>();
 }

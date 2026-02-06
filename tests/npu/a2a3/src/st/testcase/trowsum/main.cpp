@@ -18,7 +18,8 @@ using namespace PtoTestCommon;
 template <uint32_t caseId>
 void launchTROWSUMTestCase(void *out, void *src, aclrtStream stream);
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -127,22 +128,26 @@ TEST_F(TROWSUMTest, case6)
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TROWSUMTest, case7) {
+TEST_F(TROWSUMTest, case7)
+{
     bool ret = TRowSumTestFramework<7, float, 64, 64, 128, 128, 1>();
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TROWSUMTest, case8) {
+TEST_F(TROWSUMTest, case8)
+{
     bool ret = TRowSumTestFramework<8, float, 32, 32, 256, 256, 1>();
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TROWSUMTest, case9) {
+TEST_F(TROWSUMTest, case9)
+{
     bool ret = TRowSumTestFramework<9, float, 16, 16, 512, 512, 1>();
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TROWSUMTest, case10) {
+TEST_F(TROWSUMTest, case10)
+{
     bool ret = TRowSumTestFramework<10, float, 8, 8, 1024, 1024, 1>();
     EXPECT_TRUE(ret);
 }

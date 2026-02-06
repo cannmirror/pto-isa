@@ -25,15 +25,15 @@ PTO_INTERNAL void TSETFMATRIX_IMPL(const Img2colTileConfig<T> &cfg)
         constexpr uint32_t padListShiftBit = 8;
         constexpr uint32_t padListShiftBase = 32;
 
-        for(uint32_t i = 0; i < padNumber; i++) {
+        for (uint32_t i = 0; i < padNumber; i++) {
             regFmatrix |= uint64_t(cfg.padList[i] & 0xFF) << (padListShiftBase + i * padListShiftBit);
         }
-        if constexpr(FmatrixMode == SetFmatrixMode::FMATRIX_A_MANUAL) {
+        if constexpr (FmatrixMode == SetFmatrixMode::FMATRIX_A_MANUAL) {
             set_fmatrix(regFmatrix);
         } else if constexpr (FmatrixMode == SetFmatrixMode::FMATRIX_B_MANUAL) {
             set_fmatrix_b(regFmatrix);
         }
     }
 }
-}  // namespace pto
-#endif  // TSETFMATRIX_HPP
+} // namespace pto
+#endif // TSETFMATRIX_HPP

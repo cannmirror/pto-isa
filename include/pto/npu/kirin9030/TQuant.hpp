@@ -18,11 +18,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename TileDataSrc, typename TileDataExp, typename TileDataOut, typename TileDataMax, int mode>
-PTO_INTERNAL void TQUANT_IMPL(TileDataSrc &src,
-                            TileDataExp &exp,
-                            TileDataOut &dst,
-                            TileDataMax &max,
-                            TileDataSrc &scaling) {
+PTO_INTERNAL void TQUANT_IMPL(TileDataSrc &src, TileDataExp &exp, TileDataOut &dst, TileDataMax &max,
+                              TileDataSrc &scaling)
+{
     using T = typename TileDataSrc::DType;
     static_assert(sizeof(T) == 0, "Fix: Unsupports the instruction: TQUANT");
 }

@@ -22,17 +22,21 @@ namespace pto {
 
 template <typename T>
 struct AndOp {
-    PTO_INTERNAL static void BinInstr(
-        RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1, MaskReg &preg) {
+    PTO_INTERNAL static void BinInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1,
+                                      MaskReg &preg)
+    {
         vand(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
     }
 };
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, unsigned ElementsPerRepeat,
-    unsigned BlockSizeElem>
-__tf__ PTO_INTERNAL OP_NAME(TAND) OP_TYPE(element_wise) void TAnd(typename TileDataDst::TileDType __out__ dst,
-    typename TileDataSrc0::TileDType __in__ src0, typename TileDataSrc1::TileDType __in__ src1, unsigned validRows,
-    unsigned validCols, VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+          unsigned BlockSizeElem>
+__tf__ PTO_INTERNAL OP_NAME(TAND)
+    OP_TYPE(element_wise) void TAnd(typename TileDataDst::TileDType __out__ dst,
+                                    typename TileDataSrc0::TileDType __in__ src0,
+                                    typename TileDataSrc1::TileDType __in__ src1, unsigned validRows,
+                                    unsigned validCols, VFImplKind version = VFImplKind::VFIMPL_DEFAULT)
+{
     using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
@@ -44,26 +48,28 @@ __tf__ PTO_INTERNAL OP_NAME(TAND) OP_TYPE(element_wise) void TAnd(typename TileD
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-PTO_INTERNAL void TAndCheck(const TileDataDst &dst, const TileDataSrc0 &src0, const TileDataSrc1 &src1) {
+PTO_INTERNAL void TAndCheck(const TileDataDst &dst, const TileDataSrc0 &src0, const TileDataSrc1 &src1)
+{
     using T = typename TileDataDst::DType;
     static_assert(std::is_same<T, uint8_t>::value || std::is_same<T, int8_t>::value ||
                       std::is_same<T, uint16_t>::value || std::is_same<T, int16_t>::value ||
                       std::is_same<T, uint32_t>::value || std::is_same<T, int32_t>::value,
-        "Fix: TAND has invalid data type.");
+                  "Fix: TAND has invalid data type.");
     static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
-        "Fix: TAND only support row major layout.");
+                  "Fix: TAND only support row major layout.");
     static_assert(std::is_same_v<T, typename TileDataSrc0::DType> && std::is_same_v<T, typename TileDataSrc1::DType>,
-        "Fix: TAND input tile src0, src1 and dst tile data type mismatch.");
+                  "Fix: TAND input tile src0, src1 and dst tile data type mismatch.");
     unsigned validRows = dst.GetValidRow();
     unsigned validCols = dst.GetValidCol();
     PTO_ASSERT(src0.GetValidRow() == validRows && src0.GetValidCol() == validCols,
-        "Fix: TAND input tile src0 valid shape mismatch with output tile dst shape.");
+               "Fix: TAND input tile src0 valid shape mismatch with output tile dst shape.");
     PTO_ASSERT(src1.GetValidRow() == validRows && src1.GetValidCol() == validCols,
-        "Fix: TAND input tile src1 valid shape mismatch with output tile dst shape.");
+               "Fix: TAND input tile src1 valid shape mismatch with output tile dst shape.");
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
-PTO_INTERNAL void TAND_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1) {
+PTO_INTERNAL void TAND_IMPL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1)
+{
     using T = typename TileDataDst::DType;
     TAndCheck<TileDataDst, TileDataSrc0, TileDataSrc1>(dst, src0, src1);
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);

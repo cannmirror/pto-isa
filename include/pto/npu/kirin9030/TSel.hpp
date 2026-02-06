@@ -25,7 +25,8 @@ namespace pto {
 
 template <typename T, unsigned elementsPerRepeat, uint16_t unRollConstant, unsigned rowStride, unsigned maskStride>
 PTO_INTERNAL void TSelHead(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, __ubuf__ uint8_t *maskPtr,
-    uint16_t pairedRepeatTimes, unsigned validRow, unsigned validCol) {
+                           uint16_t pairedRepeatTimes, unsigned validRow, unsigned validCol)
+{
     MaskReg preg, selMask0, selMask1, tmpMask0;
     MaskReg tmpMask1 = pset_b16(PAT_ALL);
     RegTensor<T> vreg0, vreg1, vreg2, vreg3, dreg0, dreg1, dreg2;
@@ -65,7 +66,8 @@ PTO_INTERNAL void TSelHead(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *
 
 template <typename T, unsigned elementsPerRepeat, unsigned rowStride, unsigned maskStride>
 PTO_INTERNAL void TSelTail(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, __ubuf__ uint8_t *maskPtr,
-    uint16_t repeatIdx, uint16_t remainRepeat, unsigned validRow, unsigned validCol) {
+                           uint16_t repeatIdx, uint16_t remainRepeat, unsigned validRow, unsigned validCol)
+{
     MaskReg preg, selMask2;
     MaskReg tmpMask1 = pset_b16(PAT_ALL);
     RegTensor<T> vreg4, vreg5, dreg2;
@@ -90,8 +92,9 @@ PTO_INTERNAL void TSelTail(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *
 
 template <typename TileData, typename MaskTile, unsigned elementsPerRepeat, unsigned rowStride, unsigned maskStride>
 __tf__ PTO_INTERNAL void TSel_b32(typename TileData::TileDType __out__ dst, typename MaskTile::TileDType __in__ selmask,
-    typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1, unsigned validRow,
-    unsigned validCol) {
+                                  typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1,
+                                  unsigned validRow, unsigned validCol)
+{
     TILE_PTRS(dst, selmask, src0, src1);
     uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
     constexpr uint32_t unRollConstant = 2;
@@ -99,21 +102,25 @@ __tf__ PTO_INTERNAL void TSel_b32(typename TileData::TileDType __out__ dst, type
     uint16_t remainRepeat = repeatTimes % unRollConstant;
     uint16_t repeatIdx = pairedRepeatTimes * unRollConstant;
 
-    __VEC_SCOPE__ {
-        TSelHead<T, elementsPerRepeat, unRollConstant, rowStride, maskStride>(
-            dstPtr, src0Ptr, src1Ptr, maskPtr, pairedRepeatTimes, validRow, validCol);
-        TSelTail<T, elementsPerRepeat, rowStride, maskStride>(
-            dstPtr, src0Ptr, src1Ptr, maskPtr, repeatIdx, remainRepeat, validRow, validCol);
+    __VEC_SCOPE__
+    {
+        TSelHead<T, elementsPerRepeat, unRollConstant, rowStride, maskStride>(dstPtr, src0Ptr, src1Ptr, maskPtr,
+                                                                              pairedRepeatTimes, validRow, validCol);
+        TSelTail<T, elementsPerRepeat, rowStride, maskStride>(dstPtr, src0Ptr, src1Ptr, maskPtr, repeatIdx,
+                                                              remainRepeat, validRow, validCol);
     } // end of vf
 }
 
 template <typename TileData, typename MaskTile, unsigned elementsPerRepeat, unsigned rowStride, unsigned maskStride>
 __tf__ PTO_INTERNAL void TSel_b16_8(typename TileData::TileDType __out__ dst,
-    typename MaskTile::TileDType __in__ selmask, typename TileData::TileDType __in__ src0,
-    typename TileData::TileDType __in__ src1, unsigned validRow, unsigned validCol) {
+                                    typename MaskTile::TileDType __in__ selmask,
+                                    typename TileData::TileDType __in__ src0, typename TileData::TileDType __in__ src1,
+                                    unsigned validRow, unsigned validCol)
+{
     TILE_PTRS(dst, selmask, src0, src1);
     uint16_t repeatTimes = CeilDivision(validCol, elementsPerRepeat);
-    __VEC_SCOPE__ {
+    __VEC_SCOPE__
+    {
         MaskReg preg, maskreg;
         RegTensor<T> vreg0, vreg1, vreg2;
         constexpr auto distValue =
@@ -138,7 +145,8 @@ __tf__ PTO_INTERNAL void TSel_b16_8(typename TileData::TileDType __out__ dst,
 }
 
 template <typename TileData, typename MaskTile>
-PTO_INTERNAL void TSEL_IMPL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1) {
+PTO_INTERNAL void TSEL_IMPL(TileData &dst, MaskTile &selMask, TileData &src0, TileData &src1)
+{
     static_assert(TileData::isRowMajor, "Fix: TSEL has not supported layout type.");
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(typename TileData::DType);
     unsigned validRow = dst.GetValidRow();
@@ -146,8 +154,8 @@ PTO_INTERNAL void TSEL_IMPL(TileData &dst, MaskTile &selMask, TileData &src0, Ti
     constexpr unsigned rowStride = TileData::RowStride;
     constexpr unsigned maskStride = MaskTile::RowStride;
     if (sizeof(typename TileData::DType) == 4) {
-        TSel_b32<TileData, MaskTile, elementsPerRepeat, rowStride, maskStride>(
-            dst.data(), selMask.data(), src0.data(), src1.data(), validRow, validCol);
+        TSel_b32<TileData, MaskTile, elementsPerRepeat, rowStride, maskStride>(dst.data(), selMask.data(), src0.data(),
+                                                                               src1.data(), validRow, validCol);
     } else {
         TSel_b16_8<TileData, MaskTile, elementsPerRepeat, rowStride, maskStride>(
             dst.data(), selMask.data(), src0.data(), src1.data(), validRow, validCol);

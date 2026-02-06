@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-namespace TRowExpandMulTest{
+namespace TRowExpandMulTest {
 template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst>
 void launchTRowExpandMul(T *out, T *src0, T *src1, void *stream);
 
@@ -30,7 +30,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -38,8 +39,10 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst, bool isRowMajor>
-void test_trowexpandmul() {
+template <typename T, uint32_t dstRow, uint32_t dstCol, uint32_t src1Row, uint32_t src1Col, bool src0eqdst,
+          bool isRowMajor>
+void test_trowexpandmul()
+{
     size_t inputFileSize = src1Row * src1Col * sizeof(T);
     size_t outputFileSize = dstRow * dstCol * sizeof(T);
 
@@ -124,4 +127,4 @@ TEST_F(TRowExpandMulTest, case_fp32_20_64)
 {
     test_trowexpandmul<float, 20, 64, 20, 8, false, true>();
 }
-}
+} // namespace TRowExpandMulTest

@@ -17,7 +17,8 @@ using namespace pto;
 #define PTO_DIV_ROUNDUP(x, y) (((x) + (y)-1) / (y))
 
 template <typename T, int validRows, int validCols, int upperOrLower, int diagonal>
-__global__ AICORE void runTTri(__gm__ T __out__ *out) {
+__global__ AICORE void runTTri(__gm__ T __out__ *out)
+{
     constexpr uint16_t alignedCol = PTO_DIV_ROUNDUP(validCols, BLOCK_BYTE_SIZE) * BLOCK_BYTE_SIZE;
 
     using GlobalDataDst = GlobalTensor<T, Shape<1, 1, 1, validRows, validCols>, pto::Stride<1, 1, 1, validCols, 1>>;
@@ -36,7 +37,8 @@ __global__ AICORE void runTTri(__gm__ T __out__ *out) {
 }
 
 template <typename T, int validRows, int validCols, int upperOrLower, int diagonal>
-void LaunchTTri(T *out, void *stream) {
+void LaunchTTri(T *out, void *stream)
+{
     if constexpr (std::is_same_v<T, aclFloat16>) {
         runTTri<half, validRows, validCols, upperOrLower, diagonal><<<1, nullptr, stream>>>((half *)(out));
     } else {

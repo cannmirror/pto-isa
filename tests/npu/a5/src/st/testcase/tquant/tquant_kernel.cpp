@@ -20,37 +20,42 @@ namespace TQuantTest {
 // Quantize fp32 tile to fp8 (e4m3) and exponent-only (e8m0).
 // Pad columns to multiples of 32 using min fill to avoid reading garbage.
 template <int validRows, int validCols, int mode>
-__global__ AICORE void runTQuant(__gm__ uint8_t __out__ *out_e8m0,
-                                 __gm__ uint8_t __out__ *out_fp8,
-                                 __gm__ float __in__ *src) {
+__global__ AICORE void runTQuant(__gm__ uint8_t __out__ *out_e8m0, __gm__ uint8_t __out__ *out_fp8,
+                                 __gm__ float __in__ *src)
+{
     // pad each row to multiple of 32 elements
     constexpr int paddedCols = PTO_CEIL(validCols, 32);
     constexpr int groupedCols_flattened = validRows * (paddedCols / 32);
     constexpr int groupedCols_valid = paddedCols / 32;
-    using SrcGlobal    = GlobalTensor<float,   Shape<1, 1, 1, validRows, validCols>, pto::Stride<1, 1, 1, validCols, 1>>;
-    using DstE8Global  = GlobalTensor<uint8_t, Shape<1, 1, 1, 1, groupedCols_flattened>, pto::Stride<1, 1, 1, validCols, 1>>;
-    using DstFP8Global = GlobalTensor<uint8_t, Shape<1, 1, 1, validRows, validCols>, pto::Stride<1, 1, 1, validCols, 1>>;
-    
-    using SrcTile     = Tile<TileType::Vec, float,   validRows, paddedCols,             BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, PadValue::Zero>;
-    using DstE8Tile   = Tile<TileType::Vec, uint8_t, 1,         groupedCols_flattened,  BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, PadValue::Zero>;
-    using DstFP8Tile  = Tile<TileType::Vec, uint8_t, validRows, paddedCols,             BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512, PadValue::Zero>;
-    using MaxTile     = Tile<TileType::Vec, float,   1,         groupedCols_flattened,  BLayout::RowMajor, -1, -1>;
-    
-    SrcTile    srcTile(validRows, validCols);
-    SrcTile    scalingTile(validRows, validCols);
-    DstFP8Tile fp8Tile(validRows, paddedCols);
-    DstE8Tile  e8Tile(1, groupedCols_flattened);
-    MaxTile    maxPerGpTile(1, groupedCols_flattened);
+    using SrcGlobal = GlobalTensor<float, Shape<1, 1, 1, validRows, validCols>, pto::Stride<1, 1, 1, validCols, 1>>;
+    using DstE8Global =
+        GlobalTensor<uint8_t, Shape<1, 1, 1, 1, groupedCols_flattened>, pto::Stride<1, 1, 1, validCols, 1>>;
+    using DstFP8Global =
+        GlobalTensor<uint8_t, Shape<1, 1, 1, validRows, validCols>, pto::Stride<1, 1, 1, validCols, 1>>;
 
-    SrcGlobal    srcGlobal(src);
-    DstE8Global  e8Global(out_e8m0);
+    using SrcTile = Tile<TileType::Vec, float, validRows, paddedCols, BLayout::RowMajor, -1, -1, SLayout::NoneBox, 512,
+                         PadValue::Zero>;
+    using DstE8Tile = Tile<TileType::Vec, uint8_t, 1, groupedCols_flattened, BLayout::RowMajor, -1, -1,
+                           SLayout::NoneBox, 512, PadValue::Zero>;
+    using DstFP8Tile = Tile<TileType::Vec, uint8_t, validRows, paddedCols, BLayout::RowMajor, -1, -1, SLayout::NoneBox,
+                            512, PadValue::Zero>;
+    using MaxTile = Tile<TileType::Vec, float, 1, groupedCols_flattened, BLayout::RowMajor, -1, -1>;
+
+    SrcTile srcTile(validRows, validCols);
+    SrcTile scalingTile(validRows, validCols);
+    DstFP8Tile fp8Tile(validRows, paddedCols);
+    DstE8Tile e8Tile(1, groupedCols_flattened);
+    MaxTile maxPerGpTile(1, groupedCols_flattened);
+
+    SrcGlobal srcGlobal(src);
+    DstE8Global e8Global(out_e8m0);
     DstFP8Global fp8Global(out_fp8);
 
-    TASSIGN(srcTile,      0x0);      // 64  KB = 0x10000
-    TASSIGN(maxPerGpTile, 0x10100);  // 1.5 KB = 0x1800 (Max and Scaling can overlap)
-    TASSIGN(scalingTile,  0x21820);  // 3 KB   = 0xC00
-    TASSIGN(e8Tile,       0x30100);  // 0.5 KB = 0x600
-    TASSIGN(fp8Tile,      0x38160);  // 16  KB = 0x4000
+    TASSIGN(srcTile, 0x0);          // 64  KB = 0x10000
+    TASSIGN(maxPerGpTile, 0x10100); // 1.5 KB = 0x1800 (Max and Scaling can overlap)
+    TASSIGN(scalingTile, 0x21820);  // 3 KB   = 0xC00
+    TASSIGN(e8Tile, 0x30100);       // 0.5 KB = 0x600
+    TASSIGN(fp8Tile, 0x38160);      // 16  KB = 0x4000
     TLOAD(srcTile, srcGlobal);
 
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
@@ -66,7 +71,8 @@ __global__ AICORE void runTQuant(__gm__ uint8_t __out__ *out_e8m0,
 }
 
 template <int validRows, int validCols, int mode>
-void LaunchTQuant(uint8_t *out_e8m0, uint8_t *out_fp8, float *src, void *stream) {
+void LaunchTQuant(uint8_t *out_e8m0, uint8_t *out_fp8, float *src, void *stream)
+{
     runTQuant<validRows, validCols, mode><<<1, nullptr, stream>>>(out_e8m0, out_fp8, src);
 }
 

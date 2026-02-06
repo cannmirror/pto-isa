@@ -21,10 +21,10 @@ using namespace std;
 using namespace pto;
 
 template <typename T, uint32_t ROWS_, uint32_t COLS_, uint32_t VALID_R_, uint32_t VALID_C,
-    uint32_t ALIGN_C = (VALID_C + 31 - 1) / 32 * 32>
-__global__ AICORE void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, __gm__ T *tmp){
-
-    constexpr uint32_t TYPE_COEF = sizeof(float)/sizeof(T);
+          uint32_t ALIGN_C = (VALID_C + 31 - 1) / 32 * 32>
+__global__ AICORE void runTSORT32(__gm__ T *out, __gm__ T *src, __gm__ uint32_t *idx, __gm__ T *tmp)
+{
+    constexpr uint32_t TYPE_COEF = sizeof(float) / sizeof(T);
     using SrcShapeDim5 = pto::Shape<1, 1, 1, ROWS_, COLS_>;
     using SrcStridDim5 = pto::Stride<1, 1, 1, COLS_, 1>;
     using SrcGlobalData = GlobalTensor<T, SrcShapeDim5, SrcStridDim5>;
@@ -41,10 +41,10 @@ __global__ AICORE void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t
     using OutStridDim5 = pto::Stride<1, 1, 1, TYPE_COEF * 2 * COLS_, 1>;
     using OutGlobalData = GlobalTensor<T, OutShapeDim5, OutStridDim5>;
 
-    using SrcTileData = Tile<TileType::Vec, T,    ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
+    using SrcTileData = Tile<TileType::Vec, T, ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
     using IdxTileData = Tile<TileType::Vec, uint32_t, ROWS_, ALIGN_C, BLayout::RowMajor, -1, -1>;
-    using DstTileData = Tile<TileType::Vec, T,    ROWS_, TYPE_COEF * 2 * ALIGN_C, BLayout::RowMajor, -1, -1>;
-    using TmpTileData = Tile<TileType::Vec, T,    1, ALIGN_C, BLayout::RowMajor>;
+    using DstTileData = Tile<TileType::Vec, T, ROWS_, TYPE_COEF * 2 * ALIGN_C, BLayout::RowMajor, -1, -1>;
+    using TmpTileData = Tile<TileType::Vec, T, 1, ALIGN_C, BLayout::RowMajor>;
 
     SrcTileData srcTile(VALID_R_, VALID_C);
     IdxTileData idxTile(VALID_R_, ALIGN_C);
@@ -77,14 +77,14 @@ __global__ AICORE void runTSORT32( __gm__ T *out, __gm__ T *src, __gm__ uint32_t
 }
 
 template <uint32_t tRows, uint32_t tCols, uint32_t vRows, uint32_t vCols,
-    uint32_t alignedCols = (vCols + 31 - 1) / 32 * 32>
-void launchTSORT32Half(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream)
+          uint32_t alignedCols = (vCols + 31 - 1) / 32 * 32>
+void launchTSORT32Half(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void *stream)
 {
     runTSORT32<half, tRows, tCols, vRows, vCols, alignedCols><<<1, nullptr, stream>>>(
-        reinterpret_cast<half *>(out), reinterpret_cast<half *>(src), idx,
-        reinterpret_cast<half *>(tmp));
+        reinterpret_cast<half *>(out), reinterpret_cast<half *>(src), idx, reinterpret_cast<half *>(tmp));
 }
 
-template void launchTSORT32Half<2, 32, 2, 32>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream);
-template void launchTSORT32Half<4, 64, 4, 64>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream);
-template void launchTSORT32Half<1, 32 * 256, 1, 32 * 256>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void* stream);
+template void launchTSORT32Half<2, 32, 2, 32>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void *stream);
+template void launchTSORT32Half<4, 64, 4, 64>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp, void *stream);
+template void launchTSORT32Half<1, 32 * 256, 1, 32 * 256>(uint64_t *out, uint64_t *src, uint32_t *idx, uint64_t *tmp,
+                                                          void *stream);

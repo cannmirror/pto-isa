@@ -13,7 +13,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <gtest/gtest.h>
 #include "acl/acl.h"
 
-
 using namespace std;
 using namespace PtoTestCommon;
 
@@ -28,7 +27,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -36,15 +36,16 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template<typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int reverse>
-void test_tci(T S) {
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int reverse>
+void test_tci(T S)
+{
     size_t fileSize = kGRows_ * kGCols_ * sizeof(T);
 
     aclInit(nullptr);
     aclrtSetDevice(0);
     aclrtStream stream;
     aclrtCreateStream(&stream);
-    
+
     T *dstHost;
     T *dstDevice;
     aclrtMallocHost((void **)(&dstHost), fileSize);
@@ -75,33 +76,43 @@ void test_tci(T S) {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TCITest, case1) {
+TEST_F(TCITest, case1)
+{
     test_tci<int32_t, 1, 128, 1, 128, 1>(100);
 }
-TEST_F(TCITest, case2) {
+TEST_F(TCITest, case2)
+{
     test_tci<int16_t, 1, 128, 1, 128, 0>(-1);
 }
-TEST_F(TCITest, case3) {
+TEST_F(TCITest, case3)
+{
     test_tci<int16_t, 1, 128, 1, 128, 1>(-1);
 }
-TEST_F(TCITest, case4) {
+TEST_F(TCITest, case4)
+{
     test_tci<int16_t, 1, 192, 1, 192, 1>(-1);
 }
-TEST_F(TCITest, case5) {
+TEST_F(TCITest, case5)
+{
     test_tci<int32_t, 1, 192, 1, 192, 1>(-1);
 }
-TEST_F(TCITest, case6) {
+TEST_F(TCITest, case6)
+{
     test_tci<int32_t, 1, 600, 1, 600, 1>(0);
 }
-TEST_F(TCITest, case7) {
+TEST_F(TCITest, case7)
+{
     test_tci<int16_t, 1, 800, 1, 800, 0>(0);
 }
-TEST_F(TCITest, case8) {
+TEST_F(TCITest, case8)
+{
     test_tci<int32_t, 1, 2560, 1, 2560, 1>(0);
 }
-TEST_F(TCITest, case9) {
+TEST_F(TCITest, case9)
+{
     test_tci<int32_t, 1, 3200, 1, 3200, 0>(0);
 }
-TEST_F(TCITest, case10) {
+TEST_F(TCITest, case10)
+{
     test_tci<int32_t, 1, 8, 1, 8, 0>(0);
 }

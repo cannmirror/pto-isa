@@ -16,141 +16,144 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-    template <typename T>
-    PTO_INTERNAL uint32_t GetByteSize(const uint32_t value) {
-        return sizeof(T) * value;
+template <typename T>
+PTO_INTERNAL uint32_t GetByteSize(const uint32_t value)
+{
+    return sizeof(T) * value;
+}
+
+template <typename T, int U, int... Args>
+AICORE constexpr bool SupportBytes()
+{
+    if constexpr (sizeof...(Args) > 0) {
+        return sizeof(T) == U || SupportBytes<T, Args...>();
     }
+    return sizeof(T) == U;
+}
 
-    template <typename T, int U, int... Args> AICORE constexpr bool SupportBytes()
-    {
-        if constexpr (sizeof...(Args) > 0) {
-            return sizeof(T) == U || SupportBytes<T, Args...>();
-        }
-        return sizeof(T) == U;
+using MaskReg = vector_bool;
+using UnalignReg = vector_align;
+using AddrReg = vector_address;
+
+template <typename T>
+PTO_INTERNAL MaskReg CreatePredicateImpl(uint32_t &scalar)
+{
+    MaskReg reg;
+    if constexpr (sizeof(T) == 1) {
+        reg = plt_b8(scalar, POST_UPDATE);
+    } else if constexpr (sizeof(T) == 2) {
+        reg = plt_b16(scalar, POST_UPDATE);
+    } else if constexpr (sizeof(T) == 4) {
+        reg = plt_b32(scalar, POST_UPDATE);
     }
+    return reg;
+}
 
-    using MaskReg = vector_bool;
-    using UnalignReg = vector_align;
-    using AddrReg = vector_address;
+template <typename T>
+PTO_INTERNAL MaskReg CreatePredicate(uint32_t &scalar)
+{
+    return CreatePredicateImpl<T>(scalar);
+}
 
-    template <typename T> PTO_INTERNAL MaskReg CreatePredicateImpl(uint32_t &scalar)
+template <typename T>
+struct RegTensor {
+    PTO_INTERNAL RegTensor(){};
+    using RegType = typename TypeGet<T>::T;
+    RegType reg;
+
+    PTO_INTERNAL operator RegType &()
     {
-        MaskReg reg;
-        if constexpr (sizeof(T) == 1) {
-            reg = plt_b8(scalar, POST_UPDATE);
-        } else if constexpr (sizeof(T) == 2) {
-            reg = plt_b16(scalar, POST_UPDATE);
-        } else if constexpr (sizeof(T) == 4) {
-            reg = plt_b32(scalar, POST_UPDATE);
-        }
         return reg;
     }
+    AICORE void Print() const;
+};
 
-    template <typename T>
-    PTO_INTERNAL MaskReg CreatePredicate(uint32_t &scalar)
-    {
-        return CreatePredicateImpl<T>(scalar);
+template <typename SrcType, typename DstType>
+PTO_INTERNAL constexpr QuantMode_t GetCastPreQuantMode()
+{
+    if constexpr (std::is_same_v<DstType, half>) {
+        return QuantMode_t::F322F16;
     }
+    return QuantMode_t::NoQuant;
+}
 
-    template <typename T> struct RegTensor {
-        PTO_INTERNAL RegTensor(){};
-        using RegType = typename TypeGet<T>::T;
-        RegType reg;
-
-        PTO_INTERNAL operator RegType &()
-        {
-            return reg;
+template <typename SrcType, typename DstType>
+PTO_INTERNAL constexpr QuantMode_t GetScalarPreQuantMode()
+{
+    QuantMode_t quantPre = QuantMode_t::NoQuant;
+    if constexpr (std::is_same_v<SrcType, half>) {
+        if constexpr (std::is_same_v<DstType, int8_t> || std::is_same_v<DstType, uint8_t>) {
+            quantPre = QuantMode_t::QF162B8_PRE;
+        } else if constexpr (std::is_same_v<DstType, int16_t>) {
+            quantPre = QuantMode_t::QF162S16_PRE;
         }
-        AICORE void Print() const;
-    };
-
-    template <typename SrcType, typename DstType>
-    PTO_INTERNAL constexpr QuantMode_t GetCastPreQuantMode()
-    {
-        if constexpr (std::is_same_v<DstType, half>) {
-            return QuantMode_t::F322F16;
+    } else if constexpr (std::is_same_v<SrcType, int32_t>) {
+        if constexpr ((std::is_same_v<DstType, int8_t>) || (std::is_same_v<DstType, uint8_t>)) {
+            quantPre = QuantMode_t::REQ8;
+        } else if constexpr (std::is_same_v<DstType, half>) {
+            quantPre = QuantMode_t::DEQF16;
+        } else if constexpr (std::is_same_v<DstType, int16_t>) {
+            quantPre = QuantMode_t::DEQS16;
         }
-        return QuantMode_t::NoQuant;
     }
+    return quantPre;
+}
 
-    template <typename SrcType, typename DstType>
-    PTO_INTERNAL constexpr QuantMode_t GetScalarPreQuantMode()
-    {
-        QuantMode_t quantPre = QuantMode_t::NoQuant;
-        if constexpr (std::is_same_v<SrcType, half>) {
-            if constexpr (std::is_same_v<DstType, int8_t> || std::is_same_v<DstType, uint8_t>) {
-                quantPre = QuantMode_t::QF162B8_PRE;
-            } else if constexpr (std::is_same_v<DstType, int16_t>) {
-                quantPre = QuantMode_t::QF162S16_PRE;
-            }
-        } else if constexpr (std::is_same_v<SrcType, int32_t>) {
-            if constexpr ((std::is_same_v<DstType, int8_t>) || (std::is_same_v<DstType, uint8_t>)) {
-                quantPre = QuantMode_t::REQ8;
-            } else if constexpr (std::is_same_v<DstType, half>) {
-                quantPre = QuantMode_t::DEQF16;
-            } else if constexpr (std::is_same_v<DstType, int16_t>) {
-                quantPre = QuantMode_t::DEQS16;
-            }
+template <typename SrcType, typename DstType>
+PTO_INTERNAL constexpr QuantMode_t GetVectorPreQuantMode()
+{
+    QuantMode_t quantPre = QuantMode_t::NoQuant;
+    if constexpr (std::is_same_v<SrcType, half>) {
+        if constexpr (std::is_same_v<DstType, int8_t> || std::is_same_v<DstType, uint8_t>) {
+            quantPre = QuantMode_t::VQF162B8_PRE;
+        } else if constexpr (std::is_same_v<DstType, int16_t>) {
+            quantPre = QuantMode_t::VQF162S16_PRE;
         }
-        return quantPre;
-    }
-
-    template <typename SrcType, typename DstType>
-    PTO_INTERNAL constexpr QuantMode_t GetVectorPreQuantMode()
-    {
-        QuantMode_t quantPre = QuantMode_t::NoQuant;
-        if constexpr (std::is_same_v<SrcType, half>) {
-            if constexpr (std::is_same_v<DstType, int8_t> || std::is_same_v<DstType, uint8_t>) {
-                quantPre = QuantMode_t::VQF162B8_PRE;
-            } else if constexpr (std::is_same_v<DstType, int16_t>) {
-                quantPre = QuantMode_t::VQF162S16_PRE;
-            }
-        } else if constexpr (std::is_same_v<SrcType, int32_t>) {
-            if constexpr ((std::is_same_v<DstType, int8_t>) || (std::is_same_v<DstType, uint8_t>)) {
-                quantPre = QuantMode_t::VREQ8;
-            } else if constexpr (std::is_same_v<DstType, half>) {
-                quantPre = QuantMode_t::VDEQF16;
-            } else if constexpr (std::is_same_v<DstType, int16_t>) {
-                quantPre = QuantMode_t::VDEQS16;
-            }
+    } else if constexpr (std::is_same_v<SrcType, int32_t>) {
+        if constexpr ((std::is_same_v<DstType, int8_t>) || (std::is_same_v<DstType, uint8_t>)) {
+            quantPre = QuantMode_t::VREQ8;
+        } else if constexpr (std::is_same_v<DstType, half>) {
+            quantPre = QuantMode_t::VDEQF16;
+        } else if constexpr (std::is_same_v<DstType, int16_t>) {
+            quantPre = QuantMode_t::VDEQS16;
         }
-        return quantPre;
     }
+    return quantPre;
+}
 
 template <typename DstTileData, typename SrcTileData, typename DstType, typename SrcType, bool isQuant = false>
 PTO_INTERNAL void CheckTMovAccValid()
 {
-    static_assert((SrcTileData::Loc == TileType::Acc),
-        "Source TileType only support Acc.");
+    static_assert((SrcTileData::Loc == TileType::Acc), "Source TileType only support Acc.");
     static_assert((!SrcTileData::isRowMajor && SrcTileData::SFractal == SLayout::RowMajor),
-        "Src fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
+                  "Src fractal format should be (BFractal: ColMajor, SFractal: RowMajor).");
     static_assert(std::is_same_v<SrcType, half> || std::is_same_v<SrcType, int32_t>,
-        "Src data type only support half or int32_t.");
+                  "Src data type only support half or int32_t.");
     if constexpr (isQuant) {
         if constexpr (std::is_same_v<SrcType, half>) {
             static_assert(std::is_same_v<DstType, half> || std::is_same_v<DstType, int8_t> ||
-                          std::is_same_v<DstType, uint8_t> || std::is_same_v<DstType, int16_t>,
-                "The output data type must be int8/uint8/half/int16 when input is data type half.");
+                              std::is_same_v<DstType, uint8_t> || std::is_same_v<DstType, int16_t>,
+                          "The output data type must be int8/uint8/half/int16 when input is data type half.");
         } else if constexpr (std::is_same_v<SrcType, int32_t>) {
             static_assert(std::is_same_v<DstType, half> || std::is_same_v<DstType, int8_t> ||
-                          std::is_same_v<DstType, uint8_t> || std::is_same_v<DstType, int16_t>,
-                "The output data type must be int8/uint8/half/int16/int32 when input is data type int32.");
+                              std::is_same_v<DstType, uint8_t> || std::is_same_v<DstType, int16_t>,
+                          "The output data type must be int8/uint8/half/int16/int32 when input is data type int32.");
         }
     } else {
         if constexpr (std::is_same_v<SrcType, half>) {
             static_assert(std::is_same_v<DstType, half> || std::is_same_v<DstType, int8_t> ||
-                          std::is_same_v<DstType, uint8_t> || std::is_same_v<DstType, int16_t>,
-                "The output data type must be int8/uint8/half/int16 when input is data type half.");
+                              std::is_same_v<DstType, uint8_t> || std::is_same_v<DstType, int16_t>,
+                          "The output data type must be int8/uint8/half/int16 when input is data type half.");
         } else if constexpr (std::is_same_v<SrcType, int32_t>) {
             static_assert(std::is_same_v<DstType, int32_t>,
-                "The output data type must be int32 when input is data type int32.");
+                          "The output data type must be int32 when input is data type int32.");
         }
     }
     static_assert((DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
-                  (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
-                  (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor),
-        "Only support nz2nz, nz2nd or nz2dn.");
+                      (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::NoneBox) ||
+                      (!DstTileData::isRowMajor && DstTileData::SFractal == SLayout::RowMajor),
+                  "Only support nz2nz, nz2nd or nz2dn.");
 }
-}
+} // namespace pto
 
 #endif

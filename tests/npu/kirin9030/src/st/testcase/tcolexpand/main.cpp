@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-namespace TColExpandTest{
+namespace TColExpandTest {
 template <typename T, uint32_t srcRows, uint32_t dstRows, uint32_t cols, uint32_t validCols>
 void launchTCOLEXPAND(T *out, T *src, void *stream);
 
@@ -27,7 +27,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -36,7 +37,8 @@ std::string GetGoldenDir() {
 }
 
 template <typename T, uint32_t srcRows, uint32_t dstRows, uint32_t cols, uint32_t validCols>
-void test_tcolexpand() {
+void test_tcolexpand()
+{
     size_t inputFileSize = srcRows * cols * sizeof(T);
     size_t outputFileSize = dstRows * cols * sizeof(T);
 
@@ -107,4 +109,4 @@ TEST_F(TCOLEXPANDTest, case_float_1_54_64_63)
 {
     test_tcolexpand<float, 1, 54, 64, 63>();
 }
-}
+} // namespace TColExpandTest

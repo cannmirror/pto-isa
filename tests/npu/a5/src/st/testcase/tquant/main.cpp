@@ -11,7 +11,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "acl/acl.h"
 #include "test_common.h"
 
-#define DIV_ROUNDUP(a, b) (((a) + (b) -1) / (b))
+#define DIV_ROUNDUP(a, b) (((a) + (b)-1) / (b))
 
 using namespace std;
 using namespace PtoTestCommon;
@@ -29,7 +29,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -38,7 +39,8 @@ std::string GetGoldenDir() {
 }
 
 template <int validRows, int validCols, int mode>
-void test_tquant() {
+void test_tquant()
+{
     size_t srcFileSize = validRows * validCols * sizeof(float);
     size_t dstExpFileSize = DIV_ROUNDUP(validRows * validCols, 32) * sizeof(uint8_t);
     size_t dstFileSize = validRows * validCols * sizeof(uint8_t);
@@ -89,7 +91,7 @@ void test_tquant() {
     std::vector<uint8_t> golden_e8m0(dstExpFileSize);
     std::vector<uint8_t> dev_e8m0(dstExpFileSize);
 
-    ReadFile(GetGoldenDir() + "/golden_fp8.bin",  dstFileSize, golden_fp8.data(), dstFileSize);
+    ReadFile(GetGoldenDir() + "/golden_fp8.bin", dstFileSize, golden_fp8.data(), dstFileSize);
     ReadFile(GetGoldenDir() + "/golden_e8m0.bin", dstExpFileSize, golden_e8m0.data(), dstExpFileSize);
     ReadFile(GetGoldenDir() + "/output_e4m3.bin", dstFileSize, dev_fp8.data(), dstFileSize);
     ReadFile(GetGoldenDir() + "/output_e8m0.bin", dstExpFileSize, dev_e8m0.data(), dstExpFileSize);
@@ -101,25 +103,32 @@ void test_tquant() {
     EXPECT_TRUE(ret_fp8);
 }
 
-TEST_F(TQUANTTEST, case_fp32_32x32_nd) {
+TEST_F(TQUANTTEST, case_fp32_32x32_nd)
+{
     test_tquant<32, 32, 0>();
 }
-TEST_F(TQUANTTEST, case_fp32_32x64_nd) {
+TEST_F(TQUANTTEST, case_fp32_32x64_nd)
+{
     test_tquant<32, 64, 0>();
 }
-TEST_F(TQUANTTEST, case_fp32_64x128_nd) {
+TEST_F(TQUANTTEST, case_fp32_64x128_nd)
+{
     test_tquant<64, 128, 0>();
 }
-TEST_F(TQUANTTEST, case_fp32_128x128_nd) {
+TEST_F(TQUANTTEST, case_fp32_128x128_nd)
+{
     test_tquant<128, 128, 0>();
 }
-TEST_F(TQUANTTEST, case_fp32_32x64_nz) {
+TEST_F(TQUANTTEST, case_fp32_32x64_nz)
+{
     test_tquant<32, 64, 1>();
 }
-TEST_F(TQUANTTEST, case_fp32_64x128_nz) {
+TEST_F(TQUANTTEST, case_fp32_64x128_nz)
+{
     test_tquant<64, 128, 1>();
 }
-TEST_F(TQUANTTEST, case_fp32_128x128_nz) {
+TEST_F(TQUANTTEST, case_fp32_128x128_nz)
+{
     test_tquant<128, 128, 1>();
 }
 } // namespace TQuantTest

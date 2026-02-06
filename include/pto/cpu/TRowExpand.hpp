@@ -108,4 +108,3 @@ PTO_INTERNAL void TROWEXPANDSUB_IMPL(TileDst &dst, TileDst &src0, TileSrc1 &src1
 } // namespace pto
 
 #endif
-

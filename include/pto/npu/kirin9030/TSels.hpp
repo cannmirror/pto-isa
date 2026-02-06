@@ -17,13 +17,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, int dstCols>
-PTO_INTERNAL void TSelsNoPadImpl(
-    __ubuf__ T *dstPtr,
-    __ubuf__ T *src0Ptr,
-    __ubuf__ T *src1Ptr,
-    uint8_t selectMode,
-    unsigned validRow
-) {
+PTO_INTERNAL void TSelsNoPadImpl(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, uint8_t selectMode,
+                                 unsigned validRow)
+{
     __VEC_SCOPE__
     {
         MaskReg maskReg;
@@ -51,14 +47,9 @@ PTO_INTERNAL void TSelsNoPadImpl(
 }
 
 template <typename T, unsigned elementsPerRepeat, unsigned blockSizeElem, int dstCols>
-PTO_INTERNAL void TSelsPadImpl(
-    __ubuf__ T *dstPtr,
-    __ubuf__ T *src0Ptr,
-    __ubuf__ T *src1Ptr,
-    uint8_t selectMode,
-    unsigned validRow,
-    unsigned validCol
-) {
+PTO_INTERNAL void TSelsPadImpl(__ubuf__ T *dstPtr, __ubuf__ T *src0Ptr, __ubuf__ T *src1Ptr, uint8_t selectMode,
+                               unsigned validRow, unsigned validCol)
+{
     __VEC_SCOPE__
     {
         MaskReg maskReg;
@@ -88,24 +79,23 @@ PTO_INTERNAL void TSelsPadImpl(
 }
 
 template <typename TileData, unsigned elementsPerRepeat, unsigned blockSizeElem>
-__tf__ PTO_INTERNAL OP_NAME(TSELS) OP_TYPE(element_wise)
-void TSelsImpl(
-    typename TileData::TileDType __out__ dst,
-    typename TileData::TileDType __in__ src0,
-    typename TileData::TileDType __in__ src1,
-    uint8_t selectMode,
-    unsigned validRow,
-    unsigned validCol,
-    unsigned version = VFImplKind::VFIMPL_DEFAULT
-) {
+__tf__ PTO_INTERNAL OP_NAME(TSELS)
+    OP_TYPE(element_wise) void TSelsImpl(typename TileData::TileDType __out__ dst,
+                                         typename TileData::TileDType __in__ src0,
+                                         typename TileData::TileDType __in__ src1, uint8_t selectMode,
+                                         unsigned validRow, unsigned validCol,
+                                         unsigned version = VFImplKind::VFIMPL_DEFAULT)
+{
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
     __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
     if constexpr (TileData::PadVal == PadValue::Null || TileData::PadVal == PadValue::Zero) {
-        TSelsNoPadImpl<T, elementsPerRepeat, blockSizeElem, TileData::Cols>(dstPtr, src0Ptr, src1Ptr, selectMode, validRow);
+        TSelsNoPadImpl<T, elementsPerRepeat, blockSizeElem, TileData::Cols>(dstPtr, src0Ptr, src1Ptr, selectMode,
+                                                                            validRow);
     } else { // -INF(MIN) or INF(MAX)
-        TSelsPadImpl<T, elementsPerRepeat, blockSizeElem, TileData::Cols>(dstPtr, src0Ptr, src1Ptr, selectMode, validRow, validCol);
+        TSelsPadImpl<T, elementsPerRepeat, blockSizeElem, TileData::Cols>(dstPtr, src0Ptr, src1Ptr, selectMode,
+                                                                          validRow, validCol);
     }
 }
 
@@ -114,15 +104,17 @@ PTO_INTERNAL void TSELS_IMPL(TileData &dst, TileData &src0, TileData &src1, uint
 {
     using T = typename TileData::DType;
     static_assert(std::is_same<T, int8_t>::value || std::is_same<T, int16_t>::value ||
-                  std::is_same<T, int32_t>::value || std::is_same<T, half>::value ||
-                  std::is_same<T, float32_t>::value || std::is_same<T, uint8_t>::value ||
-                  std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value,
+                      std::is_same<T, int32_t>::value || std::is_same<T, half>::value ||
+                      std::is_same<T, float32_t>::value || std::is_same<T, uint8_t>::value ||
+                      std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value,
                   "TSELS: Invalid data type");
     static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "TSELS: Invalid data type.");
     static_assert(TileData::Loc == TileType::Vec, "TileType of src and dst tiles must be TileType::Vec.");
     static_assert(TileData::isRowMajor, "TSELS: not supported Layout type");
-    static_assert(TileData::ValidCol <= TileData::Cols, "Number of valid columns must not be greater than number of tile columns.");
-    static_assert(TileData::ValidRow <= TileData::Rows, "Number of valid rows must not be greater than number of tile rows.");
+    static_assert(TileData::ValidCol <= TileData::Cols,
+                  "Number of valid columns must not be greater than number of tile columns.");
+    static_assert(TileData::ValidRow <= TileData::Rows,
+                  "Number of valid rows must not be greater than number of tile rows.");
 
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
@@ -134,7 +126,8 @@ PTO_INTERNAL void TSELS_IMPL(TileData &dst, TileData &src0, TileData &src1, uint
     PTO_ASSERT(src0.GetValidRow() == src1.GetValidRow(), "Number of rows of src0, src1 must be the same.");
     PTO_ASSERT(src1.GetValidRow() == dst.GetValidRow(), "Number of rows of src1 and dst must be the same.");
 
-    TSelsImpl<TileData, elementsPerRepeat, blockSizeElem>(dst.data(), src0.data(), src1.data(), selectMode, validRow, validCol);
+    TSelsImpl<TileData, elementsPerRepeat, blockSizeElem>(dst.data(), src0.data(), src1.data(), selectMode, validRow,
+                                                          validCol);
 }
-}  // namespace pto
+} // namespace pto
 #endif

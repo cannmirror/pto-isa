@@ -23,7 +23,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -31,12 +32,14 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-
-template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol, bool isInPlace = false>
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol,
+          bool isInPlace = false>
 void LaunchTRsqrt(T *out, T *src, void *stream);
 
-template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol, bool isInPlace = false>
-void test_trsqrt() {
+template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int validRow, int validCol,
+          bool isInPlace = false>
+void test_trsqrt()
+{
     size_t srcFileSize = srcRow * srcCol * sizeof(T);
     size_t dstFileSize = dstRow * dstCol * sizeof(T);
 
@@ -85,27 +88,35 @@ void test_trsqrt() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TRSQRTTest, case1) {
+TEST_F(TRSQRTTest, case1)
+{
     test_trsqrt<float, 64, 64, 64, 64, 64, 64, true>();
 }
-TEST_F(TRSQRTTest, case2) {
+TEST_F(TRSQRTTest, case2)
+{
     test_trsqrt<float, 64, 64, 64, 64, 64, 64, false>();
 }
-TEST_F(TRSQRTTest, case3) {
+TEST_F(TRSQRTTest, case3)
+{
     test_trsqrt<aclFloat16, 64, 64, 64, 64, 64, 64, true>();
 }
-TEST_F(TRSQRTTest, case4) {
+TEST_F(TRSQRTTest, case4)
+{
     test_trsqrt<aclFloat16, 64, 64, 64, 64, 64, 64, false>();
 }
-TEST_F(TRSQRTTest, case5) {
+TEST_F(TRSQRTTest, case5)
+{
     test_trsqrt<float, 128, 128, 64, 64, 64, 64>();
 }
-TEST_F(TRSQRTTest, case6) {
+TEST_F(TRSQRTTest, case6)
+{
     test_trsqrt<float, 64, 64, 128, 128, 32, 32>();
 }
-TEST_F(TRSQRTTest, case7) {
+TEST_F(TRSQRTTest, case7)
+{
     test_trsqrt<aclFloat16, 128, 256, 64, 64, 64, 64>();
 }
-TEST_F(TRSQRTTest, case8) {
+TEST_F(TRSQRTTest, case8)
+{
     test_trsqrt<aclFloat16, 64, 64, 128, 256, 32, 32>();
 }

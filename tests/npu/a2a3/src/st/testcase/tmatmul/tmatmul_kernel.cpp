@@ -25,7 +25,6 @@ AICORE constexpr inline T CeilAlign(T num_1, T num_2)
     return (num_1 + num_2 - 1) / num_2 * num_2;
 }
 
-
 template <typename T, typename U, typename S, typename B, int validM, int validK, int validN, bool isBias>
 __global__ AICORE void RunTMATMUL_GEMV_CLOSE(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, __gm__ B *src2)
 {
@@ -34,18 +33,21 @@ __global__ AICORE void RunTMATMUL_GEMV_CLOSE(__gm__ T *out, __gm__ U *src0, __gm
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, blockAlign);
 
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
-        pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
-        pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
-        pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
+    using GlobalDataSrc0 =
+        GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
+                     pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
+    using GlobalDataSrc1 =
+        GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
+                     pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
+    using GlobalDataOut =
+        GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
+                     pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>,
-        pto::Stride<validN, validN, validN, validN, 1>>;
+    using GlobalDataSrc2 =
+        GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>, pto::Stride<validN, validN, validN, validN, 1>>;
     GlobalDataSrc2 src2Global(src2);
 
     using TileMatAData = Tile<TileType::Mat, U, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
@@ -121,18 +123,21 @@ __global__ AICORE void RunTMATMUL(__gm__ T *out, __gm__ U *src0, __gm__ S *src1,
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, blockAlign);
 
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
-        pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
-        pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
-        pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
+    using GlobalDataSrc0 =
+        GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
+                     pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
+    using GlobalDataSrc1 =
+        GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
+                     pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
+    using GlobalDataOut =
+        GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
+                     pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
 
-    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>,
-        pto::Stride<validN, validN, validN, validN, 1>>;
+    using GlobalDataSrc2 =
+        GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>, pto::Stride<validN, validN, validN, validN, 1>>;
     GlobalDataSrc2 src2Global(src2);
 
     using TileMatAData = Tile<TileType::Mat, U, M, K, BLayout::ColMajor, validM, validK, SLayout::RowMajor, 512>;
@@ -206,14 +211,16 @@ __global__ AICORE void RunTMATMULSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S 
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, BASEK);
 
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, BASEK>,
-        pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
+    using GlobalDataSrc0 =
+        GlobalTensor<U, pto::Shape<1, 1, 1, validM, BASEK>,
+                     pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, BASEK, validN>,
-        pto::Stride<1 * BASEK * validN, 1 * BASEK * validN, BASEK * validN, validN, 1>>;
-    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>,
-        pto::Stride<validN, validN, validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
-        pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
+                                        pto::Stride<1 * BASEK * validN, 1 * BASEK * validN, BASEK * validN, validN, 1>>;
+    using GlobalDataSrc2 =
+        GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>, pto::Stride<validN, validN, validN, validN, 1>>;
+    using GlobalDataOut =
+        GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
+                     pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
@@ -300,12 +307,15 @@ __global__ AICORE void RunTGEMV(__gm__ T *out, __gm__ U *src0, __gm__ S *src1, _
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, blockAlign);
 
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
-        pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
-        pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
-        pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
+    using GlobalDataSrc0 =
+        GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
+                     pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
+    using GlobalDataSrc1 =
+        GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
+                     pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
+    using GlobalDataOut =
+        GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
+                     pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
@@ -384,12 +394,15 @@ __global__ AICORE void RunTMATMUL_HF32(__gm__ T *out, __gm__ U *src0, __gm__ S *
     constexpr int N = CeilAlign<int>(validN, 16);
     constexpr int K = CeilAlign<int>(validK, 16);
 
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
-        pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
-    using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
-        pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
-        pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
+    using GlobalDataSrc0 =
+        GlobalTensor<U, pto::Shape<1, 1, 1, validM, validK>,
+                     pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
+    using GlobalDataSrc1 =
+        GlobalTensor<S, pto::Shape<1, 1, 1, validK, validN>,
+                     pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
+    using GlobalDataOut =
+        GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
+                     pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
     GlobalDataOut dstGlobal(out);
@@ -449,14 +462,16 @@ __global__ AICORE void RunTGEMVSplitK(__gm__ T *out, __gm__ U *src0, __gm__ S *s
     constexpr int N = CeilAlign<int>(validN, blockAlign);
     constexpr int K = CeilAlign<int>(validK, BASEK);
 
-    using GlobalDataSrc0 = GlobalTensor<U, pto::Shape<1, 1, 1, validM, BASEK>,
-        pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
+    using GlobalDataSrc0 =
+        GlobalTensor<U, pto::Shape<1, 1, 1, validM, BASEK>,
+                     pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<S, pto::Shape<1, 1, 1, BASEK, validN>,
-        pto::Stride<1 * BASEK * validN, 1 * BASEK * validN, BASEK * validN, validN, 1>>;
-    using GlobalDataSrc2 = GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>,
-        pto::Stride<validN, validN, validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
-        pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
+                                        pto::Stride<1 * BASEK * validN, 1 * BASEK * validN, BASEK * validN, validN, 1>>;
+    using GlobalDataSrc2 =
+        GlobalTensor<B, pto::Shape<1, 1, 1, 1, validN>, pto::Stride<validN, validN, validN, validN, 1>>;
+    using GlobalDataOut =
+        GlobalTensor<T, pto::Shape<1, 1, 1, validM, validN>,
+                     pto::Stride<1 * validM * validN, 1 * validM * validN, validM * validN, validN, 1>>;
     GlobalDataSrc2 src2Global(src2);
     GlobalDataOut dstGlobal(out);
 
@@ -542,7 +557,7 @@ void LaunchTMATMUL(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream)
     } else if constexpr (tilingKey == 2) {
         RunTMATMUL<int32_t, int8_t, int8_t, int32_t, 65, 90, 89, false>
             <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
-                reinterpret_cast<int8_t *>(src1), nullptr);
+                                     reinterpret_cast<int8_t *>(src1), nullptr);
     } else if constexpr (tilingKey == 3) {
         RunTMATMULSplitK<float, half, half, float, 5, 75, 11, false><<<1, nullptr, stream>>>(
             reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1), nullptr);
@@ -568,34 +583,37 @@ template <int32_t tilingKey>
 void LaunchTMATMULBIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream)
 {
     if constexpr (tilingKey == 1) {
-        RunTMATMUL<float, half, half, float, 26, 100, 94, true><<<1, nullptr, stream>>>(reinterpret_cast<float *>(out),
-            reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1), reinterpret_cast<float *>(src2));
+        RunTMATMUL<float, half, half, float, 26, 100, 94, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0),
+                                     reinterpret_cast<half *>(src1), reinterpret_cast<float *>(src2));
     } else if constexpr (tilingKey == 2) {
-        RunTMATMUL<float, half, half, float, 101, 288, 67, true><<<1, nullptr, stream>>>(reinterpret_cast<float *>(out),
-            reinterpret_cast<half *>(src0), reinterpret_cast<half *>(src1), reinterpret_cast<float *>(src2));
+        RunTMATMUL<float, half, half, float, 101, 288, 67, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0),
+                                     reinterpret_cast<half *>(src1), reinterpret_cast<float *>(src2));
     } else if constexpr (tilingKey == 3) {
-        RunTMATMUL<float, float, float, float, 15, 16, 15, true><<<1, nullptr, stream>>>(reinterpret_cast<float *>(out),
-            reinterpret_cast<float *>(src0), reinterpret_cast<float *>(src1), reinterpret_cast<float *>(src2));
+        RunTMATMUL<float, float, float, float, 15, 16, 15, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<float *>(src0),
+                                     reinterpret_cast<float *>(src1), reinterpret_cast<float *>(src2));
     } else if constexpr (tilingKey == 4) {
         RunTMATMUL<int32_t, int8_t, int8_t, int32_t, 55, 127, 29, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
-                reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
+                                     reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
     } else if constexpr (tilingKey == 5) {
         RunTMATMUL<float, bfloat16_t, bfloat16_t, float, 11, 402, 30, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<bfloat16_t *>(src0),
-                reinterpret_cast<bfloat16_t *>(src1), reinterpret_cast<float *>(src2));
+                                     reinterpret_cast<bfloat16_t *>(src1), reinterpret_cast<float *>(src2));
     } else if constexpr (tilingKey == 6) {
         RunTMATMUL<int32_t, int8_t, int8_t, int32_t, 150, 89, 50, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
-                reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
+                                     reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
     } else if constexpr (tilingKey == 7) {
         RunTMATMULSplitK<int32_t, int8_t, int8_t, int32_t, 135, 64, 88, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0),
-                reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
+                                     reinterpret_cast<int8_t *>(src1), reinterpret_cast<int32_t *>(src2));
     } else if constexpr (tilingKey == 8) {
         RunTGEMVSplitK<float, half, half, float, 1, 512, 32, true>
             <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0),
-                reinterpret_cast<half *>(src1), reinterpret_cast<float *>(src2));
+                                     reinterpret_cast<half *>(src1), reinterpret_cast<float *>(src2));
     }
 }
 

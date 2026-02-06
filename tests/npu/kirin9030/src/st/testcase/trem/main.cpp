@@ -23,7 +23,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -31,12 +32,12 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-
 template <typename T, int kTRows_, int kTCols_, int vRows, int vCols, bool isHalf>
 void LaunchTRem(T *out, T *src0, T *src1, void *stream);
 
-template<typename T, int kTRows_, int kTCols_, int vRows, int vCols, bool isHalf>
-void test_trem() {
+template <typename T, int kTRows_, int kTCols_, int vRows, int vCols, bool isHalf>
+void test_trem()
+{
     size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
 
     aclInit(nullptr);
@@ -88,38 +89,47 @@ void test_trem() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TREMTest, case1) {
+TEST_F(TREMTest, case1)
+{
     test_trem<uint16_t, 64, 64, 64, 64, false>();
 }
 
-TEST_F(TREMTest, case2) {
+TEST_F(TREMTest, case2)
+{
     test_trem<uint16_t, 64, 64, 63, 63, false>();
 }
 
-TEST_F(TREMTest, case3) {
+TEST_F(TREMTest, case3)
+{
     test_trem<uint16_t, 1, 16384, 1, 16384, false>();
 }
 
-TEST_F(TREMTest, case4) {
+TEST_F(TREMTest, case4)
+{
     test_trem<uint16_t, 2048, 16, 2048, 16, false>();
 }
 
-TEST_F(TREMTest, case5) {
+TEST_F(TREMTest, case5)
+{
     test_trem<float, 32, 32, 32, 32, false>();
 }
 
-TEST_F(TREMTest, case6) {
+TEST_F(TREMTest, case6)
+{
     test_trem<uint32_t, 8, 8, 8, 8, false>();
 }
 
-TEST_F(TREMTest, case7) {
+TEST_F(TREMTest, case7)
+{
     test_trem<aclFloat16, 32, 32, 31, 31, true>();
 }
 
-TEST_F(TREMTest, case8) {
+TEST_F(TREMTest, case8)
+{
     test_trem<int16_t, 16, 16, 16, 16, false>();
 }
 
-TEST_F(TREMTest, case9) {
+TEST_F(TREMTest, case9)
+{
     test_trem<int32_t, 8, 8, 8, 8, false>();
 }

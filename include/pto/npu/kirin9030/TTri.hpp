@@ -18,27 +18,30 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 template <typename TileData, unsigned rowStride, int upperOrLower>
-__tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned validRows, unsigned validCols, int diagonal) {
+__tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned validRows, unsigned validCols,
+                              int diagonal)
+{
     using T = typename TileData::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     constexpr unsigned elementsPerRepeat = REPEAT_BYTE / sizeof(T);
     unsigned numRepeatPerRow = CeilDivision(validCols, elementsPerRepeat);
     constexpr int start_offset = (upperOrLower == 0) ? 1 : 0;
     const int start_num = diagonal + start_offset; // (upperOrLower == 0) ? (diagonal + 1) : diagonal
-    __VEC_SCOPE__ {
+    __VEC_SCOPE__
+    {
         RegTensor<T> v_ones, v_zeros, vreg_out;
-        vector_s32  vreg_idx;
+        vector_s32 vreg_idx;
         vector_bool preg_cmp;
         vbr(v_ones, (T)1);
         vbr(v_zeros, (T)0);
         constexpr auto distValue =
-            std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();        
-        for (uint16_t i = 0; i < (uint16_t) validRows; ++i) {
+            std::integral_constant<::DistVST, static_cast<::DistVST>(GetDistVst<T, DistVST::DIST_NORM>())>();
+        for (uint16_t i = 0; i < (uint16_t)validRows; ++i) {
             uint32_t num_elements = validCols;
-            for (uint16_t j = 0; j < (uint16_t) numRepeatPerRow; ++j){
+            for (uint16_t j = 0; j < (uint16_t)numRepeatPerRow; ++j) {
                 vector_bool preg_st = CreatePredicate<T>(num_elements);
                 vci(vreg_idx, j * elementsPerRepeat);
-                vcmps_lt(preg_cmp, vreg_idx, (int)(i+start_num), preg_st);
+                vcmps_lt(preg_cmp, vreg_idx, (int)(i + start_num), preg_st);
                 if constexpr (upperOrLower == 0)
                     vsel(vreg_out, v_ones, v_zeros, preg_cmp);
                 else
@@ -50,13 +53,13 @@ __tf__ PTO_INTERNAL void TTri(typename TileData::TileDType __out__ dst, unsigned
 }
 
 template <typename TileData, int upperOrLower>
-PTO_INTERNAL void TTRI_IMPL(TileData &dst, int diagonal) {
+PTO_INTERNAL void TTRI_IMPL(TileData &dst, int diagonal)
+{
     using T = typename TileData::DType;
-    static_assert(std::is_same<T, int32_t>::value || std::is_same<T, int16_t>::value ||
-                      std::is_same<T, int8_t>::value || std::is_same<T, uint32_t>::value ||
-                      std::is_same<T, uint16_t>::value || std::is_same<T, uint8_t>::value ||
-                      std::is_same<T, half>::value || std::is_same<T, float16_t>::value ||
-                      std::is_same<T, float32_t>::value,
+    static_assert(
+        std::is_same<T, int32_t>::value || std::is_same<T, int16_t>::value || std::is_same<T, int8_t>::value ||
+            std::is_same<T, uint32_t>::value || std::is_same<T, uint16_t>::value || std::is_same<T, uint8_t>::value ||
+            std::is_same<T, half>::value || std::is_same<T, float16_t>::value || std::is_same<T, float32_t>::value,
         "Fix: TTRI has invalid data type.");
     TTri<TileData, TileData::RowStride, upperOrLower>(dst.data(), dst.GetValidRow(), dst.GetValidCol(), diagonal);
 }

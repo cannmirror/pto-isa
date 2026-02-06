@@ -19,7 +19,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-template <typename T> struct RemSOp {
+template <typename T>
+struct RemSOp {
     PTO_INTERNAL static void BinSInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, T scalar, MaskReg &preg)
     {
         if constexpr (std::is_same<T, float>::value) {
@@ -64,17 +65,19 @@ template <typename T> struct RemSOp {
 };
 
 template <typename TileDataDst, typename TileDataSrc>
-__tf__ PTO_INTERNAL OP_NAME(TREMS) OP_TYPE(element_wise)
-void TRemS(typename TileDataDst::TileDType __out__ dst, typename TileDataSrc::TileDType __in__ src, 
-    typename TileDataSrc::DType scalar, unsigned kValidRows, unsigned kValidCols,
-    VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+__tf__ PTO_INTERNAL OP_NAME(TREMS)
+    OP_TYPE(element_wise) void TRemS(typename TileDataDst::TileDType __out__ dst,
+                                     typename TileDataSrc::TileDType __in__ src, typename TileDataSrc::DType scalar,
+                                     unsigned kValidRows, unsigned kValidCols,
+                                     VFImplKind version = VFImplKind::VFIMPL_DEFAULT)
+{
     using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
     constexpr unsigned elementsPerRepeat = CCE_VL / sizeof(T);
-    BinaryInstr<RemSOp<T>, TileDataDst, TileDataSrc, T, elementsPerRepeat, blockSizeElem,
-        TileDataDst::RowStride, TileDataSrc::RowStride>(dstPtr, srcPtr, scalar, kValidRows, kValidCols, version);
+    BinaryInstr<RemSOp<T>, TileDataDst, TileDataSrc, T, elementsPerRepeat, blockSizeElem, TileDataDst::RowStride,
+                TileDataSrc::RowStride>(dstPtr, srcPtr, scalar, kValidRows, kValidCols, version);
 }
 
 template <typename TileDataDst, typename TileDataSrc>
@@ -82,15 +85,15 @@ PTO_INTERNAL void TRemSCheck()
 {
     using T = typename TileDataDst::DType;
     static_assert(std::is_same_v<T, typename TileDataSrc::DType>,
-        "Fix: The TREMS data type must be same of src and dst");
+                  "Fix: The TREMS data type must be same of src and dst");
     static_assert(std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, int16_t> ||
-        std::is_same_v<T, uint16_t> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t>,
-        "Fix: TREMS Invalid data type");
+                      std::is_same_v<T, uint16_t> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t>,
+                  "Fix: TREMS Invalid data type");
     static_assert((TileDataDst::Loc == TileType::Vec) && (TileDataSrc::Loc == TileType::Vec),
-        "Fix: TileType of dst and src tiles must be TileType::Vec.");
+                  "Fix: TileType of dst and src tiles must be TileType::Vec.");
     static_assert((TileDataDst::ValidCol <= TileDataDst::Cols) && (TileDataDst::ValidRow <= TileDataDst::Rows) &&
-        (TileDataSrc::ValidCol <= TileDataSrc::Cols) && (TileDataSrc::ValidRow <= TileDataSrc::Rows),
-        "Fix: Number of valid columns and rows must not be greater than number of tile columns and rows.");
+                      (TileDataSrc::ValidCol <= TileDataSrc::Cols) && (TileDataSrc::ValidRow <= TileDataSrc::Rows),
+                  "Fix: Number of valid columns and rows must not be greater than number of tile columns and rows.");
 }
 
 template <typename TileDataDst, typename TileDataSrc>
@@ -101,8 +104,8 @@ PTO_INTERNAL void TREMS_IMPL(TileDataDst &dst, TileDataSrc &src, typename TileDa
     unsigned validCol = dst.GetValidCol();
     TRemSCheck<TileDataDst, TileDataSrc>();
     PTO_ASSERT((src.GetValidCol() == validCol) && (src.GetValidRow() == validRow),
-                "Number of validColumns and validRows of src and dst must be the same.");
+               "Number of validColumns and validRows of src and dst must be the same.");
     TRemS<TileDataDst, TileDataSrc>(dst.data(), src.data(), scalar, validRow, validCol);
 }
-}  // namespace pto
+} // namespace pto
 #endif

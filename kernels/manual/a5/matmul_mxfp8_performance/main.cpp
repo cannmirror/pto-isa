@@ -32,12 +32,12 @@ void VerifyResult(size_t cFileSize)
 }
 
 template <typename T, typename U, typename X, uint32_t blockDim, uint32_t m, uint32_t k, uint32_t n,
-    uint32_t singleCoreM, uint32_t singleCoreK, uint32_t singleCoreN, uint32_t baseM, uint32_t baseK, 
-    uint32_t baseN, uint32_t stepM, uint32_t stepKa, uint32_t stepKb, uint32_t stepN>
+          uint32_t singleCoreM, uint32_t singleCoreK, uint32_t singleCoreN, uint32_t baseM, uint32_t baseK,
+          uint32_t baseN, uint32_t stepM, uint32_t stepKa, uint32_t stepKb, uint32_t stepN>
 void MxMatmul()
 {
     size_t aFileSize = m * k * sizeof(U); // uint8_t represent fp8
-    size_t bFileSize = k * n * sizeof(U); 
+    size_t bFileSize = k * n * sizeof(U);
     int sacleFactor = 32;
     size_t aScaleFileSize = m * k / sacleFactor * sizeof(X);
     size_t bScaleFileSize = k / sacleFactor * n * sizeof(X);
@@ -115,5 +115,5 @@ int main()
     constexpr uint32_t stepN = 1;
 
     MxMatmul<uint16_t, uint8_t, uint8_t, blockDim, m, k, n, singleCoreM, singleCoreK, singleCoreN, baseM, baseK, baseN,
-        stepM, stepKa, stepKb, stepN>();
+             stepM, stepKa, stepKb, stepN>();
 }

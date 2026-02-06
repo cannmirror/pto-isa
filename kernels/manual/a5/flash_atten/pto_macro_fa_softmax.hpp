@@ -28,7 +28,8 @@ namespace pto {
 // - The 2D->1D reshape for TCVT is used to avoid layout constraints and keep the cast fast.
 // -----------------------------------------------------------------------------
 
-constexpr PTO_INTERNAL float constexpr_sqrt(float x) {
+constexpr PTO_INTERNAL float constexpr_sqrt(float x)
+{
     if (x <= 0.0f)
         return 0.0f;
     float guess = x;
@@ -38,22 +39,27 @@ constexpr PTO_INTERNAL float constexpr_sqrt(float x) {
     return guess;
 }
 
-constexpr AICORE inline float constexpr_inv_sqrt(float x) {
+constexpr AICORE inline float constexpr_inv_sqrt(float x)
+{
     return 1.0f / constexpr_sqrt(x);
 }
 
 template <int HEAD_SIZE, bool CAUSAL_MASK, typename ReduceTileD1, typename TileDataD2, typename TileDataS1>
 AICORE inline void softmax_opt_fa_init_impl(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
-    ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum, ReduceTileD1 __out__ new_global_max,
-    ReduceTileD1 __out__ new_global_sum, ReduceTileD1 __out__ exp_max, TileDataS1 __out__ tmp_float,
-    TileDataS1 __out__ p_tile_f32, TileDataS1 triu, int s0_index, int s1_index) {
+                                            ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum,
+                                            ReduceTileD1 __out__ new_global_max, ReduceTileD1 __out__ new_global_sum,
+                                            ReduceTileD1 __out__ exp_max, TileDataS1 __out__ tmp_float,
+                                            TileDataS1 __out__ p_tile_f32, TileDataS1 triu, int s0_index, int s1_index)
+{
     (void)local_max;
     (void)exp_max;
     (void)local_sum;
 
     constexpr float scale = constexpr_inv_sqrt(HEAD_SIZE);
-    using Tile1D_fp32 = Tile<TileType::Vec, float, 1, TileDataS1::Rows*TileDataS1::Cols, BLayout::RowMajor, 1, TileDataS1::Rows*TileDataS1::Cols>;
-    using Tile1D_out = Tile<TileType::Vec, typename TileDataD2::DType, 1, TileDataS1::Rows*TileDataS1::Cols, BLayout::RowMajor, 1, TileDataS1::Rows*TileDataS1::Cols>;
+    using Tile1D_fp32 = Tile<TileType::Vec, float, 1, TileDataS1::Rows * TileDataS1::Cols, BLayout::RowMajor, 1,
+                             TileDataS1::Rows * TileDataS1::Cols>;
+    using Tile1D_out = Tile<TileType::Vec, typename TileDataD2::DType, 1, TileDataS1::Rows * TileDataS1::Cols,
+                            BLayout::RowMajor, 1, TileDataS1::Rows * TileDataS1::Cols>;
     Tile1D_fp32 p_tile_f32_1d;
     Tile1D_out x_exp_1d;
     if constexpr (CAUSAL_MASK) {
@@ -69,26 +75,30 @@ AICORE inline void softmax_opt_fa_init_impl(TileDataD2 __out__ x_exp, TileDataS1
     TROWEXPANDSUB(p_tile_f32, input_x, new_global_max);
     TMULS(p_tile_f32, p_tile_f32, scale);
     TEXP(p_tile_f32, p_tile_f32);
-    
+
     TROWSUM(new_global_sum, p_tile_f32, tmp_float);
 
     TRESHAPE(p_tile_f32_1d, p_tile_f32);
-    TRESHAPE(x_exp_1d, x_exp);   
+    TRESHAPE(x_exp_1d, x_exp);
     TCVT(x_exp_1d, p_tile_f32_1d, RoundMode::CAST_ROUND);
 }
 
 template <int HEAD_SIZE, bool CAUSAL_MASK, typename ReduceTileD1, typename TileDataD2, typename TileDataS1>
 AICORE inline void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
-    ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum, ReduceTileD1 __out__ new_global_max,
-    ReduceTileD1 __out__ new_global_sum, ReduceTileD1 __out__ exp_max, TileDataS1 __out__ tmp_float,
-    TileDataS1 __out__ p_tile_f32, TileDataS1 triu, int s0_index, int s1_index) {
-
-    constexpr float scale  = constexpr_inv_sqrt(HEAD_SIZE);
+                                                ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum,
+                                                ReduceTileD1 __out__ new_global_max,
+                                                ReduceTileD1 __out__ new_global_sum, ReduceTileD1 __out__ exp_max,
+                                                TileDataS1 __out__ tmp_float, TileDataS1 __out__ p_tile_f32,
+                                                TileDataS1 triu, int s0_index, int s1_index)
+{
+    constexpr float scale = constexpr_inv_sqrt(HEAD_SIZE);
 
     using ReduceTileD2 = Tile<TileType::Vec, float, 1, ReduceTileD1::Rows, BLayout::RowMajor, 1, ReduceTileD1::Rows>;
-    using Tile1D_fp32 = Tile<TileType::Vec, float, 1, TileDataS1::Rows*TileDataS1::Cols, BLayout::RowMajor, 1, TileDataS1::Rows*TileDataS1::Cols>;
-    using Tile1D_out = Tile<TileType::Vec, typename TileDataD2::DType, 1, TileDataS1::Rows*TileDataS1::Cols, BLayout::RowMajor, 1, TileDataS1::Rows*TileDataS1::Cols>;
-    
+    using Tile1D_fp32 = Tile<TileType::Vec, float, 1, TileDataS1::Rows * TileDataS1::Cols, BLayout::RowMajor, 1,
+                             TileDataS1::Rows * TileDataS1::Cols>;
+    using Tile1D_out = Tile<TileType::Vec, typename TileDataD2::DType, 1, TileDataS1::Rows * TileDataS1::Cols,
+                            BLayout::RowMajor, 1, TileDataS1::Rows * TileDataS1::Cols>;
+
     ReduceTileD2 tmp_shw_local_max;
     ReduceTileD2 tmp_shw_new_global_max;
     ReduceTileD2 tmp_shw_exp_max;
@@ -123,7 +133,7 @@ AICORE inline void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDa
     TRESHAPE(tmp_shw_exp_max, exp_max);
 
     TRESHAPE(p_tile_f32_1d, p_tile_f32);
-    TRESHAPE(x_exp_1d, x_exp);    
+    TRESHAPE(x_exp_1d, x_exp);
     TCVT(x_exp_1d, p_tile_f32_1d, RoundMode::CAST_ROUND);
     TRESHAPE(tmp_shw_new_global_sum, new_global_sum);
     TMUL(tmp_shw_new_global_sum, tmp_shw_exp_max, tmp_shw_new_global_sum);
@@ -135,18 +145,20 @@ AICORE inline void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDa
 template <bool init = false, int HEAD_SIZE, bool CAUSAL_MASK, typename ReduceTileD1, typename TileDataD2,
           typename TileDataS1>
 AICORE inline void pto_macro_fa_softmax(TileDataD2 __out__ x_exp, TileDataS1 __in__ input_x,
-    ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum, ReduceTileD1 __in__ new_global_max,
-        ReduceTileD1 __out__ new_global_sum, ReduceTileD1 __out__ exp_max, TileDataS1 __out__ input_reduce_tmp,
-        TileDataS1 __out__ p_tile_fp32, TileDataS1 triu, int s0_index, int s1_index) {
+                                        ReduceTileD1 __out__ local_max, ReduceTileD1 __out__ local_sum,
+                                        ReduceTileD1 __in__ new_global_max, ReduceTileD1 __out__ new_global_sum,
+                                        ReduceTileD1 __out__ exp_max, TileDataS1 __out__ input_reduce_tmp,
+                                        TileDataS1 __out__ p_tile_fp32, TileDataS1 triu, int s0_index, int s1_index)
+{
     if (s1_index <= s0_index || !CAUSAL_MASK) {
-    if constexpr (init) {
+        if constexpr (init) {
             softmax_opt_fa_init_impl<HEAD_SIZE, CAUSAL_MASK, ReduceTileD1, TileDataD2, TileDataS1>(
-                    x_exp, input_x, local_max, local_sum, new_global_max, new_global_sum, exp_max, input_reduce_tmp, 
-                    p_tile_fp32, triu, s0_index, s1_index);
-    } else {
+                x_exp, input_x, local_max, local_sum, new_global_max, new_global_sum, exp_max, input_reduce_tmp,
+                p_tile_fp32, triu, s0_index, s1_index);
+        } else {
             softmax_opt_fa_not_init_impl<HEAD_SIZE, CAUSAL_MASK, ReduceTileD1, TileDataD2, TileDataS1>(
-                    x_exp, input_x, local_max, local_sum, new_global_max, new_global_sum, exp_max, input_reduce_tmp, 
-                    p_tile_fp32, triu, s0_index, s1_index);
+                x_exp, input_x, local_max, local_sum, new_global_max, new_global_sum, exp_max, input_reduce_tmp,
+                p_tile_fp32, triu, s0_index, s1_index);
         }
     } else if constexpr (CAUSAL_MASK) {
         TMULS(x_exp, x_exp, 0.0);

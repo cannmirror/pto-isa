@@ -16,23 +16,42 @@ using namespace std;
 using namespace PtoTestCommon;
 
 // Wrapper types for FP8 testing - use int8_t storage but distinguish types
-struct fp8_e4m3_wrapper { 
-    int8_t value; 
-    operator int8_t() const { return value; }
-    operator float() const { return static_cast<float>(value); }
+struct fp8_e4m3_wrapper {
+    int8_t value;
+    operator int8_t() const
+    {
+        return value;
+    }
+    operator float() const
+    {
+        return static_cast<float>(value);
+    }
 };
-struct fp8_e5m2_wrapper { 
-    int8_t value; 
-    operator int8_t() const { return value; }
-    operator float() const { return static_cast<float>(value); }
+struct fp8_e5m2_wrapper {
+    int8_t value;
+    operator int8_t() const
+    {
+        return value;
+    }
+    operator float() const
+    {
+        return static_cast<float>(value);
+    }
 };
-struct hifloat8_wrapper { 
-    int8_t value; 
-    operator int8_t() const { return value; }
-    operator float() const { return static_cast<float>(value); }
+struct hifloat8_wrapper {
+    int8_t value;
+    operator int8_t() const
+    {
+        return value;
+    }
+    operator float() const
+    {
+        return static_cast<float>(value);
+    }
 };
 
-template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kValidRows_ = kTRows_, int kValidCols_ = kTCols_>
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kValidRows_ = kTRows_,
+          int kValidCols_ = kTCols_>
 void launchTCVT(D *dst, S *src, void *stream);
 
 class TCVTTest : public testing::Test {
@@ -43,7 +62,8 @@ protected:
     {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -51,7 +71,8 @@ std::string GetGoldenDir() {
     return fullPath;
 }
 
-template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kValidRows_ = kTRows_, int kValidCols_ = kTCols_>
+template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kValidRows_ = kTRows_,
+          int kValidCols_ = kTCols_>
 void test_tcvt()
 {
     uint32_t M = kGRows_;
@@ -105,15 +126,35 @@ void test_tcvt()
 }
 
 // Macro to generate test cases for all shapes for a given type pair
-#define GENERATE_TCVT_TESTS(dst_type, src_type, type_name) \
-    TEST_F(TCVTTest, case_##type_name##_1x128) { test_tcvt<dst_type, src_type, 1, 128, 1, 128>(); } \
-    TEST_F(TCVTTest, case_##type_name##_2x64) { test_tcvt<dst_type, src_type, 2, 64, 2, 64>(); } \
-    TEST_F(TCVTTest, case_##type_name##_4x32) { test_tcvt<dst_type, src_type, 4, 32, 4, 32>(); } \
-    TEST_F(TCVTTest, case_##type_name##_2x128) { test_tcvt<dst_type, src_type, 2, 128, 2, 128>(); } \
-    TEST_F(TCVTTest, case_##type_name##_4x128_4x65) { test_tcvt<dst_type, src_type, 4, 128, 4, 128, 4, 65>(); } \
-    TEST_F(TCVTTest, case_##type_name##_4x256_4x200) { test_tcvt<dst_type, src_type, 4, 256, 4, 256, 4, 200>(); } \
-    TEST_F(TCVTTest, case_##type_name##_1x256_1x129) { test_tcvt<dst_type, src_type, 1, 256, 1, 256, 1, 129>(); }
-
+#define GENERATE_TCVT_TESTS(dst_type, src_type, type_name)       \
+    TEST_F(TCVTTest, case_##type_name##_1x128)                   \
+    {                                                            \
+        test_tcvt<dst_type, src_type, 1, 128, 1, 128>();         \
+    }                                                            \
+    TEST_F(TCVTTest, case_##type_name##_2x64)                    \
+    {                                                            \
+        test_tcvt<dst_type, src_type, 2, 64, 2, 64>();           \
+    }                                                            \
+    TEST_F(TCVTTest, case_##type_name##_4x32)                    \
+    {                                                            \
+        test_tcvt<dst_type, src_type, 4, 32, 4, 32>();           \
+    }                                                            \
+    TEST_F(TCVTTest, case_##type_name##_2x128)                   \
+    {                                                            \
+        test_tcvt<dst_type, src_type, 2, 128, 2, 128>();         \
+    }                                                            \
+    TEST_F(TCVTTest, case_##type_name##_4x128_4x65)              \
+    {                                                            \
+        test_tcvt<dst_type, src_type, 4, 128, 4, 128, 4, 65>();  \
+    }                                                            \
+    TEST_F(TCVTTest, case_##type_name##_4x256_4x200)             \
+    {                                                            \
+        test_tcvt<dst_type, src_type, 4, 256, 4, 256, 4, 200>(); \
+    }                                                            \
+    TEST_F(TCVTTest, case_##type_name##_1x256_1x129)             \
+    {                                                            \
+        test_tcvt<dst_type, src_type, 1, 256, 1, 256, 1, 129>(); \
+    }
 
 // FP32 Source → fp16, int16, int32, variants
 GENERATE_TCVT_TESTS(aclFloat16, float, fp32_fp16)

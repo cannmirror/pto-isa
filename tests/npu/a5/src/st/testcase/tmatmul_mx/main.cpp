@@ -19,13 +19,15 @@ template <int32_t tilingKey>
 void LaunchTMATMUL_MX(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, uint8_t *src3, void *stream);
 
 template <int32_t tilingKey>
-void LaunchTMATMUL_MX_BIAS(
-    uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, uint8_t *src3, uint8_t *src4, void *stream);
+void LaunchTMATMUL_MX_BIAS(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, uint8_t *src3, uint8_t *src4,
+                           void *stream);
 
 class TMATMULMXTest : public testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
 std::string GetGoldenDir()

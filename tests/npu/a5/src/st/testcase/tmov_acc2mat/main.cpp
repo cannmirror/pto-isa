@@ -25,7 +25,8 @@ template <int32_t tilingKey>
 void LaunchTMOVAcc2MatNZ2DN(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
 
 template <int32_t tilingKey>
-void LaunchTMOVAcc2MatFBQuantNZ2NZ(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, uint8_t *src3, void *stream);
+void LaunchTMOVAcc2MatFBQuantNZ2NZ(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, uint8_t *src3,
+                                   void *stream);
 
 template <int32_t tilingKey>
 void LaunchTMOVAcc2MatFBQuantNZ2ND(uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *src2, void *stream);
@@ -44,8 +45,10 @@ void LaunchTMOVAcc2MatSCQuantNZ2DN(uint8_t *out, uint8_t *src0, uint8_t *src1, v
 
 class TMOVTest : public testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
 std::string GetGoldenDir()
@@ -57,8 +60,8 @@ std::string GetGoldenDir()
     return fullPath;
 }
 
-template <int32_t funcKey, typename CType, typename AType, typename BType, int32_t key,
-    uint32_t IdxRow = 0, uint32_t IdxCol = 0, bool isInsert = false, uint32_t DstRow = 0, uint32_t DstCol = 0>
+template <int32_t funcKey, typename CType, typename AType, typename BType, int32_t key, uint32_t IdxRow = 0,
+          uint32_t IdxCol = 0, bool isInsert = false, uint32_t DstRow = 0, uint32_t DstCol = 0>
 void tmov_acc2mat_test(uint32_t M, uint32_t K, uint32_t N)
 {
     size_t aFileSize = M * K * sizeof(AType);
@@ -84,7 +87,7 @@ void tmov_acc2mat_test(uint32_t M, uint32_t K, uint32_t N)
     aclrtMalloc((void **)&dstDevice, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&src0Device, aFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMalloc((void **)&src1Device, bFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src2Device, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);    
+    aclrtMalloc((void **)&src2Device, cFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     ReadFile(GetGoldenDir() + "/x1_gm.bin", aFileSize, src0Host, aFileSize);
     ReadFile(GetGoldenDir() + "/x2_gm.bin", bFileSize, src1Host, bFileSize);
@@ -140,7 +143,7 @@ void tmov_acc2mat_test(uint32_t M, uint32_t K, uint32_t N)
 }
 
 template <int32_t funcKey, typename CType, typename AType, typename BType, typename QuantType, int32_t key,
-    uint32_t IdxRow = 0, uint32_t IdxCol = 0, bool isInsert = false, uint32_t DstRow = 0, uint32_t DstCol = 0>
+          uint32_t IdxRow = 0, uint32_t IdxCol = 0, bool isInsert = false, uint32_t DstRow = 0, uint32_t DstCol = 0>
 void tmov_acc2mat_fb_quant_test(uint32_t M, uint32_t K, uint32_t N)
 {
     size_t aFileSize = M * K * sizeof(AType);

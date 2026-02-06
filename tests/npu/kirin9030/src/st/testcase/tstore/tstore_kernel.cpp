@@ -21,17 +21,14 @@ AICORE constexpr uint32_t GetBlockSize()
 {
     return 32 / sizeof(T);
 }
-}
-template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
-int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-AICORE inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ *src) {
-    constexpr int gStride[5] = {
-        gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape3 * gWholeShape4,
-        gWholeShape4,
-        1
-    };
+} // namespace
+template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+AICORE inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
+    constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
+                                gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4,
+                                1};
 
     constexpr int blockSize = GetBlockSize<T>();
     constexpr int validRow = gShape0 * gShape1 * gShape2 * gShape3;
@@ -59,16 +56,13 @@ AICORE inline void RunTStoreRowMajor(__gm__ T __out__ *out, __gm__ T __in__ *src
     out = dstGlobal.data();
 }
 
-template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
-int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-AICORE inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ *src) {
-    constexpr int gStride[5] = {
-        gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape3 * gWholeShape4,
-        1,
-        gWholeShape3
-    };
+template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+AICORE inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
+    constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
+                                gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, 1,
+                                gWholeShape3};
 
     constexpr int blockSize = GetBlockSize<T>();
     constexpr int Row = (gShape3 + blockSize - 1) / blockSize * blockSize;
@@ -96,15 +90,13 @@ AICORE inline void RunTStoreColMajor(__gm__ T __out__ *out, __gm__ T __in__ *src
     out = dstGlobal.data();
 }
 
-template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
-int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-AICORE inline void RunTStoreNZ(__gm__ T __out__ *out, __gm__ T __in__ *src) {
-    constexpr int gStride[5] = {
-        gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape2 * gWholeShape3 * gWholeShape4,
-        gWholeShape3 * gWholeShape4,
-        gWholeShape4,
-        1};
+template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+AICORE inline void RunTStoreNZ(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
+    constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
+                                gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4,
+                                1};
 
     constexpr int Row = gShape2 * gShape3;
     constexpr int Col = gShape0 * gShape1 * gShape4;
@@ -130,92 +122,35 @@ AICORE inline void RunTStoreNZ(__gm__ T __out__ *out, __gm__ T __in__ *src) {
     out = dstGlobal.data();
 }
 
-template <typename T, pto::Layout format, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, 
-    int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+template <typename T, pto::Layout format, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4,
+          int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
 __global__ AICORE void TStoreKernel(__gm__ T *out, __gm__ T *src)
 {
     if constexpr (format == pto::Layout::ND) {
-        RunTStoreRowMajor<T,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(out, src);
+        RunTStoreRowMajor<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+                          gWholeShape3, gWholeShape4>(out, src);
     } else if constexpr (format == pto::Layout::DN) {
-        RunTStoreColMajor<T,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(out, src);
+        RunTStoreColMajor<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+                          gWholeShape3, gWholeShape4>(out, src);
     } else if constexpr (format == pto::Layout::NZ) {
-        RunTStoreNZ<T,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4>(out, src);
-}
+        RunTStoreNZ<T, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
+                    gWholeShape3, gWholeShape4>(out, src);
+    }
 }
 
-template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, 
-    int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
-void LaunchTStore (T *out, T *src, void *stream)
+template <int format, typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+void LaunchTStore(T *out, T *src, void *stream)
 {
     if constexpr (format == 0) {
-        TStoreKernel<T,
-            pto::Layout::ND,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4><<<1, nullptr, stream>>>(out, src);
+        TStoreKernel<T, pto::Layout::ND, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1,
+                     gWholeShape2, gWholeShape3, gWholeShape4><<<1, nullptr, stream>>>(out, src);
     } else if constexpr (format == 1) {
-        TStoreKernel<T,
-            pto::Layout::DN,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4><<<1, nullptr, stream>>>(out, src);
+        TStoreKernel<T, pto::Layout::DN, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1,
+                     gWholeShape2, gWholeShape3, gWholeShape4><<<1, nullptr, stream>>>(out, src);
     } else if constexpr (format == 2) {
-        TStoreKernel<T,
-            pto::Layout::NZ,
-            gShape0,
-            gShape1,
-            gShape2,
-            gShape3,
-            gShape4,
-            gWholeShape0,
-            gWholeShape1,
-            gWholeShape2,
-            gWholeShape3,
-            gWholeShape4><<<1, nullptr, stream>>>(out, src);
+        TStoreKernel<T, pto::Layout::NZ, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1,
+                     gWholeShape2, gWholeShape3, gWholeShape4><<<1, nullptr, stream>>>(out, src);
     }
 }
 

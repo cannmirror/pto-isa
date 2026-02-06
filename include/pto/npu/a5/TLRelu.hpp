@@ -19,7 +19,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-template <typename T> struct LReluOp {
+template <typename T>
+struct LReluOp {
     PTO_INTERNAL static void BinSInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, T src1, MaskReg &preg)
     {
         vlrelu(reg_dst, reg_src0, src1, preg, MODE_ZEROING);
@@ -28,25 +29,24 @@ template <typename T> struct LReluOp {
 
 template <typename TileDataDst, typename TileDataSrc, unsigned elementsPerRepeat, unsigned blockSizeElem,
           unsigned dstRowStride, unsigned src0RowStride>
-__tf__ PTO_INTERNAL OP_NAME(TLRELU) OP_TYPE(element_wise)
-void TLRelu(typename TileDataDst::TileDType __out__ dst, 
-            typename TileDataSrc::TileDType __in__ src0, 
-            typename TileDataSrc::DType src1,
-            unsigned kValidRows, unsigned kValidCols,
-            VFImplKind version = VFImplKind::VFIMPL_DEFAULT) {
+__tf__ PTO_INTERNAL OP_NAME(TLRELU)
+    OP_TYPE(element_wise) void TLRelu(typename TileDataDst::TileDType __out__ dst,
+                                      typename TileDataSrc::TileDType __in__ src0, typename TileDataSrc::DType src1,
+                                      unsigned kValidRows, unsigned kValidCols,
+                                      VFImplKind version = VFImplKind::VFIMPL_DEFAULT)
+{
     using T = typename TileDataDst::DType;
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
-    BinaryInstr<LReluOp<T>, TileDataDst, TileDataSrc, T, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride>
-        (dstPtr, src0Ptr, src1, kValidRows, kValidCols, version);
+    BinaryInstr<LReluOp<T>, TileDataDst, TileDataSrc, T, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride>(
+        dstPtr, src0Ptr, src1, kValidRows, kValidCols, version);
 }
 
 template <typename TileDataDst, typename TileDataSrc>
 PTO_INTERNAL void TLRELU_IMPL(TileDataDst &dst, TileDataSrc &src0, typename TileDataSrc::DType scalar)
 {
     using T = typename TileDataDst::DType;
-    static_assert(std::is_same<T, half>::value || std::is_same<T, float>::value,
-                  "TLRELU: Invalid data type");
+    static_assert(std::is_same<T, half>::value || std::is_same<T, float>::value, "TLRELU: Invalid data type");
     static_assert((TileDataDst::Loc == TileType::Vec) && (TileDataSrc::Loc == TileType::Vec),
                   "TileType of dst and src tiles must be TileType::Vec.");
     static_assert((TileDataDst::ValidCol <= TileDataDst::Cols) && (TileDataDst::ValidRow <= TileDataDst::Rows),
@@ -59,13 +59,13 @@ PTO_INTERNAL void TLRELU_IMPL(TileDataDst &dst, TileDataSrc &src0, typename Tile
     constexpr unsigned dstRowStride = TileDataDst::RowStride;
     constexpr unsigned src0RowStride = TileDataSrc::RowStride;
 
-    PTO_ASSERT((src0.GetValidCol() == dst.GetValidCol()) && (src0.GetValidRow() == dst.GetValidRow()), 
-                "Number of columns and rows of src and dst must be the same.");
+    PTO_ASSERT((src0.GetValidCol() == dst.GetValidCol()) && (src0.GetValidRow() == dst.GetValidRow()),
+               "Number of columns and rows of src and dst must be the same.");
     unsigned validRow = dst.GetValidRow();
     unsigned validCol = dst.GetValidCol();
 
-    TLRelu<TileDataDst, TileDataSrc, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride>
-        (dst.data(), src0.data(), scalar, validRow, validCol);
+    TLRelu<TileDataDst, TileDataSrc, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride>(
+        dst.data(), src0.data(), scalar, validRow, validCol);
 }
-}  // namespace pto
+} // namespace pto
 #endif

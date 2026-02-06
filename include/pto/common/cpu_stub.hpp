@@ -17,14 +17,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <cstdio>
 
 // CPU simulator assertion helper (always enabled).
-#define PTO_CPU_STUB_ASSERT(cond)                                                                    \
-    do {                                                                                             \
-        if (!(cond)) {                                                                               \
-            std::fprintf(stderr,                                                                     \
-                "[PTO][CA] Constraint violated. Condition: %s. Hint: see docs/coding/debug.md\n",    \
-                #cond);                                                                              \
-            std::abort();                                                                            \
-        }                                                                                            \
+#define PTO_CPU_STUB_ASSERT(cond)                                                                                  \
+    do {                                                                                                           \
+        if (!(cond)) {                                                                                             \
+            std::fprintf(stderr, "[PTO][CA] Constraint violated. Condition: %s. Hint: see docs/coding/debug.md\n", \
+                         #cond);                                                                                   \
+            std::abort();                                                                                          \
+        }                                                                                                          \
     } while (0)
 
 #define __global__
@@ -41,7 +40,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define __fbuf__
 #define __tf__
 
-typedef void* aclrtStream;
+typedef void *aclrtStream;
 typedef int pipe_t;
 const pipe_t PIPE_S = 0;
 const pipe_t PIPE_V = 1;
@@ -55,8 +54,7 @@ inline void pipe_barrier(pipe_t pipe)
     (void)pipe;
 }
 
-constexpr pipe_t opPipeList[] = {
-};
+constexpr pipe_t opPipeList[] = {};
 
 #define aclFloat16ToFloat(x) ((float)(x)
 #define aclInit(x)
@@ -64,14 +62,19 @@ constexpr pipe_t opPipeList[] = {
 
 #define aclrtCreateStream(x)
 
-static inline void aclrtMallocHost(void**p, size_t sz){
+static inline void aclrtMallocHost(void **p, size_t sz)
+{
     PTO_CPU_STUB_ASSERT(sz != 0);
     *p = malloc(sz);
 }
 
-#define aclrtMalloc(a,b,c) aclrtMallocHost(a,b)
+#define aclrtMalloc(a, b, c) aclrtMallocHost(a, b)
 
-#define aclrtMemcpy(dst, sz_dst, src, sz_src, type) {for(size_t i = 0; i<sz_src && i<sz_dst; i++) reinterpret_cast<char*>(dst)[i] = reinterpret_cast<char*>(src)[i];} 
+#define aclrtMemcpy(dst, sz_dst, src, sz_src, type)                              \
+    {                                                                            \
+        for (size_t i = 0; i < sz_src && i < sz_dst; i++)                        \
+            reinterpret_cast<char *>(dst)[i] = reinterpret_cast<char *>(src)[i]; \
+    }
 
 #define aclrtSynchronizeStream(x)
 #define aclrtFree(x) free(x)
@@ -79,8 +82,8 @@ static inline void aclrtMallocHost(void**p, size_t sz){
 #define aclrtDestroyStream(x)
 #define aclrtResetDevice(x)
 #define aclFinalize(x)
-#define set_flag(a,b,c)
-#define wait_flag(a,b,c)
+#define set_flag(a, b, c)
+#define wait_flag(a, b, c)
 #define __cce_get_tile_ptr(x) x
 
 typedef int event_t;

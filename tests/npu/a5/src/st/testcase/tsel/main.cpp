@@ -20,11 +20,14 @@ void LaunchTSel(T *out, uint8_t *mask, T *src0, T *src1, void *stream);
 
 class TSELTest : public testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override
+    {}
+    void TearDown() override
+    {}
 };
 
-std::string GetGoldenDir() {
+std::string GetGoldenDir()
+{
     const testing::TestInfo *testInfo = testing::UnitTest::GetInstance()->current_test_info();
     const std::string caseName = testInfo->name();
     std::string suiteName = testInfo->test_suite_name();
@@ -33,7 +36,8 @@ std::string GetGoldenDir() {
 }
 
 template <typename T, int Rows, int Cols, int ValidRows, int ValidCols>
-void test_tsel() {
+void test_tsel()
+{
     size_t fileSize = Rows * Cols * sizeof(T);
     size_t maskFileSize = Rows * Cols * sizeof(uint8_t);
 
@@ -94,33 +98,43 @@ void test_tsel() {
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TSELTest, case1) {
+TEST_F(TSELTest, case1)
+{
     test_tsel<float, 2, 128, 2, 128>();
 }
-TEST_F(TSELTest, case2) {
+TEST_F(TSELTest, case2)
+{
     test_tsel<float, 2, 32, 2, 32>();
 }
-TEST_F(TSELTest, case3) {
+TEST_F(TSELTest, case3)
+{
     test_tsel<float, 2, 160, 2, 160>();
 }
-TEST_F(TSELTest, case4) {
+TEST_F(TSELTest, case4)
+{
     test_tsel<aclFloat16, 2, 128, 2, 128>();
 }
-TEST_F(TSELTest, case5) {
+TEST_F(TSELTest, case5)
+{
     test_tsel<aclFloat16, 2, 32, 2, 32>();
 }
-TEST_F(TSELTest, case6) {
+TEST_F(TSELTest, case6)
+{
     test_tsel<aclFloat16, 2, 160, 2, 160>();
 }
-TEST_F(TSELTest, case7) {
+TEST_F(TSELTest, case7)
+{
     test_tsel<int8_t, 2, 128, 2, 128>();
 }
-TEST_F(TSELTest, case8) {
+TEST_F(TSELTest, case8)
+{
     test_tsel<int8_t, 2, 32, 2, 32>();
 }
-TEST_F(TSELTest, case9) {
+TEST_F(TSELTest, case9)
+{
     test_tsel<int8_t, 2, 160, 2, 160>();
 }
-TEST_F(TSELTest, case10) {
+TEST_F(TSELTest, case10)
+{
     test_tsel<float, 2, 512, 2, 512>();
 }
