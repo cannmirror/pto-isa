@@ -17,15 +17,14 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #if defined(__DAV_C220_CUBE__) || defined(__DAV_C220_VEC__)
 #include <pto/npu/a2a3/custom/TSyncCVID.hpp>
 #include <pto/npu/a2a3/custom/TSync_Custom.hpp>
-#include "pto_macro_fa_softmax.hpp"
 #define UF_ENABLE 1
 #elif defined(__DAV_C310_CUBE__) || defined(__DAV_C310_VEC__)
 #include <pto/npu/a5/custom/TSyncCVID.hpp>
 #include <pto/npu/a5/custom/TSync_Custom.hpp>
-#include "pto_macro_fa_softmax_c310.hpp"
 #define UF_ENABLE 1
 #endif
 #include "pto_macro_matmul.hpp"
+#include "pto_macro_fa_softmax.hpp"
 #include "pto_macro_fa_gu.hpp"
 
 using namespace std;
@@ -539,7 +538,6 @@ AICORE inline void compute_p(int tile_id, int row_slice, __gm__ float *qk_tile_f
         TASSIGN(l1_exp_max_slice, (uint64_t)l1_exp_max_ififo.data() + reduce_row_byte_offset);
 
         // Extract current slice state from full-length reduce tiles
-        // TODO: change to TEXTRACT when available
 
         wait_flag(PIPE_MTE3, PIPE_V, pTileEventId);
         if (initFlag) {

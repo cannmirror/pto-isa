@@ -66,6 +66,16 @@ ascendc_include_directories(workspace_kernel PRIVATE
   ${PTO_LIB_PATH}/include/common
 )
 
+if(${SOC_VERSION} STREQUAL "ascend910b1")
+    ascendc_include_directories(workspace_kernel PRIVATE
+      ${PTO_LIB_PATH}/kernels/manual/a2a3/flash_atten
+    )
+elseif(${SOC_VERSION} STREQUAL "ascend910_9599")
+    ascendc_include_directories(workspace_kernel PRIVATE
+      ${PTO_LIB_PATH}/kernels/manual/a5/flash_atten
+    )
+endif()
+
 add_library(${_OPPLUGIN_PYBIND_NAME} SHARED ${_OPPLUGIN_PYBIND_OPS_SRCS})
 
 target_link_libraries(${_OPPLUGIN_PYBIND_NAME} PRIVATE

@@ -15,6 +15,19 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "../kernel/fa_custom.h"
 #include "utils.h"
 
+#define SUPPORTED_HEAD_SIZE 64
+#define SUPPORTED_HEAD_SIZE2 128
+
+#define TILING_KEY_128 128
+#define TILING_KEY_256 256
+#define TILING_KEY_512 512
+#define TILING_KEY_1K 1024
+
+#define MIN_SEQ_LEN_FOR_TK_256 256
+#define MAX_SEQ_LEN_FOR_TK_256 1024
+#define MIN_SEQ_LEN_FOR_TK_512 1024
+#define MAX_SEQ_LEN_FOR_TK_512 8192
+#define MIN_SEQ_LEN_FOR_TK_1K 1024
 
 namespace ascendc_path {
 
@@ -32,19 +45,20 @@ at::Tensor run_fa_custom(const at::Tensor &q, const at::Tensor &k, const at::Ten
     constexpr int CUBE_S0 = kFaCubeS0;
     constexpr int CUBE_S1 = kFaCubeS1;
 
-    assert((head_size == 64 || head_size == 128) && "Head Size has to be 64 or 128 for now");
+    assert((head_size == SUPPORTED_HEAD_SIZE || head_size == SUPPORTED_HEAD_SIZE2) && 
+           "Head Size has to be 64 or 128 for now");
     assert(s0 % CUBE_S0 == 0 && "S0 has to be CUBE_S0 multiple");
 
     // Dynamic tiling selection logic
     int tile_s1 = kFaTileS1; // Default
-    if (s1 >= 256 && s1 <= 1024) {
-        tile_s1 = 256;
-    } else if (s1 >= 1024 && s1 <= 8192) {
-        tile_s1 = 512;
-    } else if (s1 >= 8192) {
-        tile_s1 = 1024;
+    if (s1 >= MIN_SEQ_LEN_FOR_TK_256 && s1 <= MAX_SEQ_LEN_FOR_TK_256) {
+        tile_s1 = TILING_KEY_256;
+    } else if (s1 >= MIN_SEQ_LEN_FOR_TK_512 && s1 <= MAX_SEQ_LEN_FOR_TK_512) {
+        tile_s1 = TILING_KEY_512;
+    } else if (s1 >= MIN_SEQ_LEN_FOR_TK_1K) {
+        tile_s1 = TILING_KEY_1K;
     } else {
-        tile_s1 = 128;
+        tile_s1 = TILING_KEY_128;
     }
     
     // Verify tiling constraint

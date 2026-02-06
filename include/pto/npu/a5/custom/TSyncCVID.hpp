@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2025 Huawei Technologies Co., Ltd.
+Copyright (c) 2026 Huawei Technologies Co., Ltd.
 This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 CANN Open Software License Agreement Version 2.0 (the "License").
 Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/type.hpp>
 #include <pto/common/utils.hpp>
+
+#define FFTS_MODE_BIT_START 4
+#define FFTS_FLAG_ID_BIT_START 8
 
 namespace pto {
 
@@ -40,7 +43,8 @@ enum CVSyncMode : uint16_t {
 };
 
 AICORE inline uint16_t _getFFTSMsg(CVSyncMode mode, uint16_t flag_id, uint16_t base_const = 0x1) {
-    return ((base_const & 0xf) + ((mode & 0x3) << 4) + ((flag_id & 0xf) << 8));
+    return ((base_const & 0xf) + ((mode & 0x3) << FFTS_MODE_BIT_START) + 
+            ((flag_id & 0xf) << FFTS_FLAG_ID_BIT_START));
 }
 
 // Cross-core CV slot synchronization. Returns the CV comm slot for the current core/block.

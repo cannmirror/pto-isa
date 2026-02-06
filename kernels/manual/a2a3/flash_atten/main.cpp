@@ -33,6 +33,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
+#define GOP_PRECISION 6
+#define TIME_PRECISION 3
+
 static std::vector<std::string> Split(const std::string &s, char delim) {
     std::vector<std::string> out;
     std::stringstream ss(s);
@@ -92,9 +95,9 @@ static void AppendReportRow(const std::string &case_name, int head, int s0, int 
                "result\n";
     }
     ofs << case_name << ',' << head << ',' << s0 << ',' << s1 << ',' << cube_s0 << ',' << cube_s1 << ',' << tile_s1
-        << ',' << start_time << ',' << end_time << ',' << std::fixed << std::setprecision(3) << duration_us << ','
-        << std::setprecision(3) << avg_block_us << ',' << std::setprecision(6) << gops << ',' << tflops_str << ','
-        << (ok ? "OK" : "NOK") << '\n';
+        << ',' << start_time << ',' << end_time << ',' << std::fixed << std::setprecision(TIME_PRECISION) << duration_us 
+        << ',' << std::setprecision(TIME_PRECISION) << avg_block_us << ',' << std::setprecision(GOP_PRECISION) << gops
+        << ',' << tflops_str << ',' << (ok ? "OK" : "NOK") << '\n';
 }
 
 std::string GetGoldenDir() {
@@ -636,7 +639,7 @@ void run_tfa() {
         tflops_str = "NA";
     } else {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(6) << gops / (duration_us + 1e-9);
+        oss << std::fixed << std::setprecision(GOP_PRECISION) << gops / (duration_us + 1e-9);
         tflops_str = oss.str();
     }
     double avg_block_us = 0.0;

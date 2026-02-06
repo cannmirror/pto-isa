@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2025 Huawei Technologies Co., Ltd.
+Copyright (c) 2026 Huawei Technologies Co., Ltd.
 This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 CANN Open Software License Agreement Version 2.0 (the "License").
 Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #include <pto/common/type.hpp>
 #include <pto/common/utils.hpp>
+
+#define VEC_CORE_ID_OFFSET 16
 
 namespace pto {
 
@@ -126,7 +128,7 @@ struct TSync_Custom {
         if constexpr (is_c2v) {
             // Cube -> Vec: Cube sets BOTH flags on PIPE_FIX
             set_intra_block(PIPE_FIX, flag_id);
-            set_intra_block(PIPE_FIX, flag_id + 16);
+            set_intra_block(PIPE_FIX, flag_id + VEC_CORE_ID_OFFSET);
         } else { // is_v2c (both gm and ub)
             // Vec -> Cube: Vec sets flag_id only on PIPE_MTE3
             // Each Vec subblock executes this; hardware maps subblock 1's flag to flag_id+16
@@ -151,11 +153,11 @@ struct TSync_Custom {
         } else if constexpr (is_v2c_gm) {
             // Vec -> Cube (GM path): Cube waits on PIPE_MTE2, BOTH flags
             wait_intra_block(PIPE_MTE2, flag_id);
-            wait_intra_block(PIPE_MTE2, flag_id + 16);
+            wait_intra_block(PIPE_MTE2, flag_id + VEC_CORE_ID_OFFSET);
         } else { // is_v2c_ub
             // Vec -> Cube (UB path - TINSERT): Cube waits on PIPE_MTE1, BOTH flags
             wait_intra_block(PIPE_MTE1, flag_id);
-            wait_intra_block(PIPE_MTE1, flag_id + 16);
+            wait_intra_block(PIPE_MTE1, flag_id + VEC_CORE_ID_OFFSET);
         }
     }
     // -----------------------------------------------------------------------------
@@ -174,7 +176,7 @@ struct TSync_Custom {
             // Vec signals on flag_id+1 only, but Cube must wait on BOTH
             // (because Vec0 signals flag_id+1, Vec1 signals flag_id+1+16 from Cube's view)
             wait_intra_block(PIPE_FIX, flag_id + 1);
-            wait_intra_block(PIPE_FIX, flag_id + 1 + 16);
+            wait_intra_block(PIPE_FIX, flag_id + 1 + VEC_CORE_ID_OFFSET);
         } else { // is_v2c (both gm and ub)
             // Vec producer waits for Cube consumer to free buffer
             // Cube signals on BOTH, Vec waits on flag_id+1 only
@@ -199,7 +201,7 @@ struct TSync_Custom {
         } else { // is_v2c (both gm and ub)
             // Cube consumer frees buffer for Vec - signals BOTH flags on PIPE_MTE1
             set_intra_block(PIPE_MTE1, flag_id + 1);
-            set_intra_block(PIPE_MTE1, flag_id + 1 + 16);
+            set_intra_block(PIPE_MTE1, flag_id + 1 + VEC_CORE_ID_OFFSET);
         }
     }
 };

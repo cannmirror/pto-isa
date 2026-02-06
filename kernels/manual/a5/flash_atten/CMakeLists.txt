@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -75,7 +75,9 @@ set(CMAKE_CPP_COMPILE_OPTIONS
 )
 
 include_directories(
+    ${PROJECT_SOURCE_DIR}/../../../../include/
     ${ASCEND_HOME_PATH}/include
+    ${ASCEND_HOME_PATH}/pkg_inc/runtime
     ${ASCEND_DRIVER_PATH}/kernel/inc
     ${ASCEND_HOME_PATH}/include/experiment/runtime
     ${ASCEND_HOME_PATH}/include/experiment/msprof    
@@ -85,7 +87,6 @@ function(pto_example_mixed NAME)
     add_library(${NAME}_kernel SHARED ${NAME}_kernel.cpp)
     target_compile_options(${NAME}_kernel PRIVATE ${CMAKE_CCE_COMPILE_OPTIONS} --cce-aicore-arch=dav-c310 -DREGISTER_BASE -std=c++17)
     target_include_directories(${NAME}_kernel PRIVATE
-        ${PROJECT_SOURCE_DIR}/../../../../include/
         ${PROJECT_BINARY_DIR}
     )
     target_link_options(${NAME}_kernel PRIVATE --cce-fatobj-link)
@@ -93,7 +94,6 @@ function(pto_example_mixed NAME)
     add_executable(${NAME} main.cpp)
     target_compile_options(${NAME} PRIVATE ${CMAKE_CPP_COMPILE_OPTIONS})
     target_include_directories(${NAME} PRIVATE
-        ${PROJECT_SOURCE_DIR}/../../../../include/
         ${PROJECT_SOURCE_DIR}/../../../../tests/common
         ${PROJECT_BINARY_DIR}
     )

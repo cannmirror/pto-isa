@@ -71,7 +71,7 @@ AICORE inline void softmax_opt_fa_init_impl(TileDataD2 __out__ x_exp, TileDataS1
     TEXP(p_tile_f32, p_tile_f32);
     
     TROWSUM(new_global_sum, p_tile_f32, tmp_float);
-    //TCVT(x_exp, p_tile_f32, RoundMode::CAST_ROUND);
+
     TRESHAPE(p_tile_f32_1d, p_tile_f32);
     TRESHAPE(x_exp_1d, x_exp);   
     TCVT(x_exp_1d, p_tile_f32_1d, RoundMode::CAST_ROUND);
@@ -121,7 +121,7 @@ AICORE inline void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDa
     TRESHAPE(tmp_shw_exp_max, exp_max);
     TEXP(p_tile_f32, p_tile_f32);
     TRESHAPE(tmp_shw_exp_max, exp_max);
-    //TCVT(x_exp, p_tile_f32, RoundMode::CAST_ROUND);
+
     TRESHAPE(p_tile_f32_1d, p_tile_f32);
     TRESHAPE(x_exp_1d, x_exp);    
     TCVT(x_exp_1d, p_tile_f32_1d, RoundMode::CAST_ROUND);
