@@ -35,5 +35,9 @@ PTO_INST RecordEvent TROWEXPANDEXPDIF(TileDataDst &dst, TileDataSrc0 &src0, Tile
 
 ## Constraints
 
-- `src1` is expected to provide **one scalar per row** (i.e., its valid shape must cover `R` values).
+- `TileDataDst::DType == TileDataSrc0::DType == TileDataSrc1::DType`
+- `TileDataDst::DType`, `TileDataSrc0::DType`, `TileDataSrc1::DType` must be one of: `half`, `float`.
+- Tile shape/layout constraint (compile-time): `TileDataDst::isRowMajor`.
+- Mode 1: `src1` is expected to provide **one scalar per row** (i.e., its valid shape must cover `R` values).
+- Mode 2: `src1` is expected to provide **32 bytes data per row**.
 - Exact layout/fractal constraints are target-specific; see backend headers under `include/pto/npu/*/TRowExpand*.hpp`.

@@ -30,11 +30,12 @@ PTO_INST RecordEvent TROWEXPANDDIV(TileDataDst& dst, TileDataDst& src0, TileData
 
 ## Constraints
 
-- **Implementation checks (A2A3)**:
-  - `TileDataDst::DType == TileDataSrc1::DType` (compile-time).
-  - `TileDataDst::DType` must be one of: `half`, `float`.
-  - Tile shape/layout constraint (compile-time): `TileDataDst::isRowMajor` and `!TileDataSrc1::isRowMajor` and `TileDataSrc1::Cols == 1`.
-  - Runtime: `src1.GetValidRow() == 1` and `src1.GetValidCol() == dst.GetValidRow()`.
+- **Implementation checks**:
+  - `TileDataDst::DType == TileDataSrc0::DType == TileDataSrc1::DType` (compile-time).
+  - `TileDataDst::DType`, `TileDataSrc0::DType`, `TileDataSrc1::DType` must be one of: `half`, `float`.
+  - Tile shape/layout constraint (compile-time): `TileDataDst::isRowMajor`.
+  - Mode 1: `src1` is expected to provide **one scalar per row** (i.e., its valid shape must cover `R` values).
+  - Mode 2: `src1` is expected to provide **32 bytes data per row**.
 
 ## Examples
 
