@@ -1,14 +1,14 @@
-# TREMS
+# TFMODS
 
 ## Introduction
 
-Elementwise remainder with a scalar: `%`.
+Elementwise floor with a scalar: `fmod(src, scalar)`.
 
 ## Math Interpretation
 
 For each element `(i, j)` in the valid region:
 
-$$\mathrm{dst}_{i,j} = \mathrm{src}_{i,j} \bmod \mathrm{scalar}$$
+$$\mathrm{dst}_{i,j} = \mathrm{fmod}(\mathrm{src}_{i,j}, \mathrm{scalar})$$
 
 ## Assembly Syntax
 
@@ -17,7 +17,7 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 Synchronous form:
 
 ```text
-%dst = trems %src, %scalar : !pto.tile<...>, f32
+%dst = tfmods %src, %scalar : !pto.tile<...>, f32
 ```
 ## C++ Intrinsic
 
@@ -25,8 +25,8 @@ Declared in `include/pto/common/pto_instr.hpp`:
 
 ```cpp
 template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
-PTO_INST RecordEvent TREMS(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar,
-                           WaitEvents &... events);
+PTO_INST RecordEvent TFMODS(TileDataDst &dst, TileDataSrc &src, typename TileDataSrc::DType scalar, 
+                            WaitEvents&... events);
 ```
 
 ## Constraints
@@ -44,7 +44,7 @@ using namespace pto;
 void example() {
   using TileT = Tile<TileType::Vec, float, 16, 16>;
   TileT x, out;
-  TREMS(out, x, 3.0f);
+  TFMODS(out, x, 3.0f);
 }
 ```
 

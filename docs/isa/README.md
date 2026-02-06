@@ -16,6 +16,7 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TMUL`: `docs/isa/TMUL.md`
 - `TDIV`: `docs/isa/TDIV.md`
 - `TREM`: `docs/isa/TREM.md`
+- `TFMOD`: `docs/isa/TFMOD.md`
 - `TSHL`: `docs/isa/TSHL.md`
 - `TSHR`: `docs/isa/TSHR.md`
 - `TAND`: `docs/isa/TAND.md`
@@ -44,6 +45,7 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TDIVS`: `docs/isa/TDIVS.md`
 - `TMULS`: `docs/isa/TMULS.md`
 - `TREMS`: `docs/isa/TREMS.md`
+- `TFMODS`: `docs/isa/TFMODS.md`
 - `TMAXS`: `docs/isa/TMAXS.md`
 - `TMINS`: `docs/isa/TMINS.md`
 - `TANDS`: `docs/isa/TANDS.md`

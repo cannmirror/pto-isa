@@ -199,6 +199,8 @@ fi
 if [ "$ENABLE_A5" = "true" ]; then
   if [ "$ENABLE_SIMPLE" = "true" ]; then           # 单个用例
     python3 tests/script/build_st.py -r $RUN_TYPE -v a5 -t all
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tfmods -g TFMODSTest.case1
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tfmod -g TFMODTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsubs -g TSUBSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmaxs -g TMAXSTest.case_float_64x64_32x32_32x32
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trems -g TREMSTest.case1
@@ -291,6 +293,8 @@ if [ "$ENABLE_A5" = "true" ]; then
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/build_st.py -r $RUN_TYPE -v a5 -t all
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tfmod
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tfmods
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tsubs
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmaxs
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trems

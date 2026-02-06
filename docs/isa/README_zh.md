@@ -15,7 +15,8 @@
 - [`TSUB`](TSUB.md) — 两个 tile 的逐元素相减。
 - [`TMUL`](TMUL.md) — 两个 tile 的逐元素相乘。
 - [`TDIV`](TDIV.md) — 两个 tile 的逐元素相除。
-- [`TREM`](TREM.md) — 两个 tile 的逐元素取余。
+- [`TREM`](TREM.md) — 两个 tile 的逐元素取余，余数符号与除数相同。
+- [`TFMOD`](TFMOD.md) — 两个 tile 的逐元素取余，余数符号与被除数相同。
 - [`TSHL`](TSHL.md) — 两个 tile 的逐元素左移。
 - [`TSHR`](TSHR.md) — 两个 tile 的逐元素右移。
 - [`TAND`](TAND.md) — 两个 tile 的逐元素按位与。
@@ -43,7 +44,8 @@
 - [`TSUBS`](TSUBS.md) — tile 逐元素减一个标量。
 - [`TDIVS`](TDIVS.md) — 与标量的逐元素除法（tile/scalar 或 scalar/tile）。
 - [`TMULS`](TMULS.md) — tile 逐元素乘一个标量。
-- [`TREMS`](TREMS.md) — 与标量的逐元素取余：`fmod(src, scalar)`（或整数的 `%`）。
+- [`TREMS`](TREMS.md) — 与标量的逐元素取余：`mod(src, scalar)`。
+- [`TFMODS`](TFMODS.md) — 与标量的逐元素取余：`fmod(src, scalar)`。
 - [`TMAXS`](TMAXS.md) — tile 与标量逐元素取 max：`max(src, scalar)`。
 - [`TMINS`](TMINS.md) — tile 与标量逐元素取 min。
 - [`TANDS`](TANDS.md) — tile 与标量逐元素按位与。

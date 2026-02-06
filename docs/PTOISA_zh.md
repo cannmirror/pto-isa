@@ -78,7 +78,8 @@ ISA 参考基于以下程序员可见的模型：
 | 逐元素运算 (Tile-Tile) | isa/TPRELU.md | 带逐元素斜率 Tile 的逐元素参数化 ReLU (PReLU)。 |
 | 逐元素运算 (Tile-Tile) | isa/TRECIP.md | Tile 的逐元素倒数。 |
 | 逐元素运算 (Tile-Tile) | isa/TRELU.md | Tile 的逐元素 ReLU。 |
-| 逐元素运算 (Tile-Tile) | isa/TREM.md | 两个 Tile 的逐元素余数。 |
+| 逐元素运算 (Tile-Tile) | isa/TREM.md | 两个 Tile 的逐元素余数，余数符号与除数相同。 |
+| 逐元素运算 (Tile-Tile) | isa/TFMOD.md | 两个 Tile 的逐元素余数，余数符号与被除数相同。 |
 | 逐元素运算 (Tile-Tile) | isa/TRSQRT.md | 逐元素倒数平方根。 |
 | 逐元素运算 (Tile-Tile) | isa/TSEL.md | 使用掩码 Tile 在两个 Tile 之间进行选择（逐元素选择）。 |
 | 逐元素运算 (Tile-Tile) | isa/TSHL.md | 两个 Tile 的逐元素左移。 |
@@ -98,7 +99,8 @@ ISA 参考基于以下程序员可见的模型：
 | Tile-标量 / Tile-立即数 | isa/TMINS.md | Tile 与标量的逐元素最小值。 |
 | Tile-标量 / Tile-立即数 | isa/TMULS.md | Tile 与标量的逐元素乘法。 |
 | Tile-标量 / Tile-立即数 | isa/TORS.md | Tile 与标量的逐元素按位或。 |
-| Tile-标量 / Tile-立即数 | isa/TREMS.md | 与标量的逐元素余数：`fmod(src, scalar)`（整数则为 `%`）。 |
+| Tile-标量 / Tile-立即数 | isa/TREMS.md | 与标量的逐元素余数：`remainder(src, scalar)`。 |
+| Tile-标量 / Tile-立即数 | isa/TREMS.md | 与标量的逐元素余数：`fmod(src, scalar)`。 |
 | Tile-标量 / Tile-立即数 | isa/TSELS.md | 使用标量 `selectMode` 在两个源 Tile 中选择一个（全局选择）。 |
 | Tile-标量 / Tile-立即数 | isa/TSUBS.md | 从 Tile 中逐元素减去一个标量。 |
 | Tile-标量 / Tile-立即数 | isa/TSUBSC.md | 融合逐元素运算：`src0 - scalar + src1`。 |

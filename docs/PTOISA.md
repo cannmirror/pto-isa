@@ -79,6 +79,7 @@ This table covers all PTO instructions exposed by `include/pto/common/pto_instr.
 | Elementwise (Tile-Tile) | [`TRECIP`](isa/TRECIP.md) | Elementwise reciprocal of a tile. |
 | Elementwise (Tile-Tile) | [`TRELU`](isa/TRELU.md) | Elementwise ReLU of a tile. |
 | Elementwise (Tile-Tile) | [`TREM`](isa/TREM.md) | Elementwise remainder of two tiles. |
+| Elementwise (Tile-Tile) | [`TFMOD`](isa/TFMOD.md) | Elementwise fmod of two tiles. |
 | Elementwise (Tile-Tile) | [`TRSQRT`](isa/TRSQRT.md) | Elementwise reciprocal square root. |
 | Elementwise (Tile-Tile) | [`TSEL`](isa/TSEL.md) | Select between two tiles using a mask tile (per-element selection). |
 | Elementwise (Tile-Tile) | [`TSHL`](isa/TSHL.md) | Elementwise shift-left of two tiles. |
@@ -98,7 +99,8 @@ This table covers all PTO instructions exposed by `include/pto/common/pto_instr.
 | Tile-Scalar / Tile-Immediate | [`TMINS`](isa/TMINS.md) | Elementwise minimum of a tile and a scalar. |
 | Tile-Scalar / Tile-Immediate | [`TMULS`](isa/TMULS.md) | Elementwise multiply a tile by a scalar. |
 | Tile-Scalar / Tile-Immediate | [`TORS`](isa/TORS.md) | Elementwise bitwise OR of a tile and a scalar. |
-| Tile-Scalar / Tile-Immediate | [`TREMS`](isa/TREMS.md) | Elementwise remainder with a scalar: `fmod(src, scalar)` (or `%` for integers). |
+| Tile-Scalar / Tile-Immediate | [`TREMS`](isa/TREMS.md) | Elementwise remainder with a scalar: `remainder(src, scalar)`. |
+| Tile-Scalar / Tile-Immediate | [`TFMODS`](isa/TFMODS.md) | Elementwise remainder with a scalar: `fmod(src, scalar)`. |
 | Tile-Scalar / Tile-Immediate | [`TSELS`](isa/TSELS.md) | Select one of two source tiles using a scalar `selectMode` (global select). |
 | Tile-Scalar / Tile-Immediate | [`TSUBS`](isa/TSUBS.md) | Elementwise subtract a scalar from a tile. |
 | Tile-Scalar / Tile-Immediate | [`TSUBSC`](isa/TSUBSC.md) | Elementwise fused op: `src0 - scalar + src1`. |

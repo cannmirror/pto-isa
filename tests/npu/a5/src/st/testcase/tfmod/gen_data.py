@@ -15,7 +15,7 @@ import numpy as np
 np.random.seed(19)
 
 
-def gen_golden_data_trem(case_name, param):
+def gen_golden_data_tfmod(case_name, param):
     dtype = param.dtype
 
     h_valid, w_valid = [param.valid_row, param.valid_col]
@@ -32,7 +32,7 @@ def gen_golden_data_trem(case_name, param):
     input2 = np.random.uniform(low=value_min, high=value_max, size=(h_valid, w_valid)).astype(dtype)
 
     # Perform the andbtraction
-    golden = input1 % input2
+    golden = np.fmod(input1, input2)
 
     # Apply valid region constraints
     output = np.zeros(h_valid * w_valid).astype(dtype)
@@ -45,7 +45,7 @@ def gen_golden_data_trem(case_name, param):
     return output, input1, input2, golden
 
 
-class TremParams:
+class TfmodParams:
     def __init__(self, name, dtype, tile_row, tile_col, valid_row, valid_col):
         self.name = name
         self.dtype = dtype
@@ -64,15 +64,15 @@ if __name__ == "__main__":
         os.makedirs(testcases_dir)
 
     case_params_list = [
-        TremParams("TREMTest.case1", np.uint16, 64, 64, 64, 64),
-        TremParams("TREMTest.case2", np.uint16, 64, 64, 63, 63),
-        TremParams("TREMTest.case3", np.uint16, 1, 16384, 1, 16384),
-        TremParams("TREMTest.case4", np.uint16, 2048, 16, 2048, 16),
-        TremParams("TREMTest.case5", np.float32, 32, 32, 32, 32),
-        TremParams("TREMTest.case6", np.uint32, 8, 8, 8, 8),
-        TremParams("TREMTest.case7", np.float16, 32, 32, 31, 31),
-        TremParams("TREMTest.case8", np.int16, 16, 16, 16, 16),
-        TremParams("TREMTest.case9", np.int32, 8, 8, 8, 8),
+        TfmodParams("TFMODTest.case1", np.uint16, 64, 64, 64, 64),
+        TfmodParams("TFMODTest.case2", np.uint16, 64, 64, 63, 63),
+        TfmodParams("TFMODTest.case3", np.uint16, 1, 16384, 1, 16384),
+        TfmodParams("TFMODTest.case4", np.uint16, 2048, 16, 2048, 16),
+        TfmodParams("TFMODTest.case5", np.float32, 32, 32, 32, 32),
+        TfmodParams("TFMODTest.case6", np.uint32, 8, 8, 8, 8),
+        TfmodParams("TFMODTest.case7", np.float16, 32, 32, 31, 31),
+        TfmodParams("TFMODTest.case8", np.int16, 16, 16, 16, 16),
+        TfmodParams("TFMODTest.case9", np.int32, 8, 8, 8, 8),
     ]
 
     for param in case_params_list:
@@ -81,5 +81,5 @@ if __name__ == "__main__":
             os.makedirs(case_name)
         original_dir = os.getcwd()
         os.chdir(case_name)
-        gen_golden_data_trem(case_name, param)
+        gen_golden_data_tfmod(case_name, param)
         os.chdir(original_dir)
