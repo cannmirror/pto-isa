@@ -11,7 +11,6 @@
 # --------------------------------------------------------------------------------
 
 import os
-import struct
 import numpy as np
 np.random.seed(19)
 

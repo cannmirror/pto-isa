@@ -44,7 +44,6 @@ import re
 import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
-import math
 from typing import Dict, List, Optional, Tuple
 
 # Simple representation for SVG tasks derived from timeline entries

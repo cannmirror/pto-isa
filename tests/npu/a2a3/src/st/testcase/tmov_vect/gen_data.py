@@ -23,7 +23,7 @@ def get_golden_data(case_name, param):
     input_arr = np.random.uniform(0, 20, size=(rows, cols)).astype(data_type) 
     input_arr.tofile("input_arr.bin")
     golden = input_arr.copy()
-    golden.tofile(f"golden.bin")
+    golden.tofile("golden.bin")
 
 
 class tmovParams:

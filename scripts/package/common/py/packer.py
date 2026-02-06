@@ -13,7 +13,7 @@
 import shutil
 from argparse import Namespace
 from itertools import chain
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from .utils.comm_log import CommLog
 

@@ -11,7 +11,6 @@
 # --------------------------------------------------------------------------------
 
 import os
-import math
 import numpy as np
 import ml_dtypes
 import en_dtypes

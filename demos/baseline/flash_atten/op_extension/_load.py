@@ -12,9 +12,7 @@
 
 import os
 import pathlib
-from functools import wraps, lru_cache
 import torch
-import torch_npu
 
 
 def _load_opextension_so():
