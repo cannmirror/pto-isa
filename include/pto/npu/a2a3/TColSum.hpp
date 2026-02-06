@@ -46,8 +46,8 @@ PTO_INTERNAL void SequentialSum(__ubuf__ T *dst, __ubuf__ T *src, int validRow, 
     set_vector_mask(-1, -1);
 }
 
-template <typename T, typename TileDataDst, typename TileDataSrc, typename TileDataTmp, int srcstride, int dststride,
-          int tmpstride, bool IsBinary>
+template <typename T, typename TileDataDst, typename TileDataSrc, typename TileDataTmp, int srcStride, int dstStride,
+          int tmpStride, bool IsBinary>
 __tf__ PTO_INTERNAL void TColSum(typename TileDataDst::TileDType __out__ dst,
                                  typename TileDataSrc::TileDType __in__ src, typename TileDataTmp::TileDType __in__ tmp,
                                  int validRow, int validCol)
@@ -66,10 +66,10 @@ __tf__ PTO_INTERNAL void TColSum(typename TileDataDst::TileDType __out__ dst,
     }
 
     if (IsBinary) {
-        BinarySum<T, srcstride, tmpstride>(tmpPtr, srcPtr, validRow, validCol);
+        BinarySum<T, srcStride, tmpStride>(tmpPtr, srcPtr, validRow, validCol);
         int cnt = validRow / 2;
         while (cnt > 1) {
-            BinarySum<T, tmpstride, tmpstride>(tmpPtr, tmpPtr, cnt, validCol);
+            BinarySum<T, tmpStride, tmpStride>(tmpPtr, tmpPtr, cnt, validCol);
             pipe_barrier(PIPE_V);
             cnt /= 2;
         }
@@ -78,7 +78,7 @@ __tf__ PTO_INTERNAL void TColSum(typename TileDataDst::TileDType __out__ dst,
     } else {
         copy_ubuf_to_ubuf(dstPtr, srcPtr, 0, 1, lenBurst, 0, 0);
         pipe_barrier(PIPE_V);
-        SequentialSum<T, srcstride, dststride>(dstPtr, srcPtr, validRow, validCol);
+        SequentialSum<T, srcStride, dstStride>(dstPtr, srcPtr, validRow, validCol);
     }
 }
 
@@ -98,24 +98,27 @@ PTO_INTERNAL void TCOLSUM_IMPL(TileDataDst &dst, TileDataSrc &src, TileDataTmp &
     static_assert(
         std::is_same_v<T, half> || std::is_same_v<T, float> || std::is_same_v<T, int16_t> || std::is_same_v<T, int32_t>,
         "Fix: TCOLSUM input data type is not supported by this instruction.");
-    static_assert(std::is_same_v<typename TileDataDst::DType, T> && std::is_same_v<typename TileDataTmp::DType, T>,
-                  "Fix: TCOLSUM input data type must be consistent with the output data type and the tmp data type.");
-    PTO_ASSERT(src.GetValidCol() == dst.GetValidCol(),
-               "Fix: TCOLSUM input valid col must be consistent with the output valid row.");
+    static_assert(std::is_same_v<typename TileDataDst::DType, T>,
+                  "Fix: TCOLSUM input data type must be consistent with the output data type.");
 
-    if (src.GetValidRow() == 0 || src.GetValidCol() == 0) {
-        return;
-    }
-    constexpr int srcstride = TileDataSrc::RowStride;
-    constexpr int dststride = TileDataDst::RowStride;
-    constexpr int tmpstride = TileDataTmp::RowStride;
     int validRow = src.GetValidRow();
     int validCol = src.GetValidCol();
+    constexpr int srcStride = TileDataSrc::RowStride;
+    constexpr int dstStride = TileDataDst::RowStride;
+    constexpr int tmpStride = TileDataTmp::RowStride * sizeof(typename TileDataTmp::DType) / sizeof(T);
+
+    PTO_ASSERT(validCol == dst.GetValidCol(),
+               "Fix: TCOLSUM input valid col must be consistent with the output valid row.");
+    PTO_ASSERT(validCol <= tmpStride,
+               "Fix: TCOLSUM input valid columns must be less than or equal to the tmp columns.");
+    if (validRow == 0 || validCol == 0) {
+        return;
+    }
     if (IsBinary) {
-        TColSum<T, TileDataDst, TileDataSrc, TileDataTmp, srcstride, dststride, tmpstride, true>(
+        TColSum<T, TileDataDst, TileDataSrc, TileDataTmp, srcStride, dstStride, tmpStride, true>(
             dst.data(), src.data(), tmp.data(), validRow, validCol);
     } else {
-        TColSum<T, TileDataDst, TileDataSrc, TileDataTmp, srcstride, dststride, tmpstride, false>(
+        TColSum<T, TileDataDst, TileDataSrc, TileDataTmp, srcStride, dstStride, tmpStride, false>(
             dst.data(), src.data(), tmp.data(), validRow, validCol);
     }
 }
