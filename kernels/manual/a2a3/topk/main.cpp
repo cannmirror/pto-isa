@@ -103,5 +103,10 @@ void Topk()
 
 int main()
 {
-    Topk<float, 1, 1, 1, 4800, 1024, 1, 1, 1, 4800, 1280, 1000>();
+    constexpr int gShape3 = 4800;
+    constexpr int gShape4 = 1024;
+    constexpr int gWholeShape3 = 4800;
+    constexpr int gWholeShape4 = 1280;
+    constexpr int topk = 1000;
+    Topk<float, 1, 1, 1, gShape3, gShape4, 1, 1, 1, gWholeShape3, gWholeShape4, topk>();
 }
