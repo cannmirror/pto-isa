@@ -48,8 +48,15 @@ void LaunchTAnd(T *out, T *src0, T *src1, void *stream)
     runTAnd<T, kTRows_, kTCols_, vRows, vCols><<<1, nullptr, stream>>>(out, src0, src1);
 }
 
+template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
+void LaunchTAnd2(T *out, T *src0, T *src1, void *stream)
+{
+    runTAnd<half, kTRows_, kTCols_, vRows, vCols><<<1, nullptr, stream>>>((half *)out, (half *)src0, (half *)src1);
+}
+
 template void LaunchTAnd<uint16_t, 64, 64, 64, 64>(uint16_t *out, uint16_t *src0, uint16_t *src1, void *stream);
 template void LaunchTAnd<uint16_t, 64, 64, 63, 63>(uint16_t *out, uint16_t *src0, uint16_t *src1, void *stream);
 template void LaunchTAnd<uint16_t, 1, 16384, 1, 16384>(uint16_t *out, uint16_t *src0, uint16_t *src1, void *stream);
 template void LaunchTAnd<uint16_t, 2048, 16, 2048, 16>(uint16_t *out, uint16_t *src0, uint16_t *src1, void *stream);
 template void LaunchTAnd<int16_t, 64, 64, 64, 64>(int16_t *out, int16_t *src0, int16_t *src1, void *stream);
+template void LaunchTAnd2<uint16_t, 64, 64, 64, 64>(uint16_t *out, uint16_t *src0, uint16_t *src1, void *stream);

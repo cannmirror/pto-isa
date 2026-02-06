@@ -36,6 +36,9 @@ template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
 void LaunchTAnd(T *out, T *src0, T *src1, void *stream);
 
 template <typename T, int kTRows_, int kTCols_, int vRows, int vCols>
+void LaunchTAnd2(T *out, T *src0, T *src1, void *stream);
+
+template <typename T, int kTRows_, int kTCols_, int vRows, int vCols, bool isHalf>
 void test_tand()
 {
     size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
@@ -61,7 +64,11 @@ void test_tand()
 
     aclrtMemcpy(src0Device, fileSize, src0Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, fileSize, src1Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    LaunchTAnd<T, kTRows_, kTCols_, vRows, vCols>(dstDevice, src0Device, src1Device, stream);
+    if constexpr (isHalf) {
+        LaunchTAnd2<T, kTRows_, kTCols_, vRows, vCols>(dstDevice, src0Device, src1Device, stream);
+    } else {
+        LaunchTAnd<T, kTRows_, kTCols_, vRows, vCols>(dstDevice, src0Device, src1Device, stream);
+    }
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -91,45 +98,55 @@ void test_tand()
 
 TEST_F(TANDTest, case1)
 {
-    test_tand<uint16_t, 64, 64, 64, 64>();
+    test_tand<uint16_t, 64, 64, 64, 64, false>();
 }
 
 TEST_F(TANDTest, case2)
 {
-    test_tand<uint16_t, 64, 64, 63, 63>();
+    test_tand<uint16_t, 64, 64, 63, 63, false>();
 }
 
 TEST_F(TANDTest, case3)
 {
-    test_tand<uint16_t, 1, 16384, 1, 16384>();
+    test_tand<uint16_t, 1, 16384, 1, 16384, false>();
 }
 
 TEST_F(TANDTest, case4)
 {
-    test_tand<uint16_t, 2048, 16, 2048, 16>();
+    test_tand<uint16_t, 2048, 16, 2048, 16, false>();
 }
 
 TEST_F(TANDTest, case5)
 {
-    test_tand<uint8_t, 32, 32, 32, 32>();
+    test_tand<uint8_t, 32, 32, 32, 32, false>();
 }
 
 TEST_F(TANDTest, case6)
 {
-    test_tand<uint32_t, 8, 8, 8, 8>();
+    test_tand<uint32_t, 8, 8, 8, 8, false>();
 }
 
 TEST_F(TANDTest, case7)
 {
-    test_tand<int8_t, 32, 32, 32, 32>();
+    test_tand<int8_t, 32, 32, 32, 32, false>();
 }
 
 TEST_F(TANDTest, case8)
 {
-    test_tand<int16_t, 16, 16, 16, 16>();
+    test_tand<int16_t, 16, 16, 16, 16, false>();
 }
 
 TEST_F(TANDTest, case9)
 {
-    test_tand<int32_t, 8, 8, 8, 8>();
+    test_tand<int32_t, 8, 8, 8, 8, false>();
+}
+
+TEST_F(TANDTest, case10)
+{
+    test_tand<int16_t, 16, 16, 16, 16, true>();
+}
+
+TEST_F(TANDTest, case11)
+{
+    test_tand<float, 8, 8, 8, 8, false>();
 }

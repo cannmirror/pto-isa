@@ -21,12 +21,22 @@ template <typename T>
 struct AndOp {
     PTO_INTERNAL static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats)
     {
-        vand(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
+        if constexpr (sizeof(T) == 2) {
+            vand((__ubuf__ uint16_t *)dst, (__ubuf__ uint16_t *)src0, (__ubuf__ uint16_t *)src1, repeats, 1, 1, 1, 8, 8,
+                 8);
+        } else {
+            vand(dst, src0, src1, repeats, 1, 1, 1, 8, 8, 8);
+        }
     }
     PTO_INTERNAL static void BinInstr(__ubuf__ T *dst, __ubuf__ T *src0, __ubuf__ T *src1, uint8_t repeats,
                                       uint8_t dstRepeatStride, uint8_t src0RepeatStride, uint8_t src1RepeatStride)
     {
-        vand(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, src1RepeatStride);
+        if constexpr (sizeof(T) == 2) {
+            vand((__ubuf__ uint16_t *)dst, (__ubuf__ uint16_t *)src0, (__ubuf__ uint16_t *)src1, repeats, 1, 1, 1,
+                 dstRepeatStride, src0RepeatStride, src1RepeatStride);
+        } else {
+            vand(dst, src0, src1, repeats, 1, 1, 1, dstRepeatStride, src0RepeatStride, src1RepeatStride);
+        }
     }
 };
 
@@ -55,8 +65,7 @@ PTO_INTERNAL void TAndCheck(const TileDataDst &dst, const TileDataSrc0 &src0, co
     static_assert(
         std::is_same<T, typename TileDataSrc0::DType>::value && std::is_same<T, typename TileDataSrc1::DType>::value,
         "Fix: TAND the data type of dst must be consistent with of src0 and src1.");
-    static_assert(std::is_same<T, uint16_t>::value || std::is_same<T, int16_t>::value,
-                  "Fix: TAND has invalid data type.");
+    static_assert(sizeof(T) == 2, "Fix: TAND has invalid data type.");
     static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
                   "Fix: TAND only support row major layout.");
     unsigned validRows = dst.GetValidRow();

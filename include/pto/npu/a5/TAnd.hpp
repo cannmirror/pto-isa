@@ -25,7 +25,17 @@ struct AndOp {
     PTO_INTERNAL static void BinInstr(RegTensor<T> &reg_dst, RegTensor<T> &reg_src0, RegTensor<T> &reg_src1,
                                       MaskReg &preg)
     {
-        vand(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
+        if constexpr (sizeof(T) == 4) {
+            vand((RegTensor<uint32_t> &)reg_dst, (RegTensor<uint32_t> &)reg_src0, (RegTensor<uint32_t> &)reg_src1,
+                 preg);
+        } else if constexpr (sizeof(T) == 2) {
+            vand((RegTensor<uint16_t> &)reg_dst, (RegTensor<uint16_t> &)reg_src0, (RegTensor<uint16_t> &)reg_src1,
+                 preg);
+        } else if constexpr (sizeof(T) == 1) {
+            vand((RegTensor<uint8_t> &)reg_dst, (RegTensor<uint8_t> &)reg_src0, (RegTensor<uint8_t> &)reg_src1, preg);
+        } else {
+            vand(reg_dst, reg_src0, reg_src1, preg, MODE_ZEROING);
+        }
     }
 };
 
@@ -51,10 +61,7 @@ template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1>
 PTO_INTERNAL void TAndCheck(const TileDataDst &dst, const TileDataSrc0 &src0, const TileDataSrc1 &src1)
 {
     using T = typename TileDataDst::DType;
-    static_assert(std::is_same<T, uint8_t>::value || std::is_same<T, int8_t>::value ||
-                      std::is_same<T, uint16_t>::value || std::is_same<T, int16_t>::value ||
-                      std::is_same<T, uint32_t>::value || std::is_same<T, int32_t>::value,
-                  "Fix: TAND has invalid data type.");
+    static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "Fix: TAND has invalid data type.");
     static_assert(TileDataDst::isRowMajor && TileDataSrc0::isRowMajor && TileDataSrc1::isRowMajor,
                   "Fix: TAND only support row major layout.");
     static_assert(std::is_same_v<T, typename TileDataSrc0::DType> && std::is_same_v<T, typename TileDataSrc1::DType>,
