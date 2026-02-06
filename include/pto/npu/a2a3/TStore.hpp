@@ -457,7 +457,6 @@ __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename T
         TStoreAccNz2NC1HWC0<GlobalData, TileData, quantizationMode, reluPreMode, Phase>(dstAddr, srcAddr, gShape0, gShape1,
             gShape2, gShape3, gShape4, validRow, validCol);
     }
-
 }
 
 template <typename GlobalData, typename TileData, typename FpTileData,

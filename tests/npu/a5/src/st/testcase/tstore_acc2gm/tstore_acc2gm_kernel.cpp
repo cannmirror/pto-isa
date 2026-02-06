@@ -18,7 +18,7 @@ constexpr uint16_t BLOCK_CUBE_M_N = 16;
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0, bool format4D = false>
 __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1)
 {
     constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
@@ -28,13 +28,17 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
     constexpr int K = (validK + BLOCK_CUBE_M_N - 1) / BLOCK_CUBE_M_N * BLOCK_CUBE_M_N;
     constexpr int Rows = M;
     constexpr int Cols = N;
-    using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
-    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+
     using GlobalDataSrc0 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validK, validN>,
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>;
+
+    using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
+    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+    using GlobalDataOut = std::conditional_t< format4D,
+        GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5, Layout::NHWC>,
+        GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>>;
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
@@ -46,7 +50,7 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
         Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
     using LeftTile = TileLeft<srcDataType, M, K, validM, validK>;
     using RightTile = TileRight<srcDataType, K, N, validK, validN>;
-    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
+    using AccTile = TileAcc<accDataType, Rows, Cols, -1, -1>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
 
@@ -57,7 +61,7 @@ __global__ AICORE void TStoreAcc2gmNz2nd(__gm__ dstDataType *out, __gm__ srcData
 
     LeftTile aTile;
     RightTile bTile;
-    AccTile cTile(gShape3, gShape4);
+    AccTile cTile(validM, validN);
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
@@ -118,7 +122,7 @@ __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcData
         Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
     using LeftTile = TileLeft<srcDataType, M, K, validM, validK>;
     using RightTile = TileRight<srcDataType, K, N, validK, validN>;
-    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
+    using AccTile = TileAcc<accDataType, Rows, Cols, -1, -1>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
 
@@ -160,7 +164,7 @@ __global__ AICORE void TStoreAcc2gmNz2nz(__gm__ dstDataType *out, __gm__ srcData
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0, bool format4D = false>
 __global__ AICORE void TStoreAcc2gmScalarNz2nd(
     __gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1, float scalarQuant)
 {
@@ -171,13 +175,17 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
     constexpr int K = (validK + BLOCK_CUBE_M_N - 1) / BLOCK_CUBE_M_N * BLOCK_CUBE_M_N;
     constexpr int Rows = M;
     constexpr int Cols = N;
-    using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
-    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+
     using GlobalDataSrc0 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validK, validN>,
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
-    using GlobalDataOut = GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>;
+
+    using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
+    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+    using GlobalDataOut = std::conditional_t< format4D,
+        GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5, Layout::NHWC>,
+        GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>>;
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
@@ -189,7 +197,7 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
         Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
     using LeftTile = TileLeft<srcDataType, M, K, validM, validK>;
     using RightTile = TileRight<srcDataType, K, N, validK, validN>;
-    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
+    using AccTile = TileAcc<accDataType, Rows, Cols, -1, -1>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
 
@@ -200,7 +208,7 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nd(
 
     LeftTile aTile;
     RightTile bTile;
-    AccTile cTile(gShape3, gShape4);
+    AccTile cTile(validM, validN);
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
     TASSIGN(cTile, 0x0);
@@ -268,7 +276,7 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
         Tile<TileType::Mat, srcDataType, K, N, BLayout::ColMajor, validK, validN, SLayout::RowMajor, 512>;
     using LeftTile = TileLeft<srcDataType, M, K, validM, validK>;
     using RightTile = TileRight<srcDataType, K, N, validK, validN>;
-    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
+    using AccTile = TileAcc<accDataType, Rows, Cols, -1, -1>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
 
@@ -315,7 +323,7 @@ __global__ AICORE void TStoreAcc2gmScalarNz2nz(
 
 template <int atomicType, typename accDataType, typename dstDataType, typename srcDataType, int gShape0, int gShape1,
     int gShape2, int gShape3, int gShape4, int gWholeShape0, int gWholeShape1, int gWholeShape2, int gWholeShape3,
-    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0>
+    int gWholeShape4, int validM, int validN, int validK, int reluMode = 0, bool format4D = false>
 __global__ AICORE void TStoreAcc2gmVectorNz2nd(
     __gm__ dstDataType *out, __gm__ srcDataType *src0, __gm__ srcDataType *src1, __gm__ uint64_t *quantTensor)
 {
@@ -327,15 +335,19 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
     constexpr int Rows = M;
     constexpr int Cols = N;
     constexpr int alignScalingN = ((validN * sizeof(uint64_t) + 127) / 128) * 128 / sizeof(uint64_t);
-    using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
-    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+
     using GlobalDataSrc0 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validM, validK>,
         pto::Stride<1 * validM * validK, 1 * validM * validK, validM * validK, validK, 1>>;
     using GlobalDataSrc1 = GlobalTensor<srcDataType, pto::Shape<1, 1, 1, validK, validN>,
         pto::Stride<1 * validK * validN, 1 * validK * validN, validK * validN, validN, 1>>;
     using GlobalDataSrc2 = GlobalTensor<uint64_t, pto::Shape<1, 1, 1, 1, alignScalingN>,
         pto::Stride<alignScalingN, alignScalingN, alignScalingN, alignScalingN, 1>>;
-    using GlobalDataOut = GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>;
+
+    using DynShapeDim5 = pto::Shape<gShape0, gShape1, gShape2, gShape3, gShape4>;
+    using DynStridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+    using GlobalDataOut = std::conditional_t< format4D,
+        GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5, Layout::NHWC>,
+        GlobalTensor<dstDataType, DynShapeDim5, DynStridDim5>>;
 
     GlobalDataSrc0 src0Global(src0);
     GlobalDataSrc1 src1Global(src1);
@@ -350,7 +362,7 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
         Tile<TileType::Mat, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
     using LeftTile = TileLeft<srcDataType, M, K, validM, validK>;
     using RightTile = TileRight<srcDataType, K, N, validK, validN>;
-    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
+    using AccTile = TileAcc<accDataType, Rows, Cols, -1, -1>;
     using ScalingTile = Tile<TileType::Scaling, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
@@ -364,7 +376,7 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nd(
 
     LeftTile aTile;
     RightTile bTile;
-    AccTile cTile(gShape3, gShape4);
+    AccTile cTile(validM, validN);
     ScalingTile scalingTile(validN);
     TASSIGN(aTile, 0x0);
     TASSIGN(bTile, 0x0);
@@ -436,7 +448,7 @@ __global__ AICORE void TStoreAcc2gmVectorNz2nz(
         Tile<TileType::Mat, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
     using LeftTile = TileLeft<srcDataType, M, K, validM, validK>;
     using RightTile = TileRight<srcDataType, K, N, validK, validN>;
-    using AccTile = Tile<TileType::Acc, accDataType, Rows, Cols, BLayout::ColMajor, -1, -1, SLayout::RowMajor, 1024>;
+    using AccTile = TileAcc<accDataType, Rows, Cols, -1, -1>;
     using ScalingTile = Tile<TileType::Scaling, uint64_t, 1, alignScalingN, BLayout::RowMajor, 1, -1, SLayout::NoneBox>;
 
     uint32_t aMatSize = M * K * sizeof(srcDataType);
@@ -516,6 +528,22 @@ void LaunchTStoreAcc2gmNz2nd(uint8_t *out, uint8_t *src0, uint8_t *src1, void *s
         TStoreAcc2gmNz2nd<0, float, float, float, 1, 1, 1, 117, 97, 1, 1, 1, 117, 97, 117, 97, 71, 1>
             <<<1, nullptr, stream>>>(
                 reinterpret_cast<float *>(out), reinterpret_cast<float *>(src0), reinterpret_cast<float *>(src1));
+    } else if constexpr (tilingKey == 31) {
+        TStoreAcc2gmNz2nd<0, float, float, float, 1, 1, 16, 8, 128, 1, 1, 16, 8, 128, 128, 128, 16, 0, true>
+            <<<1, nullptr, stream>>>(
+                reinterpret_cast<float *>(out), reinterpret_cast<float *>(src0), reinterpret_cast<float *>(src1));
+    } else if constexpr (tilingKey == 32) {
+        TStoreAcc2gmNz2nd<0, int32_t, int32_t, int8_t, 1, 4, 8, 16, 63, 1, 4, 8, 16, 63, 512, 63, 31, 0, true>
+            <<<1, nullptr, stream>>>(
+                reinterpret_cast<int32_t *>(out), reinterpret_cast<int8_t *>(src0), reinterpret_cast<int8_t *>(src1));
+    } else if constexpr (tilingKey == 33) {
+        TStoreAcc2gmNz2nd<0, float, bfloat16_t, float, 1, 1, 32, 32, 32, 1, 1, 32, 32, 32, 1024, 32, 8, 0, true>
+            <<<1, nullptr, stream>>>(
+                reinterpret_cast<bfloat16_t *>(out), reinterpret_cast<float *>(src0), reinterpret_cast<float *>(src1));
+    } else if constexpr (tilingKey == 34) {
+        TStoreAcc2gmNz2nd<0, float, float, bfloat16_t, 1, 1, 2, 63, 43, 1, 1, 2, 63, 43, 126, 43, 64, 1, true>
+            <<<1, nullptr, stream>>>(
+                reinterpret_cast<float *>(out), reinterpret_cast<bfloat16_t *>(src0), reinterpret_cast<bfloat16_t *>(src1));
     }
 }
 
@@ -603,6 +631,10 @@ void LaunchTStoreAcc2gmScalarNz2nd(uint8_t *out, uint8_t *src0, uint8_t *src1, v
         TStoreAcc2gmScalarNz2nd<0, float, int8_t, half, 1, 1, 1, 77, 34, 1, 1, 1, 77, 34, 77, 34, 81, 1>
             <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<half *>(src0),
                 reinterpret_cast<half *>(src1), scalarQuant);
+    } else if constexpr (tilingKey == 31) {
+        TStoreAcc2gmScalarNz2nd<0, float, int8_t, hifloat8_t, 1, 8, 16, 5, 64, 1, 8, 16, 5, 64, 640, 64, 96, 1, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<hifloat8_t *>(src0),
+                reinterpret_cast<hifloat8_t *>(src1), scalarQuant);
     }
 }
 
@@ -694,6 +726,14 @@ void LaunchTStoreAcc2gmVectorNz2nd(uint8_t *out, uint8_t *src0, uint8_t *src1, u
     } else if constexpr (tilingKey == 21) {
         TStoreAcc2gmVectorNz2nd<0, float, int8_t, half, 1, 1, 1, 85, 77, 1, 1, 1, 85, 77, 85, 77, 66, 1>
             <<<1, nullptr, stream>>>(reinterpret_cast<int8_t *>(out), reinterpret_cast<half *>(src0),
+                reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
+    } else if constexpr (tilingKey == 31) {
+        TStoreAcc2gmVectorNz2nd<0, float, half, float8_e4m3_t, 1, 2, 8, 22, 64, 1, 2, 8, 22, 64, 352, 64, 32, 0, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<half *>(out), reinterpret_cast<float8_e4m3_t *>(src0),
+                reinterpret_cast<float8_e4m3_t *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
+    } else if constexpr (tilingKey == 32) {
+        TStoreAcc2gmVectorNz2nd<0, float, float, half, 1, 1, 64, 4, 128, 1, 1, 64, 4, 128, 256, 128, 32, 1, true>
+            <<<1, nullptr, stream>>>(reinterpret_cast<float *>(out), reinterpret_cast<half *>(src0),
                 reinterpret_cast<half *>(src1), reinterpret_cast<uint64_t *>(quantTensor));
     }
 }
@@ -848,4 +888,15 @@ template void LaunchTStoreAcc2gmScalarNz2nz<21>(
 template void LaunchTStoreAcc2gmVectorNz2nd<21>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
 template void LaunchTStoreAcc2gmVectorNz2nz<21>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
+
+template void LaunchTStoreAcc2gmNz2nd<31>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void LaunchTStoreAcc2gmNz2nd<32>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void LaunchTStoreAcc2gmNz2nd<33>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void LaunchTStoreAcc2gmNz2nd<34>(uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream);
+template void LaunchTStoreAcc2gmScalarNz2nd<31>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, void *stream, float scalarQuant);
+template void LaunchTStoreAcc2gmVectorNz2nd<31>(
+    uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
+template void LaunchTStoreAcc2gmVectorNz2nd<32>(
     uint8_t *out, uint8_t *src0, uint8_t *src1, uint8_t *quantTensor, void *stream);
