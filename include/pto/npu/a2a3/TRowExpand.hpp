@@ -16,68 +16,27 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 constexpr const int vbrcbElem = 8;
-constexpr const int B8_DATA_TYPE_OFFSET = 8;
-template <typename T>
-struct VdupTrait {
-    static constexpr bool isB8 = (std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t>);
-    using DupType = std::conditional_t<isB8, int16_t, T>;
 
-    PTO_INTERNAL DupType DupValue(T value)
-    {
-        if constexpr (isB8) {
-            // convert signed int to unsigned int to avoid sign extension
-            uint16_t u16 = static_cast<uint8_t>(value);
-            // duplicate the 8-bit value into both lower and upper bytes of a 16-bit integer
-            return u16 | (u16 << B8_DATA_TYPE_OFFSET);
-        } else {
-            return value;
-        }
-    }
-
-    PTO_INTERNAL uint64_t DupSize(uint64_t size)
-    {
-        if constexpr (isB8) {
-            // UB是32B对齐，这是安全的
-            return (size + sizeof(DupType) - 1) / sizeof(DupType);
-        } else {
-            return size;
-        }
-    }
-
-    PTO_INTERNAL constexpr uint64_t DupDstStride(uint64_t stride)
-    {
-        if constexpr (isB8) {
-            return stride / sizeof(DupType);
-        } else {
-            return stride;
-        }
-    }
-};
-
-template <typename T, typename TileDataDst, typename TileDataSrc>
+template <typename TileDataDst, typename TileDataSrc>
 __tf__ PTO_INTERNAL void TRowExpand(typename TileDataDst::TileDType __out__ dst,
                                     typename TileDataSrc::TileDType __in__ src, int validRow, int validCol)
 {
+    using TRANS = B82B16Trait<typename TileDataDst::DType>;
+    using T = typename TRANS::TransType;
+    int transValidCol = TRANS::TransSize(validCol);
     __ubuf__ T *dstPtr = (__ubuf__ T *)__cce_get_tile_ptr(dst);
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
 
-    using DupType = typename VdupTrait<T>::DupType;
-    __ubuf__ DupType *dupDst = (__ubuf__ DupType *)dstPtr;
-    VdupTrait<T> trait;
-
-    constexpr int dstStride = TileDataDst::RowStride;
-    constexpr int srcStride = TileDataSrc::RowStride;
-    constexpr int dupStride = trait.DupDstStride(dstStride);
-    int dupValidCol = trait.DupSize(validCol);
+    constexpr int dstStride = TRANS::template TransStride<TileDataDst::RowStride>();
+    constexpr int srcStride = TRANS::template TransStride<TileDataSrc::RowStride>();
 
     set_mask_count();
-    set_vector_mask(0, dupValidCol);
+    set_vector_mask(0, transValidCol);
     for (int i = 0; i < validRow; i++) {
         PtoSetWaitFlag<PIPE_V, PIPE_S>();
         T tempValue = (T)(*(srcPtr + i * srcStride));
-        DupType dupValue = trait.DupValue(tempValue);
         PtoSetWaitFlag<PIPE_S, PIPE_V>();
-        vector_dup(dupDst + i * dupStride, dupValue, 0, 1, 1, BLOCK_MAX_PER_REPEAT, 0);
+        vector_dup(dstPtr + i * dstStride, tempValue, 0, 1, 1, BLOCK_MAX_PER_REPEAT, 0);
     }
     set_mask_norm();
     set_vector_mask(-1, -1);
@@ -160,7 +119,7 @@ PTO_INTERNAL void TROWEXPAND_IMPL(TileDataDst &dst, TileDataSrc &src)
         */
         TRowExpandBrcb<T, TileDataDst, TileDataSrc>(dst.data(), src.data());
     } else {
-        TRowExpand<T, TileDataDst, TileDataSrc>(dst.data(), src.data(), dstValidRow, dstValidCol);
+        TRowExpand<TileDataDst, TileDataSrc>(dst.data(), src.data(), dstValidRow, dstValidCol);
     }
 }
 } // namespace pto

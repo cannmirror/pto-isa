@@ -35,6 +35,7 @@ constexpr const uint32_t B4_C0_SIZE = 64;
 constexpr const int MX_COL_LEN = 2;
 constexpr const int MX_ROW_LEN = 16;
 constexpr const int MX_BLOCK_SIZE = 32;
+constexpr const int B8_DATA_TYPE_OFFSET = 8;
 
 enum VFImplKind : unsigned
 {

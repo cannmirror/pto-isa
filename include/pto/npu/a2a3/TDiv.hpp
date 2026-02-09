@@ -40,10 +40,10 @@ __tf__ PTO_INTERNAL void TDiv(typename TileData::TileDType __out__ dst, typename
     __ubuf__ T *src0Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src0);
     __ubuf__ T *src1Ptr = (__ubuf__ T *)__cce_get_tile_ptr(src1);
     if constexpr (dstRowStride == src0RowStride && dstRowStride == src1RowStride) {
-        BinaryInstr<DivOp<T>, TileData, elementsPerRepeat, blockSizeElem, dstRowStride>(dstPtr, src0Ptr, src1Ptr,
-                                                                                        validRows, validCols);
+        BinaryInstr<DivOp<T>, T, TileData, elementsPerRepeat, blockSizeElem, dstRowStride>(dstPtr, src0Ptr, src1Ptr,
+                                                                                           validRows, validCols);
     } else {
-        BinaryInstr<DivOp<T>, TileData, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
+        BinaryInstr<DivOp<T>, T, elementsPerRepeat, blockSizeElem, dstRowStride, src0RowStride, src1RowStride>(
             dstPtr, src0Ptr, src1Ptr, validRows, validCols);
     }
     return;

@@ -89,3 +89,13 @@ TEST_F(TNOTTest, case_uint16_60x60_64x64_60x60)
 {
     test_tnot<u_int16_t, 60, 60, 64, 64>();
 }
+
+TEST_F(TNOTTest, case_int8_64x64_64x64_64x64)
+{
+    test_tnot<int8_t, 64, 64, 64, 64>();
+}
+
+TEST_F(TNOTTest, case_uint8_60x60_64x64_60x60)
+{
+    test_tnot<uint8_t, 60, 60, 64, 64>();
+}

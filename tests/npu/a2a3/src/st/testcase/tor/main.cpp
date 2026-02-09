@@ -113,3 +113,13 @@ TEST_F(TORTest, case5)
 {
     test_tor<int16_t, 64, 64, 64, 64>();
 }
+
+TEST_F(TORTest, case6)
+{
+    test_tor<uint8_t, 64, 64, 63, 63>();
+}
+
+TEST_F(TORTest, case7)
+{
+    test_tor<int8_t, 64, 64, 63, 63>();
+}

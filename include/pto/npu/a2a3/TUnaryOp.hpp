@@ -43,28 +43,28 @@ PTO_INTERNAL void Unary1LNormMode(__ubuf__ T *dst, __ubuf__ T *src, unsigned val
     }
 }
 
-template <typename Op, typename T, typename DstTile, typename SrcTile>
+template <typename Op, typename T, unsigned dstRowStride, unsigned srcRowStride>
 PTO_INTERNAL void Unary2LCountMode(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol)
 {
     set_mask_count();
     SetVectorCount(validCol);
     for (uint32_t i = 0; i < validRow; i++) {
-        Op::UnaryInstr(dst + i * DstTile::RowStride, src + i * SrcTile::RowStride, 0);
+        Op::UnaryInstr(dst + i * dstRowStride, src + i * srcRowStride, 0);
     }
     set_mask_norm();
     SetFullVecMaskByDType<T>();
 }
 
-template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+template <typename Op, typename T, unsigned dstRowStride, unsigned srcRowStride, unsigned nRepeatElem>
 PTO_INTERNAL void Unary2LNormModeColVLAlign(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol)
 {
     unsigned headRepeats = validCol / nRepeatElem;
     for (uint32_t i = 0; i < validRow; i++) {
-        Op::UnaryInstr(dst + i * DstTile::RowStride, src + i * SrcTile::RowStride, headRepeats);
+        Op::UnaryInstr(dst + i * dstRowStride, src + i * srcRowStride, headRepeats);
     }
 }
 
-template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+template <typename Op, typename T, unsigned dstRowStride, unsigned srcRowStride, unsigned nRepeatElem>
 PTO_INTERNAL void Unary2LNormModeHead(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned nRepeatPerLine)
 {
     if (nRepeatPerLine) {
@@ -73,38 +73,39 @@ PTO_INTERNAL void Unary2LNormModeHead(__ubuf__ T *dst, __ubuf__ T *src, unsigned
         for (unsigned i = 0; i < validRow; i++) {
             if (loop) {
                 for (unsigned j = 0; j < loop; j++) {
-                    Op::UnaryInstr(dst + i * DstTile::RowStride + j * nRepeatElem * REPEAT_MAX,
-                                   src + i * SrcTile::RowStride + j * nRepeatElem * REPEAT_MAX, REPEAT_MAX);
+                    Op::UnaryInstr(dst + i * dstRowStride + j * nRepeatElem * REPEAT_MAX,
+                                   src + i * srcRowStride + j * nRepeatElem * REPEAT_MAX, REPEAT_MAX);
                 }
             }
             if (remain) {
-                Op::UnaryInstr(dst + i * DstTile::RowStride + loop * nRepeatElem * REPEAT_MAX,
-                               src + i * SrcTile::RowStride + loop * nRepeatElem * REPEAT_MAX, remain);
+                Op::UnaryInstr(dst + i * dstRowStride + loop * nRepeatElem * REPEAT_MAX,
+                               src + i * srcRowStride + loop * nRepeatElem * REPEAT_MAX, remain);
             }
         }
     }
 }
 
-template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem, unsigned blockSizeElem>
+template <typename Op, typename T, unsigned dstRowStride, unsigned srcRowStride, unsigned dstRow, unsigned srcRow,
+          unsigned nRepeatElem, unsigned blockSizeElem>
 PTO_INTERNAL void Unary2LNormModeTail(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned nRemainPerLine)
 {
-    constexpr unsigned dstStride = DstTile::RowStride / blockSizeElem;
-    constexpr unsigned srcStride = SrcTile::RowStride / blockSizeElem;
+    constexpr unsigned dstStride = dstRowStride / blockSizeElem;
+    constexpr unsigned srcStride = srcRowStride / blockSizeElem;
     unsigned loop = 0;
     unsigned remain = validRow;
     constexpr bool strideOverFlag = (dstStride > REPEAT_STRIDE_MAX || srcStride > REPEAT_STRIDE_MAX);
     SetContMaskByDType<T>(nRemainPerLine);
-    if constexpr (DstTile::Rows > pto::REPEAT_MAX || SrcTile::Rows > pto::REPEAT_MAX) {
+    if constexpr (dstRow > pto::REPEAT_MAX || srcRow > pto::REPEAT_MAX) {
         loop = validRow / REPEAT_MAX;
         for (uint32_t i = 0; i < loop; i++) {
             if constexpr (strideOverFlag) {
                 for (uint64_t j = 0; j < REPEAT_MAX; j++) {
-                    Op::UnaryInstr(dst + (i * REPEAT_MAX + j) * DstTile::RowStride,
-                                   src + (i * REPEAT_MAX + j) * SrcTile::RowStride, 1, 1, 1);
+                    Op::UnaryInstr(dst + (i * REPEAT_MAX + j) * dstRowStride, src + (i * REPEAT_MAX + j) * srcRowStride,
+                                   1, 1, 1);
                 }
             } else {
-                Op::UnaryInstr(dst + i * REPEAT_MAX * DstTile::RowStride, src + i * REPEAT_MAX * SrcTile::RowStride,
-                               REPEAT_MAX, dstStride, srcStride);
+                Op::UnaryInstr(dst + i * REPEAT_MAX * dstRowStride, src + i * REPEAT_MAX * srcRowStride, REPEAT_MAX,
+                               dstStride, srcStride);
             }
         }
         remain = validRow % REPEAT_MAX;
@@ -112,25 +113,26 @@ PTO_INTERNAL void Unary2LNormModeTail(__ubuf__ T *dst, __ubuf__ T *src, unsigned
     if (remain) {
         if constexpr (strideOverFlag) {
             for (uint32_t j = 0; j < remain; j++) {
-                Op::UnaryInstr(dst + (loop * REPEAT_MAX + j) * DstTile::RowStride,
-                               src + (loop * REPEAT_MAX + j) * SrcTile::RowStride, 1, 1, 1);
+                Op::UnaryInstr(dst + (loop * REPEAT_MAX + j) * dstRowStride,
+                               src + (loop * REPEAT_MAX + j) * srcRowStride, 1, 1, 1);
             }
         } else {
-            Op::UnaryInstr(dst + loop * REPEAT_MAX * DstTile::RowStride, src + loop * REPEAT_MAX * SrcTile::RowStride,
-                           remain, dstStride, srcStride);
+            Op::UnaryInstr(dst + loop * REPEAT_MAX * dstRowStride, src + loop * REPEAT_MAX * srcRowStride, remain,
+                           dstStride, srcStride);
         }
     }
     SetFullVecMaskByDType<T>();
 }
 
-template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+template <typename Op, typename T, unsigned dstRowStride, unsigned srcRowStride, unsigned dstRow, unsigned srcRow,
+          unsigned nRepeatElem>
 PTO_INTERNAL void Unary2LNormModeRowRpt(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol)
 {
     constexpr unsigned blockSizeElem = BLOCK_BYTE_SIZE / sizeof(T);
-    constexpr unsigned dstStride = DstTile::RowStride / blockSizeElem;
-    constexpr unsigned srcStride = SrcTile::RowStride / blockSizeElem;
-    constexpr bool condRowRpt = ((DstTile::Rows <= pto::REPEAT_MAX) && (dstStride <= REPEAT_STRIDE_MAX) &&
-                                 (SrcTile::Rows <= pto::REPEAT_MAX) && (srcStride <= REPEAT_STRIDE_MAX));
+    constexpr unsigned dstStride = dstRowStride / blockSizeElem;
+    constexpr unsigned srcStride = srcRowStride / blockSizeElem;
+    constexpr bool condRowRpt = ((dstRow <= pto::REPEAT_MAX) && (dstStride <= REPEAT_STRIDE_MAX) &&
+                                 (srcRow <= pto::REPEAT_MAX) && (srcStride <= REPEAT_STRIDE_MAX));
     if constexpr (condRowRpt) {
         unsigned loop = validCol / nRepeatElem;
         unsigned tailElements = validCol % nRepeatElem;
@@ -146,32 +148,35 @@ PTO_INTERNAL void Unary2LNormModeRowRpt(__ubuf__ T *dst, __ubuf__ T *src, unsign
     } else {
         unsigned nRepeatPerLine = validCol / nRepeatElem;
         unsigned remain = validCol % nRepeatElem;
-        if constexpr (DstTile::Rows > nRepeatElem) {
-            Unary2LNormModeHead<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, nRepeatPerLine);
+        if constexpr (dstRow > nRepeatElem) {
+            Unary2LNormModeHead<Op, T, dstRowStride, srcRowStride, nRepeatElem>(dst, src, validRow, nRepeatPerLine);
             dst += nRepeatPerLine * nRepeatElem;
             src += nRepeatPerLine * nRepeatElem;
         }
         if (remain) {
-            Unary2LNormModeTail<Op, T, DstTile, SrcTile, nRepeatElem, blockSizeElem>(dst, src, validRow, remain);
+            Unary2LNormModeTail<Op, T, dstRowStride, srcRowStride, dstRow, srcRow, nRepeatElem, blockSizeElem>(
+                dst, src, validRow, remain);
         }
     }
 }
 
-template <typename Op, typename T, typename DstTile, typename SrcTile, unsigned nRepeatElem>
+template <typename Op, typename T, unsigned dstRowStride, unsigned srcRowStride, unsigned dstRow, unsigned srcRow,
+          unsigned dstCol, unsigned nRepeatElem>
 PTO_INTERNAL void Unary2LProcess(__ubuf__ T *dst, __ubuf__ T *src, unsigned validRow, unsigned validCol)
 {
-    constexpr unsigned normColRepeat = DstTile::Cols / nRepeatElem;
-    if constexpr ((normColRepeat > 1) && ((DstTile::Rows * normColRepeat) < SMALL_RPT)) {
-        Unary2LCountMode<Op, T, DstTile, SrcTile>(dst, src, validRow, validCol);
-    } else if constexpr (DstTile::Rows < (normColRepeat + 1)) {
+    constexpr unsigned normColRepeat = dstCol / nRepeatElem;
+    if constexpr ((normColRepeat > 1) && ((dstRow * normColRepeat) < SMALL_RPT)) {
+        Unary2LCountMode<Op, T, dstRowStride, srcRowStride>(dst, src, validRow, validCol);
+    } else if constexpr (dstRow < (normColRepeat + 1)) {
         unsigned tailElements = validCol % nRepeatElem;
         if (tailElements) {
-            Unary2LCountMode<Op, T, DstTile, SrcTile>(dst, src, validRow, validCol);
+            Unary2LCountMode<Op, T, dstRowStride, srcRowStride>(dst, src, validRow, validCol);
         } else {
-            Unary2LNormModeColVLAlign<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
+            Unary2LNormModeColVLAlign<Op, T, dstRowStride, srcRowStride, nRepeatElem>(dst, src, validRow, validCol);
         }
     } else {
-        Unary2LNormModeRowRpt<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
+        Unary2LNormModeRowRpt<Op, T, dstRowStride, srcRowStride, dstRow, srcRow, nRepeatElem>(dst, src, validRow,
+                                                                                              validCol);
     }
 }
 
@@ -179,35 +184,45 @@ template <typename Op, typename DstTile, typename SrcTile>
 __tf__ PTO_INTERNAL void TUnaryOp(typename DstTile::TileDType __out__ dstData,
                                   typename SrcTile::TileDType __in__ srcData, unsigned validRow, unsigned validCol)
 {
-    using T = typename DstTile::DType;
+    using TRANS = B82B16Trait<typename DstTile::DType>;
+    using T = typename TRANS::TransType;
     __ubuf__ T *dst = (__ubuf__ T *)__cce_get_tile_ptr(dstData);
     __ubuf__ T *src = (__ubuf__ T *)__cce_get_tile_ptr(srcData);
-    constexpr unsigned nRepeatElem = REPEAT_BYTE / sizeof(T);
+    constexpr int nRepeatElem = REPEAT_BYTE / sizeof(T);
+    constexpr unsigned dstRow = DstTile::Rows;
+    constexpr unsigned srcRow = SrcTile::Rows;
+    constexpr unsigned dstRowStride = TRANS::template TransStride<DstTile::RowStride>();
+    constexpr unsigned srcRowStride = TRANS::template TransStride<SrcTile::RowStride>();
+    constexpr unsigned dstCol = TRANS::template TransStride<DstTile::Cols>();
+    int transValidCol = TRANS::TransSize(validCol);
+
     constexpr bool isCombined = ((DstTile::ValidCol == DstTile::Cols) && (SrcTile::ValidCol == SrcTile::Cols)) ||
-                                ((DstTile::Rows == 1) && (SrcTile::Rows == 1));
+                                ((dstRow == 1) && (srcRow == 1));
 
     if constexpr (isCombined) {
-        constexpr unsigned totalRepeats = (DstTile::Rows * DstTile::Cols + nRepeatElem - 1) / nRepeatElem;
+        constexpr unsigned totalRepeats = (dstRow * dstCol + nRepeatElem - 1) / nRepeatElem;
         if constexpr (totalRepeats > pto::REPEAT_MAX) {
-            Unary1LCountMode<Op, T>(dst, src, validRow, validCol);
+            Unary1LCountMode<Op, T>(dst, src, validRow, transValidCol);
         } else {
-            Unary1LNormMode<Op, T>(dst, src, validRow, DstTile::Cols);
+            Unary1LNormMode<Op, T>(dst, src, validRow, transValidCol);
         }
     } else {
-        constexpr bool isSameShape = (DstTile::Cols == SrcTile::Cols) && (DstTile::Rows == SrcTile::Rows);
+        constexpr bool isSameShape = (DstTile::Cols == SrcTile::Cols) && (dstRow == srcRow);
         if constexpr (isSameShape) {
-            if ((validCol == DstTile::Cols) || (validRow == 1)) {
-                unsigned totalRepeats = (validRow * validCol + nRepeatElem - 1) / nRepeatElem;
+            if ((transValidCol == dstCol) || (validRow == 1)) {
+                unsigned totalRepeats = (validRow * transValidCol + nRepeatElem - 1) / nRepeatElem;
                 if (totalRepeats > pto::REPEAT_MAX) {
-                    Unary1LCountMode<Op, T>(dst, src, validRow, validCol);
+                    Unary1LCountMode<Op, T>(dst, src, validRow, transValidCol);
                 } else {
-                    Unary1LNormMode<Op, T>(dst, src, validRow, validCol);
+                    Unary1LNormMode<Op, T>(dst, src, validRow, transValidCol);
                 }
             } else {
-                Unary2LProcess<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
+                Unary2LProcess<Op, T, dstRowStride, srcRowStride, dstRow, srcRow, dstCol, nRepeatElem>(
+                    dst, src, validRow, transValidCol);
             }
         } else {
-            Unary2LProcess<Op, T, DstTile, SrcTile, nRepeatElem>(dst, src, validRow, validCol);
+            Unary2LProcess<Op, T, dstRowStride, srcRowStride, dstRow, srcRow, dstCol, nRepeatElem>(dst, src, validRow,
+                                                                                                   transValidCol);
         }
     }
 }
@@ -302,7 +317,8 @@ struct NotOp {
 template <typename DstTile, typename SrcTile>
 PTO_INTERNAL void TNOT_IMPL(DstTile &dst, SrcTile &src)
 {
-    TUNARY_IMPL<NotOp<typename DstTile::DType>, DstTile, SrcTile, false>(dst, src);
+    using TransType = typename B82B16Trait<typename DstTile::DType>::TransType;
+    TUNARY_IMPL<NotOp<TransType>, DstTile, SrcTile, false>(dst, src);
 }
 
 /* RELU */

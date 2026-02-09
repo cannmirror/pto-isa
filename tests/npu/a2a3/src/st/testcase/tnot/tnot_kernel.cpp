@@ -50,3 +50,5 @@ void LaunchTNot(T *out, T *input, void *stream)
 
 template void LaunchTNot<int16_t, 64, 64, 64, 64>(int16_t *out, int16_t *input, void *stream);
 template void LaunchTNot<uint16_t, 60, 60, 64, 64>(uint16_t *out, uint16_t *input, void *stream);
+template void LaunchTNot<int8_t, 64, 64, 64, 64>(int8_t *out, int8_t *input, void *stream);
+template void LaunchTNot<uint8_t, 60, 60, 64, 64>(uint8_t *out, uint8_t *input, void *stream);

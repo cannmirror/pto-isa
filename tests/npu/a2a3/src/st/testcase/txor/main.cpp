@@ -118,3 +118,11 @@ TEST_F(TXORTest, case_uint16_32x128_32x128_32x256_32x127)
 {
     test_txor<uint16_t, 32, 128, 32, 128, 32, 256, 32, 127>();
 }
+TEST_F(TXORTest, case_int8_32x128_32x128_32x256_32x127)
+{
+    test_txor<int8_t, 32, 128, 32, 128, 32, 256, 32, 127>();
+}
+TEST_F(TXORTest, case_uint8_32x128_32x128_32x256_32x127)
+{
+    test_txor<uint8_t, 32, 128, 32, 128, 32, 256, 32, 127>();
+}

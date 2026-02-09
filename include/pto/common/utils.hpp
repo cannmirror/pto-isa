@@ -69,6 +69,32 @@ PTO_INTERNAL T CeilAlignment(T num1, T num2)
     }
     return (num1 + num2 - 1) / num2 * num2;
 }
+
+template <typename T>
+struct B82B16Trait {
+    static constexpr bool isB8 = (std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t>);
+    using TransType = std::conditional_t<isB8, int16_t, T>;
+
+    PTO_INTERNAL static uint64_t TransSize(uint64_t size)
+    {
+        if constexpr (isB8) {
+            // UB是32B对齐，这是安全的
+            return (size + sizeof(TransType) - 1) / sizeof(TransType);
+        } else {
+            return size;
+        }
+    }
+
+    template <uint64_t stride>
+    PTO_INTERNAL static constexpr uint64_t TransStride()
+    {
+        if constexpr (isB8) {
+            return stride / sizeof(TransType);
+        } else {
+            return stride;
+        }
+    }
+};
 } // namespace pto
 
 #endif
