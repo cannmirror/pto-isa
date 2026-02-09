@@ -93,7 +93,7 @@ source ${ASCEND_INSTALL_PATH}/bin/setenv.bash
 2. 运行示例：
 
 ```bash
-cd ${git_clone_path}/demos/baseline/topk
+cd ${git_clone_path}/kernels/manual/a2a3/topk
 bash run.sh -r npu -v Ascend910B1
 ```
 

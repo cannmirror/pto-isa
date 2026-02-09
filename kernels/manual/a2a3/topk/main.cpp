@@ -17,6 +17,41 @@ using namespace PtoTestCommon;
 template <typename T>
 void launchTopk(uint8_t *out, uint8_t *index, uint8_t *src, uint8_t *inIdx, void *stream);
 
+template <typename T>
+AICORE inline bool ValidateDataResults(size_t outFileSize)
+{
+    std::vector<T> golden(outFileSize);
+    std::vector<T> devFinal(outFileSize);
+
+    ReadFile("../output/golden_d.bin", outFileSize, golden.data(), outFileSize);
+    ReadFile("../output/output_z.bin", outFileSize, devFinal.data(), outFileSize);
+
+    bool ret = ResultCmp(golden, devFinal, 0.001f);
+    if (ret) {
+        printf("test data success\n");
+    } else {
+        printf("test data failed\n");
+    }
+    return ret;
+}
+
+AICORE inline bool ValidateIndexResults(size_t indexFileSize)
+{
+    std::vector<uint32_t> golden_i(indexFileSize);
+    std::vector<uint32_t> devFinal_i(indexFileSize);
+
+    ReadFile("../output/golden_i.bin", indexFileSize, golden_i.data(), indexFileSize);
+    ReadFile("../output/index_z.bin", indexFileSize, devFinal_i.data(), indexFileSize);
+
+    bool ret = ResultCmp(golden_i, devFinal_i, 0.001f);
+    if (ret) {
+        printf("test index success\n");
+    } else {
+        printf("test index failed\n");
+    }
+    return ret;
+}
+
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
           int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk>
 void Topk()
@@ -76,28 +111,12 @@ void Topk()
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(outFileSize);
-    std::vector<T> devFinal(outFileSize);
-    ReadFile("../output/golden_d.bin", outFileSize, golden.data(), outFileSize);
-    ReadFile("../output/output_z.bin", outFileSize, devFinal.data(), outFileSize);
-
-    bool ret = ResultCmp(golden, devFinal, 0.001f);
-    if (ret) {
-        printf("test data success\n");
+    bool dataSuccess = ValidateDataResults<T>(outFileSize);
+    bool indexSuccess = ValidateIndexResults(indexFileSize);
+    if (dataSuccess && indexSuccess) {
+        printf("All tests passed!\n");
     } else {
-        printf("test data failed\n");
-    }
-
-    std::vector<indexT> golden_i(indexFileSize);
-    std::vector<indexT> devFinal_i(indexFileSize);
-    ReadFile("../output/golden_i.bin", indexFileSize, golden_i.data(), indexFileSize);
-    ReadFile("../output/index_z.bin", indexFileSize, devFinal_i.data(), indexFileSize);
-
-    ret = ResultCmp(golden_i, devFinal_i, 0.001f);
-    if (ret) {
-        printf("test index success\n");
-    } else {
-        printf("test index failed\n");
+        printf("Some tests failed!\n");
     }
 }
 

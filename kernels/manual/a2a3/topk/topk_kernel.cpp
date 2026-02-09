@@ -12,6 +12,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/pto-inst.hpp>
 
 using namespace pto;
+constexpr uint32_t BUFFER_NUM = 2;
+constexpr uint32_t SINGLE_LOOP_ROW = 2;
 
 template <int Cols>
 PTO_INTERNAL int32_t FillMrgArray(int32_t *mrgArray, int blockLen)
@@ -26,6 +28,23 @@ PTO_INTERNAL int32_t FillMrgArray(int32_t *mrgArray, int blockLen)
         tmpInner -= count * i;
     }
     return arrayCount;
+}
+
+template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk, int blockDim>
+AICORE inline void Check()
+{
+    constexpr int totalRow = gShape0 * gShape1 * gShape2 * gShape3;
+    constexpr int validRow = gShape0 * gShape1 * gShape2 * gShape3 / blockDim;
+    constexpr int validCol = gShape4;
+    constexpr int TYPE_COEF = sizeof(float) / sizeof(T);
+    constexpr int dstCols = validCol * 2 * TYPE_COEF;
+    constexpr uint32_t sort32DstSize = SINGLE_LOOP_ROW * dstCols * sizeof(T) * 2;
+    constexpr uint32_t srcSize = SINGLE_LOOP_ROW * validCol * sizeof(T) * 2;
+
+    static_assert(totalRow % blockDim == 0, "expect totalRow % blockDim == 0");
+    static_assert(sort32DstSize * 3 + validCol * sizeof(uint32_t) * 5 + srcSize < 192 * 1024, "memory is exhausted.");
+    static_assert(validRow % (SINGLE_LOOP_ROW * 2) == 0, "expect validRow % (SINGLE_LOOP_ROW * 2) == 0.");
 }
 
 template <typename DstTileData, typename SrcTileData, typename TmpTileData, typename T, int Cols, int topk>
@@ -156,153 +175,157 @@ PTO_INTERNAL void ExtractDataOrIndex(DstTileData &dstTile, SrcTileData &srcTile)
     }
 }
 
+template <typename T, typename GlobalData, typename DstDataGlobalData, typename DstIdxGlobalData, typename DstTileData,
+          typename DstDataTileData, typename DstIndexTileData, typename SrcTileData, typename IndexTileData,
+          int SINGLE_LOOP_ROW, int dstCols, int validCol, int topk>
+AICORE inline void ProcessSingleRow(int cur, GlobalData &srcGlobal, DstDataGlobalData &dstDataGlobal,
+                                    DstIdxGlobalData &dstIdxGlobal, DstTileData *sort32DstTile, SrcTileData *srcTile,
+                                    IndexTileData &indexTile, DstTileData *mrgDstTile, DstDataTileData *dTile,
+                                    DstIndexTileData *iTile, uint64_t tmpAddr, event_t loadEvent, event_t storeEvent)
+{
+    constexpr int TYPE_COEF = sizeof(float) / sizeof(T);
+    using SingleRowTileData = Tile<TileType::Vec, T, 1, dstCols, BLayout::RowMajor, -1, -1>;
+    wait_flag(PIPE_V, PIPE_MTE2, loadEvent);
+
+    TLOAD(srcTile[cur], srcGlobal);
+    set_flag(PIPE_MTE2, PIPE_V, (event_t)cur);
+    wait_flag(PIPE_MTE2, PIPE_V, (event_t)cur);
+
+    SortEachGroup<T, DstTileData, SrcTileData, IndexTileData, SingleRowTileData, SINGLE_LOOP_ROW, validCol,
+                  SINGLE_LOOP_ROW, validCol>(sort32DstTile[cur], srcTile[cur], indexTile);
+
+    set_flag(PIPE_V, PIPE_MTE2, loadEvent);
+
+    pipe_barrier(PIPE_V);
+    MrgsortSingleTile<T, DstTileData, DstTileData, SingleRowTileData, SINGLE_LOOP_ROW, dstCols, SINGLE_LOOP_ROW,
+                      dstCols, topk * 2 * TYPE_COEF>(mrgDstTile[cur], sort32DstTile[cur], tmpAddr);
+
+    pipe_barrier(PIPE_V);
+    ExtractDataOrIndex<T, DstDataTileData, DstTileData, SingleRowTileData, 0>(dTile[cur], mrgDstTile[cur]);
+    set_flag(PIPE_V, PIPE_MTE3, storeEvent);
+
+    pipe_barrier(PIPE_V);
+    ExtractDataOrIndex<T, DstIndexTileData, DstTileData, SingleRowTileData, 1>(iTile[cur], mrgDstTile[cur]);
+    set_flag(PIPE_V, PIPE_MTE3, (event_t)(storeEvent + 2));
+    wait_flag(PIPE_V, PIPE_MTE3, storeEvent);
+
+    TSTORE(dstDataGlobal, dTile[cur]);
+    wait_flag(PIPE_V, PIPE_MTE3, (event_t)(storeEvent + 2));
+    TSTORE(dstIdxGlobal, iTile[cur]);
+}
+
+template <typename T, typename GlobalData, typename DstDataGlobalData, typename DstIdxGlobalData, typename DstTileData,
+          typename DstDataTileData, typename DstIndexTileData, typename SrcTileData, typename IndexTileData,
+          int dstCols, int Cols, int validCol, int topk>
+AICORE inline void ProcessIteration(__gm__ T *out, __gm__ T *src, __gm__ uint32_t *index, uint32_t i, uint64_t tmpAddr,
+                                    uint64_t nextTmpAddr, DstTileData sort32DstTile[BUFFER_NUM],
+                                    SrcTileData srcTile[BUFFER_NUM], IndexTileData indexTile,
+                                    DstTileData mrgDstTile[BUFFER_NUM], DstDataTileData dTile[BUFFER_NUM],
+                                    DstIndexTileData iTile[BUFFER_NUM])
+{
+    using SingleRowTileData = Tile<TileType::Vec, T, 1, dstCols, BLayout::RowMajor, -1, -1>;
+    constexpr int TYPE_COEF = sizeof(float) / sizeof(T);
+    GlobalData src0Global(src + i * SINGLE_LOOP_ROW * Cols); // ND2ND
+    GlobalData src1Global(src + i * SINGLE_LOOP_ROW * Cols + SINGLE_LOOP_ROW * Cols);
+    DstDataGlobalData dst0DataGlobal(out + i * SINGLE_LOOP_ROW * topk);
+    DstDataGlobalData dst1DataGlobal(out + i * SINGLE_LOOP_ROW * topk + SINGLE_LOOP_ROW * topk);
+    DstIdxGlobalData dst0IdxGlobal(index + i * SINGLE_LOOP_ROW * topk);
+    DstIdxGlobalData dst1IdxGlobal(index + i * SINGLE_LOOP_ROW * topk + SINGLE_LOOP_ROW * topk);
+
+    ProcessSingleRow<T, GlobalData, DstDataGlobalData, DstIdxGlobalData, DstTileData, DstDataTileData, DstIndexTileData,
+                     SrcTileData, IndexTileData, SINGLE_LOOP_ROW, dstCols, validCol, topk>(
+        0, src0Global, dst0DataGlobal, dst0IdxGlobal, sort32DstTile, srcTile, indexTile, mrgDstTile, dTile, iTile,
+        tmpAddr, EVENT_ID0, (event_t)0);
+
+    ProcessSingleRow<T, GlobalData, DstDataGlobalData, DstIdxGlobalData, DstTileData, DstDataTileData, DstIndexTileData,
+                     SrcTileData, IndexTileData, SINGLE_LOOP_ROW, dstCols, validCol, topk>(
+        1, src1Global, dst1DataGlobal, dst1IdxGlobal, sort32DstTile, srcTile, indexTile, mrgDstTile, dTile, iTile,
+        nextTmpAddr, EVENT_ID1, (event_t)1);
+}
+
+template <typename T, int SINGLE_LOOP_ROW, int validCol, int dstCols, int topk, typename DstTileData,
+          typename SrcTileData, typename IndexTileData, typename DstDataTileData, typename DstIndexTileData>
+AICORE inline void InitBuffers(uint64_t baseAddr, DstTileData sort32DstTile[BUFFER_NUM],
+                               DstTileData mrgDstTile[BUFFER_NUM], SrcTileData srcTile[BUFFER_NUM],
+                               IndexTileData &indexTile, DstDataTileData dTile[BUFFER_NUM],
+                               DstIndexTileData iTile[BUFFER_NUM], uint64_t &tmpAddr, uint64_t &nextTmpAddr)
+{
+    constexpr uint32_t sort32DstSize = SINGLE_LOOP_ROW * dstCols * sizeof(T) * 2;
+    constexpr uint32_t srcSize = SINGLE_LOOP_ROW * validCol * sizeof(T) * 2;
+
+    TASSIGN(sort32DstTile[0], baseAddr);
+    TASSIGN(sort32DstTile[1], baseAddr + sort32DstSize / 2);
+    TASSIGN(mrgDstTile[0], baseAddr + sort32DstSize);
+    TASSIGN(mrgDstTile[1], baseAddr + sort32DstSize + sort32DstSize / 2);
+    TASSIGN(indexTile, baseAddr + sort32DstSize * 2);
+
+    tmpAddr = baseAddr + sort32DstSize * 2 + validCol * sizeof(uint32_t);
+    nextTmpAddr = baseAddr + sort32DstSize * 2 + validCol * sizeof(uint32_t) * 3;
+    uint64_t curAddr = sort32DstSize * 2 + validCol * sizeof(uint32_t) * 5;
+
+    TASSIGN(dTile[0], curAddr);
+    TASSIGN(dTile[1], curAddr + SINGLE_LOOP_ROW * topk * sizeof(T));
+    TASSIGN(iTile[0], curAddr + SINGLE_LOOP_ROW * topk * sizeof(T) * 2);
+    TASSIGN(iTile[1], curAddr + SINGLE_LOOP_ROW * topk * sizeof(T) * 2 + SINGLE_LOOP_ROW * topk * sizeof(uint32_t));
+    TASSIGN(srcTile[0], baseAddr + sort32DstSize * 3 + validCol * sizeof(uint32_t) * 5);
+    TASSIGN(srcTile[1], baseAddr + sort32DstSize * 3 + validCol * sizeof(uint32_t) * 5 + srcSize / 2);
+}
+
 template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gWholeShape0,
           int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4, int topk, int blockDim>
 AICORE inline void runTOPK(__gm__ T *origOut, __gm__ uint32_t *origIndex, __gm__ T *origSrc, __gm__ uint32_t *origInIdx)
 {
     using indexT = uint32_t;
-
-    constexpr int totalRow = gShape0 * gShape1 * gShape2 * gShape3;
     constexpr int validRow = gShape0 * gShape1 * gShape2 * gShape3 / blockDim;
     constexpr int validCol = gShape4;
-    static_assert(totalRow % blockDim == 0, "expect totalRow % blockDim == 0");
     __gm__ T *src = origSrc + get_block_idx() * validRow * gWholeShape4;
     __gm__ T *out = origOut + get_block_idx() * validRow * topk;
     __gm__ uint32_t *index = origIndex + get_block_idx() * validRow * topk;
     __gm__ uint32_t *inIdx = origInIdx;
-    constexpr int Rows = gWholeShape0 * gWholeShape1 * gWholeShape2 * gWholeShape3 / blockDim;
     constexpr int Cols = gWholeShape4;
-
-    constexpr int tileNumTwo = 2;
     constexpr int TYPE_COEF = sizeof(float) / sizeof(T);
-    constexpr int singleLoopRow = 2;
     constexpr int dstCols = validCol * 2 * TYPE_COEF;
-    using DstTileData = Tile<TileType::Vec, T, singleLoopRow, dstCols, BLayout::RowMajor, singleLoopRow, dstCols>;
-    DstTileData sort32DstTile[tileNumTwo];
 
-    using SrcTileData = Tile<TileType::Vec, T, singleLoopRow, validCol, BLayout::RowMajor, singleLoopRow, validCol>;
-    SrcTileData srcTile[tileNumTwo];
-
-    using SingleRowTileData = Tile<TileType::Vec, T, 1, dstCols, BLayout::RowMajor, -1, -1>;
-
-    using IndexTileData = Tile<TileType::Vec, indexT, 1, validCol, BLayout::RowMajor, 1, validCol>;
-    IndexTileData indexTile;
-    using IndexShapeDim5 = Shape<1, 1, 1, 1, validCol>;
-    using IndexStridDim5 = Stride<validCol, validCol, validCol, validCol, 1>;
-    using IndexGlobalData = GlobalTensor<indexT, IndexShapeDim5, IndexStridDim5>;
+    using IndexGlobalData =
+        GlobalTensor<indexT, pto::Shape<1, 1, 1, 1, validCol>, pto::Stride<validCol, validCol, validCol, validCol, 1>>;
     IndexGlobalData idxGlobal(inIdx);
-
-    constexpr uint32_t loopNum = validRow / singleLoopRow;
-    static_assert(validRow % (singleLoopRow * 2) == 0, "expect validRow % (singleLoopRow * 2) == 0.");
-
-    DstTileData mrgDstTile[tileNumTwo];
-
-    using DstDataTileData = Tile<TileType::Vec, T, singleLoopRow, topk, BLayout::RowMajor, singleLoopRow, topk>;
-    DstDataTileData dTile[tileNumTwo];
-
-    using DstIndexTileData = Tile<TileType::Vec, indexT, singleLoopRow, topk, BLayout::RowMajor, singleLoopRow, topk>;
-    DstIndexTileData iTile[tileNumTwo];
-
-    using DynShapeDim5 = Shape<1, 1, 1, singleLoopRow, validCol>;
-    using DynStridDim5 = Stride<singleLoopRow * Cols, singleLoopRow * Cols, singleLoopRow * Cols, Cols, 1>;
-    using GlobalData = GlobalTensor<T, DynShapeDim5, DynStridDim5>;
-
-    using DstShapeDim5 = Shape<1, 1, 1, singleLoopRow, topk>;
-    using DstStridDim5 = Stride<singleLoopRow * topk, singleLoopRow * topk, singleLoopRow * topk, topk, 1>;
+    using GlobalData =
+        GlobalTensor<T, pto::Shape<1, 1, 1, SINGLE_LOOP_ROW, validCol>,
+                     pto::Stride<SINGLE_LOOP_ROW * Cols, SINGLE_LOOP_ROW * Cols, SINGLE_LOOP_ROW * Cols, Cols, 1>>;
+    using DstShapeDim5 = Shape<1, 1, 1, SINGLE_LOOP_ROW, topk>;
+    using DstStridDim5 = Stride<SINGLE_LOOP_ROW * topk, SINGLE_LOOP_ROW * topk, SINGLE_LOOP_ROW * topk, topk, 1>;
     using DstDataGlobalData = GlobalTensor<T, DstShapeDim5, DstStridDim5>;
     using DstIdxGlobalData = GlobalTensor<indexT, DstShapeDim5, DstStridDim5>;
 
-    constexpr uint32_t sort32DstSize = singleLoopRow * dstCols * sizeof(T) * 2;
-    TASSIGN(sort32DstTile[0], 0x0);
-    TASSIGN(sort32DstTile[1], 0x0 + sort32DstSize / 2);
-    TASSIGN(mrgDstTile[0], 0x0 + sort32DstSize);
-    TASSIGN(mrgDstTile[1], 0x0 + sort32DstSize + sort32DstSize / 2);
+    using DstTileData = Tile<TileType::Vec, T, SINGLE_LOOP_ROW, dstCols, BLayout::RowMajor, SINGLE_LOOP_ROW, dstCols>;
+    using SrcTileData = Tile<TileType::Vec, T, SINGLE_LOOP_ROW, validCol, BLayout::RowMajor, SINGLE_LOOP_ROW, validCol>;
+    using SingleRowTileData = Tile<TileType::Vec, T, 1, dstCols, BLayout::RowMajor, -1, -1>;
+    using IndexTileData = Tile<TileType::Vec, indexT, 1, validCol, BLayout::RowMajor, 1, validCol>;
+    using DstDataTileData = Tile<TileType::Vec, T, SINGLE_LOOP_ROW, topk, BLayout::RowMajor, SINGLE_LOOP_ROW, topk>;
+    using DstIndexTileData =
+        Tile<TileType::Vec, indexT, SINGLE_LOOP_ROW, topk, BLayout::RowMajor, SINGLE_LOOP_ROW, topk>;
+    IndexTileData indexTile;
+    DstTileData sort32DstTile[BUFFER_NUM];
+    SrcTileData srcTile[BUFFER_NUM];
+    DstTileData mrgDstTile[BUFFER_NUM];
+    DstDataTileData dTile[BUFFER_NUM];
+    DstIndexTileData iTile[BUFFER_NUM];
 
-    TASSIGN(indexTile, 0x0 + sort32DstSize * 2);
+    constexpr uint32_t sort32DstSize = SINGLE_LOOP_ROW * dstCols * sizeof(T) * 2;
     uint64_t tmpAddr = 0x0 + sort32DstSize * 2 + validCol * sizeof(indexT);
     uint64_t nextTmpAddr = 0x0 + sort32DstSize * 2 + validCol * sizeof(indexT) * 3;
-    uint64_t curAddr = sort32DstSize * 2 + validCol * sizeof(indexT) * 5;
-    TASSIGN(dTile[0], curAddr);
-    TASSIGN(dTile[1], curAddr + singleLoopRow * topk * sizeof(T));
-    TASSIGN(iTile[0], curAddr + singleLoopRow * topk * sizeof(T) * 2);
-    TASSIGN(iTile[1], curAddr + singleLoopRow * topk * sizeof(T) * 2 + singleLoopRow * topk * sizeof(indexT));
-    constexpr uint32_t srcSize = singleLoopRow * validCol * sizeof(T) * 2;
-    TASSIGN(srcTile[0], 0x0 + sort32DstSize * 3 + validCol * sizeof(indexT) * 5);
-    TASSIGN(srcTile[1], 0x0 + sort32DstSize * 3 + validCol * sizeof(indexT) * 5 + srcSize / 2);
+    InitBuffers<T, SINGLE_LOOP_ROW, validCol, dstCols, topk>(0x0, sort32DstTile, mrgDstTile, srcTile, indexTile, dTile,
+                                                             iTile, tmpAddr, nextTmpAddr);
 
-    static_assert(sort32DstSize * 3 + validCol * sizeof(indexT) * 5 + srcSize < 192 * 1024, "memory is exhausted.");
     TLOAD(indexTile, idxGlobal);
     set_flag(PIPE_V, PIPE_MTE2, EVENT_ID0); // reverse
     set_flag(PIPE_V, PIPE_MTE2, EVENT_ID1); // reverse
 
+    constexpr uint32_t loopNum = validRow / SINGLE_LOOP_ROW;
     for (uint32_t i = 0; i < loopNum; i += 2) {
-        GlobalData src0Global(src + i * singleLoopRow * Cols); // ND2ND
-        GlobalData src1Global(src + i * singleLoopRow * Cols + singleLoopRow * Cols);
-        DstDataGlobalData dst0DataGlobal(out + i * singleLoopRow * topk);
-        DstDataGlobalData dst1DataGlobal(out + i * singleLoopRow * topk + singleLoopRow * topk);
-        DstIdxGlobalData dst0IdxGlobal(index + i * singleLoopRow * topk);
-        DstIdxGlobalData dst1IdxGlobal(index + i * singleLoopRow * topk + singleLoopRow * topk);
-
-        constexpr int cur = 0;
-        wait_flag(PIPE_V, PIPE_MTE2, EVENT_ID0); // reverse 0
-        TLOAD(srcTile[cur], src0Global);
-
-        set_flag(PIPE_MTE2, PIPE_V, (event_t)cur);
-        wait_flag(PIPE_MTE2, PIPE_V, (event_t)cur);
-
-        SortEachGroup<T, DstTileData, SrcTileData, IndexTileData, SingleRowTileData, singleLoopRow, validCol,
-                      singleLoopRow, validCol>(sort32DstTile[cur], srcTile[cur], indexTile);
-
-        set_flag(PIPE_V, PIPE_MTE2, EVENT_ID0); // reverse 0
-
-        pipe_barrier(PIPE_V);
-        MrgsortSingleTile<T, DstTileData, DstTileData, SingleRowTileData, singleLoopRow, dstCols, singleLoopRow,
-                          dstCols, topk * 2 * TYPE_COEF>(mrgDstTile[cur], sort32DstTile[cur], tmpAddr);
-
-        pipe_barrier(PIPE_V);
-        ExtractDataOrIndex<T, DstDataTileData, DstTileData, SingleRowTileData, 0>(dTile[cur], mrgDstTile[cur]);
-        set_flag(PIPE_V, PIPE_MTE3, (event_t)cur);
-
-        pipe_barrier(PIPE_V);
-        ExtractDataOrIndex<T, DstIndexTileData, DstTileData, SingleRowTileData, 1>(iTile[cur], mrgDstTile[cur]);
-        set_flag(PIPE_V, PIPE_MTE3, (event_t)(cur + 2));
-
-        wait_flag(PIPE_V, PIPE_MTE3, (event_t)cur);
-        TSTORE(dst0DataGlobal, dTile[cur]);
-
-        wait_flag(PIPE_V, PIPE_MTE3, (event_t)(cur + 2));
-        TSTORE(dst0IdxGlobal, iTile[cur]);
-
-        ////////////////////////////////////////
-        constexpr int next = 1;
-        wait_flag(PIPE_V, PIPE_MTE2, EVENT_ID1); // reverse 1
-        TLOAD(srcTile[next], src1Global);
-
-        set_flag(PIPE_MTE2, PIPE_V, (event_t)next);
-        wait_flag(PIPE_MTE2, PIPE_V, (event_t)next);
-
-        SortEachGroup<T, DstTileData, SrcTileData, IndexTileData, SingleRowTileData, singleLoopRow, validCol,
-                      singleLoopRow, validCol>(sort32DstTile[next], srcTile[next], indexTile);
-
-        set_flag(PIPE_V, PIPE_MTE2, EVENT_ID1); // reverse 1
-
-        pipe_barrier(PIPE_V);
-        MrgsortSingleTile<T, DstTileData, DstTileData, SingleRowTileData, singleLoopRow, dstCols, singleLoopRow,
-                          dstCols, topk * 2 * TYPE_COEF>(mrgDstTile[next], sort32DstTile[next], nextTmpAddr);
-
-        pipe_barrier(PIPE_V);
-        ExtractDataOrIndex<T, DstDataTileData, DstTileData, SingleRowTileData, 0>(dTile[next], mrgDstTile[next]);
-        set_flag(PIPE_V, PIPE_MTE3, (event_t)next);
-
-        pipe_barrier(PIPE_V);
-        ExtractDataOrIndex<T, DstIndexTileData, DstTileData, SingleRowTileData, 1>(iTile[next], mrgDstTile[next]);
-        set_flag(PIPE_V, PIPE_MTE3, (event_t)(next + 2));
-
-        wait_flag(PIPE_V, PIPE_MTE3, (event_t)next);
-        TSTORE(dst1DataGlobal, dTile[next]);
-
-        wait_flag(PIPE_V, PIPE_MTE3, (event_t)(next + 2));
-        TSTORE(dst1IdxGlobal, iTile[next]);
+        ProcessIteration<T, GlobalData, DstDataGlobalData, DstIdxGlobalData, DstTileData, DstDataTileData,
+                         DstIndexTileData, SrcTileData, IndexTileData, dstCols, Cols, validCol, topk>(
+            out, src, index, i, tmpAddr, nextTmpAddr, sort32DstTile, srcTile, indexTile, mrgDstTile, dTile, iTile);
     }
     wait_flag(PIPE_V, PIPE_MTE2, EVENT_ID0); // reverse
     wait_flag(PIPE_V, PIPE_MTE2, EVENT_ID1); // reverse
@@ -313,6 +336,8 @@ template <typename T, int gShape0, int gShape1, int gShape2, int gShape3, int gS
 __global__ AICORE void Topk(__gm__ uint8_t *out, __gm__ uint8_t *index, __gm__ uint8_t *src, __gm__ uint8_t *inIdx)
 {
     using indexT = uint32_t;
+    Check<half, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2, gWholeShape3,
+          gWholeShape4, topk, blockDim>();
     if constexpr (std::is_same_v<T, uint16_t>) {
         runTOPK<half, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1, gWholeShape2,
                 gWholeShape3, gWholeShape4, topk, blockDim>(
