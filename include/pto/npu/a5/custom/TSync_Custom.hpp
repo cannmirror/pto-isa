@@ -121,7 +121,6 @@ struct TSync_Custom {
 
     // -----------------------------------------------------------------------------
     // record - Producer signals that data is ready
-    //
     // Cube producers: set BOTH flag_id AND flag_id + 16 (one for each Vec subblock)
     // Vec producers: set flag_id only (hardware maps to flag_id+16 for subblock 1)
     // -----------------------------------------------------------------------------
@@ -140,7 +139,6 @@ struct TSync_Custom {
 
     // -----------------------------------------------------------------------------
     // wait - Consumer waits for data to be ready
-    //
     // Vec consumers: wait on flag_id only (each subblock waits independently)
     // Cube consumers: wait on BOTH flag_id AND flag_id + 16
     // -----------------------------------------------------------------------------
@@ -169,7 +167,6 @@ struct TSync_Custom {
 
     // -----------------------------------------------------------------------------
     // allocate - Producer waits for buffer space to be available
-    //
     // Cube producers: wait on BOTH flag_id+1 AND flag_id+1+16 (Vec consumer signals)
     // Vec producers: wait on flag_id+1 only (Cube consumer signals both)
     // -----------------------------------------------------------------------------
@@ -190,7 +187,6 @@ struct TSync_Custom {
 
     // -----------------------------------------------------------------------------
     // free - Consumer signals that buffer space is available
-    //
     // Vec consumers: set flag_id+1 only (hardware maps to flag_id+1+16 for subblock 1)
     // Cube consumers: set BOTH flag_id+1 AND flag_id+1+16
     // -----------------------------------------------------------------------------
