@@ -810,6 +810,14 @@ PTO_INST RecordEvent TPARTADD(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1
 }
 
 template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
+PTO_INST RecordEvent TPARTMUL(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1, WaitEvents &... events)
+{
+    TSYNC(events...);
+    MAP_INSTR_IMPL(TPARTMUL, dst, src0, src1);
+    return {};
+}
+
+template <typename TileDataDst, typename TileDataSrc0, typename TileDataSrc1, typename... WaitEvents>
 PTO_INST RecordEvent TPARTMAX(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &src1, WaitEvents &... events)
 {
     TSYNC(events...);

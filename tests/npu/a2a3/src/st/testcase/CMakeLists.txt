@@ -135,6 +135,7 @@ tor
 tshl
 tshr
 tpartadd
+tpartmul
 tpartmin
 tpartmax
 tsel

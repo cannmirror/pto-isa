@@ -88,6 +88,7 @@ This table tracks per-instruction backend availability:
 | [`TPARTADD`](../docs/isa/TPARTADD.md) | Yes | Yes | Yes | Yes |
 | [`TPARTMAX`](../docs/isa/TPARTMAX.md) | Yes | Yes | Yes | Yes |
 | [`TPARTMIN`](../docs/isa/TPARTMIN.md) | Yes | Yes | Yes | Yes |
+| [`TPARTMUL`]() | TODO | Yes | Yes | Yes |
 | [`TPRELU`](../docs/isa/TPRELU.md) | Yes | Yes | Yes | Yes |
 | [`TPREFETCH`]() | TODO | Yes | Yes | Yes |
 | [`TPRINT`]() | TODO | Yes | Yes | Yes |

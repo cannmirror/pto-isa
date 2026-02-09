@@ -91,6 +91,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tand -g TANDTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tor -g TANDTest.case2
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tpartmul -g TPARTMULTest.case_float_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tsel -g TSELTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tfillpad -g TFILLPADTest.case_float_GT_128_127_VT_128_128_BLK1_PADMAX_PADMAX
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tmins
@@ -161,6 +162,7 @@ if [ "$ENABLE_A3" = "true" ]; then                 # A2A3
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t ttrans
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tsort32
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tpartadd
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tpartmul
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tsel
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tload_gm2mat
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a3 -t tload
@@ -254,6 +256,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmuls -g TMULSTest.case1
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tor -g TANDTest.case2
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartadd -g TPARTADDTest.case_float_64x64_64x64_64x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmul -g TPARTMULTest.case_float_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmax -g TPARTMAXTest.case_fp32_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmin -g TPARTMINTest.case_fp32_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tprelu -g TPRELUTest.case1
@@ -344,6 +347,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmuls
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tor
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartadd
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmul
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmax
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tpartmin
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tprelu

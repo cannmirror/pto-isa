@@ -88,6 +88,7 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TPARTADD`](../docs/isa/TPARTADD.md) | 是 | 是 | 是 | 是 |
 | [`TPARTMAX`](../docs/isa/TPARTMAX.md) | 是 | 是 | 是 | 是 |
 | [`TPARTMIN`](../docs/isa/TPARTMIN.md) | 是 | 是 | 是 | 是 |
+| [`TPARTMUL`]() | 否 | 是 | 是 | 是 |
 | [`TPRELU`](../docs/isa/TPRELU.md) | 是 | 是 | 是 | 是 |
 | [`TPREFETCH`]() | TODO | 是 | 是 | 是 |
 | [`TPRINT`]() | TODO | 是 | 是 | 是 |

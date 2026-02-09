@@ -147,6 +147,7 @@ set(ALL_TESTCASES
     tshrs
     tadd
     tpartadd
+    tpartmul
     tfillpad
     tmin
     tmax
