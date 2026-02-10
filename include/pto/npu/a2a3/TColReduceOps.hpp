@@ -88,9 +88,6 @@ PTO_INTERNAL void TColReduceCheck(int SrcValidRow, int SrcValidCol, int DstValid
                   "Fix: TCOLREDUCE input data type must be consistent with the output data type.");
     PTO_ASSERT(SrcValidCol == DstValidCol,
                "Fix: TCOLREDUCE input valid col must be consistent with the output valid row.");
-    if (SrcValidRow == 0 || SrcValidCol == 0 || DstValidCol == 0) {
-        return;
-    }
 }
 } // namespace pto
 #endif

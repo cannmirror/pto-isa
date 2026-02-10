@@ -59,6 +59,7 @@ enum class Op : uint16_t
     TROWMIN,
     TROWEXPAND,
     TCOLSUM,
+    TCOLPROD,
     TCOLMAX,
     TCOLMIN,
     TTRANS,

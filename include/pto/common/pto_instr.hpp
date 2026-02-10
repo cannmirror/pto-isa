@@ -962,6 +962,14 @@ PTO_INST RecordEvent TCOLSUM(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp
 }
 
 template <typename TileDataOut, typename TileDataIn, typename... WaitEvents>
+PTO_INST RecordEvent TCOLPROD(TileDataOut &dst, TileDataIn &src, WaitEvents &... events)
+{
+    TSYNC(events...);
+    MAP_INSTR_IMPL(TCOLPROD, dst, src);
+    return {};
+}
+
+template <typename TileDataOut, typename TileDataIn, typename... WaitEvents>
 PTO_INST RecordEvent TCOLMAX(TileDataOut &dst, TileDataIn &src, WaitEvents &... events)
 {
     TSYNC(events...);

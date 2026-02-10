@@ -56,6 +56,7 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TCOLMAX`](../docs/isa/TCOLMAX.md) | 是 | 是 | 是 | 是 |
 | [`TCOLMIN`](../docs/isa/TCOLMIN.md) | 是 | 是 | 是 | 是 |
 | [`TCOLSUM`](../docs/isa/TCOLSUM.md) | 是 | 是 | 是 | 是 |
+| [`TCOLPROD`](../docs/isa/TCOLPROD.md) | TODO | 是 | 是 | 是 |
 | [`TCVT`](../docs/isa/TCVT.md) | 是 | 是 | 是 | 是 |
 | [`TDIV`](../docs/isa/TDIV.md) | 是 | 是 | 是 | 是 |
 | [`TDIVS`](../docs/isa/TDIVS.md) | 是 | 是 | 是 | 是 |
@@ -96,6 +97,8 @@ PTO Tile Lib 对外的 C/C++ 头文件（以模板化、基本 header-only 为�
 | [`TRELU`](../docs/isa/TRELU.md) | 是 | 是 | 是 | 是 |
 | [`TREM`](../docs/isa/TREM.md) | 是 | 是 | 是 | 是 |
 | [`TREMS`](../docs/isa/TREMS.md) | 是 | 是 | 是 | 是 |
+| [`TFMOD`](../docs/isa/TFMOD.md) | TODO | 是 | 是 | 是 |
+| [`TFMODS`](../docs/isa/TFMODS.md) | TODO | 是 | 是 | 是 |
 | [`TRESHAPE`](../docs/isa/TRESHAPE.md) | 是 | 是 | 是 | 是 |
 | [`TROWEXPAND`](../docs/isa/TROWEXPAND.md) | 是 | 是 | 是 | 是 |
 | [`TROWEXPANDADD `]() | TODO | 是 | 是 | 是 |

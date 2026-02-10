@@ -99,8 +99,8 @@ ISA 参考基于以下程序员可见的模型：
 | Tile-标量 / Tile-立即数 | isa/TMINS.md | Tile 与标量的逐元素最小值。 |
 | Tile-标量 / Tile-立即数 | isa/TMULS.md | Tile 与标量的逐元素乘法。 |
 | Tile-标量 / Tile-立即数 | isa/TORS.md | Tile 与标量的逐元素按位或。 |
-| Tile-标量 / Tile-立即数 | isa/TREMS.md | 与标量的逐元素余数：`remainder(src, scalar)`。 |
-| Tile-标量 / Tile-立即数 | isa/TREMS.md | 与标量的逐元素余数：`fmod(src, scalar)`。 |
+| Tile-标量 / Tile-立即数 | isa/TREMS.md | 与标量的逐元素余数，余数符号与除数相同：`remainder(src, scalar)`。 |
+| Tile-标量 / Tile-立即数 | isa/TFMODS.md | 与标量的逐元素余数，余数符号与被除数相同：`fmod(src, scalar)`。 |
 | Tile-标量 / Tile-立即数 | isa/TSELS.md | 使用标量 `selectMode` 在两个源 Tile 中选择一个（全局选择）。 |
 | Tile-标量 / Tile-立即数 | isa/TSUBS.md | 从 Tile 中逐元素减去一个标量。 |
 | Tile-标量 / Tile-立即数 | isa/TSUBSC.md | 融合逐元素运算：`src0 - scalar + src1`。 |
@@ -110,7 +110,8 @@ ISA 参考基于以下程序员可见的模型：
 | 轴归约 / 扩展 | isa/TCOLEXPAND.md | 将每个源列的第一个元素广播到目标列中。 |
 | 轴归约 / 扩展 | isa/TCOLMAX.md | 通过取行间最大值来归约每一列。 |
 | 轴归约 / 扩展 | isa/TCOLMIN.md | 通过取行间最小值来归约每一列。 |
-| 轴归约 / 扩展 | isa/TCOLSUM.md | 通过对行求和来归约每一列。 |
+| 轴归约 / 扩展 | isa/TCOLSUM.md | 通过跨行求和来归约每一列。 |
+| 轴归约 / 扩展 | isa/TCOLPROD.md | 通过跨行求积来归约每一列。 |
 | 轴归约 / 扩展 | isa/TROWEXPAND.md | 将每个源行的第一个元素广播到目标行中。 |
 | 轴归约 / 扩展 | isa/TROWEXPANDDIV.md | 行广播除法：将 `src0` 的每一行除以一个每行标量向量 `src1`。 |
 | 轴归约 / 扩展 | isa/TROWEXPANDMUL.md | 行广播乘法：将 `src0` 的每一行乘以一个每行标量向量 `src1`。 |

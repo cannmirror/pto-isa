@@ -66,6 +66,7 @@ constexpr pipe_t opPipeList[] = {
     PIPE_V /* TROWMIN */,
     PIPE_V /* TROWEXPAND */,
     PIPE_V /* TCOLSUM */,
+    PIPE_V /* TCOLPROD */,
     PIPE_V /* TCOLMAX */,
     PIPE_V /* TCOLMIN */,
     PIPE_V /* TTRANS */,

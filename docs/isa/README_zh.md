@@ -69,6 +69,7 @@
 - [`TROWEXPANDMUL`](TROWEXPANDMUL.md) — 行级广播乘法：对 `src0` 的每一行乘以每行标量向量 `src1`。
 - [`TROWEXPANDSUB`](TROWEXPANDSUB.md) — 行级广播减法：对 `src0` 的每一行减去每行标量向量 `src1`。
 - [`TCOLSUM`](TCOLSUM.md) — 对每列按行求和。
+- [`TCOLPROD`](TCOLPROD.md) — 对每列按行求积。
 - [`TCOLMAX`](TCOLMAX.md) — 对每列按行取最大值。
 - [`TCOLMIN`](TCOLMIN.md) — 对每列按行取最小值。
 - [`TCOLEXPAND`](TCOLEXPAND.md) — 将源 tile 每列的第一个元素广播到目标列。

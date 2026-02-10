@@ -111,6 +111,7 @@ This table covers all PTO instructions exposed by `include/pto/common/pto_instr.
 | Axis Reduce / Expand | [`TCOLMAX`](isa/TCOLMAX.md) | Reduce each column by taking the maximum across rows. |
 | Axis Reduce / Expand | [`TCOLMIN`](isa/TCOLMIN.md) | Reduce each column by taking the minimum across rows. |
 | Axis Reduce / Expand | [`TCOLSUM`](isa/TCOLSUM.md) | Reduce each column by summing across rows. |
+| Axis Reduce / Expand | [`TCOLPROD`](isa/TCOLPROD.md) | Reduce each column by producting across rows. |
 | Axis Reduce / Expand | [`TROWEXPAND`](isa/TROWEXPAND.md) | Broadcast the first element of each source row across the destination row. |
 | Axis Reduce / Expand | [`TROWEXPANDDIV`](isa/TROWEXPANDDIV.md) | Row-wise broadcast divide: divide each row of `src0` by a per-row scalar vector `src1`. |
 | Axis Reduce / Expand | [`TROWEXPANDMUL`](isa/TROWEXPANDMUL.md) | Row-wise broadcast multiply: multiply each row of `src0` by a per-row scalar vector `src1`. |

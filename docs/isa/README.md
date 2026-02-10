@@ -69,6 +69,7 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - `TROWEXPANDMUL`: `docs/isa/TROWEXPANDMUL.md`
 - `TROWEXPANDSUB`: `docs/isa/TROWEXPANDSUB.md`
 - `TCOLSUM`: `docs/isa/TCOLSUM.md`
+- `TCOLPROD`: `docs/isa/TCOLPROD.md`
 - `TCOLMAX`: `docs/isa/TCOLMAX.md`
 - `TCOLMIN`: `docs/isa/TCOLMIN.md`
 - `TCOLEXPAND`: `docs/isa/TCOLEXPAND.md`
