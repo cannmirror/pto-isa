@@ -12,6 +12,7 @@
 
 import os
 import struct
+import math
 import numpy as np
 import ml_dtypes
 

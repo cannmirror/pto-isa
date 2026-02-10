@@ -13,21 +13,21 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-template <SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_AUTO, typename T = uint64_t>
-PTO_INTERNAL void SetFmatrix(const Img2colTileConfig<T> &cfg)
+template <SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_AUTO>
+PTO_INTERNAL void SetFmatrix(uint16_t fmapH, uint16_t fmapW, const uint8_t *padList)
 {
     if constexpr (FmatrixMode == SetFmatrixMode::FMATRIX_A_AUTO || FmatrixMode == SetFmatrixMode::FMATRIX_B_AUTO) {
         uint64_t regFmatrix = 0;
         constexpr uint32_t l1ShiftBit = 16;
-        regFmatrix |= uint64_t(cfg.fmapW & 0xFFFF);
-        regFmatrix |= uint64_t(cfg.fmapH & 0xFFFF) << l1ShiftBit;
+        regFmatrix |= uint64_t(fmapW & 0xFFFF);
+        regFmatrix |= uint64_t(fmapH & 0xFFFF) << l1ShiftBit;
 
         constexpr uint32_t padListShiftBit = 8;
         constexpr uint32_t padListShiftBase = 32;
         constexpr uint32_t padNumber = 4;
 
         for (uint32_t i = 0; i < padNumber; i++) {
-            regFmatrix |= uint64_t(cfg.padList[i] & 0xFF) << (padListShiftBase + i * padListShiftBit);
+            regFmatrix |= uint64_t(padList[i] & 0xFF) << (padListShiftBase + i * padListShiftBit);
         }
         if constexpr (FmatrixMode == SetFmatrixMode::FMATRIX_A_AUTO) {
             set_fmatrix(regFmatrix);
@@ -59,14 +59,13 @@ __tf__ PTO_INTERNAL void TImg2col(typename TileData::TileDType __out__ dst, type
                          dilationW, dilationH, highFilterW, highFilterH, transpose, fmatrixCtrl, channelSize);
 }
 
-template <typename TileData, typename ConvTileData, SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_MANUAL,
-          typename T = uint64_t>
-AICORE void TIMG2COL_IMPL(TileData &dst, ConvTileData &src, uint16_t posM, uint16_t posK,
-                          const Img2colTileConfig<T> &cfg)
+template <typename TileData, typename ConvTileData, SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_MANUAL>
+PTO_INTERNAL void TIMG2COL_IMPL(TileData &dst, ConvTileData &src, uint16_t posM, uint16_t posK)
 {
     static_assert((ConvTileData::Loc == TileType::Mat), "TImg2col: Source TileType only support Mat.");
     static_assert((TileData::Loc == TileType::Left), "TImg2col: Destination TileType only support Left.");
-    static_assert((ConvTileData::layout == Layout::NC1HWC0), "TImg2col: Source layout only support NC1HWC0.");
+    static_assert((ConvTileData::layout == Layout::NC1HWC0) || (ConvTileData::layout == Layout::NDC1HWC0),
+                  "TImg2col: Source layout only support NC1HWC0.");
     static_assert(TileData::SFractal == SLayout::RowMajor && TileData::isRowMajor,
                   "TImg2col: Destination layout only support SLayout is RowMajor ang BLayout is RowMajor.");
     static_assert(std::is_same_v<typename ConvTileData::DType, typename TileData::DType>,
@@ -76,15 +75,15 @@ AICORE void TIMG2COL_IMPL(TileData &dst, ConvTileData &src, uint16_t posM, uint1
                       std::is_same_v<typename TileData::DType, float>,
                   "TImg2col: Invalid data type.");
     if constexpr (FmatrixMode == SetFmatrixMode::FMATRIX_A_AUTO || FmatrixMode == SetFmatrixMode::FMATRIX_B_AUTO) {
-        SetFmatrix<FmatrixMode>(cfg);
+        SetFmatrix<FmatrixMode>(src.GetFmapH(), src.GetFmapW(), src.GetPadListArray());
     }
     constexpr int32_t c0Size = BLOCK_BYTE_SIZE / sizeof(typename TileData::DType);
     uint16_t stepM = dst.GetValidRow();
     uint16_t stepK = CeilAlignment(dst.GetValidCol(), c0Size);
 
-    TImg2col<TileData, ConvTileData, FmatrixMode>(dst.data(), src.data(), stepM, stepK, posM, posK, cfg.strideW,
-                                                  cfg.strideH, cfg.filterW, cfg.filterH, cfg.dilationW, cfg.dilationH,
-                                                  cfg.transpose, cfg.channelSize);
+    TImg2col<TileData, ConvTileData, FmatrixMode>(
+        dst.data(), src.data(), stepM, stepK, posM, posK, src.GetStrideW(), src.GetStrideH(), src.GetFilterW(),
+        src.GetFilterH(), src.GetDilationW(), src.GetDilationH(), src.GetTranspose(), src.GetChannelSize());
 }
 } // namespace pto
 #endif // TIMG2COL_HPP

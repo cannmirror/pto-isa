@@ -17,6 +17,8 @@
 - [TSETHF32MODE](TSETHF32MODE_zh.md) - 设置 HF32 变换模式（实现定义）。
 - [TSETTF32MODE](TSETTF32MODE_zh.md) - 设置 TF32 变换模式（实现定义）。
 - [TSETFMATRIX](TSETFMATRIX_zh.md) - 为类 IMG2COL 操作设置 FMATRIX 寄存器。
+- [TSET_IMG2COL_RPT](TSET_IMG2COL_RPT_zh.md) - 从 IMG2COL 配置 Tile 设置 IMG2COL 重复次数元数据。
+- [TSET_IMG2COL_PADDING](TSET_IMG2COL_PADDING_zh.md) - 从 IMG2COL 配置 Tile 设置 IMG2COL 填充元数据。
 
 ## 逐元素（Tile-Tile）
 - [TADD](TADD_zh.md) - 两个 Tile 的逐元素加法。
@@ -72,6 +74,7 @@
 ## 轴归约 / 扩展
 - [TROWSUM](TROWSUM_zh.md) - 通过对列求和来归约每一行。
 - [TCOLSUM](TCOLSUM_zh.md) - 通过对行求和来归约每一列。
+- [TCOLPROD](TCOLPROD_zh.md) - 通过跨行乘积来归约每一列。
 - [TCOLMAX](TCOLMAX_zh.md) - 通过取行间最大值来归约每一列。
 - [TROWMAX](TROWMAX_zh.md) - 通过取列间最大值来归约每一行。
 - [TROWMIN](TROWMIN_zh.md) - 通过取列间最小值来归约每一行。

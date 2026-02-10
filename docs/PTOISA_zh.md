@@ -22,6 +22,8 @@
 | 手动 / 资源绑定 | [`TSETHF32MODE`](isa/TSETHF32MODE_zh.md) | 设置 HF32 变换模式（实现定义）。 |
 | 手动 / 资源绑定 | [`TSETTF32MODE`](isa/TSETTF32MODE_zh.md) | 设置 TF32 变换模式（实现定义）。 |
 | 手动 / 资源绑定 | [`TSETFMATRIX`](isa/TSETFMATRIX_zh.md) | 为类 IMG2COL 操作设置 FMATRIX 寄存器。 |
+| 手动 / 资源绑定 | [`TSET_IMG2COL_RPT`](isa/TSET_IMG2COL_RPT_zh.md) | 从 IMG2COL 配置 Tile 设置 IMG2COL 重复次数元数据。 |
+| 手动 / 资源绑定 | [`TSET_IMG2COL_PADDING`](isa/TSET_IMG2COL_PADDING_zh.md) | 从 IMG2COL 配置 Tile 设置 IMG2COL 填充元数据。 |
 | 逐元素（Tile-Tile） | [`TADD`](isa/TADD_zh.md) | 两个 Tile 的逐元素加法。 |
 | 逐元素（Tile-Tile） | [`TABS`](isa/TABS_zh.md) | Tile 的逐元素绝对值。 |
 | 逐元素（Tile-Tile） | [`TAND`](isa/TAND_zh.md) | 两个 Tile 的逐元素按位与。 |
@@ -71,6 +73,7 @@
 | Tile-标量 / Tile-立即数 | [`TSUBSC`](isa/TSUBSC_zh.md) | 融合逐元素运算：`src0 - scalar + src1`。 |
 | 轴归约 / 扩展 | [`TROWSUM`](isa/TROWSUM_zh.md) | 通过对列求和来归约每一行。 |
 | 轴归约 / 扩展 | [`TCOLSUM`](isa/TCOLSUM_zh.md) | 通过对行求和来归约每一列。 |
+| 轴归约 / 扩展 | [`TCOLPROD`](isa/TCOLPROD_zh.md) | 通过跨行乘积来归约每一列。 |
 | 轴归约 / 扩展 | [`TCOLMAX`](isa/TCOLMAX_zh.md) | 通过取行间最大值来归约每一列。 |
 | 轴归约 / 扩展 | [`TROWMAX`](isa/TROWMAX_zh.md) | 通过取列间最大值来归约每一行。 |
 | 轴归约 / 扩展 | [`TROWMIN`](isa/TROWMIN_zh.md) | 通过取列间最小值来归约每一行。 |

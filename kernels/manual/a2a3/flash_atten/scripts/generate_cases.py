@@ -26,6 +26,7 @@ Defaults replicate the previous hard-coded set if --cases is omitted.
 """
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import List, Dict
 

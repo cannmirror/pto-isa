@@ -22,6 +22,8 @@ This page is the source-synchronized ISA index generated from `docs/isa/manifest
 | Manual / Resource Binding | [`TSETHF32MODE`](isa/TSETHF32MODE.md) | Configure HF32 transform mode (implementation-defined). |
 | Manual / Resource Binding | [`TSETTF32MODE`](isa/TSETTF32MODE.md) | Configure TF32 transform mode (implementation-defined). |
 | Manual / Resource Binding | [`TSETFMATRIX`](isa/TSETFMATRIX.md) | Set FMATRIX register(s) for IMG2COL-like ops. |
+| Manual / Resource Binding | [`TSET_IMG2COL_RPT`](isa/TSET_IMG2COL_RPT.md) | Set IMG2COL repeat metadata from an IMG2COL configuration tile. |
+| Manual / Resource Binding | [`TSET_IMG2COL_PADDING`](isa/TSET_IMG2COL_PADDING.md) | Set IMG2COL padding metadata from an IMG2COL configuration tile. |
 | Elementwise (Tile-Tile) | [`TADD`](isa/TADD.md) | Elementwise add of two tiles. |
 | Elementwise (Tile-Tile) | [`TABS`](isa/TABS.md) | Elementwise absolute value of a tile. |
 | Elementwise (Tile-Tile) | [`TAND`](isa/TAND.md) | Elementwise bitwise AND of two tiles. |
@@ -71,6 +73,7 @@ This page is the source-synchronized ISA index generated from `docs/isa/manifest
 | Tile-Scalar / Tile-Immediate | [`TSUBSC`](isa/TSUBSC.md) | Elementwise fused op: `src0 - scalar + src1`. |
 | Axis Reduce / Expand | [`TROWSUM`](isa/TROWSUM.md) | Reduce each row by summing across columns. |
 | Axis Reduce / Expand | [`TCOLSUM`](isa/TCOLSUM.md) | Reduce each column by summing across rows. |
+| Axis Reduce / Expand | [`TCOLPROD`](isa/TCOLPROD.md) | Reduce each column by multiplying across rows. |
 | Axis Reduce / Expand | [`TCOLMAX`](isa/TCOLMAX.md) | Reduce each column by taking the maximum across rows. |
 | Axis Reduce / Expand | [`TROWMAX`](isa/TROWMAX.md) | Reduce each row by taking the maximum across columns. |
 | Axis Reduce / Expand | [`TROWMIN`](isa/TROWMIN.md) | Reduce each row by taking the minimum across columns. |

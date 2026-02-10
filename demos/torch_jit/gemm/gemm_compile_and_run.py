@@ -10,6 +10,7 @@
 # --------------------------------------------------------------------------------
 
 import torch
+import torch_npu
 
 from jit_util_gemm import jit_compile_gemm
 

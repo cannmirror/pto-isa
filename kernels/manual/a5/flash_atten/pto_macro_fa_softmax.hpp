@@ -71,15 +71,14 @@ AICORE inline void softmax_opt_fa_init_impl(TileDataD2 __out__ x_exp, TileDataS1
         }
     }
     // FA2.0 init mode
+    TRESHAPE(p_tile_f32_1d, p_tile_f32);
+    TRESHAPE(x_exp_1d, x_exp);
+
     TROWMAX(new_global_max, input_x, tmp_float);
     TROWEXPANDSUB(p_tile_f32, input_x, new_global_max);
     TMULS(p_tile_f32, p_tile_f32, scale);
     TEXP(p_tile_f32, p_tile_f32);
-
     TROWSUM(new_global_sum, p_tile_f32, tmp_float);
-
-    TRESHAPE(p_tile_f32_1d, p_tile_f32);
-    TRESHAPE(x_exp_1d, x_exp);
     TCVT(x_exp_1d, p_tile_f32_1d, RoundMode::CAST_ROUND);
 }
 
@@ -116,29 +115,26 @@ AICORE inline void softmax_opt_fa_not_init_impl(TileDataD2 __out__ x_exp, TileDa
         }
     }
     // FA2.0 streaming mode (not first tile): update (global_max, global_sum) and rescale old sums.
-    TROWMAX(local_max, input_x, tmp_float);
     TRESHAPE(tmp_shw_local_max, local_max);
     TRESHAPE(tmp_shw_new_global_max, new_global_max);
-    TMAX(tmp_shw_local_max, tmp_shw_local_max, tmp_shw_new_global_max);
     TRESHAPE(tmp_shw_exp_max, exp_max);
-    TSUB(tmp_shw_exp_max, tmp_shw_new_global_max, tmp_shw_local_max);
-
-    TMULS(tmp_shw_new_global_max, tmp_shw_local_max, 1.0f); // just copy
-    TROWEXPANDSUB(p_tile_f32, input_x, local_max);
-    TMULS(tmp_shw_exp_max, tmp_shw_exp_max, scale);
-    TMULS(p_tile_f32, p_tile_f32, scale);
-    TEXP(tmp_shw_exp_max, tmp_shw_exp_max);
-    TRESHAPE(tmp_shw_exp_max, exp_max);
-    TEXP(p_tile_f32, p_tile_f32);
-    TRESHAPE(tmp_shw_exp_max, exp_max);
-
     TRESHAPE(p_tile_f32_1d, p_tile_f32);
     TRESHAPE(x_exp_1d, x_exp);
-    TCVT(x_exp_1d, p_tile_f32_1d, RoundMode::CAST_ROUND);
     TRESHAPE(tmp_shw_new_global_sum, new_global_sum);
-    TMUL(tmp_shw_new_global_sum, tmp_shw_exp_max, tmp_shw_new_global_sum);
-    TROWSUM(local_sum, p_tile_f32, tmp_float);
     TRESHAPE(tmp_shw_local_sum, local_sum);
+
+    TROWMAX(local_max, input_x, tmp_float);
+    TMAX(tmp_shw_local_max, tmp_shw_local_max, tmp_shw_new_global_max);
+    TSUB(tmp_shw_exp_max, tmp_shw_new_global_max, tmp_shw_local_max);
+    TMULS(tmp_shw_new_global_max, tmp_shw_local_max, 1.0f); // just copy
+    TMULS(tmp_shw_exp_max, tmp_shw_exp_max, scale);
+    TEXP(tmp_shw_exp_max, tmp_shw_exp_max);
+    TROWEXPANDSUB(p_tile_f32, input_x, local_max);
+    TMULS(p_tile_f32, p_tile_f32, scale);
+    TEXP(p_tile_f32, p_tile_f32);
+    TROWSUM(local_sum, p_tile_f32, tmp_float);
+    TCVT(x_exp_1d, p_tile_f32_1d, RoundMode::CAST_ROUND);
+    TMUL(tmp_shw_new_global_sum, tmp_shw_exp_max, tmp_shw_new_global_sum);
     TADD(tmp_shw_new_global_sum, tmp_shw_new_global_sum, tmp_shw_local_sum);
 }
 

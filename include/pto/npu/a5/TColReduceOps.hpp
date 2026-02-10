@@ -34,8 +34,6 @@ PTO_INTERNAL void TColReduceCheck(int srcValidRow, int srcValidCol, int dstValid
                   "Fix: TCOLREDUCE input data type must be consistent with the output data type.");
     PTO_ASSERT(srcValidCol == dstValidCol,
                "Fix: TCOLREDUCE input valid row must be consistent with the output valid row.");
-    PTO_ASSERT(srcValidCol != 0 && srcValidRow != 0,
-               "Fix: TCOLREDUCE input shape is invalid, validCol or validRow is 0.");
 }
 
 template <typename InstrOp, typename T, unsigned SrcStride>

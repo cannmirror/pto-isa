@@ -17,6 +17,7 @@ import shutil
 import multiprocessing
 from distutils.version import LooseVersion
 from setuptools import find_packages, setup
+from setuptools import Extension
 from setuptools.command.build_clib import build_clib
 from setuptools.command.build_ext import build_ext
 import torch

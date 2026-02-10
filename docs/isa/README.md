@@ -17,6 +17,8 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 - [TSETHF32MODE](TSETHF32MODE.md) - Configure HF32 transform mode (implementation-defined).
 - [TSETTF32MODE](TSETTF32MODE.md) - Configure TF32 transform mode (implementation-defined).
 - [TSETFMATRIX](TSETFMATRIX.md) - Set FMATRIX register(s) for IMG2COL-like ops.
+- [TSET_IMG2COL_RPT](TSET_IMG2COL_RPT.md) - Set IMG2COL repeat metadata from an IMG2COL configuration tile.
+- [TSET_IMG2COL_PADDING](TSET_IMG2COL_PADDING.md) - Set IMG2COL padding metadata from an IMG2COL configuration tile.
 
 ## Elementwise (Tile-Tile)
 - [TADD](TADD.md) - Elementwise add of two tiles.
@@ -72,6 +74,7 @@ This directory contains the per-instruction reference for the PTO Tile Lib ISA.
 ## Axis Reduce / Expand
 - [TROWSUM](TROWSUM.md) - Reduce each row by summing across columns.
 - [TCOLSUM](TCOLSUM.md) - Reduce each column by summing across rows.
+- [TCOLPROD](TCOLPROD.md) - Reduce each column by multiplying across rows.
 - [TCOLMAX](TCOLMAX.md) - Reduce each column by taking the maximum across rows.
 - [TROWMAX](TROWMAX.md) - Reduce each row by taking the maximum across columns.
 - [TROWMIN](TROWMIN.md) - Reduce each row by taking the minimum across columns.

@@ -12,22 +12,22 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define TSETFMATRIX_HPP
 
 namespace pto {
-template <SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_MANUAL, typename T = uint64_t>
-PTO_INTERNAL void TSETFMATRIX_IMPL(const Img2colTileConfig<T> &cfg)
+template <typename ConvTileData, SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_MANUAL>
+PTO_INTERNAL void TSETFMATRIX_IMPL(ConvTileData &src)
 {
     if constexpr (FmatrixMode == SetFmatrixMode::FMATRIX_A_MANUAL || FmatrixMode == SetFmatrixMode::FMATRIX_B_MANUAL) {
         uint64_t regFmatrix = 0;
-        regFmatrix |= uint64_t(cfg.fmapW & 0xFFFF);
+        regFmatrix |= uint64_t(src.GetFmapW() & 0xFFFF);
 
         constexpr uint32_t l1ShiftBit = 16;
-        regFmatrix |= uint64_t(cfg.fmapH & 0xFFFF) << l1ShiftBit;
+        regFmatrix |= uint64_t(src.GetFmapH() & 0xFFFF) << l1ShiftBit;
 
         constexpr uint32_t padNumber = 4;
         constexpr uint32_t padListShiftBit = 8;
         constexpr uint32_t padListShiftBase = 32;
 
         for (uint32_t i = 0; i < padNumber; i++) {
-            regFmatrix |= uint64_t(cfg.padList[i] & 0xFF) << (padListShiftBase + i * padListShiftBit);
+            regFmatrix |= uint64_t(src.GetPadListArray()[i] & 0xFF) << (padListShiftBase + i * padListShiftBit);
         }
         if constexpr (FmatrixMode == SetFmatrixMode::FMATRIX_A_MANUAL) {
             set_fmatrix(regFmatrix);

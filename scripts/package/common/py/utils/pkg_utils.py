@@ -14,9 +14,11 @@
 """基础构件。"""
 
 import os 
+from functools import partial
 from itertools import chain, tee
+from operator import methodcaller
 from pathlib import Path
-from typing import Callable, Dict, Iterator, Optional, TypeVar, Set
+from typing import Callable, Dict, Iterator, List, Optional, TypeVar, Set
 
 TOP_DIR = str(Path(__file__).resolve().parents[5])
 TOP_SOURCE_DIR = TOP_DIR + '/scripts/'

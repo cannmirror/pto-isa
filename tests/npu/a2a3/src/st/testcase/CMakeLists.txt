@@ -168,6 +168,7 @@ tcolmax
 tcolmin
 texpands
 tcolsum
+tcolprod
 tcmp
 tassign
 tstore_mat2gm

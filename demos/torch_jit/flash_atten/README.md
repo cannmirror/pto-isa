@@ -15,8 +15,8 @@ Which produces a CSV file containing one row per `(sq, sk, kernel)` configuratio
 
 - `sq`, `sk` — query and key sequence lengths  
 - `head_size` — attention head dimension (fixed at 128)  
-- `kernel` — attention implementation (`gemm_ref`, `npu_fused_attention`, `jit_flash`)  
-- `time_us` — average execution time in microseconds over 200 iterations  
+- `kernel` — attention implementation (`npu_fused_attention`, `jit_flash`)  
+- `time_us` — average execution time in microseconds over 50 iterations  
 - `tflops` — achieved throughput for the full attention forward pass  
 - `flops_total` — total operation count used to compute TFLOP/s  
 
@@ -25,8 +25,8 @@ Which produces a CSV file containing one row per `(sq, sk, kernel)` configuratio
 
 All benchmarks were run on 910B2 after:
 
-- **50 warm-up iterations**
-- **200 timed iterations (average reported)**
+- **10 warm-up iterations**
+- **50 timed iterations (average reported)**
 
 The JIT flash kernel parallelizes work across tiles of size 128 along the query dimension.
 
@@ -44,7 +44,7 @@ The normalized throughput is computed as:
 
 #### Results (Batch = 1, Head Size = 128)
 
-**Speedup vs Fused Baseline**
+**Speedup vs Fused Baseline aarch64**
 
 ---
 
@@ -70,3 +70,30 @@ The normalized throughput is computed as:
 |2048|2048|75.535|36.055|2.10×|60.26|90.39|
 |2048|4096|91.798|59.690|1.54×|72.80|109.20|
 |2048|8192|126.845|107.780|1.18×|80.63|120.95|
+
+**Speedup vs Fused Baseline x86_64**
+
+---
+
+| S0 | S1 | Fused µs | JIT µs | Speedup | JIT TFLOP/s | Normalized JIT TFLOP/s |
+|----|----|---------:|-------:|--------:|-----------:|----------------------:|
+|128|1024|46.83|16.54|2.83×|4.11|98.56|
+|128|2048|48.20|23.98|2.01×|5.66|135.96|
+|128|4096|47.93|40.94|1.17×|6.64|159.27|
+|128|8192|52.58|72.14|0.73×|7.53|180.77|
+|256|1024|48.41|16.77|2.89×|8.10|97.20|
+|256|2048|50.13|22.96|2.18×|11.83|142.00|
+|256|4096|49.19|40.43|1.22×|13.44|161.28|
+|256|8192|68.99|72.39|0.95×|15.01|180.15|
+|512|1024|52.50|18.03|2.91×|15.07|90.41|
+|512|2048|53.62|25.02|2.14×|21.72|130.31|
+|512|4096|61.27|41.21|1.49×|26.37|158.23|
+|512|8192|88.09|73.93|1.19×|29.40|176.40|
+|1024|1024|55.40|18.70|2.96×|29.06|87.17|
+|1024|2048|61.38|26.76|2.29×|40.61|121.83|
+|1024|4096|84.73|44.20|1.92×|49.17|147.52|
+|1024|8192|103.27|77.65|1.33×|55.98|167.95|
+|2048|1024|63.49|23.27|2.73×|46.70|70.05|
+|2048|2048|84.70|35.15|2.41×|61.83|92.75|
+|2048|4096|101.94|58.43|1.74×|74.40|111.59|
+|2048|8192|142.38|100.93|1.41×|86.14|129.21|

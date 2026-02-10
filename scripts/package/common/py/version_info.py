@@ -12,10 +12,12 @@
 
 import os
 import re
+import sys
 import xml.etree.ElementTree as ET
 from functools import total_ordering
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+from .utils.comm_log import CommLog
 
 
 class VersionInfoError(Exception):

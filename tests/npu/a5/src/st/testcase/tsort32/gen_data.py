@@ -12,6 +12,7 @@
 
 import os
 import numpy as np
+import math
 import struct
 import ctypes
 
