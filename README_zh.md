@@ -107,7 +107,7 @@ PTO ISA 定义了 90+ 条标准操作。本仓库实现了其中不断增长的�
 
 ## 快速开始
 
-更详细、分操作系统的环境配置（Windows / Linux / macOS），请参考：[docs/getting-started.md](docs/getting-started.md)。
+更详细、分操作系统的环境配置（Windows / Linux / macOS），请参考：[docs/getting-started_zh.md](docs/getting-started_zh.md)。
 
 ### 构建文档（MkDocs）
 
@@ -238,8 +238,8 @@ source ${install-path}/cann/bin/setenv.bash
 * ISA 指南与导航：[docs/README_zh.md](docs/README_zh.md)
 * ISA 指令索引：[docs/isa/README_zh.md](docs/isa/README_zh.md)
 * 开发者文档索引：[docs/coding/README_zh.md](docs/coding/README_zh.md)
-* 入门指南（建议先 CPU，再 NPU）：[docs/getting-started.md](docs/getting-started.md)
-* 安全与披露流程：[SECURITY.md](SECURITY.md)
+* 入门指南（建议先 CPU，再 NPU）：[docs/getting-started_zh.md](docs/getting-started_zh.md)
+* 安全与披露流程：[SECURITY_zh.md](SECURITY_zh.md)
 * 分目录阅读（代码组织）：
 
   * 构建与打包（CMake）：[cmake/README_zh.md](cmake/README_zh.md)

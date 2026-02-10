@@ -1,5 +1,10 @@
 # TCOLMIN
 
+
+## Tile Operation Diagram
+
+![TCOLMIN tile operation](../figures/isa/TCOLMIN.svg)
+
 ## Introduction
 
 Reduce each column by taking the minimum across rows.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tcolmin %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcolmin %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcolmin ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -77,3 +94,31 @@ void example_manual() {
   TCOLMIN(dst, src);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst = pto.tcolmin %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.tcolmin %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### PTO Assembly Form
+
+```text
+%dst = tcolmin %src : !pto.tile<...> -> !pto.tile<...>
+# IR Level 2 (DPS)
+pto.tcolmin ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
+

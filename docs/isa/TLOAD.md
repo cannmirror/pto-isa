@@ -1,5 +1,10 @@
 # TLOAD
 
+
+## Tile Operation Diagram
+
+![TLOAD tile operation](../figures/isa/TLOAD.svg)
+
 ## Introduction
 
 Load data from a GlobalTensor (GM) into a Tile.
@@ -18,6 +23,19 @@ Synchronous form:
 
 ```text
 %t0 = tload %sv[%c0, %c0] : (!pto.memref<...>, index, index) -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tload %mem : !pto.partition_tensor_view<MxNxdtype> ->
+!pto.tile<loc, dtype, rows, cols, blayout, slayout, fractal, pad>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tload ins(%mem : !pto.partition_tensor_view<MxNxdtype>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -99,3 +117,31 @@ void example_manual(__gm__ T* in) {
   TLOAD(t, gin);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst = pto.tload %mem : !pto.partition_tensor_view<MxNxdtype> ->
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.tload %mem : !pto.partition_tensor_view<MxNxdtype> ->
+```
+
+### PTO Assembly Form
+
+```text
+%t0 = tload %sv[%c0, %c0] : (!pto.memref<...>, index, index) -> !pto.tile<...>
+# IR Level 2 (DPS)
+pto.tload ins(%mem : !pto.partition_tensor_view<MxNxdtype>) outs(%dst : !pto.tile_buf<...>)
+```
+
