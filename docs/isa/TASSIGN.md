@@ -87,3 +87,31 @@ void example_manual() {
   TADD(c, a, b);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+pto.tassign %tile, %addr : !pto.tile<...>, dtype
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+pto.tassign %tile, %addr : !pto.tile<...>, dtype
+```
+
+### PTO Assembly Form
+
+```text
+tassign %tile, %addr : !pto.tile<...>, index
+# IR Level 2 (DPS)
+pto.tassign ins(%tile, %addr : !pto.tile_buf<...>, dtype)
+```
+

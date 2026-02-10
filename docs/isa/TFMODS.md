@@ -64,3 +64,31 @@ void example() {
   TFMODS(out, x, 3.0f);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst = pto.tfmods %src, %scalar : !pto.tile<...>, f32
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.tfmods %src, %scalar : !pto.tile<...>, f32
+```
+
+### PTO Assembly Form
+
+```text
+%dst = tfmods %src, %scalar : !pto.tile<...>, f32
+# IR Level 2 (DPS)
+pto.tfmods ins(%src, %scalar : !pto.tile_buf<...>, f32) outs(%dst : !pto.tile_buf<...>)
+```
+

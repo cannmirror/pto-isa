@@ -61,3 +61,31 @@ void example_enable_hf32() {
   TSETHF32MODE<true, RoundMode::CAST_ROUND>();
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+pto.tsethf32mode {enable = true, mode = ...}
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+pto.tsethf32mode {enable = true, mode = ...}
+```
+
+### PTO Assembly Form
+
+```text
+pto.tsethf32mode {enable = true, mode = ...}
+# IR Level 2 (DPS)
+pto.tsethf32mode ins({enable = true, mode = ...}) outs()
+```
+

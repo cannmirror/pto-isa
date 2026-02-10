@@ -90,3 +90,31 @@ void example_manual() {
   TEXPANDS(dst, 0.0f);
 }
 ```
+
+## 汇编示例（ASM）
+
+### 自动模式
+
+```text
+# 自动模式：由编译器/运行时负责资源放置与调度。
+%dst = pto.texpands %scalar : dtype -> !pto.tile<...>
+```
+
+### 手动模式
+
+```text
+# 手动模式：先显式绑定资源，再发射指令。
+# 可选（当该指令包含 tile 操作数时）：
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.texpands %scalar : dtype -> !pto.tile<...>
+```
+
+### PTO 汇编形式
+
+```text
+%dst = texpands %scalar : f32, !pto.tile<...>
+# IR Level 2 (DPS)
+pto.texpands ins(%scalar : dtype) outs(%dst : !pto.tile_buf<...>)
+```
+

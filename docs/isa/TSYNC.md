@@ -108,3 +108,31 @@ void example_manual() {
   TSYNC(e);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%result = pto.tsync ...
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%result = pto.tsync ...
+```
+
+### PTO Assembly Form
+
+```text
+tsync %e0, %e1 : !pto.event<...>, !pto.event<...>
+# IR Level 2 (DPS)
+pto.record_event[src_op, dst_op, eventID]
+```
+

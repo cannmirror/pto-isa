@@ -44,3 +44,31 @@ Type/layout/location/shape legality is backend-dependent; treat implementation-s
 ## 示例
 
 See related examples in `docs/isa/` and `docs/coding/tutorials/`.
+
+## 汇编示例（ASM）
+
+### 自动模式
+
+```text
+# 自动模式：由编译器/运行时负责资源放置与调度。
+pto.tsetfmatrix %cfg : !pto.fmatrix_config -> ()
+```
+
+### 手动模式
+
+```text
+# 手动模式：先显式绑定资源，再发射指令。
+# 可选（当该指令包含 tile 操作数时）：
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+pto.tsetfmatrix %cfg : !pto.fmatrix_config -> ()
+```
+
+### PTO 汇编形式
+
+```text
+pto.tsetfmatrix %cfg : !pto.fmatrix_config -> ()
+# IR Level 2 (DPS)
+pto.tsetfmatrix ins(%cfg : !pto.fmatrix_config) outs()
+```
+

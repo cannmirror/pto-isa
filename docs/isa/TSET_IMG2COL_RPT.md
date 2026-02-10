@@ -63,3 +63,31 @@ void example_set_img2col_rpt(Img2colTileConfig<uint64_t>& cfg) {
   TSET_IMG2COL_RPT(cfg);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+pto.tset_img2col_rpt %cfg : !pto.fmatrix_config -> ()
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+pto.tset_img2col_rpt %cfg : !pto.fmatrix_config -> ()
+```
+
+### PTO Assembly Form
+
+```text
+pto.tset_img2col_rpt %cfg : !pto.fmatrix_config -> ()
+# IR Level 2 (DPS)
+pto.tset_img2col_rpt ins(%cfg : !pto.fmatrix_config) outs()
+```
+
