@@ -14,6 +14,7 @@ import os
 import pathlib
 
 import torch
+import torch_npu
 
 
 def _load_opextension_so():

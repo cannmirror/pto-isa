@@ -84,7 +84,7 @@ def build_project(run_mode, soc_version, testcase = "all"):
     except subprocess.CalledProcessError as e:
         print(f"build failed: {e.stdout}")
         raise
-    except RuntimeError:
+    except RuntimeError as e:
         print("build failed")
         raise
     finally:
