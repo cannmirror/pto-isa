@@ -231,6 +231,32 @@ AICORE inline void StoreResult(TileAcc<float, baseM, baseN, baseM, baseN> &cTile
     WaitFlag<PIPE_FIX, PIPE_M>(0);
 }
 
+template <typename T, typename U, typename X, int m, int k, int n, uint32_t singleCoreM, uint32_t singleCoreK,
+          uint32_t singleCoreN, uint32_t baseM, uint32_t baseK, uint32_t baseN, uint32_t baseScaleK, uint32_t stepKa,
+          uint32_t stepKb, uint32_t stepKscaleA, uint32_t stepKscaleB, typename TileMatA, typename TileMatB,
+          typename TileScaleA, typename TileScaleB, typename LeftTile, typename RightTile, typename LeftScaleTile,
+          typename RightScaleTile, typename ResTile>
+AICORE inline void Compute(__gm__ U *currentSrc0, __gm__ U *currentSrc1, __gm__ X *currentSrc2, __gm__ X *currentSrc3,
+                           __gm__ T *&currentDst, TileMatA aMatTile[BUFFER_NUM], TileMatB bMatTile[BUFFER_NUM],
+                           TileScaleA aScaleMatTile[BUFFER_NUM], TileScaleB bScaleMatTile[BUFFER_NUM],
+                           LeftTile aTile[BUFFER_NUM], RightTile bTile[BUFFER_NUM],
+                           LeftScaleTile aScaleTile[BUFFER_NUM], RightScaleTile bScaleTile[BUFFER_NUM], ResTile &cTile)
+{
+    uint8_t mte2DBFlag = 0, mte2mxDBFlag = 0, mte1DBFlag = 0;
+    for (uint32_t i = 0; i < singleCoreM / baseM; i++) {
+        for (uint32_t j = 0; j < singleCoreN / baseN; j++) {
+            for (uint32_t kIter = 0; kIter < singleCoreK / baseK; kIter++) {
+                ProcessKIteration<T, U, X, m, k, n, singleCoreK, baseM, baseK, baseN, baseScaleK, stepKa, stepKb,
+                                  stepKscaleA, stepKscaleB, TileMatA, TileMatB, TileScaleA, TileScaleB, LeftTile,
+                                  RightTile, LeftScaleTile, RightScaleTile, ResTile>(
+                    kIter, i, j, currentSrc0, currentSrc1, currentSrc2, currentSrc3, aMatTile, bMatTile, aScaleMatTile,
+                    bScaleMatTile, aTile, bTile, aScaleTile, bScaleTile, cTile, mte2DBFlag, mte2mxDBFlag, mte1DBFlag);
+            }
+            StoreResult<T, U, m, n, baseM, baseN, singleCoreK>(cTile, currentDst, i, j);
+        }
+    }
+}
+
 AICORE inline void InitSyncFlags()
 {
     // supplement first sync instr for reverse sync in ProcessKIteration
@@ -295,22 +321,12 @@ AICORE inline void RunMxMatmul(__gm__ T *out, __gm__ U *src0, __gm__ U *src1, __
                 TileScaleA, TileScaleB, LeftTile, RightTile, LeftScaleTile, RightScaleTile, ResTile>(
         aMatTile, bMatTile, aScaleMatTile, bScaleMatTile, aTile, bTile, aScaleTile, bScaleTile, cTile);
 
-    uint8_t mte2DBFlag = 0, mte2mxDBFlag = 0, mte1DBFlag = 0;
-
     InitSyncFlags();
 
-    for (uint32_t i = 0; i < singleCoreM / baseM; i++) {
-        for (uint32_t j = 0; j < singleCoreN / baseN; j++) {
-            for (uint32_t kIter = 0; kIter < singleCoreK / baseK; kIter++) {
-                ProcessKIteration<T, U, X, m, k, n, singleCoreK, baseM, baseK, baseN, baseScaleK, stepKa, stepKb,
-                                  stepKscaleA, stepKscaleB, TileMatA, TileMatB, TileScaleA, TileScaleB, LeftTile,
-                                  RightTile, LeftScaleTile, RightScaleTile, ResTile>(
-                    kIter, i, j, currentSrc0, currentSrc1, currentSrc2, currentSrc3, aMatTile, bMatTile, aScaleMatTile,
-                    bScaleMatTile, aTile, bTile, aScaleTile, bScaleTile, cTile, mte2DBFlag, mte2mxDBFlag, mte1DBFlag);
-            }
-            StoreResult<T, U, m, n, baseM, baseN, singleCoreK>(cTile, currentDst, i, j);
-        }
-    }
+    Compute<T, U, X, m, k, n, singleCoreM, singleCoreK, singleCoreN, baseM, baseK, baseN, baseScaleK, stepKa, stepKb,
+            stepKscaleA, stepKscaleB, TileMatA, TileMatB, TileScaleA, TileScaleB, LeftTile, RightTile, LeftScaleTile,
+            RightScaleTile, ResTile>(currentSrc0, currentSrc1, currentSrc2, currentSrc3, currentDst, aMatTile, bMatTile,
+                                     aScaleMatTile, bScaleMatTile, aTile, bTile, aScaleTile, bScaleTile, cTile);
 
     WaitSyncFlags();
 }

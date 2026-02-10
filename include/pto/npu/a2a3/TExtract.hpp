@@ -480,6 +480,52 @@ PTO_INTERNAL void CheckTExtract()
 }
 
 template <typename DstTileData, typename SrcTileData>
+AICORE void TExtractToLeft(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol)
+{
+    static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor,
+                  "TExtract: LeftTile Invalid Fractal.");
+    if constexpr (SrcTileData::Rows == 1 && SrcTileData::isRowMajor) {
+        TExtractToAVector<DstTileData, SrcTileData>(dst.data(), src.data(), indexRow, indexCol, dst.GetValidCol());
+    } else if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+        if constexpr (DstTileData::Compact == CompactMode::Normal) {
+            TExtractToACompact<DstTileData, SrcTileData, false>(
+                dst.data(), src.data(), indexRow, indexCol, dst.GetValidRow(), dst.GetValidCol(), dst.GetKAligned());
+        } else {
+            TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol);
+        }
+    } else {
+        if constexpr (DstTileData::Compact == CompactMode::Normal) {
+            TExtractToACompact<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol,
+                                                               dst.GetValidRow(), dst.GetValidCol(), dst.GetKAligned());
+        } else {
+            TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
+        }
+    }
+}
+
+template <typename DstTileData, typename SrcTileData>
+AICORE void TExtractToRight(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol)
+{
+    static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
+                  "TExtract: RightTile Invalid Fractal.");
+    if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
+        if constexpr (DstTileData::Compact == CompactMode::Normal) {
+            TExtractToBCompact<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol,
+                                                                dst.GetValidRow(), dst.GetValidCol());
+        } else {
+            TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol);
+        }
+    } else {
+        if constexpr (DstTileData::Compact == CompactMode::Normal) {
+            TExtractToBCompact<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol,
+                                                               dst.GetValidRow(), dst.GetValidCol());
+        } else {
+            TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
+        }
+    }
+}
+
+template <typename DstTileData, typename SrcTileData>
 PTO_INTERNAL void TEXTRACT_TILE_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow = 0, uint16_t indexCol = 0)
 {
     CheckTExtract<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType>();
@@ -488,45 +534,9 @@ PTO_INTERNAL void TEXTRACT_TILE_IMPL(DstTileData &dst, SrcTileData &src, uint16_
     PTO_ASSERT(indexCol + DstTileData::Cols <= SrcTileData::Cols,
                "The sum of indexCol and dstCol should be less than srcCol!");
     if constexpr (DstTileData::Loc == TileType::Left) {
-        static_assert(DstTileData::SFractal == SLayout::RowMajor && DstTileData::isRowMajor,
-                      "TExtract: LeftTile Invalid Fractal.");
-        if constexpr (SrcTileData::Rows == 1 && SrcTileData::isRowMajor) {
-            TExtractToAVector<DstTileData, SrcTileData>(dst.data(), src.data(), indexRow, indexCol, dst.GetValidCol());
-        } else if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-            if constexpr (DstTileData::Compact == CompactMode::Normal) {
-                TExtractToACompact<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol,
-                                                                    dst.GetValidRow(), dst.GetValidCol(),
-                                                                    dst.GetKAligned());
-            } else {
-                TExtractToA<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol);
-            }
-        } else {
-            if constexpr (DstTileData::Compact == CompactMode::Normal) {
-                TExtractToACompact<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol,
-                                                                   dst.GetValidRow(), dst.GetValidCol(),
-                                                                   dst.GetKAligned());
-            } else {
-                TExtractToA<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
-            }
-        }
+        TExtractToLeft<DstTileData, SrcTileData>(dst, src, indexRow, indexCol);
     } else if constexpr (DstTileData::Loc == TileType::Right) {
-        static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
-                      "TExtract: RightTile Invalid Fractal.");
-        if constexpr (DstTileData::SFractal == SrcTileData::SFractal) {
-            if constexpr (DstTileData::Compact == CompactMode::Normal) {
-                TExtractToBCompact<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol,
-                                                                    dst.GetValidRow(), dst.GetValidCol());
-            } else {
-                TExtractToB<DstTileData, SrcTileData, false>(dst.data(), src.data(), indexRow, indexCol);
-            }
-        } else {
-            if constexpr (DstTileData::Compact == CompactMode::Normal) {
-                TExtractToBCompact<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol,
-                                                                   dst.GetValidRow(), dst.GetValidCol());
-            } else {
-                TExtractToB<DstTileData, SrcTileData, true>(dst.data(), src.data(), indexRow, indexCol);
-            }
-        }
+        TExtractToRight<DstTileData, SrcTileData>(dst, src, indexRow, indexCol);
     } else if constexpr (SrcTileData::Loc == TileType::Acc && DstTileData::Loc == TileType::Mat) {
         CheckTMovAccToMat<DstTileData, SrcTileData, typename DstTileData::DType, typename SrcTileData::DType, true>();
         constexpr QuantMode_t quantPre =

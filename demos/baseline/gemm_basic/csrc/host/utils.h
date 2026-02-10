@@ -46,7 +46,6 @@ constexpr auto ConvertTypes(Ts &... args)
             std::apply(                                                                                              \
                 [&](auto &&... params) { ret = ACLRT_LAUNCH_KERNEL(kernel_name)(blockdim, acl_stream, params...); }, \
                 converted_params);                                                                                   \
-            return static_cast<int>(ret);                                                                            \
         };                                                                                                           \
         at_npu::native::OpCommand::RunOpApi(#kernel_name, acl_call);                                                 \
     } while (false)

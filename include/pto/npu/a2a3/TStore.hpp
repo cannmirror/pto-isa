@@ -397,8 +397,8 @@ PTO_INTERNAL void TStoreAccNz2nz(typename GlobalData::DType *dstAddr, __cc__ typ
 template <typename GlobalData, typename TileData, QuantMode_t quantizationMode = QuantMode_t::NoQuant,
           ReluPreMode reluPreMode = ReluPreMode::NoRelu, STPhase Phase = STPhase::Unspecified>
 PTO_INTERNAL void TStoreAccNz2NC1HWC0(typename GlobalData::DType *dstAddr, __cc__ typename TileData::DType *srcAddr,
-                                      int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int validRow,
-                                      int validCol)
+                                      int gShape0, int gShape1, int gShape2, int gShape3, int gShape4, int gStride1,
+                                      int gStride3, int validRow, int validCol)
 {
     PTO_ASSERT(validRow == gShape0 * gShape2 * gShape3,
                "The validRow of TileData must be equal to gShape0 * Shape2 * Shape3 of NC1HWC0 shape!");
@@ -430,7 +430,7 @@ PTO_INTERNAL void TStoreAccNz2NC1HWC0(typename GlobalData::DType *dstAddr, __cc_
     if constexpr (CompactMode::Normal == TileData::Compact) {
         srcStride = CeilAlignment(validRow, FRACTAL_NZ_ROW);
     }
-    uint32_t dstStride = gShape0 * gShape2 * gShape3 * c0Size >> SHIFT_BLOCK_BYTE;
+    uint32_t dstStride = gShape0 * gStride1 / gStride3 * c0Size >> SHIFT_BLOCK_BYTE;
     constexpr uint8_t unitFlagCtrl = static_cast<uint8_t>(Phase);
     uint64_t xmReg = (static_cast<uint64_t>(nSize & 0xfff) << 4) | (static_cast<uint64_t>(mSize & 0xffff) << 16) |
                      (static_cast<uint64_t>(dstStride & 0xffffffff) << 32);
@@ -461,7 +461,7 @@ __tf__ AICORE void TStoreAcc(typename GlobalData::DType __out__ *dst, typename T
             gStride4, validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::NC1HWC0) {
         TStoreAccNz2NC1HWC0<GlobalData, TileData, quantizationMode, reluPreMode, Phase>(
-            dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, validRow, validCol);
+            dstAddr, srcAddr, gShape0, gShape1, gShape2, gShape3, gShape4, gStride1, gStride3, validRow, validCol);
     }
 }
 
@@ -485,8 +485,8 @@ __tf__ AICORE void TStoreAccFp(typename GlobalData::DType __out__ *dst, typename
             dst, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride0, gStride1, gStride2, gStride3, gStride4,
             validRow, validCol);
     } else if constexpr (GlobalData::layout == pto::Layout::NC1HWC0) {
-        TStoreAccNz2NC1HWC0<GlobalData, TileData, quantizationMode, reluPreMode>(dst, src, gShape0, gShape1, gShape2,
-                                                                                 gShape3, gShape4, validRow, validCol);
+        TStoreAccNz2NC1HWC0<GlobalData, TileData, quantizationMode, reluPreMode>(
+            dst, src, gShape0, gShape1, gShape2, gShape3, gShape4, gStride1, gStride3, validRow, validCol);
     }
 }
 

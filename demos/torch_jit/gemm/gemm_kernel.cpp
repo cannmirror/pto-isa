@@ -144,6 +144,24 @@ AICORE inline void StoreResult(TileAcc<T, baseM, baseN, baseM, baseN> &cTile, __
     WaitFlag<PIPE_FIX, PIPE_M>(0);
 }
 
+AICORE inline void WaitSyncFlags()
+{
+    // supplement last sync instr for reverse sync in ProcessKIteration
+    WaitFlag<PIPE_M, PIPE_MTE1>(0);
+    WaitFlag<PIPE_M, PIPE_MTE1>(1);
+    WaitFlag<PIPE_MTE1, PIPE_MTE2>(0);
+    WaitFlag<PIPE_MTE1, PIPE_MTE2>(1);
+}
+
+AICORE inline void InitSyncFlags()
+{
+    // supplement first sync instr for reverse sync in ProcessKIteration
+    SetFlag<PIPE_MTE1, PIPE_MTE2>(0);
+    SetFlag<PIPE_MTE1, PIPE_MTE2>(1);
+    SetFlag<PIPE_M, PIPE_MTE1>(0);
+    SetFlag<PIPE_M, PIPE_MTE1>(1);
+}
+
 template <typename T, typename U, typename S, typename B, uint32_t blockDim, int m, int k, int n, int validM,
           int validK, int validN, uint32_t singleCoreM, uint32_t singleCoreK, uint32_t singleCoreN, uint32_t baseM,
           uint32_t baseK, uint32_t baseN, uint32_t stepM, uint32_t stepKa, uint32_t stepKb, uint32_t stepN>
@@ -191,11 +209,7 @@ AICORE inline void RunGemmE2E(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     constexpr uint32_t kLoop = singleCoreK / baseK;
     uint8_t mte2DBFlag = 0, mte1DBFlag = 0;
 
-    // supplement first sync instr for reverse sync in ProcessKIteration
-    SetFlag<PIPE_MTE1, PIPE_MTE2>(0);
-    SetFlag<PIPE_MTE1, PIPE_MTE2>(1);
-    SetFlag<PIPE_M, PIPE_MTE1>(0);
-    SetFlag<PIPE_M, PIPE_MTE1>(1);
+    InitSyncFlags();
 
     for (uint32_t i = 0; i < mLoop; i++) {
         for (uint32_t j = 0; j < nLoop; j++) {
@@ -208,11 +222,7 @@ AICORE inline void RunGemmE2E(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
         }
     }
 
-    // supplement last sync instr for reverse sync in ProcessKIteration
-    WaitFlag<PIPE_M, PIPE_MTE1>(0);
-    WaitFlag<PIPE_M, PIPE_MTE1>(1);
-    WaitFlag<PIPE_MTE1, PIPE_MTE2>(0);
-    WaitFlag<PIPE_MTE1, PIPE_MTE2>(1);
+    WaitSyncFlags();
 
 #else
 

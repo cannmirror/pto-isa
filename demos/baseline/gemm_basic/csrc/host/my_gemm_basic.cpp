@@ -17,6 +17,7 @@ namespace pto_path {
 constexpr uint32_t M = 512;
 constexpr uint32_t K = 2048;
 constexpr uint32_t N = 1536;
+constexpr uint32_t DIM_2 = 2;
 
 at::Tensor run_gemm_basic_custom(const at::Tensor &a, const at::Tensor &b_dn)
 {
