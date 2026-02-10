@@ -1,5 +1,10 @@
 # TLRELU
 
+
+## Tile Operation Diagram
+
+![TLRELU tile operation](../figures/isa/TLRELU.svg)
+
 ## Introduction
 
 Leaky ReLU with a scalar slope.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tlrelu %src, %slope : !pto.tile<...>, f32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tlrelu %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tlrelu ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -45,4 +62,3 @@ void example() {
   TLRELU(out, x, 0.1f);
 }
 ```
-

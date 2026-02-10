@@ -1,5 +1,10 @@
 # TMRGSORT
 
+
+## Tile Operation Diagram
+
+![TMRGSORT tile operation](../figures/isa/TMRGSORT.svg)
+
 ## Introduction
 
 Merge sort for multiple sorted lists (implementation-defined element format and layout).
@@ -19,6 +24,22 @@ Synchronous form (conceptual):
 ```text
 %dst, %executed = tmrgsort %src0, %src1 {exhausted = false}
     : !pto.tile<...>, !pto.tile<...> -> (!pto.tile<...>, vector<4xi16>)
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tmrgsort %src, %blockLen : (!pto.tile<...>, dtype) -> !pto.tile<...>
+%dst, %executed = pto.tmrgsort %src0, %src1, %src2, %src3 {exhausted = false}
+ : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> (!pto.tile<...>, vector<4xi16>)
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tmrgsort ins(%src, %blockLen : !pto.tile_buf<...>, dtype)  outs(%dst : !pto.tile_buf<...>)
+pto.tmrgsort ins(%src0, %src1, %src2, %src3 {exhausted = false} : !pto.tile_buf<...>, !pto.tile_buf<...>, !pto.tile_buf<...>, !pto.tile_buf<...>)
+outs(%dst, %executed : !pto.tile_buf<...>, vector<4xi16>)
 ```
 ## C++ Intrinsic
 

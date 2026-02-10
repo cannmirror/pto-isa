@@ -1,5 +1,10 @@
 # TFMOD
 
+
+## Tile Operation Diagram
+
+![TFMOD tile operation](../figures/isa/TFMOD.svg)
+
 ## Introduction
 
 Elementwise floor of two tiles.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tfmod %src0, %src1 : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tfmod %src0, %src1 : !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tfmod ins(%src0, %src1 : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -47,4 +64,3 @@ void example() {
   TFMOD(out, a, b);
 }
 ```
-

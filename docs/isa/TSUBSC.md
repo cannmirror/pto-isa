@@ -1,5 +1,10 @@
 # TSUBSC
 
+
+## Tile Operation Diagram
+
+![TSUBSC tile operation](../figures/isa/TSUBSC.svg)
+
 ## Introduction
 
 Elementwise fused op: `src0 - scalar + src1`.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tsubsc %src0, %scalar, %src1 : !pto.tile<...>, f32, !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tsubsc %src0, %scalar, %src1 : (!pto.tile<...>, dtype, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tsubsc ins(%src0, %scalar, %src1 : !pto.tile_buf<...>, dtype, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -46,4 +63,3 @@ void example() {
   TSUBSC(out, a, 2.0f, b);
 }
 ```
-

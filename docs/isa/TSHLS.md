@@ -1,5 +1,10 @@
 # TSHLS
 
+
+## Tile Operation Diagram
+
+![TSHLS tile operation](../figures/isa/TSHLS.svg)
+
 ## Introduction
 
 Elementwise shift-left of a tile, shift bits given by scalar.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tshls %src, %scalar : !pto.tile<...>, i32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tshls %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tshls ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -49,4 +66,3 @@ void example() {
   TSHLS(dst, src, 0x2);
 }
 ```
-

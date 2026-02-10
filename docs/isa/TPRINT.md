@@ -1,5 +1,10 @@
 # TPRINT
 
+
+## Tile Operation Diagram
+
+![TPRINT tile operation](../figures/isa/TPRINT.svg)
+
 ## Introduction
 
 Print the contents of a Tile or GlobalTensor for debugging purposes directly from device code.
@@ -20,6 +25,17 @@ PTO-AS form: see `docs/grammar/PTO-AS.md`.
 tprint %src : !pto.tile<...> | !pto.global<...>
 ```
 
+### IR Level 1 (SSA)
+
+```text
+pto.tprint %src : !pto.tile<...> | !pto.partition_tensor_view<MxNxdtype> -> ()
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tprint ins(%src : !pto.tile_buf<...> | !pto.partition_tensor_view<MxNxdtype>)
+```
 ## C++ Intrinsic
 Declared in `include/pto/common/pto_instr.hpp`:
 ```cpp
@@ -100,3 +116,7 @@ PTO_INTERNAL void DebugGlobalTensor(__gm__ float *src) {
   TPRINT(srcGlobal);
 }
 ```
+
+## Math Interpretation
+
+Unless otherwise specified, semantics are defined over the valid region and target-dependent behavior is marked as implementation-defined.

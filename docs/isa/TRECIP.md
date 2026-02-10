@@ -1,5 +1,10 @@
 # TRECIP
 
+
+## Tile Operation Diagram
+
+![TRECIP tile operation](../figures/isa/TRECIP.svg)
+
 ## Introduction
 
 Elementwise reciprocal of a tile.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = trecip %src : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.trecip %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.trecip ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -55,4 +72,3 @@ void example() {
   TRECIP(out, x);
 }
 ```
-

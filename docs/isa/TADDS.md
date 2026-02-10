@@ -1,5 +1,10 @@
 # TADDS
 
+
+## Tile Operation Diagram
+
+![TADDS tile operation](../figures/isa/TADDS.svg)
+
 ## Introduction
 
 Elementwise add a scalar to a tile.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tadds %src, %scalar : !pto.tile<...>, f32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tadds %src, %scalar : (!pto.tile<...>,dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tadds ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

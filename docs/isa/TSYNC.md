@@ -1,5 +1,10 @@
 # TSYNC
 
+
+## Tile Operation Diagram
+
+![TSYNC tile operation](../figures/isa/TSYNC.svg)
+
 ## Introduction
 
 Synchronize PTO execution:
@@ -29,6 +34,22 @@ Single-op barrier form:
 tsync.op #pto.op<TADD>
 ```
 
+### IR Level 1 (SSA)
+
+```text
+// Level 1 (SSA) does not support explicit synchronization primitives.
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.record_event[src_op, dst_op, eventID]
+// 支持的op：TLOAD， TSTORE_ACC，TSTORE_VEC，TMOV_M2L，TMOV_M2S，TMOV_M2B，TMOV_M2V，TMOV_V2M，TMATMUL，TVEC
+pto.wait_event[src_op, dst_op, eventID]
+// 支持的op：TLOAD， TSTORE_ACC，TSTORE_VEC，TMOV_M2L，TMOV_M2S，TMOV_M2B，TMOV_M2V，TMOV_V2M，TMATMUL，TVEC
+pto.barrier(op)
+// 支持的op：TVEC,TMATMUL
+```
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

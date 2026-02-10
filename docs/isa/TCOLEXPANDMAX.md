@@ -1,5 +1,10 @@
 # TCOLEXPANDDIV
 
+
+## Tile Operation Diagram
+
+![TCOLEXPANDMAX tile operation](../figures/isa/TCOLEXPANDMAX.svg)
+
 ## Introduction
 
 Column-wise broadcast max: take `max(src0, src1)` where `src1` provides one scalar per column.
@@ -25,6 +30,17 @@ Synchronous form:
 %dst = tcolexpandmax %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
 
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcolexpandmax %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcolexpandmax ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
@@ -40,3 +56,7 @@ PTO_INST RecordEvent TCOLEXPANDMAX(TileDataDst &dst, TileDataDst &src0, TileData
 - Tile shape/layout constraint (compile-time): `TileDataDst::isRowMajor`.
 - `src1` is expected to provide **one scalar per column** (i.e., its valid shape must cover `C` values).
 - Exact layout/fractal constraints are target-specific; see backend headers under `include/pto/npu/*/TColExpand*.hpp`.
+
+## Examples
+
+See related examples in `docs/isa/` and `docs/coding/tutorials/`.

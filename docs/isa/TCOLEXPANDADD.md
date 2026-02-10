@@ -1,5 +1,10 @@
 # TCOLEXPANDDIV
 
+
+## Tile Operation Diagram
+
+![TCOLEXPANDADD tile operation](../figures/isa/TCOLEXPANDADD.svg)
+
 ## Introduction
 
 Column-wise broadcast add: add each element of `src0` by a per-column scalar vector `src1`.
@@ -24,6 +29,17 @@ Synchronous form:
 %dst = tcolexpandadd %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
 
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcolexpandadd %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcolexpandadd ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
@@ -39,3 +55,7 @@ PTO_INST RecordEvent TCOLEXPANDADD(TileDataDst &dst, TileDataDst &src0, TileData
 - Tile shape/layout constraint (compile-time): `TileDataDst::isRowMajor`.
 - `src1` is expected to provide **one scalar per column** (i.e., its valid shape must cover `C` values).
 - Exact layout/fractal constraints are target-specific; see backend headers under `include/pto/npu/*/TColExpand*.hpp`.
+
+## Examples
+
+See related examples in `docs/isa/` and `docs/coding/tutorials/`.

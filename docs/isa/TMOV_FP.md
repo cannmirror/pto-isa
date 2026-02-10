@@ -1,5 +1,10 @@
 # TMOV_FP
 
+
+## Tile Operation Diagram
+
+![TMOV_FP tile operation](../figures/isa/TMOV_FP.svg)
+
 ## Introduction
 
 Move/convert from an accumulator tile into a destination tile, using a scaling (`fp`) tile for vector quantization parameters.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst = tmov.fp %src, %fp : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tmov.fp %src, %fp : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tmov.fp ins(%src, %fp : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

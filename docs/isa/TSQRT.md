@@ -1,5 +1,10 @@
 # TSQRT
 
+
+## Tile Operation Diagram
+
+![TSQRT tile operation](../figures/isa/TSQRT.svg)
+
 ## Introduction
 
 Elementwise square root.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tsqrt %src : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tsqrt %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tsqrt ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

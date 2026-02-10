@@ -94,7 +94,7 @@ ISA 将每条指令分配给一个流水线类。事件可以表达流水线类�
 * **在单个核心的一个 Tile 块内**，对于具有显式数据或事件依赖关系的操作，程序顺序得以保留。
 * **跨 Tile 块和核心**，只有在通过以下方式表达时，顺序才得到保证：
     * 全局内存依赖关系（例如，一个 `TSTORE` 产生数据，随后被 `TLOAD` 消耗），由运行时/驱动契约定义；和/或
-    * 显式事件/同步，如 `docs/coding/Event.md` 和 `docs/isa/TSYNC.md` 所定义。
+    * 显式事件/同步，如 `docs/coding/Event_zh.md` 和 `docs/isa/TSYNC_zh.md` 所定义。
 
 设备实现可以乱序且并行地执行独立的 Tile 块。
 
@@ -109,7 +109,7 @@ ISA 将每条指令分配给一个流水线类。事件可以表达流水线类�
 
 另请参阅：
 
-* `docs/coding/ProgrammingModel.md`
+* `docs/coding/ProgrammingModel_zh.md`
 
 ## PTO Host Machine
 

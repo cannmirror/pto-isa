@@ -1,5 +1,10 @@
 # TCVT
 
+
+## Tile Operation Diagram
+
+![TCVT tile operation](../figures/isa/TCVT.svg)
+
 ## Introduction
 
 Elementwise type conversion with a specified rounding mode.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst = tcvt %src {rmode = #pto.round_mode<CAST_RINT>} : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcvt %src{rmode = #pto<round_mode xx>}: !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcvt ins(%src{rmode = #pto<round_mode xx>}: !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

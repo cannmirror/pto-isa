@@ -1,5 +1,10 @@
 # TMATMUL_BIAS
 
+
+## Tile Operation Diagram
+
+![TMATMUL_BIAS tile operation](../figures/isa/TMATMUL_BIAS.svg)
+
 ## Introduction
 
 Matrix multiply with bias add.
@@ -26,6 +31,18 @@ Synchronous form:
 
 ```text
 %acc = tmatmul.bias %a, %b, %bias : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%c = pto.tmatmul.bias %a, %b, %bias : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tmatmul.bias ins(%a, %b, %bias : !pto.tile_buf<...>, !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%c : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

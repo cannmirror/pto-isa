@@ -1,5 +1,10 @@
 # TPARTADD
 
+
+## Tile Operation Diagram
+
+![TPARTADD tile operation](../figures/isa/TPARTADD.svg)
+
 ## Introduction
 
 Partial elementwise add with implementation-defined handling of mismatched valid regions.
@@ -25,6 +30,18 @@ Synchronous form:
 
 ```text
 %dst = tpartadd %src0, %src1 : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tpartadd %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tpartadd ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

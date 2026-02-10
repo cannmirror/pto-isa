@@ -1,5 +1,10 @@
 # TSTORE_FP
 
+
+## Tile Operation Diagram
+
+![TSTORE_FP tile operation](../figures/isa/TSTORE_FP.svg)
+
 ## Introduction
 
 Store an accumulator tile into global memory using a scaling (`fp`) tile for vector quantization parameters.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 tstore.fp %src, %fp, %sv_out[%c0, %c0]
+```
+
+### IR Level 1 (SSA)
+
+```text
+pto.tstore.fp %src, %fp, %mem : (!pto.tile<...>, !pto.tile<...>, !pto.partition_tensor_view<MxNxdtype>) -> ()
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tstore.fp ins(%src, %fp : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%mem : !pto.partition_tensor_view<MxNxdtype>)
 ```
 ## C++ Intrinsic
 

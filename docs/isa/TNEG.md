@@ -1,5 +1,10 @@
 # TNEG
 
+
+## Tile Operation Diagram
+
+![TNEG tile operation](../figures/isa/TNEG.svg)
+
 ## Introduction
 
 Elementwise negation of a tile.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tneg %src : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tneg %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tneg ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -45,4 +62,3 @@ void example() {
   TNEG(out, x);
 }
 ```
-

@@ -1,5 +1,10 @@
 # TMULS
 
+
+## Tile Operation Diagram
+
+![TMULS tile operation](../figures/isa/TMULS.svg)
+
 ## Introduction
 
 Elementwise multiply a tile by a scalar.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tmuls %src, %scalar : !pto.tile<...>, f32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tmuls %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tmuls ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

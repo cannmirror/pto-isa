@@ -1,5 +1,10 @@
 # TCOLMAX
 
+
+## Tile Operation Diagram
+
+![TCOLMAX tile operation](../figures/isa/TCOLMAX.svg)
+
 ## Introduction
 
 Reduce each column by taking the maximum across rows.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tcolmax %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcolmax %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcolmax ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

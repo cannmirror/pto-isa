@@ -1,5 +1,10 @@
 # TCMPS
 
+
+## Tile Operation Diagram
+
+![TCMPS tile operation](../figures/isa/TCMPS.svg)
+
 ## Introduction
 
 Compare a tile against a scalar and write per-element comparison results.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst = tcmps %src, %scalar {cmpMode = #pto.cmp<EQ>} : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcmps %src, %scalar {cmpMode = #pto<cmp xx>} : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcmps ins(%src, %scalar{cmpMode = #pto<cmp xx>}: !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

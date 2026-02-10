@@ -1,5 +1,10 @@
 # TTRI
 
+
+## Tile Operation Diagram
+
+![TTRI tile operation](../figures/isa/TTRI.svg)
+
 ## Introduction
 
 Generate a (lower/upper) triangular mask tile with ones and zeros. The triangular orientation is controlled by the compile-time template parameter `isUpperOrLower` (0 = lower, 1 = upper).
@@ -33,3 +38,22 @@ PTO_INST RecordEvent TTRI(TileData &dst, int diagonal, WaitEvents&... events);
 
 - `isUpperOrLower` must be `0` (lower) or `1` (upper).
 - Destination tile must be row-major on some targets (see `include/pto/npu/*/TTri.hpp`).
+
+## Assembly Syntax
+
+PTO-AS form: see `docs/grammar/PTO-AS.md`.
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.ttri %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.ttri ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
+## Examples
+
+See related examples in `docs/isa/` and `docs/coding/tutorials/`.

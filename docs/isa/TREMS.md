@@ -1,5 +1,10 @@
 # TREMS
 
+
+## Tile Operation Diagram
+
+![TREMS tile operation](../figures/isa/TREMS.svg)
+
 ## Introduction
 
 Elementwise remainder with a scalar: `%`.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = trems %src, %scalar : !pto.tile<...>, f32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.trems %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.trems ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -47,4 +64,3 @@ void example() {
   TREMS(out, x, 3.0f);
 }
 ```
-

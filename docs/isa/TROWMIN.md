@@ -1,5 +1,10 @@
 # TROWMIN
 
+
+## Tile Operation Diagram
+
+![TROWMIN tile operation](../figures/isa/TROWMIN.svg)
+
 ## Introduction
 
 Reduce each row by taking the minimum across columns.
@@ -21,6 +26,17 @@ Synchronous form:
 ```
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.
 
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.trowmin %src, %tmp : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.trowmin ins(%src, %tmp : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

@@ -1,5 +1,10 @@
 # TEXTRACT
 
+
+## Tile Operation Diagram
+
+![TEXTRACT tile operation](../figures/isa/TEXTRACT.svg)
+
 ## Introduction
 
 Extract a sub-tile from a source tile.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst = textract %src[%r0, %r1] : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.textract %src, %idxrow, %idxcol : (!pto.tile<...>, dtype, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.textract ins(%src, %idxrow, %idxcol : !pto.tile_buf<...>, dtype, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

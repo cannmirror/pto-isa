@@ -1,5 +1,10 @@
 # TTRANS
 
+
+## Tile Operation Diagram
+
+![TTRANS tile operation](../figures/isa/TTRANS.svg)
+
 ## Introduction
 
 Transpose with an implementation-defined temporary tile.
@@ -23,6 +28,17 @@ Synchronous form:
 ```
 Lowering may introduce internal scratch tiles; the C++ intrinsic requires an explicit `tmp` operand.
 
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.ttrans %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.ttrans ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:

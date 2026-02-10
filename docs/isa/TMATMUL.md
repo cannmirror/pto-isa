@@ -1,5 +1,10 @@
 # TMATMUL
 
+
+## Tile Operation Diagram
+
+![TMATMUL tile operation](../figures/isa/TMATMUL.svg)
+
 ## Introduction
 
 Matrix multiply (GEMM) producing an accumulator/output tile.
@@ -26,6 +31,18 @@ Synchronous form:
 
 ```text
 %acc = tmatmul %a, %b : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%c = pto.tmatmul %a, %b : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tmatmul ins(%a, %b : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%c : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

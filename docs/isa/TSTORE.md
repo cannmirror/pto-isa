@@ -1,5 +1,10 @@
 # TSTORE
 
+
+## Tile Operation Diagram
+
+![TSTORE tile operation](../figures/isa/TSTORE.svg)
+
 ## Introduction
 
 Store data from a Tile into a GlobalTensor (GM), optionally using atomic write or quantization parameters.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 tstore %t1, %sv_out[%c0, %c0]
+```
+
+### IR Level 1 (SSA)
+
+```text
+pto.tstore %src, %mem : (!pto.tile<...>, !pto.partition_tensor_view<MxNxdtype>) -> ()
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tstore ins(%src : !pto.tile_buf<...>) outs(%mem : !pto.partition_tensor_view<MxNxdtype>)
 ```
 ## C++ Intrinsic
 

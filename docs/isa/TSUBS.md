@@ -1,5 +1,10 @@
 # TSUBS
 
+
+## Tile Operation Diagram
+
+![TSUBS tile operation](../figures/isa/TSUBS.svg)
+
 ## Introduction
 
 Elementwise subtract a scalar from a tile.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tsubs %src, %scalar : !pto.tile<...>, f32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tsubs %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tsubs ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -45,4 +62,3 @@ void example() {
   TSUBS(out, x, 1.0f);
 }
 ```
-

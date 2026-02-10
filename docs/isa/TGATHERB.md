@@ -1,5 +1,10 @@
 # TGATHERB
 
+
+## Tile Operation Diagram
+
+![TGATHERB tile operation](../figures/isa/TGATHERB.svg)
+
 ## Introduction
 
 Gather elements using byte offsets.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst = tgatherb %src, %offsets : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tgatherb %src, %offsets : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tgatherb ins(%src, %offsets : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

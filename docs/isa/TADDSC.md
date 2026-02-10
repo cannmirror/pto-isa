@@ -1,5 +1,10 @@
 # TADDSC
 
+
+## Tile Operation Diagram
+
+![TADDSC tile operation](../figures/isa/TADDSC.svg)
+
 ## Introduction
 
 Elementwise fused add with scalar and a second tile: `src0 + scalar + src1`.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = taddsc %src0, %scalar, %src1 : !pto.tile<...>, f32, !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.taddsc %src0, %scalar, %src1 : (!pto.tile<...>, dtype, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.taddsc ins(%src0, %scalar, %src1 : !pto.tile_buf<...>, dtype, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -46,4 +63,3 @@ void example() {
   TADDSC(out, a, 2.0f, b);
 }
 ```
-

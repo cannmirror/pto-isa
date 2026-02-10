@@ -1,5 +1,10 @@
 # TCOLEXPAND
 
+
+## Tile Operation Diagram
+
+![TCOLEXPAND tile operation](../figures/isa/TCOLEXPAND.svg)
+
 ## Introduction
 
 Broadcast the first element of each source column across the destination column.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tcolexpand %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcolexpand %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcolexpand ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

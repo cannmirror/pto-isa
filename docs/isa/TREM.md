@@ -1,5 +1,10 @@
 # TREM
 
+
+## Tile Operation Diagram
+
+![TREM tile operation](../figures/isa/TREM.svg)
+
 ## Introduction
 
 Elementwise remainder of two tiles.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = trem %src0, %src1 : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.trem %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.trem ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -47,4 +64,3 @@ void example() {
   TREM(out, a, b);
 }
 ```
-

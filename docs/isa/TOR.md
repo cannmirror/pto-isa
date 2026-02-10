@@ -1,5 +1,10 @@
 # TOR
 
+
+## Tile Operation Diagram
+
+![TOR tile operation](../figures/isa/TOR.svg)
+
 ## Introduction
 
 Elementwise bitwise OR of two tiles.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tor %src0, %src1 : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tor %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tor ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -46,4 +63,3 @@ void example() {
   TOR(out, a, b);
 }
 ```
-

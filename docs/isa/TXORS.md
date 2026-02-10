@@ -1,5 +1,10 @@
 # TXORS
 
+
+## Tile Operation Diagram
+
+![TXORS tile operation](../figures/isa/TXORS.svg)
+
 ## Introduction
 
 Elementwise bitwise XOR of a tile and a scalar.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = txors %src, %scalar : !pto.tile<...>, i32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.txors %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.txors ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

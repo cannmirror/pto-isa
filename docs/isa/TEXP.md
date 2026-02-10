@@ -1,5 +1,10 @@
 # TEXP
 
+
+## Tile Operation Diagram
+
+![TEXP tile operation](../figures/isa/TEXP.svg)
+
 ## Introduction
 
 Elementwise exponential.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = texp %src : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.texp %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.texp ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

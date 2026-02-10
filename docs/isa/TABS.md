@@ -1,5 +1,10 @@
 # TABS
 
+
+## Tile Operation Diagram
+
+![TABS tile operation](../figures/isa/TABS.svg)
+
 ## Introduction
 
 Elementwise absolute value of a tile.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tabs %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tabs %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tabs ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

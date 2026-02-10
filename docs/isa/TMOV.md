@@ -1,5 +1,10 @@
 # TMOV
 
+
+## Tile Operation Diagram
+
+![TMOV tile operation](../figures/isa/TMOV.svg)
+
 ## Introduction
 
 Move/copy between tiles, optionally applying implementation-defined conversion modes selected by template parameters and overloads.
@@ -31,6 +36,18 @@ The PTO IR design recommends splitting `TMOV` into a family of ops:
 %scale = tmov.m2s %mat  : !pto.tile<...> -> !pto.tile<...>
 %vec   = tmov.a2v %acc  : !pto.tile<...> -> !pto.tile<...>
 %v1    = tmov.v2v %v0   : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tmov.s2d %src  : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tmov ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

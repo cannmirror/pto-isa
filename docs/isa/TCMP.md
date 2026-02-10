@@ -1,5 +1,10 @@
 # TCMP
 
+
+## Tile Operation Diagram
+
+![TCMP tile operation](../figures/isa/TCMP.svg)
+
 ## Introduction
 
 Compare two tiles and write a packed predicate mask.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst = tcmp %src0, %src1 {cmpMode = #pto.cmp<EQ>} : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcmp %src0, %src1{cmpMode = #pto<cmp xx>}: (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcmp ins(%src0, %src1{cmpMode = #pto<cmp xx>}: !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

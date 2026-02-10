@@ -1,5 +1,10 @@
 # TSORT32
 
+
+## Tile Operation Diagram
+
+![TSORT32 tile operation](../figures/isa/TSORT32.svg)
+
 ## Introduction
 
 Sort a fixed-size 32-element block and produce an index mapping.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst, %idx = tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst, %idx = pto.tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tsort32 ins(%src : !pto.tile_buf<...>) outs(%dst, %idx : !pto.tile_buf<...>, !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

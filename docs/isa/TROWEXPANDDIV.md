@@ -1,5 +1,10 @@
 # TROWEXPANDDIV
 
+
+## Tile Operation Diagram
+
+![TROWEXPANDDIV tile operation](../figures/isa/TROWEXPANDDIV.svg)
+
 ## Introduction
 
 Row-wise broadcast divide: divide each row of `src0` by a per-row scalar vector `src1`.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = trowexpanddiv %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcolexpanddiv %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcolexpanddiv ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -75,4 +92,3 @@ void example_manual() {
   TROWEXPANDDIV(dst, src0, src1);
 }
 ```
-

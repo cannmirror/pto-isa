@@ -1,5 +1,10 @@
 # TEXPANDS
 
+
+## Tile Operation Diagram
+
+![TEXPANDS tile operation](../figures/isa/TEXPANDS.svg)
+
 ## Introduction
 
 Broadcast a scalar into a destination tile.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = texpands %scalar : f32, !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.texpands %scalar : dtype -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.texpands ins(%scalar : dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

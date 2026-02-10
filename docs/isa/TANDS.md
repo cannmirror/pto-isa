@@ -1,5 +1,10 @@
 # TANDS
 
+
+## Tile Operation Diagram
+
+![TANDS tile operation](../figures/isa/TANDS.svg)
+
 ## Introduction
 
 Elementwise bitwise AND of a tile and a scalar.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tands %src, %scalar : !pto.tile<...>, i32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tands %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tands ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -49,4 +66,3 @@ void example() {
   TANDS(dst, src, 0xffu);
 }
 ```
-

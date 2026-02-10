@@ -1,5 +1,10 @@
 # TROWEXPANDSUB
 
+
+## Tile Operation Diagram
+
+![TROWEXPANDSUB tile operation](../figures/isa/TROWEXPANDSUB.svg)
+
 ## Introduction
 
 Row-wise broadcast subtract: subtract a per-row scalar vector `src1` from each row of `src0`.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = trowexpandsub %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcolexpandsub %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcolexpandsub ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -75,4 +92,3 @@ void example_manual() {
   TROWEXPANDSUB(dst, src0, src1);
 }
 ```
-

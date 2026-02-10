@@ -1,5 +1,10 @@
 # TMINS
 
+
+## Tile Operation Diagram
+
+![TMINS tile operation](../figures/isa/TMINS.svg)
+
 ## Introduction
 
 Elementwise minimum of a tile and a scalar.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tmins %src, %scalar : !pto.tile<...>, f32
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tmins %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tmins ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

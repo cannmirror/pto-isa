@@ -1,5 +1,10 @@
 # MSCATTER
 
+
+## Tile Operation Diagram
+
+![MSCATTER tile operation](../figures/isa/MSCATTER.svg)
+
 ## Introduction
 
 Scatter-store elements from a tile into global memory using per-element indices.
@@ -21,6 +26,18 @@ Synchronous form:
 ```text
 mscatter %src, %mem, %idx : !pto.memref<...>, !pto.tile<...>, !pto.tile<...>
 ```
+
+### IR Level 1 (SSA)
+
+```text
+pto.mscatter %src, %idx, %mem : (!pto.tile<...>, !pto.tile<...>, !pto.partition_tensor_view<MxNxdtype>) -> ()
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.mscatter ins(%src, %idx : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%mem : !pto.partition_tensor_view<MxNxdtype>)
+```
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
@@ -35,3 +52,6 @@ PTO_INST RecordEvent MSCATTER(GlobalData& dst, TileSrc& src, TileInd& indexes, W
 - Index interpretation is target-defined. The CPU simulator treats indices as linear element indices into `dst.data()`.
 - No bounds checks are enforced on `indexes` by the CPU simulator.
 
+## Examples
+
+See related examples in `docs/isa/` and `docs/coding/tutorials/`.

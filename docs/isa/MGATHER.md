@@ -1,5 +1,10 @@
 # MGATHER
 
+
+## Tile Operation Diagram
+
+![MGATHER tile operation](../figures/isa/MGATHER.svg)
+
 ## Introduction
 
 Gather-load elements from global memory into a tile using per-element indices.
@@ -19,6 +24,19 @@ Synchronous form:
 ```text
 %dst = mgather %mem, %idx : !pto.memref<...>, !pto.tile<...> -> !pto.tile<...>
 ```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.mgather %mem, %idx : (!pto.partition_tensor_view<MxNxdtype>, pto.tile<...>)
+-> !pto.tile<loc, dtype, rows, cols, blayout, slayout, fractal, pad>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.mgather ins(%mem, %idx : !pto.partition_tensor_view<MxNxdtype>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
@@ -33,3 +51,6 @@ PTO_INST RecordEvent MGATHER(TileDst& dst, GlobalData& src, TileInd& indexes, Wa
 - Index interpretation is target-defined. The CPU simulator treats indices as linear element indices into `src.data()`.
 - No bounds checks are enforced on `indexes` by the CPU simulator.
 
+## Examples
+
+See related examples in `docs/isa/` and `docs/coding/tutorials/`.

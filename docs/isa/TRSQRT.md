@@ -1,5 +1,10 @@
 # TRSQRT
 
+
+## Tile Operation Diagram
+
+![TRSQRT tile operation](../figures/isa/TRSQRT.svg)
+
 ## Introduction
 
 Elementwise reciprocal square root.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = trsqrt %src : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.trsqrt %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.trsqrt ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

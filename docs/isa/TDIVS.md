@@ -1,5 +1,10 @@
 # TDIVS
 
+
+## Tile Operation Diagram
+
+![TDIVS tile operation](../figures/isa/TDIVS.svg)
+
 ## Introduction
 
 Elementwise division with a scalar (tile/scalar or scalar/tile).
@@ -30,6 +35,20 @@ Scalar/tile form:
 
 ```text
 %dst = tdivs %scalar, %src : f32, !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tdivs %src, %scalar : (!pto.tile<...>, dtype) -> !pto.tile<...>
+%dst = pto.tdivs %scalar, %src : (dtype, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tdivs ins(%src, %scalar : !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
+pto.tdivs ins(%scalar, %src : dtype, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

@@ -1,5 +1,10 @@
 # TSUBC
 
+
+## Tile Operation Diagram
+
+![TSUBC tile operation](../figures/isa/TSUBC.svg)
+
 ## Introduction
 
 Elementwise ternary op: `src0 - src1 + src2`.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tsubc %src0, %src1, %src2 : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tsubc %src0, %src1, %src2 : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tsubc ins(%src0, %src1, %src2 : !pto.tile_buf<...>, !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -45,4 +62,3 @@ void example() {
   TSUBC(out, a, b, c);
 }
 ```
-

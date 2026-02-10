@@ -1,5 +1,10 @@
 # TLOG
 
+
+## Tile Operation Diagram
+
+![TLOG tile operation](../figures/isa/TLOG.svg)
+
 ## Introduction
 
 Elementwise natural logarithm of a tile.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tlog %src : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tlog %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tlog ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -56,4 +73,3 @@ void example() {
   TLOG(out, x);
 }
 ```
-

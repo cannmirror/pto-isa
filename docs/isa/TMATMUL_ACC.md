@@ -1,5 +1,10 @@
 # TMATMUL_ACC
 
+
+## Tile Operation Diagram
+
+![TMATMUL_ACC tile operation](../figures/isa/TMATMUL_ACC.svg)
+
 ## Introduction
 
 Matrix multiply with accumulator input (fused accumulate).
@@ -24,6 +29,18 @@ Synchronous form:
 
 ```text
 %acc1 = tmatmul.acc %acc0, %a, %b : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%c_out = pto.tmatmul.acc %c_in, %a, %b : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tmatmul.acc ins(%c_in, %a, %b : !pto.tile_buf<...>, !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%c_out : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

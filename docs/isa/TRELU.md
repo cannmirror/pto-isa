@@ -1,5 +1,10 @@
 # TRELU
 
+
+## Tile Operation Diagram
+
+![TRELU tile operation](../figures/isa/TRELU.svg)
+
 ## Introduction
 
 Elementwise ReLU of a tile.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = trelu %src : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.trelu %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.trelu ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -58,4 +75,3 @@ void example() {
   TRELU(out, x);
 }
 ```
-

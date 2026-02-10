@@ -1,5 +1,10 @@
 # TLOAD
 
+
+## Tile Operation Diagram
+
+![TLOAD tile operation](../figures/isa/TLOAD.svg)
+
 ## Introduction
 
 Load data from a GlobalTensor (GM) into a Tile.
@@ -18,6 +23,19 @@ Synchronous form:
 
 ```text
 %t0 = tload %sv[%c0, %c0] : (!pto.memref<...>, index, index) -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tload %mem : !pto.partition_tensor_view<MxNxdtype> ->
+!pto.tile<loc, dtype, rows, cols, blayout, slayout, fractal, pad>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tload ins(%mem : !pto.partition_tensor_view<MxNxdtype>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

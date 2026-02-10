@@ -1,5 +1,10 @@
 # TSELS
 
+
+## Tile Operation Diagram
+
+![TSELS tile operation](../figures/isa/TSELS.svg)
+
 ## Introduction
 
 Select one of two source tiles using a scalar `selectMode` (global select).
@@ -26,6 +31,18 @@ Synchronous form:
 
 ```text
 %dst = tsels %src0, %src1, %selectMode : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tsels %src0, %src1, %scalar : (!pto.tile<...>, !pto.tile<...>, dtype) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tsels ins(%src0, %src1, %scalar : !pto.tile_buf<...>, !pto.tile_buf<...>, dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

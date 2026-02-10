@@ -1,5 +1,10 @@
 # TFILLPAD
 
+
+## Tile Operation Diagram
+
+![TFILLPAD tile operation](../figures/isa/TFILLPAD.svg)
+
 ## Introduction
 
 Copy a source tile into a destination tile and fill the remaining (padded) elements with a compile-time pad value
@@ -33,6 +38,17 @@ Synchronous form (conceptual):
 %dst = tfillpad %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tfillpad %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tfillpad ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
 ## C++ Intrinsic
 
 Implemented in the backend headers pulled in by `include/pto/common/pto_instr_impl.hpp`:
@@ -82,4 +98,3 @@ void example2() {
   TFILLPAD(matTile, matTile);
 }
 ```
-

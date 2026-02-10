@@ -1,5 +1,10 @@
 # TCOLMIN
 
+
+## Tile Operation Diagram
+
+![TCOLMIN tile operation](../figures/isa/TCOLMIN.svg)
+
 ## Introduction
 
 Reduce each column by taking the minimum across rows.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tcolmin %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcolmin %src : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcolmin ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 

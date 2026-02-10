@@ -1,5 +1,10 @@
 # TSCATTER
 
+
+## Tile Operation Diagram
+
+![TSCATTER tile operation](../figures/isa/TSCATTER.svg)
+
 ## Introduction
 
 Scatter rows of a source tile into a destination tile using per-element row indices.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst = tscatter %src, %idx : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tscatter %src, %idx : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tscatter ins(%src, %idx : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -89,4 +106,3 @@ void example_manual() {
   TSCATTER(dst, src, idx);
 }
 ```
-
