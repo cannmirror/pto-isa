@@ -95,7 +95,6 @@ constexpr pipe_t opPipeList[] = {
     PIPE_V /* TXORS */,
     PIPE_FIX /* TEXTRACT_A2M */,
     PIPE_FIX /* TINSERT_A2M */,
-    PIPE_S /* TSETF32MODE */,
     PIPE_MTE1 /* TIMG2COL */,
     PIPE_S /* TSETFMATRIX */,
     PIPE_S /* TSET_IMG2COL_RPT */,

@@ -330,6 +330,7 @@ __global__ AICORE void RunTMATMUL_TF32(__gm__ OutType *out, __gm__ AType *src0, 
     TASSIGN(biasDataTile, 0x20000);
 
     LeftTile aTile;
+    aTile.SetMadTF32Mode(tf32TransMode);
     RightTile bTile;
     AccTile cTile;
     BiasTile biasTile;
@@ -360,19 +361,16 @@ __global__ AICORE void RunTMATMUL_TF32(__gm__ OutType *out, __gm__ AType *src0, 
     wait_flag(PIPE_MTE1, PIPE_M, EVENT_ID0);
 
     /**********************************TMATMUL**********************************/
-    TSETTF32MODE<true, tf32TransMode>();
     if constexpr (isBias) {
         TMATMUL_BIAS(cTile, aTile, bTile, biasTile);
     } else {
         TMATMUL(cTile, aTile, bTile);
     }
-    TSETTF32MODE<false>();
+    aTile.ResetMadMode();
     set_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
     wait_flag(PIPE_M, PIPE_FIX, EVENT_ID0);
-
     /**********************************TSTORE**********************************/
     TSTORE(dstGlobal, cTile);
-
     out = dstGlobal.data();
 }
 

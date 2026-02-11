@@ -17,8 +17,6 @@ namespace pto {
 
 inline namespace TMatmulInternel {
 constexpr const int MMAD_MAX_SUPPORT_LENGTH = 4095;
-constexpr const int TF32_MODE_BIT = 46;
-constexpr const int TF32_TRANS_MODE_BIT = 47;
 } // namespace TMatmulInternel
 
 template <typename TileLeft>
@@ -353,23 +351,5 @@ PTO_INTERNAL void TGEMV_MX_IMPL(TileRes &cMatrix, TileLeft &aMatrix, TileLeftSca
     TMatmulMxBias<Phase, TileRes, TileLeft, TileRight, true, false, false>(cMatrix.data(), aMatrix.data(),
                                                                            bMatrix.data(), biasData.data(), 1, k, n);
 }
-
-template <bool isEnable, RoundMode tf32TransMode = RoundMode::CAST_ROUND>
-PTO_INTERNAL void TSETTF32MODE_IMPL()
-{
-    if constexpr (isEnable) {
-        static_assert(tf32TransMode == RoundMode::CAST_ROUND || tf32TransMode == RoundMode::CAST_RINT,
-                      "Unsupported RoundMode for TF32.");
-        set_ctrl(sbitset1(get_ctrl(), TF32_MODE_BIT));
-        if (tf32TransMode == RoundMode::CAST_ROUND) {
-            set_ctrl(sbitset1(get_ctrl(), TF32_TRANS_MODE_BIT));
-        } else if (tf32TransMode == RoundMode::CAST_RINT) {
-            set_ctrl(sbitset0(get_ctrl(), TF32_TRANS_MODE_BIT));
-        }
-    } else {
-        set_ctrl(sbitset0(get_ctrl(), TF32_MODE_BIT));
-    }
-}
-
 } // namespace pto
 #endif

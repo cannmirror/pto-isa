@@ -14,6 +14,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/common/memory.hpp"
 #include <pto/common/type.hpp>
 #include <pto/common/constants.hpp>
+#include "pto/common/debug.h"
 #ifdef __CPU_SIM
 #include <iomanip>
 #endif
@@ -1397,6 +1398,8 @@ public:
     template <typename T, typename AddrType>
     friend AICORE void TASSIGN_IMPL(T &tile, AddrType addr);
 
+#if defined(__DAV_CUBE__)
+#ifdef MEMORY_BASE
     PTO_INTERNAL bool GetKAligned() const
     {
         return isKAligned_;
@@ -1405,14 +1408,45 @@ public:
     {
         isKAligned_ = isKAligned;
     }
-
+    PTO_INTERNAL void SetMadHF32Mode(RoundMode hf32TransMode = RoundMode::CAST_ROUND)
+    {
+        PTO_ASSERT(hf32TransMode == RoundMode::CAST_ROUND || hf32TransMode == RoundMode::CAST_RINT,
+                   "Unsupported RoundMode for HF32.");
+        set_ctrl(sbitset1(get_ctrl(), MAD_MODE_BIT));
+        if (hf32TransMode == RoundMode::CAST_ROUND) {
+            set_ctrl(sbitset1(get_ctrl(), MAD_ROUND_MODE_BIT));
+        } else if (hf32TransMode == RoundMode::CAST_RINT) {
+            set_ctrl(sbitset0(get_ctrl(), MAD_ROUND_MODE_BIT));
+        }
+    }
+#endif
+#ifdef REGISTER_BASE
+    PTO_INTERNAL void SetMadTF32Mode(RoundMode tf32TransMode = RoundMode::CAST_ROUND)
+    {
+        PTO_ASSERT(tf32TransMode == RoundMode::CAST_ROUND || tf32TransMode == RoundMode::CAST_RINT,
+                   "Unsupported RoundMode for TF32.");
+        set_ctrl(sbitset1(get_ctrl(), MAD_MODE_BIT));
+        if (tf32TransMode == RoundMode::CAST_ROUND) {
+            set_ctrl(sbitset1(get_ctrl(), MAD_ROUND_MODE_BIT));
+        } else if (tf32TransMode == RoundMode::CAST_RINT) {
+            set_ctrl(sbitset0(get_ctrl(), MAD_ROUND_MODE_BIT));
+        }
+    }
+#endif
+    PTO_INTERNAL void ResetMadMode()
+    {
+        set_ctrl(sbitset0(get_ctrl(), MAD_MODE_BIT));
+    }
+#endif
 private:
     AICORE void assignData(TileDType data)
     {
         data_ = data;
     }
     TileDType data_;
+#ifdef MEMORY_BASE
     bool isKAligned_; // K-Alignedment for A3
+#endif
 };
 
 #ifdef MEMORY_BASE

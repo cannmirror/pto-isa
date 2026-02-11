@@ -564,26 +564,6 @@ PTO_INST RecordEvent TGEMV_BIAS(TileRes &cMatrix, TileLeft &aMatrix, TileRight &
     return {};
 }
 
-#ifdef MEMORY_BASE
-template <bool isEnable, RoundMode hf32TransMode = RoundMode::CAST_ROUND, typename... WaitEvents>
-PTO_INST RecordEvent TSETHF32MODE(WaitEvents &... events)
-{
-    TSYNC(events...);
-    TSETHF32MODE_IMPL<isEnable, hf32TransMode>();
-    return {};
-}
-#endif
-
-#ifdef REGISTER_BASE
-template <bool isEnable, RoundMode tf32TransMode = RoundMode::CAST_ROUND, typename... WaitEvents>
-PTO_INST RecordEvent TSETTF32MODE(WaitEvents &... events)
-{
-    TSYNC(events...);
-    TSETTF32MODE_IMPL<isEnable, tf32TransMode>();
-    return {};
-}
-#endif
-
 template <typename DstTileData, typename TmpTileData, typename Src0TileData, typename Src1TileData,
           typename Src2TileData, typename Src3TileData, bool exhausted, typename... WaitEvents>
 PTO_INST RecordEvent TMRGSORT(DstTileData &dst, MrgSortExecutedNumList &executedNumList, TmpTileData &tmp,
