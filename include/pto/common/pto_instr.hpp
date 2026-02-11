@@ -1390,13 +1390,23 @@ PTO_INST RecordEvent TFMOD(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &s
 }
 
 #ifdef REGISTER_BASE
-template <typename TileDataSrc, typename TileDataExp, typename TileDataOut, typename TileDataMax, int mode,
+template <QuantType quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataExp, typename TileDataMax,
           typename... WaitEvents>
-PTO_INST RecordEvent TQUANT(TileDataSrc &src, TileDataExp &exp, TileDataOut &dst, TileDataMax &max,
-                            TileDataSrc &scaling, WaitEvents &... events)
+PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataExp *exp, TileDataMax *max,
+                            TileDataSrc *scaling, WaitEvents &... events)
 {
     TSYNC(events...);
-    TQUANT_IMPL<TileDataSrc, TileDataExp, TileDataOut, TileDataMax, mode>(src, exp, dst, max, scaling);
+    TQUANT_IMPL<quant_type, TileDataOut, TileDataSrc, TileDataExp, TileDataMax>(dst, src, exp, max, scaling);
+    return {};
+}
+
+template <QuantType quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataPara,
+          typename TileDataOffset = TileDataPara, typename... WaitEvents>
+PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataPara &scale, TileDataOffset *offset = nullptr,
+                            WaitEvents &... events)
+{
+    TSYNC(events...);
+    TQUANT_IMPL<quant_type, TileDataOut, TileDataSrc, TileDataPara, TileDataOffset>(dst, src, scale, offset);
     return {};
 }
 #endif
