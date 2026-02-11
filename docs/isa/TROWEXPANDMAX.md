@@ -1,5 +1,10 @@
 # TROWEXPANDMAX
 
+
+## Tile Operation Diagram
+
+![TROWEXPANDMAX tile operation](../figures/isa/TROWEXPANDMAX.svg)
+
 ## Introduction
 
 Row-wise broadcast max: take `max(src0, src1)` where `src1` provides one scalar per row.
@@ -24,6 +29,17 @@ Synchronous form:
 %dst = trowexpandmax %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
 ```
 
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.trowexpandmax %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.trowexpandmax ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
 ## C++ Intrinsic
 
 Declared in `include/pto/common/pto_instr.hpp`:
@@ -41,3 +57,35 @@ PTO_INST RecordEvent TROWEXPANDMAX(TileDataDst &dst, TileDataSrc0 &src0, TileDat
 - Mode 1: `src1` is expected to provide **one scalar per row** (i.e., its valid shape must cover `R` values).
 - Mode 2: `src1` is expected to provide **32 bytes data per row**.
 - Exact layout/fractal constraints are target-specific; see backend headers under `include/pto/npu/*/TRowExpand*.hpp`.
+
+## Examples
+
+See related examples in `docs/isa/` and `docs/coding/tutorials/`.
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst = pto.trowexpandmax %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.trowexpandmax %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+```
+
+### PTO Assembly Form
+
+```text
+%dst = trowexpandmax %src0, %src1 : !pto.tile<...>, !pto.tile<...> -> !pto.tile<...>
+# IR Level 2 (DPS)
+pto.trowexpandmax ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
+

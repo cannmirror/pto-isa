@@ -1,5 +1,10 @@
 # TSUB
 
+
+## Tile Operation Diagram
+
+![TSUB tile operation](../figures/isa/TSUB.svg)
+
 ## Introduction
 
 Elementwise subtract of two tiles.
@@ -18,6 +23,18 @@ Synchronous form:
 
 ```text
 %dst = tsub %src0, %src1 : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tsub %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tsub ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -77,3 +94,31 @@ void example_manual() {
   TSUB(dst, src0, src1);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst = pto.tsub %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.tsub %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### PTO Assembly Form
+
+```text
+%dst = tsub %src0, %src1 : !pto.tile<...>
+# IR Level 2 (DPS)
+pto.tsub ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
+

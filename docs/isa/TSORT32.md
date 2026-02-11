@@ -1,5 +1,10 @@
 # TSORT32
 
+
+## Tile Operation Diagram
+
+![TSORT32 tile operation](../figures/isa/TSORT32.svg)
+
 ## Introduction
 
 Sort a fixed-size 32-element block and produce an index mapping.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst, %idx = tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst, %idx = pto.tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tsort32 ins(%src : !pto.tile_buf<...>) outs(%dst, %idx : !pto.tile_buf<...>, !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -84,3 +101,31 @@ void example_manual() {
   TSORT32(dst, src, idx);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst, %idx = pto.tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst, %idx = pto.tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
+```
+
+### PTO Assembly Form
+
+```text
+%dst, %idx = tsort32 %src : !pto.tile<...> -> (!pto.tile<...>, !pto.tile<...>)
+# IR Level 2 (DPS)
+pto.tsort32 ins(%src : !pto.tile_buf<...>) outs(%dst, %idx : !pto.tile_buf<...>, !pto.tile_buf<...>)
+```
+

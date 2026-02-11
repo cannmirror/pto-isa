@@ -1,5 +1,10 @@
 # TCVT
 
+
+## Tile Operation Diagram
+
+![TCVT tile operation](../figures/isa/TCVT.svg)
+
 ## Introduction
 
 Elementwise type conversion with a specified rounding mode.
@@ -20,6 +25,18 @@ Synchronous form:
 
 ```text
 %dst = tcvt %src {rmode = #pto.round_mode<CAST_RINT>} : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tcvt %src{rmode = #pto<round_mode xx>}: !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tcvt ins(%src{rmode = #pto<round_mode xx>}: !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -72,3 +89,31 @@ void example_manual() {
   TCVT(dst, src, RoundMode::CAST_RINT);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst = pto.tcvt %src{rmode = #pto<round_mode xx>}: !pto.tile<...> -> !pto.tile<...>
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.tcvt %src{rmode = #pto<round_mode xx>}: !pto.tile<...> -> !pto.tile<...>
+```
+
+### PTO Assembly Form
+
+```text
+%dst = tcvt %src {rmode = #pto.round_mode<CAST_RINT>} : !pto.tile<...> -> !pto.tile<...>
+# IR Level 2 (DPS)
+pto.tcvt ins(%src{rmode = #pto<round_mode xx>}: !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
+

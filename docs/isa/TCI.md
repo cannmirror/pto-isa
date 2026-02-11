@@ -1,5 +1,10 @@
 # TCI
 
+
+## Tile Operation Diagram
+
+![TCI tile operation](../figures/isa/TCI.svg)
+
 ## Introduction
 
 Generate a contiguous integer sequence into a destination tile.
@@ -26,6 +31,18 @@ Synchronous form:
 
 ```text
 %dst = tci %S {descending = false} : !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tci %scalar {descending = false} : dtype -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tci ins(%scalar {descending = false} : dtype) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -75,3 +92,31 @@ void example_manual() {
   TCI<TileT, int32_t, /*descending=*/1>(dst, /*S=*/100);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst = pto.tci %scalar {descending = false} : dtype -> !pto.tile<...>
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.tci %scalar {descending = false} : dtype -> !pto.tile<...>
+```
+
+### PTO Assembly Form
+
+```text
+%dst = tci %S {descending = false} : !pto.tile<...>
+# IR Level 2 (DPS)
+pto.tci ins(%scalar {descending = false} : dtype) outs(%dst : !pto.tile_buf<...>)
+```
+

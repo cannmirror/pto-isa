@@ -1,5 +1,10 @@
 # TPARTMAX
 
+
+## Tile Operation Diagram
+
+![TPARTMAX tile operation](../figures/isa/TPARTMAX.svg)
+
 ## Introduction
 
 Partial elementwise max with implementation-defined handling of mismatched valid regions.
@@ -25,6 +30,18 @@ Synchronous form:
 
 ```text
 %dst = tpartmax %src0, %src1 : !pto.tile<...> -> !pto.tile<...>
+```
+
+### IR Level 1 (SSA)
+
+```text
+%dst = pto.tpartmax %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### IR Level 2 (DPS)
+
+```text
+pto.tpartmax ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
 ## C++ Intrinsic
 
@@ -79,3 +96,31 @@ void example_manual() {
   TPARTMAX(dst, src0, src1);
 }
 ```
+
+## ASM Form Examples
+
+### Auto Mode
+
+```text
+# Auto mode: compiler/runtime-managed placement and scheduling.
+%dst = pto.tpartmax %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### Manual Mode
+
+```text
+# Manual mode: bind resources explicitly before issuing the instruction.
+# Optional for tile operands:
+# pto.tassign %arg0, @tile(0x1000)
+# pto.tassign %arg1, @tile(0x2000)
+%dst = pto.tpartmax %src0, %src1 : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
+```
+
+### PTO Assembly Form
+
+```text
+%dst = tpartmax %src0, %src1 : !pto.tile<...> -> !pto.tile<...>
+# IR Level 2 (DPS)
+pto.tpartmax ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
+```
+
