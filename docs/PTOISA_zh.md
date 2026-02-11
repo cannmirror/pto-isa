@@ -54,7 +54,7 @@
 | 逐元素（Tile-Tile） | [`TFMOD`](isa/TFMOD_zh.md) | 两个 Tile 的逐元素余数，余数符号与被除数相同。 |
 | Tile-标量 / Tile-立即数 | [`TEXPANDS`](isa/TEXPANDS_zh.md) | 将标量广播到目标 Tile 中。 |
 | Tile-标量 / Tile-立即数 | [`TCMPS`](isa/TCMPS_zh.md) | 将 Tile 与标量比较并写入逐元素比较结果。 |
-| Tile-标量 / Tile-立即数 | [`TSELS`](isa/TSELS_zh.md) | 使用标量 `selectMode` 在两个源 Tile 中选择一个（全局选择）。 |
+| Tile-标量 / Tile-立即数 | [`TSELS`](isa/TSELS_zh.md) | 使用掩码Tile在源Tile和标量之间进行选择（源Tile逐元素选择）。 |
 | Tile-标量 / Tile-立即数 | [`TMINS`](isa/TMINS_zh.md) | Tile 与标量的逐元素最小值。 |
 | Tile-标量 / Tile-立即数 | [`TADDS`](isa/TADDS_zh.md) | Tile 与标量的逐元素加法。 |
 | Tile-标量 / Tile-立即数 | [`TSUBS`](isa/TSUBS_zh.md) | 从 Tile 中逐元素减去一个标量。 |

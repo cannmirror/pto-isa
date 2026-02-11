@@ -32,16 +32,20 @@ std::string GetGoldenDir()
     return fullPath;
 }
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kPadValue_>
-void LaunchTSels(T *out, T *src0, T *src1, uint8_t selectMode, void *stream);
+template <typename T, typename TMask, int dstTileH, int dstTileW, int maskTileH, int maskTileW, int srcTileH,
+          int srcTileW, int vRows, int vCols>
+void LaunchTSels(T *out, TMask *mask, T *src, T scalar, void *stream);
+template <typename TMask, int dstTileH, int dstTileW, int maskTileH, int maskTileW, int srcTileH, int srcTileW,
+          int vRows, int vCols>
+void LaunchTSelsHalf(aclFloat16 *out, TMask *mask, aclFloat16 *src, aclFloat16 scalar, void *stream);
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kPadValue_>
+template <typename T, typename TMask, int dstTileH, int dstTileW, int maskTileH, int maskTileW, int srcTileH,
+          int srcTileW, int vRows, int vCols, bool isHalf = false>
 void test_tsels()
 {
-    size_t fileSize = kTRows_ * kTCols_ * sizeof(T);
-    if (kPadValue_ == PAD_VALUE_MAX) {
-        fileSize = kGRows_ * kGCols_ * sizeof(T);
-    }
+    size_t dstFileSize = sizeof(T) * dstTileH * dstTileW;
+    size_t maskFileSize = sizeof(TMask) * maskTileH * maskTileW;
+    size_t srcFileSize = sizeof(T) * srcTileH * srcTileW;
     size_t scalarFileSize = sizeof(T);
 
     aclInit(nullptr);
@@ -49,105 +53,143 @@ void test_tsels()
     aclrtStream stream;
     aclrtCreateStream(&stream);
 
-    T *dstHost, *src0Host, *src1Host;
-    T *dstDevice, *src0Device, *src1Device;
-    uint8_t selectMode, *srcScalarHost;
+    T *dstHost, *srcHost, *dstDevice, *srcDevice, scalar;
+    TMask *maskHost, *maskDevice;
 
-    aclrtMallocHost((void **)(&dstHost), fileSize);
-    aclrtMallocHost((void **)(&src0Host), fileSize);
-    aclrtMallocHost((void **)(&src1Host), fileSize);
-    aclrtMallocHost((void **)(&srcScalarHost), scalarFileSize);
+    aclrtMallocHost((void **)(&dstHost), dstFileSize);
+    aclrtMallocHost((void **)(&maskHost), maskFileSize);
+    aclrtMallocHost((void **)(&srcHost), srcFileSize);
 
-    aclrtMalloc((void **)&dstDevice, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src0Device, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc((void **)&src1Device, fileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&maskDevice, maskFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-    ReadFile(GetGoldenDir() + "/input1.bin", fileSize, src0Host, fileSize);
-    ReadFile(GetGoldenDir() + "/input2.bin", fileSize, src1Host, fileSize);
-    ReadFile(GetGoldenDir() + "/input_scalar.bin", scalarFileSize, srcScalarHost, scalarFileSize);
+    ReadFile(GetGoldenDir() + "/mask.bin", maskFileSize, maskHost, maskFileSize);
+    ReadFile(GetGoldenDir() + "/input1.bin", srcFileSize, srcHost, srcFileSize);
+    ReadFile(GetGoldenDir() + "/input2.bin", scalarFileSize, &scalar, scalarFileSize);
 
-    aclrtMemcpy(src0Device, fileSize, src0Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    aclrtMemcpy(src1Device, fileSize, src1Host, fileSize, ACL_MEMCPY_HOST_TO_DEVICE);
-    selectMode = srcScalarHost[0];
-    LaunchTSels<T, kGRows_, kGCols_, kTRows_, kTCols_, kPadValue_>(dstDevice, src0Device, src1Device, selectMode,
-                                                                   stream);
+    aclrtMemcpy(dstDevice, dstFileSize, dstHost, dstFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(maskDevice, maskFileSize, maskHost, maskFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
+    if constexpr (isHalf) {
+        LaunchTSelsHalf<TMask, dstTileH, dstTileW, maskTileH, maskTileW, srcTileH, srcTileW, vRows, vCols>(
+            dstDevice, maskDevice, srcDevice, scalar, stream);
+    } else {
+        LaunchTSels<T, TMask, dstTileH, dstTileW, maskTileH, maskTileW, srcTileH, srcTileW, vRows, vCols>(
+            dstDevice, maskDevice, srcDevice, scalar, stream);
+    }
 
     aclrtSynchronizeStream(stream);
-    aclrtMemcpy(dstHost, fileSize, dstDevice, fileSize, ACL_MEMCPY_DEVICE_TO_HOST);
+    aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    WriteFile(GetGoldenDir() + "/output.bin", dstHost, fileSize);
+    WriteFile(GetGoldenDir() + "/output.bin", dstHost, dstFileSize);
 
     aclrtFree(dstDevice);
-    aclrtFree(src0Device);
-    aclrtFree(src1Device);
+    aclrtFree(maskDevice);
+    aclrtFree(srcDevice);
 
     aclrtFreeHost(dstHost);
-    aclrtFreeHost(src0Host);
-    aclrtFreeHost(src1Host);
-    aclrtFreeHost(srcScalarHost);
+    aclrtFreeHost(maskHost);
+    aclrtFreeHost(srcHost);
     aclrtDestroyStream(stream);
     aclrtResetDevice(0);
     aclFinalize();
 
-    std::vector<T> golden(fileSize);
-    std::vector<T> devFinal(fileSize);
-    ReadFile(GetGoldenDir() + "/golden.bin", fileSize, golden.data(), fileSize);
-    ReadFile(GetGoldenDir() + "/output.bin", fileSize, devFinal.data(), fileSize);
+    std::vector<T> golden(dstFileSize);
+    std::vector<T> devFinal(dstFileSize);
+    ReadFile(GetGoldenDir() + "/golden.bin", dstFileSize, golden.data(), dstFileSize);
+    ReadFile(GetGoldenDir() + "/output.bin", dstFileSize, devFinal.data(), dstFileSize);
 
     bool ret = ResultCmp<T>(golden, devFinal, 0.0001f);
 
     EXPECT_TRUE(ret);
 }
 
-TEST_F(TSELSTest, case_float_64x64_32x32_64x64)
+TEST_F(TSELSTest, case_uint8_uint8_2x32_2x32_2x32_2x32)
 {
-    test_tsels<float, 64, 64, 32, 32, PAD_VALUE_NULL>();
+    test_tsels<uint8_t, uint8_t, 2, 32, 2, 32, 2, 32, 2, 32>();
 }
-TEST_F(TSELSTest, case_float_128x128_64x64_128x128)
+TEST_F(TSELSTest, case_uint8_uint16_2x32_2x16_2x32_2x32)
 {
-    test_tsels<float, 128, 128, 64, 64, PAD_VALUE_NULL>();
+    test_tsels<uint8_t, uint16_t, 2, 32, 2, 16, 2, 32, 2, 32>();
 }
-TEST_F(TSELSTest, case_float_2x32_2x32_2x32)
+TEST_F(TSELSTest, case_uint8_uint32_2x32_2x8_2x32_2x32)
 {
-    test_tsels<float, 2, 32, 2, 32, PAD_VALUE_NULL>();
+    test_tsels<uint8_t, uint32_t, 2, 32, 2, 8, 2, 32, 2, 32>();
 }
-TEST_F(TSELSTest, case_int32_2x32_2x32_2x32)
+TEST_F(TSELSTest, case_uint16_uint8_2x16_2x32_2x16_2x16)
 {
-    test_tsels<int32_t, 2, 32, 2, 32, PAD_VALUE_NULL>();
+    test_tsels<uint16_t, uint8_t, 2, 16, 2, 32, 2, 16, 2, 16>();
 }
-TEST_F(TSELSTest, case_uint32_2x32_2x32_2x32)
+TEST_F(TSELSTest, case_uint16_uint16_2x16_2x16_2x16_2x16)
 {
-    test_tsels<uint32_t, 2, 32, 2, 32, PAD_VALUE_NULL>();
+    test_tsels<uint16_t, uint16_t, 2, 16, 2, 16, 2, 16, 2, 16>();
 }
-TEST_F(TSELSTest, case_int16_2x32_2x32_2x32)
+TEST_F(TSELSTest, case_uint16_uint32_2x16_2x8_2x16_2x16)
 {
-    test_tsels<int16_t, 2, 32, 2, 32, PAD_VALUE_NULL>();
+    test_tsels<uint16_t, uint32_t, 2, 16, 2, 8, 2, 16, 2, 16>();
 }
-TEST_F(TSELSTest, case_int8_2x32_2x32_2x32)
+TEST_F(TSELSTest, case_uint32_uint8_2x8_2x32_2x8_2x8)
 {
-    test_tsels<int8_t, 2, 32, 2, 32, PAD_VALUE_NULL>();
+    test_tsels<uint32_t, uint8_t, 2, 8, 2, 32, 2, 8, 2, 8>();
 }
-TEST_F(TSELSTest, case_uint8_2x32_2x32_2x32)
+TEST_F(TSELSTest, case_uint32_uint16_2x8_2x16_2x8_2x8)
 {
-    test_tsels<uint8_t, 2, 32, 2, 32, PAD_VALUE_NULL>();
+    test_tsels<uint32_t, uint16_t, 2, 8, 2, 16, 2, 8, 2, 8>();
 }
-TEST_F(TSELSTest, case_float_60x60_64x64_60x60)
+TEST_F(TSELSTest, case_uint32_uint32_2x8_2x8_2x8_2x8)
 {
-    test_tsels<float, 60, 60, 64, 64, PAD_VALUE_MAX>();
+    test_tsels<uint32_t, uint32_t, 2, 8, 2, 8, 2, 8, 2, 8>();
 }
-TEST_F(TSELSTest, case_float_16x200_20x224_16x200)
+TEST_F(TSELSTest, case_half_uint8_2x16_2x32_2x16_2x16)
 {
-    test_tsels<float, 16, 200, 20, 224, PAD_VALUE_MAX>();
+    test_tsels<aclFloat16, uint8_t, 2, 16, 2, 32, 2, 16, 2, 16, true>();
 }
-TEST_F(TSELSTest, case_float_16x200_20x256_16x200)
+TEST_F(TSELSTest, case_half_uint16_2x16_2x16_2x16_2x16)
 {
-    test_tsels<float, 16, 200, 20, 256, PAD_VALUE_MAX>();
+    test_tsels<aclFloat16, uint16_t, 2, 16, 2, 16, 2, 16, 2, 16, true>();
 }
-TEST_F(TSELSTest, case_float_1x3600_2x4096_1x3600)
+TEST_F(TSELSTest, case_half_uint32_2x16_2x8_2x16_2x16)
 {
-    test_tsels<float, 1, 3600, 2, 4096, PAD_VALUE_MAX>();
+    test_tsels<aclFloat16, uint32_t, 2, 16, 2, 8, 2, 16, 2, 16, true>();
 }
-TEST_F(TSELSTest, case_uint16_16x200_20x224_16x200)
+TEST_F(TSELSTest, case_float_uint8_2x8_2x32_2x8_2x8)
 {
-    test_tsels<uint16_t, 16, 200, 20, 224, PAD_VALUE_MAX>();
+    test_tsels<float, uint8_t, 2, 8, 2, 32, 2, 8, 2, 8>();
+}
+TEST_F(TSELSTest, case_float_uint16_2x8_2x16_2x8_2x8)
+{
+    test_tsels<float, uint16_t, 2, 8, 2, 16, 2, 8, 2, 8>();
+}
+TEST_F(TSELSTest, case_float_uint32_2x8_2x8_2x8_2x8)
+{
+    test_tsels<float, uint32_t, 2, 8, 2, 8, 2, 8, 2, 8>();
+}
+TEST_F(TSELSTest, case_uint8_uint8_2x32_2x64_2x128_2x31)
+{
+    test_tsels<uint8_t, uint8_t, 2, 32, 2, 64, 2, 128, 2, 31>();
+}
+TEST_F(TSELSTest, case_uint16_uint8_2x32_2x64_2x128_2x31)
+{
+    test_tsels<uint16_t, uint8_t, 2, 32, 2, 64, 2, 128, 2, 31>();
+}
+TEST_F(TSELSTest, case_float_uint8_2x32_2x64_2x128_2x31)
+{
+    test_tsels<float, uint8_t, 2, 32, 2, 64, 2, 128, 2, 31>();
+}
+TEST_F(TSELSTest, case_uint8_uint8_32x672_32x96_32x672_32x666)
+{
+    test_tsels<uint8_t, uint8_t, 32, 672, 32, 96, 32, 672, 32, 666>();
+}
+TEST_F(TSELSTest, case_half_uint8_32x672_32x96_32x672_32x666)
+{
+    test_tsels<aclFloat16, uint8_t, 32, 672, 32, 96, 32, 672, 32, 666, true>();
+}
+TEST_F(TSELSTest, case_float_uint8_32x672_32x96_32x672_32x666)
+{
+    test_tsels<float, uint8_t, 32, 672, 32, 96, 32, 672, 32, 666>();
+}
+TEST_F(TSELSTest, case_float_uint8_1x8192_1x4096_1x8192_1x8192)
+{
+    test_tsels<float, uint8_t, 1, 8192, 1, 4096, 1, 8192, 1, 8192>();
 }

@@ -1001,11 +1001,12 @@ PTO_INST RecordEvent TROWMIN(TileDataOut &dst, TileDataIn &src, TileDataTmp &tmp
     return {};
 }
 
-template <typename TileData, typename... WaitEvents>
-PTO_INST RecordEvent TSELS(TileData &dst, TileData &src0, TileData &src1, uint8_t selectMode, WaitEvents &... events)
+template <typename TileDataDst, typename TileDataMask, typename TileDataSrc, typename... WaitEvents>
+PTO_INST RecordEvent TSELS(TileDataDst &dst, TileDataMask &mask, TileDataSrc &src, typename TileDataSrc::DType scalar,
+                           WaitEvents &... events)
 {
     TSYNC(events...);
-    MAP_INSTR_IMPL(TSELS, dst, src0, src1, selectMode);
+    MAP_INSTR_IMPL(TSELS, dst, mask, src, scalar);
     return {};
 }
 
