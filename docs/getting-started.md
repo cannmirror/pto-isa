@@ -220,8 +220,8 @@ Set environment variables according to [Environment_Variables](./getting-started
 
   Note: if you have not installed toolkit,you should download toolkit package first.
   ```bash
-  chmod +x ./script/install_pto.sh
-  ./install_pto.sh <toolkit_install_path> [toolkit_package_path]
+  chmod +x ./scripts/install_pto.sh
+  ./scripts/install_pto.sh <toolkit_install_path> [toolkit_package_path]
   ```
 
 # Environment Setup (Ascend 910B/910C, Linux)
