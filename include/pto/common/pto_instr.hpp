@@ -18,6 +18,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define MAP_INSTR_IMPL(API, ...) API##_IMPL(__VA_ARGS__)
 
 namespace pto {
+
 template <typename T, typename AddrType>
 PTO_INST void TASSIGN(T &obj, AddrType addr)
 {
@@ -1425,6 +1426,51 @@ PTO_INST bool TTEST(GlobalSignalData &signalData, int32_t cmpValue, CmpMode cmp,
     TSYNC(events...);
     return MAP_INSTR_IMPL(TTEST, signalData, cmpValue, cmp);
 }
+
+#ifdef __CPU_SIM
+template <typename GlobalDstData, typename GlobalSrcData, typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TGET(GlobalDstData &dst, GlobalSrcData &src, TileData &stagingTileData, WaitEvents &... events)
+{
+    TSYNC(events...);
+    MAP_INSTR_IMPL(TGET, dst, src, stagingTileData);
+    return {};
+}
+
+template <typename GlobalDstData, typename GlobalSrcData, typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TGET(GlobalDstData &dst, GlobalSrcData &src, TileData &pingTile, TileData &pongTile,
+                          WaitEvents &... events)
+{
+    TSYNC(events...);
+    MAP_INSTR_IMPL(TGET, dst, src, pingTile, pongTile);
+    return {};
+}
+
+template <typename GlobalDstData, typename GlobalSrcData, typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TPUT(GlobalDstData &dst, GlobalSrcData &src, TileData &stagingTileData, WaitEvents &... events)
+{
+    TSYNC(events...);
+    MAP_INSTR_IMPL(TPUT, dst, src, stagingTileData);
+    return {};
+}
+
+template <typename GlobalDstData, typename GlobalSrcData, typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TPUT(GlobalDstData &dst, GlobalSrcData &src, TileData &stagingTileData, AtomicType atomicType,
+                          WaitEvents &... events)
+{
+    TSYNC(events...);
+    MAP_INSTR_IMPL(TPUT, dst, src, stagingTileData, atomicType);
+    return {};
+}
+
+template <typename GlobalDstData, typename GlobalSrcData, typename TileData, typename... WaitEvents>
+PTO_INST RecordEvent TPUT(GlobalDstData &dst, GlobalSrcData &src, TileData &pingTile, TileData &pongTile,
+                          WaitEvents &... events)
+{
+    TSYNC(events...);
+    MAP_INSTR_IMPL(TPUT, dst, src, pingTile, pongTile);
+    return {};
+}
+#endif
 
 } // namespace pto
 #endif
