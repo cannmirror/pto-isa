@@ -58,7 +58,7 @@ ascendc_library(no_workspace_kernel STATIC
 )
 
 ascendc_include_directories(no_workspace_kernel PRIVATE
-  ${PTO_LIB_PATH}/include/pto
+  ${PTO_LIB_PATH}/include
   ${PTO_LIB_PATH}/include/pto/common
 )
 
