@@ -186,6 +186,15 @@ enum class PadValue
     Min,
 };
 
+enum class SaturationMode : uint8_t
+{
+    // Saturation enabled (default) - CTRL bit 59 = 0
+    ON = 0,
+
+    // Saturation disabled - CTRL bit 59 = 1
+    OFF = 1,
+};
+
 enum class CompactMode
 {
     Null,
