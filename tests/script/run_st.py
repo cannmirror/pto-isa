@@ -184,6 +184,12 @@ def main():
     default_cases = "all"
     if args.gtest_filter != None:
         default_cases = args.gtest_filter
+    testcase = args.testcase
+    is_comm = testcase.startswith("comm/")
+    if is_comm:
+        testcase = testcase[len("comm/"):]
+        if not testcase:
+            raise ValueError("comm/ 后必须指定用例名")
 
     original_dir = os.getcwd()
     try:
@@ -191,7 +197,11 @@ def main():
         script_path = os.path.abspath(__file__)
         target_dir = os.path.dirname(os.path.dirname(script_path))
 
-        if args.soc_version == "a3":
+        if is_comm:
+            if args.soc_version != "a3":
+                raise ValueError("comm 暂时仅支持 a3")
+            target_dir = target_dir + "/npu/a2a3/comm/st"
+        elif args.soc_version == "a3":
             target_dir = target_dir + "/npu/a2a3/src/st"
         elif args.soc_version == "kirin9030" : # kirin9030
             target_dir = target_dir + "/npu/kirin9030/src/st"
@@ -210,14 +220,14 @@ def main():
                 cwd=original_dir,
                 check=True)
         else:
-            build_project(args.run_mode, default_soc_version, args.testcase, args.debug_enable)
+            build_project(args.run_mode, default_soc_version, testcase, args.debug_enable)
 
         # 生成标杆
-        golden_path = "testcase/" + args.testcase + "/gen_data.py"
+        golden_path = "testcase/" + testcase + "/gen_data.py"
         run_gen_data(golden_path)
 
         # 执行二进制文件
-        run_binary(args.testcase, args.run_mode, default_cases)
+        run_binary(testcase, args.run_mode, default_cases)
 
     except Exception as e:
         print(f"run failed: {str(e)}", file=sys.stderr)

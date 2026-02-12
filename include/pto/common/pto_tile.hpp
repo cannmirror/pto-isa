@@ -329,6 +329,8 @@ struct GlobalTensor {
             stride_.stride[GlobalTensorDim::DIM_4] = stride.stride[GlobalTensorDim::DIM_4];
         }
     }
+    PTO_INTERNAL GlobalTensor() : data_(nullptr)
+    {}
 
     PTO_INTERNAL int64_t GetShape(const int dim)
     {
