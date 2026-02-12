@@ -133,9 +133,7 @@ PTO_INTERNAL void TExtractToBNonTranspose(__cb__ DstType *dstAddr, __cbuf__ SrcT
     constexpr uint16_t dstColNum = dstCol >> SHIFT_BLOCK_LEN;
     constexpr uint16_t srcColNum = srcCol >> SHIFT_BLOCK_LEN;
     constexpr uint16_t srcRowNum = (srcRow * sizeof(SrcType)) >> SHIFT_BLOCK_BYTE;
-    // 计算源矩阵、目标矩阵行列中512B小分型矩阵的个数
-    uint16_t blockNum =
-        CUBE_BLOCK_SIZE >> (sizeof(SrcType) == 1 ? 0 : sizeof(SrcType) == 2 ? 1 : sizeof(SrcType) == 4 ? 2 : 0);
+    uint16_t blockNum = CUBE_BLOCK_SIZE / sizeof(SrcType);
     uint16_t startIdx0 = (indexRow * sizeof(SrcType) * srcColNum >> SHIFT_BLOCK_BYTE) + (indexCol >> SHIFT_BLOCK_LEN);
     if constexpr (dstRowNum >= dstColNum) {
         dstGap = dstColNum - 1;
@@ -322,8 +320,7 @@ PTO_INTERNAL void TExtractToBNonTransposeCompact(__cb__ DstType *dstAddr, __cbuf
     uint16_t dstColNum = dstValidColAlign >> SHIFT_BLOCK_LEN;
     constexpr uint16_t srcColNum = srcCol >> SHIFT_BLOCK_LEN;
     constexpr uint16_t srcRowNum = (srcRow * sizeof(SrcType)) >> SHIFT_BLOCK_BYTE;
-    uint16_t blockNum =
-        CUBE_BLOCK_SIZE >> (sizeof(SrcType) == 1 ? 0 : sizeof(SrcType) == 2 ? 1 : sizeof(SrcType) == 4 ? 2 : 0);
+    uint16_t blockNum = CUBE_BLOCK_SIZE / sizeof(SrcType);
     uint16_t startIdx0 = (indexRow * sizeof(SrcType) * srcColNum >> SHIFT_BLOCK_BYTE) + (indexCol >> SHIFT_BLOCK_LEN);
     if (dstRowNum >= dstColNum) {
         dstGap = dstColNum - 1;
@@ -430,18 +427,29 @@ __tf__ AICORE void TExtractToBConv(typename DstTileData::TileDType __out__ dst,
 template <typename DstTileData, typename SrcTileData>
 PTO_INTERNAL void TEXTRACT_CONVTILE_IMPL(DstTileData &dst, SrcTileData &src, uint16_t indexRow, uint16_t indexCol)
 {
-    if constexpr (SrcTileData::layout == pto::Layout::FRACTAL_Z) { // C1HWNC0, dst dim4 is c0Size
-        constexpr uint32_t c0ElemCount = C0_SIZE_BYTE / sizeof(typename SrcTileData::DType);
-        if constexpr (SrcTileData::totalDimCount == 4) { // ConvTile layout is [C1HW,N/16,16,C0]
-            static_assert(SrcTileData::staticShape[2] == FRACTAL_NZ_ROW && SrcTileData::staticShape[3] == c0ElemCount,
-                          "Fix: The SrcTileData last 2 dim must be static and satisfy [16, 32 / sizeof(DataType)]");
-            int srcCol = src.GetShape(1) * src.GetShape(2);
-            TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(), srcCol, dst.GetValidRow(),
-                                                      dst.GetValidCol(), indexRow, indexCol);
-        } else { //  [C1,H,W,N,C0]
-            TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(), src.GetShape(3), dst.GetValidRow(),
-                                                      dst.GetValidCol(), indexRow, indexCol);
-        }
+    static_assert(SrcTileData::Loc == pto::TileType::Mat, "Fix: Src TileType must be Mat!");
+    static_assert(DstTileData::Loc == pto::TileType::Right, "Fix: Dst TileType must be Right!");
+    static_assert(sizeof(typename DstTileData::DType) == sizeof(typename SrcTileData::DType),
+                  "Fix: Source dtype must be same with dst dtype!");
+
+    static_assert((SrcTileData::layout == Layout::FRACTAL_Z) || (SrcTileData::layout == Layout::FRACTAL_Z_3D),
+                  "TExtract: Source layout only support FRACTAL_Z or FRACTAL_Z_3D.");
+    static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
+                  "TExtract: Destination layout only support SLayout is ColMajor ang BLayout is RowMajor.");
+    static_assert(std::is_same<typename DstTileData::DType, int8_t>::value ||
+                      std::is_same<typename DstTileData::DType, half>::value ||
+                      std::is_same<typename DstTileData::DType, bfloat16_t>::value ||
+                      std::is_same<typename DstTileData::DType, float>::value,
+                  "TExtract: Invalid data type.");
+
+    constexpr uint32_t c0ElemCount = C0_SIZE_BYTE / sizeof(typename SrcTileData::DType);
+    if constexpr (SrcTileData::totalDimCount == 4) { // ConvTile layout is [C1HW,N/16,16,C0]
+        int srcCol = src.GetShape(1) * src.GetShape(2);
+        TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(), srcCol, dst.GetValidRow(), dst.GetValidCol(),
+                                                  indexRow, indexCol);
+    } else { //  [C1,H,W,N,C0]
+        TExtractToBConv<DstTileData, SrcTileData>(dst.data(), src.data(), src.GetShape(3), dst.GetValidRow(),
+                                                  dst.GetValidCol(), indexRow, indexCol);
     }
 }
 

@@ -360,11 +360,11 @@ if __name__ == "__main__":
         "TLOADMIXTest.NHWC2NC1HWC0_float_1_1_56_112_8_1_2_224_224_25",
         "TLOADMIXTest.NHWC2NC1HWC0_float_2_1_56_43_8_1_3_333_188_19",
 
-        "TLOADMIXTest.NCHW2NC1HWC0_int8_t_1_3_11_109_32_1_3_111_1023_1000",
+        "TLOADMIXTest.NCHW2NC1HWC0_int8_t_1_3_11_109_32_1_3_111_1023_109",
         "TLOADMIXTest.NCHW2NC1HWC0_int8_t_3_2_121_9_32_1_3_65_128_127",
         "TLOADMIXTest.NCHW2NC1HWC0_bfloat16_1_6_10_100_16_1_1_96_100_100",
         "TLOADMIXTest.NCHW2NC1HWC0_bfloat16_10_16_16_2_16_1_256_255_100_16",
-        "TLOADMIXTest.NCHW2NC1HWC0_float_1_1_56_112_8_1_2_25_224_224",
+        "TLOADMIXTest.NCHW2NC1HWC0_float_1_1_56_112_8_1_2_25_224_112",
         "TLOADMIXTest.NCHW2NC1HWC0_float_2_1_56_43_8_1_3_19_333_188",
 
         "TLOADMIXTest.NCHW2FZ4D_int8_t_75_3_16_32_48_95_5_5_50_111_5_5", # [C1HW,N/16,16,C0,src_n,src_c,src_h,src_w,N,C,H,W]
@@ -429,11 +429,11 @@ if __name__ == "__main__":
         TloadParams(np.float16, 10, 16, 16, 2, 16, 1, 256, 100, 16, 255, 1, 1, DataFormat["NHWC2NC1HWC0"].value),
         TloadParams(np.float32, 1, 1, 56, 112, 8, 1, 2, 224, 224, 25, 1, 1, DataFormat["NHWC2NC1HWC0"].value),
         TloadParams(np.float32, 2, 1, 56, 43, 8, 1, 3, 333, 188, 19, 1, 1, DataFormat["NHWC2NC1HWC0"].value),
-        TloadParams(np.int8, 1, 3, 11, 109, 32, 1, 3, 111, 1023, 1000, 1, 1, DataFormat["NCHW2NC1HWC0"].value),
+        TloadParams(np.int8, 1, 3, 11, 109, 32, 1, 3, 111, 1023, 109, 1, 1, DataFormat["NCHW2NC1HWC0"].value),
         TloadParams(np.int8, 3, 2, 121, 9, 32, 1, 3, 65, 128, 127, 1, 1, DataFormat["NCHW2NC1HWC0"].value),
         TloadParams(np.float16, 1, 6, 10, 100, 16, 1, 1, 96, 100, 100, 1, 1, DataFormat["NCHW2NC1HWC0"].value),
         TloadParams(np.float16, 10, 16, 16, 2, 16, 1, 256, 255, 100, 16, 1, 1, DataFormat["NCHW2NC1HWC0"].value),
-        TloadParams(np.float32, 1, 1, 56, 112, 8, 1, 2, 25, 224, 224, 1, 1, DataFormat["NCHW2NC1HWC0"].value),
+        TloadParams(np.float32, 1, 1, 56, 112, 8, 1, 2, 25, 224, 112, 1, 1, DataFormat["NCHW2NC1HWC0"].value),
         TloadParams(np.float32, 2, 1, 56, 43, 8, 1, 3, 19, 333, 188, 1, 1, DataFormat["NCHW2NC1HWC0"].value),
         TloadParams(np.int8, 75, 3, 16, 32, 48, 95, 5, 5, 50, 111, 5, 5, DataFormat["NCHW2FZ4D"].value),
         TloadParams(np.int8, 98, 4, 16, 32, 64, 58, 7, 7, 121, 127, 7, 7, DataFormat["NCHW2FZ4D"].value),

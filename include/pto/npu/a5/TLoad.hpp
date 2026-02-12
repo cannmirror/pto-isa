@@ -1025,15 +1025,24 @@ __tf__ PTO_INTERNAL void TLoadNCHW(typename TileData::TileDType __out__ dst, typ
     mte2NzPara |= static_cast<uint64_t>(loop2DstStride) << 16;         // MTE2_NZ_PARA[31:16]
     mte2NzPara |= static_cast<uint64_t>(dnNum);                        // MTE2_NZ_PARA[15:0]
     set_mte2_nz_para(mte2NzPara);                                      // only set once
-
-    for (uint32_t i = 0; i < dstShape0; i++) {
-        srcAddr = src + i * gStride1;
-        dstAddr = dst + i * dstShape1 * dstShape2 * dstShape3 * c0ElemCount;
-        for (uint32_t j = 0; j < srcShape3; j++) { // use dn2nz, inner iterations : srcH
-            srcAddrP = srcAddr + j * gStride3;
-            dstAddrP = dstAddr + j * dstShape3 * c0ElemCount;
+    if (dstShape3 == gStride3) {
+        nValue = srcShape4 * srcShape3;
+        for (uint32_t i = 0; i < dstShape0; i++) {
+            srcAddrP = src + i * gStride1;
+            dstAddrP = dst + i * dstShape1 * dstShape2 * dstShape3 * c0ElemCount;
             TLoadCubeInstr<TileData, GlobalData, pto::Layout::DN>(dstAddrP, srcAddrP, loop1SrcStride, nValue, dValue,
                                                                   0);
+        }
+    } else if (dstShape3 < gStride3) {
+        for (uint32_t i = 0; i < dstShape0; i++) {
+            srcAddr = src + i * gStride1;
+            dstAddr = dst + i * dstShape1 * dstShape2 * dstShape3 * c0ElemCount;
+            for (uint32_t j = 0; j < srcShape3; j++) { // use dn2nz, inner iterations : srcH
+                srcAddrP = srcAddr + j * gStride3;
+                dstAddrP = dstAddr + j * dstShape3 * c0ElemCount;
+                TLoadCubeInstr<TileData, GlobalData, pto::Layout::DN>(dstAddrP, srcAddrP, loop1SrcStride, nValue,
+                                                                      dValue, 0);
+            }
         }
     }
 #endif

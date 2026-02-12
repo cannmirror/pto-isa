@@ -567,7 +567,8 @@ PTO_INTERNAL void TextractConvTileCheck(DstTileData &dst, SrcTileData &src)
     static_assert(sizeof(typename DstTileData::DType) == sizeof(typename SrcTileData::DType),
                   "Fix: Source dtype must be same with dst dtype!");
 
-    static_assert((SrcTileData::layout == Layout::FRACTAL_Z), "TExtract: Source layout only support FRACTAL_Z.");
+    static_assert((SrcTileData::layout == Layout::FRACTAL_Z) || (SrcTileData::layout == Layout::FRACTAL_Z_3D),
+                  "TExtract: Source layout only support FRACTAL_Z or FRACTAL_Z_3D.");
     static_assert(DstTileData::SFractal == SLayout::ColMajor && DstTileData::isRowMajor,
                   "TExtract: Destination layout only support SLayout is ColMajor ang BLayout is RowMajor.");
 }
