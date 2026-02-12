@@ -1,6 +1,6 @@
 #!/bin/bash
 # --------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -299,6 +299,11 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_acc2mat -g TMOVTest.case_nz2nz_insert
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mgather -g MGATHERTest.case_half_16x128_8x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mscatter -g MSCATTERTest.case_uint8_16x64_2048
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tquant -g TQUANTTest.case_mxfp8_fp32_128x128_nd
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tquant -g TQUANTTest.case_int8_sym_fp32_128x128_nd
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tquant -g TQUANTTest.case_int8_asym_fp32_128x128_nd
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttri -g TTRITest.case_float_128x128_lower_diag_n3
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttri -g TTRITest.case_float_128x128_upper_diag_0
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/build_st.py -r $RUN_TYPE -v a5 -t all

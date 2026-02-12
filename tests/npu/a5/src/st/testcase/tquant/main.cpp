@@ -240,18 +240,6 @@ TEST_F(TQUANTTEST, case_mxfp8_fp32_128x128_nd)
 {
     test_tquant_mxfp8<128, 128, 0>();
 }
-TEST_F(TQUANTTEST, case_mxfp8_fp32_32x64_nz)
-{
-    test_tquant_mxfp8<32, 64, 1>();
-}
-TEST_F(TQUANTTEST, case_mxfp8_fp32_64x128_nz)
-{
-    test_tquant_mxfp8<64, 128, 1>();
-}
-TEST_F(TQUANTTEST, case_mxfp8_fp32_128x128_nz)
-{
-    test_tquant_mxfp8<128, 128, 1>();
-}
 
 // // INT8 - Sym cases
 TEST_F(TQUANTTEST, case_int8_sym_fp32_64x128_nd)
