@@ -21,7 +21,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define FFTS_EVENT_ID_WIDTH 0xf
 #define FFTS_EVENT_ID_OFFSET 8
 namespace pto {
-#ifdef __CCE_AICORE__
 // opPipeList maps each operation in Op enum to its corresponding pipeline type.
 // This array is used to determine which hardware pipeline should be used for each operation.
 constexpr pipe_t opPipeList[] = {
@@ -223,6 +222,5 @@ struct Event {
         return Init();
     }
 };
-#endif
 } // namespace pto
 #endif

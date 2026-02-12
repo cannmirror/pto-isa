@@ -8,8 +8,8 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
@@ -18,6 +18,7 @@ using namespace pto;
 #define PAD_VALUE_MAX (1)
 #define PAD_VALUE_MIN (-1)
 
+#ifdef __CCE_AICORE__
 template <typename T, int TRows, int TCols, int vRows, int vCols, int paddingValueType>
 struct TileDataSelector;
 
@@ -32,6 +33,7 @@ struct TileDataSelector<T, TRows, TCols, vRows, vCols, PAD_VALUE_MIN> {
     using Type =
         Tile<TileType::Vec, T, TRows, TCols, BLayout::RowMajor, vRows, vCols, SLayout::NoneBox, 512, PadValue::Min>;
 };
+#endif
 
 template <typename T, int dstTileH, int dstTileW, int src0TileH, int src0TileW, int src1TileH, int src1TileW, int vRows,
           int vCols, int padValueType>

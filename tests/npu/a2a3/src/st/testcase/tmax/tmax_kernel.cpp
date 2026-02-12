@@ -8,8 +8,8 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
@@ -19,6 +19,7 @@ using namespace pto;
 #define PAD_VALUE_MIN (-1)
 #define SFRACTAL_SIZE (512)
 
+#ifdef __CCE_AICORE__
 template <typename T, int kTRows_, int kTCols_, int paddingValueType>
 struct TileDataSelector;
 
@@ -33,6 +34,7 @@ struct TileDataSelector<T, kTRows_, kTCols_, PAD_VALUE_MAX> {
     using Type = Tile<TileType::Vec, T, kTRows_, kTCols_, BLayout::RowMajor, -1, -1, SLayout::NoneBox, SFRACTAL_SIZE,
                       PadValue::Max>;
 };
+#endif
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kVRows_, int kVCols_, int padValueType>
 __global__ AICORE void runTMAX(__gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *src1)

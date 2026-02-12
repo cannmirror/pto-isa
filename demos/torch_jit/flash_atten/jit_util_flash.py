@@ -46,7 +46,6 @@ def compile_flash(kernel_cpp: str, verbose: bool = False, timeout: int = 300) ->
         "-O2",
         "-std=c++17",
         "-Wno-ignored-attributes",
-        "-DMEMORY_BASE",
         f"-I{PTO_LIB_PATH}/include",
         f"-I{PTO_LIB_PATH}/kernels/manual/a2a3/flash_atten",
         f"-I{ASCEND_TOOLKIT_HOME}/include",

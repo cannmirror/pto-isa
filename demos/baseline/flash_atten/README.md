@@ -28,7 +28,7 @@ export PTO_LIB_PATH=[YOUR_PATH]/pto-isa
 
 ## 2. Build the Wheel
 
-The project supports building for different SOC versions via the `SOC_VERSION` environment variable. The build system automatically configures the correct optimization macros (e.g., `MEMORY_BASE` vs `REGISTER_BASE`) based on the target SOC.
+The project supports building for different SOC versions via the `SOC_VERSION` environment variable. The build system automatically configures the correct optimization macros (e.g., `PTO_NPU_ARCH_A2A3` vs `PTO_NPU_ARCH_A5`) based on the target SOC.
 
 **Default Build (A2 / A3):**
 ```bash

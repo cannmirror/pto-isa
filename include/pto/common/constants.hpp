@@ -39,74 +39,6 @@ constexpr const int B8_DATA_TYPE_OFFSET = 8;
 constexpr const int MAD_MODE_BIT = 46;
 constexpr const int MAD_ROUND_MODE_BIT = 47;
 
-enum VFImplKind : unsigned
-{
-    VFIMPL_DEFAULT = 0, // 默认版本
-    VFIMPL_1D_NO_POST_UPDATE = 1,
-    VFIMPL_2D_NO_POST_UPDATE = 2,
-    VFIMPL_1D_POST_UPDATE = 3,
-    VFIMPL_2D_POST_UPDATE = 4,
-};
-
-enum class RoundMode : uint8_t
-{
-    CAST_NONE = 0,
-    CAST_RINT = 1,  // round to nearest, tie to even
-    CAST_ROUND = 2, // round to nearest, tie away from zero
-    CAST_FLOOR = 3, // round to minus infinity
-    CAST_CEIL = 4,  // round to positive infinity
-    CAST_TRUNC = 5, // round to zero
-    CAST_ODD = 6,   // round to odd (Von Neumann rounding)
-};
-
-enum class TCopyMode : uint8_t
-{
-    SHALLOW_COPY = 0,
-    DEEP_COPY = 1,
-};
-
-enum class AccToVecMode : uint8_t
-{
-    SingleModeVec0 = 0,
-    SingleModeVec1 = 1,
-    DualModeSplitM = 2,
-    DualModeSplitN = 3,
-};
-
-enum class ReluPreMode : uint8_t
-{
-    NoRelu = 0,
-    NormalRelu = 1,
-};
-
-enum class AtomicType : uint8_t
-{
-    AtomicNone = 0,
-    AtomicAdd = 1,
-};
-
-enum class PadValue
-{
-    Null,
-    Zero,
-    Max,
-    Min,
-};
-
-enum class CompactMode
-{
-    Null,
-    Normal,
-};
-
-enum class SetFmatrixMode
-{
-    FMATRIX_A_AUTO,
-    FMATRIX_B_AUTO,
-    FMATRIX_A_MANUAL,
-    FMATRIX_B_MANUAL,
-};
-
 template <typename DType, PadValue PadVal>
 struct PadValueMap {
     PTO_STATIC_ASSERT(sizeof(DType) < 0, "TLOAD: Unsupported DType for PadValue!");
@@ -276,7 +208,7 @@ struct PadValueMap<uint8_t, PadValue::Max> {
     static constexpr auto value = uint8_t(0xff);
 };
 
-#if defined(REGISTER_BASE) && !defined(PTO_NPU_ARCH_KIRIN9030)
+#if defined(PTO_NPU_ARCH_A5)
 template <PadValue PadVal>
 struct PadValueMap<float4_e1m2x2_t, PadVal> {
     static constexpr auto value = uint8_t(0);
@@ -310,16 +242,6 @@ PTO_INTERNAL constexpr auto GetPadValue()
     constexpr PadValue PadVal = TileData::PadVal;
     return PadValueMap<DType, PadVal>::value;
 }
-
-enum class TileLayoutCustom : uint8_t
-{
-    ND,
-    DN,
-    NZ,
-    ZN,
-    ZZ,
-    NONE,
-};
 
 template <typename TileData>
 PTO_INTERNAL constexpr TileLayoutCustom GetTileLayoutCustom()

@@ -29,7 +29,6 @@ def compile_cpp(kernel_cpp: str, verbose: bool = False, timeout: int = 120) -> s
         "-shared",
         "-xcce",
         "--npu-arch=dav-2201",
-        "-DMEMORY_BASE",  # here hardcoded for A2A3; TODO: expose this option to jit interface
         "-O2",
         "-std=c++17",
         f"-I{PTO_LIB_PATH}/include",

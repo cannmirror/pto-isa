@@ -11,9 +11,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #ifndef PTO_INSTR_HPP
 #define PTO_INSTR_HPP
 
-#if defined(__CPU_SIM) || defined(__CCE_AICORE__)
-
 #include "pto/common/debug.h"
+#include "pto/common/event.hpp"
 #include "pto/common/pto_instr_impl.hpp"
 
 #define MAP_INSTR_IMPL(API, ...) API##_IMPL(__VA_ARGS__)
@@ -322,7 +321,7 @@ PTO_INST RecordEvent TSUBC(TileData &dst, TileData &src0, TileData &src1, TileDa
     return {};
 }
 
-#ifdef REGISTER_BASE
+#ifdef PTO_NPU_ARCH_A5
 template <typename TileRes, typename TileLeft, typename TileLeftScale, typename TileRight, typename TileRightScale,
           typename... WaitEvents>
 PTO_INST RecordEvent TGEMV_MX(TileRes &cMatrix, TileLeft &aMatrix, TileLeftScale &aScaleMatrix, TileRight &bMatrix,
@@ -662,7 +661,7 @@ PTO_INST RecordEvent TSETFMATRIX(ConvTileData &src, WaitEvents &... events)
     return {};
 }
 
-#ifdef MEMORY_BASE
+#ifdef PTO_NPU_ARCH_A2A3
 template <typename ConvTileData, typename... WaitEvents>
 PTO_INST RecordEvent TSET_IMG2COL_RPT(ConvTileData &src, WaitEvents &... events)
 {
@@ -679,7 +678,7 @@ PTO_INST RecordEvent TSET_IMG2COL_PADDING(ConvTileData &src, WaitEvents &... eve
     return {};
 }
 #endif
-#if defined REGISTER_BASE
+#if defined PTO_NPU_ARCH_A5
 template <typename ConvTileData, SetFmatrixMode FmatrixMode = SetFmatrixMode::FMATRIX_A_MANUAL, typename... WaitEvents>
 PTO_INST RecordEvent TSET_IMG2COL_RPT(ConvTileData &src, WaitEvents &... events)
 {
@@ -1389,7 +1388,7 @@ PTO_INST RecordEvent TFMOD(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &s
     return {};
 }
 
-#ifdef REGISTER_BASE
+#ifdef PTO_NPU_ARCH_A5
 template <QuantType quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataExp, typename TileDataMax,
           typename... WaitEvents>
 PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataExp *exp, TileDataMax *max,
@@ -1419,5 +1418,4 @@ PTO_INST bool TTEST(GlobalSignalData &signalData, int32_t cmpValue, CmpMode cmp,
 }
 
 } // namespace pto
-#endif // #if defined (__CPU_SIM) || defined (__CCE_AICORE__)
 #endif

@@ -10,8 +10,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #if __CCE_AICORE__ == 220 && defined(__DAV_C220_VEC__)
 
-#define MEMORY_BASE
-
 #include "kernel_operator.h"
 #include <pto/pto-inst.hpp>
 

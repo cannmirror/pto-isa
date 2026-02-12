@@ -16,15 +16,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #if defined __CCE_AICORE__ == 220 && defined(__DAV_C220_VEC__)
 
 // Placeholder for VEC compilation (the real kernel is CUBE-only).
-#define MEMORY_BASE
 #include "kernel_operator.h"
 #include <pto/common/type.hpp>
 extern "C" __global__ AICORE void gemm_basic_custom(GM_ADDR a, GM_ADDR b_dn, GM_ADDR out)
 {}
 
 #elif (__CHECK_FEATURE_AT_PRECOMPILE) || (__CCE_AICORE__ == 220 && defined(__DAV_C220_CUBE__))
-
-#define MEMORY_BASE
 
 #include "kernel_operator.h"
 #include <pto/common/constants.hpp>

@@ -8,8 +8,8 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 #define PAD_VALUE_NULL (-100)
@@ -17,6 +17,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 using namespace pto;
 
+#ifdef __CCE_AICORE__
 template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows_, int kVCols_, int kPadValue_>
 struct GenericDataSelector {
 };
@@ -36,6 +37,7 @@ struct GenericDataSelector<T, dstRow, dstCol, srcRow, srcCol, kVRows_, kVCols_, 
     using dstTileType = Tile<TileType::Vec, T, dstRow, dstCol, BLayout::RowMajor, kVRows_, kVCols_, SLayout::NoneBox,
                              512, PadValue::Max>;
 };
+#endif
 
 template <typename T, int dstRow, int dstCol, int srcRow, int srcCol, int kVRows_, int kVCols_, int kPadValue_>
 __global__ AICORE void runTMINS(__gm__ T __out__ *out, __gm__ T __in__ *src0, __gm__ T __in__ *scalar)

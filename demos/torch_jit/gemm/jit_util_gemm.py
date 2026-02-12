@@ -41,7 +41,6 @@ def compile_cpp(kernel_cpp: str, verbose: bool = False, timeout: int = 120) -> s
         "-O2",
         "-std=c++17",
         # "-Wno-ignored-attributes", # suppress warnings from PTO headers
-        "-DMEMORY_BASE",  # here hardcoded for A2A3; TODO: expose this option to jit interface
         f"-I{PTO_LIB_PATH}/include",
     ]
 

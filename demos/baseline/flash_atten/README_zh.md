@@ -28,7 +28,7 @@ export PTO_LIB_PATH=[YOUR_PATH]/pto-isa
 
 ## 2. 构建 Wheel 包
 
-项目支持通过 `SOC_VERSION` 环境变量为不同的 SOC 版本进行构建。构建系统会根据目标 SOC 自动配置正确的优化宏（例如 `MEMORY_BASE` 与 `REGISTER_BASE`）。
+项目支持通过 `SOC_VERSION` 环境变量为不同的 SOC 版本进行构建。构建系统会根据目标 SOC 自动配置正确的优化宏（例如 `PTO_NPU_ARCH_A2A3` 与 `PTO_NPU_ARCH_A5`）。
 
 **默认构建（A2 / A3）：**
 ```bash

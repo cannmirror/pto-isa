@@ -15,8 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <pto/common/type.hpp>
 #include <pto/common/event.hpp>
 
-#ifdef __CCE_AICORE__
-#ifdef MEMORY_BASE
+#ifdef PTO_NPU_ARCH_A2A3
 #include "pto/npu/a2a3/TAssign.hpp"
 #include "pto/npu/a2a3/TSync.hpp"
 #include "pto/npu/a2a3/TAdd.hpp"
@@ -104,8 +103,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a2a3/TColExpandExpdif.hpp"
 #endif
 
-#ifdef REGISTER_BASE
-#if __NPU_ARCH__ != 3113
+#ifdef PTO_NPU_ARCH_A5
 #include "pto/npu/a5/TAssign.hpp"
 #include "pto/npu/a5/TSync.hpp"
 #include "pto/npu/a5/TAdd.hpp"
@@ -197,10 +195,10 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TTri.hpp"
 #include "pto/npu/a5/TPrefetch.hpp"
 #include "pto/npu/a5/TInsert.hpp"
-#else
+#endif
+
+#ifdef PTO_NPU_ARCH_KIRIN9030
 #include "pto/npu/kirin9030/header.hpp"
-#endif
-#endif
 #endif
 
 #ifdef __CPU_SIM

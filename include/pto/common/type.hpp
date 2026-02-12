@@ -10,7 +10,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 #ifndef _PTO_INCLUDE_NPU_TYPE_H_
 #define _PTO_INCLUDE_NPU_TYPE_H_
-#if defined(MEMORY_BASE) || defined(REGISTER_BASE)
+#ifndef __CPU_SIM
 #define AICORE [aicore]
 #else
 #define AICORE
@@ -130,6 +130,84 @@ enum class AccPhase : uint8_t
     Unknown = Unspecified,
     Partial = 0x2,
     Final = 0x3,
+};
+
+enum VFImplKind : unsigned
+{
+    VFIMPL_DEFAULT = 0, // 默认版本
+    VFIMPL_1D_NO_POST_UPDATE = 1,
+    VFIMPL_2D_NO_POST_UPDATE = 2,
+    VFIMPL_1D_POST_UPDATE = 3,
+    VFIMPL_2D_POST_UPDATE = 4,
+};
+
+enum class RoundMode : uint8_t
+{
+    CAST_NONE = 0,
+    CAST_RINT = 1,  // round to nearest, tie to even
+    CAST_ROUND = 2, // round to nearest, tie away from zero
+    CAST_FLOOR = 3, // round to minus infinity
+    CAST_CEIL = 4,  // round to positive infinity
+    CAST_TRUNC = 5, // round to zero
+    CAST_ODD = 6,   // round to odd (Von Neumann rounding)
+};
+
+enum class TCopyMode : uint8_t
+{
+    SHALLOW_COPY = 0,
+    DEEP_COPY = 1,
+};
+
+enum class AccToVecMode : uint8_t
+{
+    SingleModeVec0 = 0,
+    SingleModeVec1 = 1,
+    DualModeSplitM = 2,
+    DualModeSplitN = 3,
+};
+
+enum class ReluPreMode : uint8_t
+{
+    NoRelu = 0,
+    NormalRelu = 1,
+};
+
+enum class AtomicType : uint8_t
+{
+    AtomicNone = 0,
+    AtomicAdd = 1,
+};
+
+enum class PadValue
+{
+    Null,
+    Zero,
+    Max,
+    Min,
+};
+
+enum class CompactMode
+{
+    Null,
+    Normal,
+};
+
+enum class SetFmatrixMode
+{
+    FMATRIX_A_AUTO,
+    FMATRIX_B_AUTO,
+    FMATRIX_A_MANUAL,
+    FMATRIX_B_MANUAL,
+};
+
+enum class TileLayoutCustom : uint8_t
+{
+    ND,
+    DN,
+    NZ,
+    ZN,
+    ZZ,
+    NONE,
 };
 } // namespace pto
 
