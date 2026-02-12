@@ -33,6 +33,29 @@ np.random.seed(19)
 USE_PYTORCH_GPU_BEHAVIOR = True  # Set to False to use CPU behavior
 
 
+def default_saturation_off(srctype, dsttype):
+    """Check if this conversion's default saturation mode is OFF.
+
+    Default OFF conversions (truncation/bit-extraction behavior):
+    - fp16 → uint8
+    - fp16 → int8
+    - fp32 → int16
+    - fp16 → int16
+    - int64 → int32
+    - int32 → int16
+
+    All other conversions default to ON (clamping).
+    """
+    return (
+        (srctype == np.float16 and dsttype == np.uint8)
+        or (srctype == np.float16 and dsttype == np.int8)
+        or (srctype == np.float32 and dsttype == np.int16)
+        or (srctype == np.float16 and dsttype == np.int16)
+        or (srctype == np.int64 and dsttype == np.int32)
+        or (srctype == np.int32 and dsttype == np.int16)
+    )
+
+
 def gen_golden(case_name, param):
     srctype = param.srctype
     dsttype = param.dsttype
@@ -108,13 +131,52 @@ def gen_golden(case_name, param):
         # Integer to any type conversion
         converted_golden = x1_gm
 
-    # Clamp the result to the destination type's representable range
+    # Generate golden data based on default saturation mode for this conversion
     if np.issubdtype(dsttype, np.integer):
         info = np.iinfo(dsttype)
-        # Convert to float64 first to avoid overflow during clipping
-        converted_float = converted_golden.astype(np.float64)
-        clipped = np.clip(converted_float, info.min, info.max)
-        golden = clipped.astype(dsttype)
+
+        # Determine if this conversion has default saturation OFF (truncation) or ON (clamping)
+        sat_off = default_saturation_off(srctype, dsttype)
+
+        if sat_off:
+            # OFF (truncation): bit extraction - wrap around using modulo
+            golden_list = []
+            for val in converted_golden.flat:
+                if np.isnan(val) or np.isinf(val):
+                    int_val = 0
+                else:
+                    int_val = int(np.int64(val))
+
+                # Extract lower N bits and interpret as signed/unsigned
+                if dsttype == np.int8:
+                    byte_val = int_val & 0xFF
+                    truncated_val = byte_val if byte_val < 128 else byte_val - 256
+                elif dsttype == np.uint8:
+                    truncated_val = int_val & 0xFF
+                elif dsttype == np.int16:
+                    word_val = int_val & 0xFFFF
+                    truncated_val = word_val if word_val < 32768 else word_val - 65536
+                elif dsttype == np.int32:
+                    dword_val = int_val & 0xFFFFFFFF
+                    truncated_val = dword_val if dword_val < 2147483648 else dword_val - 4294967296
+                else:
+                    truncated_val = int_val
+
+                golden_list.append(truncated_val)
+            golden = np.array(golden_list, dtype=dsttype).reshape(converted_golden.shape)
+        else:
+            # ON (saturation): clamp to datatype range
+            # NOTE: np.clip casts a_min/a_max to the input array dtype, so for integer->integer
+            # widening (e.g. int32 -> int64), clip() must run on a widened dtype first.
+            # IMPORTANT: Always widen integers to SIGNED int64, even when destination is unsigned.
+            # This ensures negative values clip to 0, not wrap to large unsigned values.
+            tmp = converted_golden
+            if np.issubdtype(tmp.dtype, np.integer):
+                # Always use int64 to preserve sign for correct clipping
+                tmp = tmp.astype(np.int64, copy=False)
+            else:
+                tmp = tmp.astype(np.float64, copy=False)
+            golden = np.clip(tmp, info.min, info.max).astype(dsttype)
     elif np.issubdtype(dsttype, np.floating):
         info = np.finfo(dsttype)
         golden = np.clip(converted_golden, info.min, info.max).astype(dsttype)
