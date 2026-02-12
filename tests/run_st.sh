@@ -297,6 +297,8 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tnot -g TNOTTest.case_int16_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trelu -g TNOTTest.case_int32_64x64_64x64_64x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_acc2mat -g TMOVTest.case_nz2nz_insert
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mgather -g MGATHERTest.case_half_16x128_8x64
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mscatter -g MSCATTERTest.case_uint8_16x64_2048
 
   elif [ "$ENABLE_ALL" = "true" ]; then            # 所有用例
     python3 tests/script/build_st.py -r $RUN_TYPE -v a5 -t all
@@ -389,5 +391,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tnot
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t trelu
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tmov_acc2mat
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mgather
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mscatter
   fi
 fi
