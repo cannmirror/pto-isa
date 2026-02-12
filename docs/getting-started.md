@@ -13,8 +13,8 @@ This guide covers prerequisites and setup on **macOS / Linux / Windows**, and sh
 - Git
 - Python `>= 3.8` (3.10+ recommended)
 - CMake `>= 3.16`
-- A C++ compiler with C++23 support:
-  - Linux: GCC 14+ or Clang 16+
+- A C++ compiler with C++20 support:
+  - Linux: GCC 13+ or Clang 15+ (bfloat16 support will be enabled only for GCC>=14)
   - macOS: Xcode/AppleClang (or Homebrew LLVM)
   - Windows: Visual Studio 2022 Build Tools (MSVC)
 - Python packages: `numpy` (the CPU test data generators use it)

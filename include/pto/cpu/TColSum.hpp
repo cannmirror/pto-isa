@@ -31,8 +31,8 @@ void TColSum(typename TileDst::TileDType dst, typename TileSrc::TileDType src, u
 template <typename TileDst, typename TileSrc>
 PTO_INTERNAL void CheckCSValid()
 {
-    using SrcNonDuplicateType = TileSrc::DType;
-    using DstNonDuplicateType = TileDst::DType;
+    using SrcNonDuplicateType = typename TileSrc::DType;
+    using DstNonDuplicateType = typename TileDst::DType;
     static_assert(
         (std::is_same_v<SrcNonDuplicateType, half> && std::is_same_v<DstNonDuplicateType, half>) ||      // f162f16
             (std::is_same_v<SrcNonDuplicateType, half> && std::is_same_v<DstNonDuplicateType, float>) || // f162f32

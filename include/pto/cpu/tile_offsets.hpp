@@ -32,7 +32,7 @@ size_t GetTileElementOffsetSubfractals(size_t subTileR, size_t innerR, size_t su
         return subTileR * TileData::Cols * TileData::InnerRows + subTileC * TileData::InnerNumel +
                innerR * TileData::InnerCols + innerC;
     } else {
-        static_assert(false, "Invalid layout");
+        assert(false && "Invalid layout");
     }
 }
 

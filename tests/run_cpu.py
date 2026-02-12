@@ -177,12 +177,12 @@ def _auto_detect_compilers() -> Tuple[str, Optional[str]]:
     logging.info("CXX not specified, starting automatic detection...")
 
     # 1. Try Clang
-    cxx, cc = _try_find_compiler("clang++", "clang", 16)
+    cxx, cc = _try_find_compiler("clang++", "clang", 15)
     if cxx:
         return cxx, cc
 
     # 2. Try GCC
-    cxx, cc = _try_find_compiler("g++", "gcc", 14)
+    cxx, cc = _try_find_compiler("g++", "gcc", 13)
     if cxx:
         return cxx, cc
 
@@ -190,8 +190,8 @@ def _auto_detect_compilers() -> Tuple[str, Optional[str]]:
     error_msg = (
         "Could not find a suitable compiler.\n"
         "Requirements:\n"
-        " - clang++ >= 16\n"
-        " - OR g++ >= 14"
+        " - clang++ >= 15\n"
+        " - OR g++ >= 13"
     )
     logging.error(error_msg)
     raise RuntimeError(error_msg)
