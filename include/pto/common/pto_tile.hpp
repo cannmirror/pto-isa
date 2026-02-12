@@ -846,17 +846,17 @@ static constexpr int fractalMxSize = 32;
 
 namespace ConvTileDetail {
 constexpr int MAX_CONVTILE_DIM = 6; // max support dim of convtile
-template <int N, int... Shapes>
+template <int N, int64_t... Shapes>
 struct GetNthShape {
-    static constexpr int value = []() {
+    static constexpr int64_t value = []() {
         int idx = 0;
-        int val = 0;
+        int64_t val = 0;
         ((idx == N ? (val = Shapes, idx++) : idx++), ...);
         return val;
     }();
 };
 
-template <int... Shapes>
+template <int64_t... Shapes>
 struct CountDynamicDim {
     static constexpr int value = []() {
         int count = 0;
@@ -870,9 +870,9 @@ struct CountDynamicDim {
     }();
 };
 
-template <int DimIdx, int... Shapes>
+template <int DimIdx, int64_t... Shapes>
 struct AssignDynamicDim {
-    static void apply(int *shape, const int *vals, int &val_idx)
+    static void apply(int64_t *shape, const int *vals, int &val_idx)
     {
         if constexpr (GetNthShape<DimIdx, Shapes...>::value == DYNAMIC) {
             shape[DimIdx] = vals[val_idx++];
@@ -888,12 +888,12 @@ template <int... Shapes>
 struct ConvTileShape {
     static constexpr int totalDimCount = sizeof...(Shapes);
     static constexpr int dynamicDimCount = ConvTileDetail::CountDynamicDim<Shapes...>::value;
-    static constexpr int staticShape[static_cast<int>(ConvTileDetail::MAX_CONVTILE_DIM)] = {
+    static constexpr int64_t staticShape[static_cast<int64_t>(ConvTileDetail::MAX_CONVTILE_DIM)] = {
         ConvTileDetail::GetNthShape<0, Shapes...>::value, ConvTileDetail::GetNthShape<1, Shapes...>::value,
         ConvTileDetail::GetNthShape<2, Shapes...>::value, ConvTileDetail::GetNthShape<3, Shapes...>::value,
         ConvTileDetail::GetNthShape<4, Shapes...>::value, ConvTileDetail::GetNthShape<5, Shapes...>::value};
 
-    PTO_INTERNAL ConvTileShape(int n1, int n2, int n3, int n4, int n5, int n6)
+    PTO_INTERNAL ConvTileShape(int64_t n1, int64_t n2, int64_t n3, int64_t n4, int64_t n5, int64_t n6)
     {
         if constexpr (staticShape[0] == DYNAMIC)
             shape[0] = n1;
@@ -925,13 +925,13 @@ struct ConvTileShape {
             shape[5] = 1;
     }
 
-    PTO_INTERNAL ConvTileShape(int n)
+    PTO_INTERNAL ConvTileShape(int64_t n)
     {
         static_assert(dynamicDimCount == 1,
                       "1-parameter constructors is only applicable to Shape with 1 dynamic dimension.");
 
         int val_idx = 0;
-        const int vals[] = {n};
+        const int64_t vals[] = {n};
         ConvTileDetail::AssignDynamicDim<0, Shapes...>::apply(shape, vals, val_idx);
     }
 
@@ -941,41 +941,41 @@ struct ConvTileShape {
                       "2-parameter constructors is only applicable to Shape with 2 dynamic dimension.");
 
         int val_idx = 0;
-        const int vals[] = {n1, n2};
+        const int64_t vals[] = {n1, n2};
         ConvTileDetail::AssignDynamicDim<0, Shapes...>::apply(shape, vals, val_idx);
     }
 
-    PTO_INTERNAL ConvTileShape(int n1, int n2, int n3)
+    PTO_INTERNAL ConvTileShape(int64_t n1, int64_t n2, int64_t n3)
     {
         static_assert(dynamicDimCount == 3,
                       "3-parameter constructors is only applicable to Shape with 3 dynamic dimension.");
 
         int val_idx = 0;
-        const int vals[] = {n1, n2, n3};
+        const int64_t vals[] = {n1, n2, n3};
         ConvTileDetail::AssignDynamicDim<0, Shapes...>::apply(shape, vals, val_idx);
     }
 
-    PTO_INTERNAL ConvTileShape(int n1, int n2, int n3, int n4)
+    PTO_INTERNAL ConvTileShape(int64_t n1, int64_t n2, int64_t n3, int64_t n4)
     {
         static_assert(dynamicDimCount == 4,
                       "4-parameter constructors is only applicable to Shape with 4 dynamic dimension.");
 
         int val_idx = 0;
-        const int vals[] = {n1, n2, n3, n4};
+        const int64_t vals[] = {n1, n2, n3, n4};
         ConvTileDetail::AssignDynamicDim<0, Shapes...>::apply(shape, vals, val_idx);
     }
-    PTO_INTERNAL ConvTileShape(int n1, int n2, int n3, int n4, int n5)
+    PTO_INTERNAL ConvTileShape(int64_t n1, int64_t n2, int64_t n3, int64_t n4, int64_t n5)
     {
         static_assert(dynamicDimCount == 5,
                       "5-parameter constructors is only applicable to Shape with 5 dynamic dimension.");
 
         int val_idx = 0;
-        const int vals[] = {n1, n2, n3, n4, n5};
+        const int64_t vals[] = {n1, n2, n3, n4, n5};
         ConvTileDetail::AssignDynamicDim<0, Shapes...>::apply(shape, vals, val_idx);
     }
 
 public:
-    int shape[static_cast<int>(ConvTileDetail::MAX_CONVTILE_DIM)] = {1};
+    int64_t shape[static_cast<int64_t>(ConvTileDetail::MAX_CONVTILE_DIM)] = {1};
 };
 
 template <TileType Loc_, typename Element_, const int BufferSize_, Layout Layout_, typename Shape_>
@@ -990,7 +990,7 @@ public:
     static constexpr int totalDimCount = ShapeType::totalDimCount;
     static_assert(totalDimCount >= 1 && totalDimCount <= ConvTileDetail::MAX_CONVTILE_DIM,
                   "ConvTile only support 1D~6D Shapes!");
-    static constexpr int staticShape[ConvTileDetail::MAX_CONVTILE_DIM] = {
+    static constexpr int64_t staticShape[ConvTileDetail::MAX_CONVTILE_DIM] = {
         ShapeType::staticShape[0], ShapeType::staticShape[1], ShapeType::staticShape[2],
         ShapeType::staticShape[3], ShapeType::staticShape[4], ShapeType::staticShape[5]};
     static constexpr int dynamicDimCount = ShapeType::dynamicDimCount;
@@ -998,9 +998,9 @@ public:
         ShapeType::staticShape[0] == DYNAMIC, ShapeType::staticShape[1] == DYNAMIC,
         ShapeType::staticShape[2] == DYNAMIC, ShapeType::staticShape[3] == DYNAMIC,
         ShapeType::staticShape[4] == DYNAMIC, ShapeType::staticShape[5] == DYNAMIC};
-    int shape[ConvTileDetail::MAX_CONVTILE_DIM] = {1};
+    int64_t shape[ConvTileDetail::MAX_CONVTILE_DIM] = {1};
 
-    PTO_INTERNAL constexpr int GetShape(int dim) const
+    PTO_INTERNAL constexpr int64_t GetShape(int dim) const
     {
         if (dim < 0 || dim >= totalDimCount) {
             return -1;
@@ -1015,10 +1015,10 @@ public:
     {
         static_assert(sizeof...(vals) == dynamicDimCount,
                       "Number of dynamic values does not match dynamic dimension count!");
-        static_assert((std::is_same_v<Ints, int> && ...), "Dynamic values must be int type!");
+        static_assert((std::is_same_v<Ints, int64_t> && ...), "Dynamic values must be int64_t type!");
 
         int idx = 0;
-        const int dynamicVals[] = {vals...};
+        const int64_t dynamicVals[] = {vals...};
         for (int i = 0; i < ConvTileDetail::MAX_CONVTILE_DIM; ++i) {
             if (isDynamicDim[i]) {
                 shape[i] = dynamicVals[idx++];
