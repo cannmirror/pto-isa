@@ -29,6 +29,8 @@ class DataFormat(Enum):
     NHWC2NC1HWC0 = 10
     NCHW2NC1HWC0 = 11
     NCHW2FZ4D = 12
+    NCDHW2NDC1HWC0 = 13
+    NCDHW2FZ3D = 14
 
 
 def nchw_to_nc1hwc0(nchw_tensor: np.ndarray, c0: int = 16) -> np.ndarray:
@@ -53,6 +55,29 @@ def nchw_to_nc1hwc0(nchw_tensor: np.ndarray, c0: int = 16) -> np.ndarray:
     nc1hwc0_tensor = np.transpose(nc1c0hw_tensor, axes=(0, 1, 3, 4, 2))
 
     return nc1hwc0_tensor
+
+
+def ncdhw_to_ndc1hwc0(ncdhw_tensor: np.ndarray, c0: int = 16) -> np.ndarray:
+    if ncdhw_tensor.ndim != 5:
+        raise ValueError(f"The input must be a 5-dimensional NCDHW tensor, current dim: {ncdhw_tensor.ndim}")
+    if (c0 & (c0 - 1)) != 0 and c0 != 1:
+        raise ValueError(f"C0 should be 8/16/32, now is : {c0}")
+
+    n, c, d, h, w = ncdhw_tensor.shape
+    c1 = (c + c0 - 1) // c0
+    pad_c = c1 * c0 - c
+    if pad_c > 0:
+        pad_width = ((0, 0), (0, pad_c), (0, 0), (0, 0), (0, 0))
+        ncdhw_padded = np.pad(ncdhw_tensor, pad_width, mode="constant", constant_values=0)
+    else:
+        ncdhw_padded = ncdhw_tensor
+
+    nc1c0dhw_tensor = ncdhw_padded.reshape(n, c1, c0, d, h, w)
+
+    # NC1C0DHW → NDC1HWC0
+    ndc1hwc0_tensor = np.transpose(nc1c0dhw_tensor, axes=(0, 3, 1, 4, 5, 2))
+
+    return ndc1hwc0_tensor
 
 
 def nhwc_to_nc1hwc0(nhwc_tensor: np.ndarray, c0: int = 16) -> np.ndarray:
@@ -105,6 +130,37 @@ def nchw_to_c1hw_n16_16_c0(nchw_tensor: np.ndarray, c0: int = 16) -> np.ndarray:
     # [c1hw, N/16, 16, C0]
     final_tensor = rearranged.reshape(c1hw, n_div_16, 16, c0)
 
+    return final_tensor
+
+
+def ncdhw_to_c1dhw_n16_16_c0(ncdhw_tensor: np.ndarray, c0: int = 16) -> np.ndarray:
+    if ncdhw_tensor.ndim != 5:
+        raise ValueError(f"The input must be a 5-dimensional NCDHW tensor, current dim: {ncdhw_tensor.ndim}")
+    if (c0 & (c0 - 1)) != 0 and c0 != 1:
+        raise ValueError(f"C0 should be a power of 2 (1/8/16/32), now is: {c0}")
+
+    n_ori, c_ori, d, h, w = ncdhw_tensor.shape
+    # Pad N to multiple of 16
+    n_pad = ((n_ori + 15) // 16) * 16
+    n_div_16 = n_pad // 16
+    # Pad C to multiple of c0
+    c_pad = ((c_ori + c0 - 1) // c0) * c0
+    c1 = c_pad // c0
+    c1dhw = c1 * d * h * w
+
+    pad_width = ((0, n_pad - n_ori), (0, c_pad - c_ori), (0, 0), (0, 0), (0, 0))
+    ncdhw_padded = np.pad(ncdhw_tensor, pad_width, mode="constant", constant_values=0)
+
+    # Reshape to (N, C1, C0, D, H, W)
+    nc1c0dhw = ncdhw_padded.reshape(n_pad, c1, c0, d, h, w)
+
+    # Reshape N dimension to (N/16, 16, C1, C0, D, H, W)
+    n16_c1c0dhw = nc1c0dhw.reshape(n_div_16, 16, c1, c0, d, h, w)
+
+    # Transpose: (n_div_16, 16, c1, c0, d, h, w) -> (c1, d, h, w, n_div_16, 16, c0)
+    transposed = np.transpose(n16_c1c0dhw, axes=(2, 4, 5, 6, 0, 1, 3))
+    # Reshape to [C1DHW, N/16, 16, C0]
+    final_tensor = transposed.reshape(c1dhw, n_div_16, 16, c0)
     return final_tensor
 
 
@@ -248,7 +304,56 @@ def gen_golden_data(case_name, param):
         golden_nchw = np.zeros(shape=(n_16 * 16, c1_h_w * c0_size // (src_h * src_w), src_h, src_w), dtype=src_type)
         golden_nchw = x1_gm[0:src_n, 0:src_c, 0:src_h, 0:src_w]
         golden = nchw_to_c1hw_n16_16_c0(golden_nchw, c0=c0_size)
+    elif param.load_type == DataFormat['NCDHW2NDC1HWC0'].value:
+        # 参数说明:
+        # shape0: 输出的N维度
+        # shape1: 输出的D维度  
+        # shape2: 输出的C1维度
+        # shape3: 输出的H维度
+        # shape4: 输出的W维度
+        # c0_size: C0大小由数据类型决定
+        
+        # whole_shape0: 输入x1_gm的N维度
+        # whole_shape1: 输入x1_gm的C维度
+        # whole_shape2: 输入x1_gm的D维度
+        # whole_shape3: 输入x1_gm的H维度
+        # whole_shape4: 输入x1_gm的W维度
 
+        x1_gm = np.random.randint(1, 5, size=(whole_shape0, whole_shape1,
+                                    whole_shape2, whole_shape3, whole_shape4)).astype(src_type)
+        target_n = shape0
+        target_c = shape2 * c0_size
+        target_d = shape1
+        target_h = shape3
+        target_w = shape4
+        golden_ncdhw = np.zeros((target_n, target_c, target_d, target_h, target_w), dtype=src_type)
+        golden_ncdhw[:] = x1_gm[:target_n, :target_c, :target_d, :target_h, :target_w]
+        # 转换为NDC1HWC0格式
+        golden = ncdhw_to_ndc1hwc0(golden_ncdhw, c0=c0_size)
+    elif param.load_type == DataFormat['NCDHW2FZ3D'].value:
+        # whole_shape is guaranteed to be >= corresponding shape
+        src_n = shape0
+        src_c = shape1
+        src_d = shape2
+        src_h = shape3
+        src_w = shape4
+        
+        n = whole_shape0
+        c = whole_shape1
+        d = whole_shape2
+        h = whole_shape3
+        w = whole_shape4
+
+        c1_d_h_w = param.basem
+        n_16 = param.basek
+        # Generate random input data
+        x1_gm = np.random.randint(1, 5, size=(n, c, d, h, w)).astype(src_type)
+        
+        # Create golden NCDHW tensor from the input
+        golden_nchw = np.zeros(shape=(n_16 * 16, c1_d_h_w * c0_size // (src_h * src_w), src_h, src_w), dtype=src_type)
+        golden_ncdhw = x1_gm[0:src_n, 0:src_c, 0:src_d, 0:src_h, 0:src_w]
+        # Convert to FZ3D format: [C1DHW, N/16, 16, C0]
+        golden = ncdhw_to_c1dhw_n16_16_c0(golden_ncdhw, c0=c0_size)
 
     x2_gm = np.random.randint(1, 5, [M, K]).astype(src_type)
     if param.load_type == DataFormat['ND2NZ'].value:
@@ -373,6 +478,20 @@ if __name__ == "__main__":
         "TLOADMIXTest.NCHW2FZ4D_bfloat16_75_4_16_16_64_48_5_5_100_50_5_5",
         "TLOADMIXTest.NCHW2FZ4D_float_50_3_16_8_48_14_5_5_224_224_5_5",
         "TLOADMIXTest.NCHW2FZ4D_float_27_2_16_8_32_24_3_3_333_188_3_3",
+
+        "TLOADMIXTest.NCDHW2NDC1HWC0_int8_t_1_2_3_11_109_3_111_2_1023_109",
+        "TLOADMIXTest.NCDHW2NDC1HWC0_int8_t_3_3_2_15_9_3_65_4_30_9",
+        "TLOADMIXTest.NCDHW2NDC1HWC0_bfloat16_1_4_6_10_10_1_96_6_100_10",
+        "TLOADMIXTest.NCDHW2NDC1HWC0_bfloat16_10_2_8_16_2_256_128_2_100_2",
+        "TLOADMIXTest.NCDHW2NDC1HWC0_float_1_5_1_25_31_2_25_7_112_31",
+        "TLOADMIXTest.NCDHW2NDC1HWC0_float_2_2_1_43_43_3_19_2_155_43",
+
+        "TLOADMIXTest.NCDHW2FZ3D_int8_t_48_95_2_5_5_50_111_4_5_5_150_3", # [srcN srcC srcD_srcH srcW N C D H W C1DHW N/16]
+        "TLOADMIXTest.NCDHW2FZ3D_int8_t_32_58_2_7_7_63_127_2_7_7_196_2", # src_c <= C1*C0
+        "TLOADMIXTest.NCDHW2FZ3D_bfloat16_48_111_2_3_3_110_112_2_3_3_126_3",
+        "TLOADMIXTest.NCDHW2FZ3D_bfloat16_32_48_3_3_3_70_50_4_3_3_81_2",
+        "TLOADMIXTest.NCDHW2FZ3D_float_48_14_5_2_2_224_224_7_2_2_40_3",
+        "TLOADMIXTest.NCDHW2FZ3D_float_32_24_2_3_3_333_188_2_3_3_54_2",
     ]
 
     case_params_list = [
@@ -441,6 +560,20 @@ if __name__ == "__main__":
         TloadParams(np.float16, 75, 4, 16, 16, 64, 48, 5, 5, 100, 50, 5, 5, DataFormat["NCHW2FZ4D"].value),
         TloadParams(np.float32, 50, 3, 16, 8, 48, 14, 5, 5, 224, 224, 5, 5, DataFormat["NCHW2FZ4D"].value),
         TloadParams(np.float32, 27, 2, 16, 8, 32, 24, 3, 3, 333, 188, 3, 3, DataFormat["NCHW2FZ4D"].value),
+                         ## N D C1 H W  N C D H W
+        TloadParams(np.int8, 1, 2, 3, 11, 109, 3, 111, 2, 1023, 109, 1, 1, DataFormat["NCDHW2NDC1HWC0"].value),
+        TloadParams(np.int8, 3, 3, 2, 15, 9, 3, 65, 4, 30, 9, 1, 1, DataFormat["NCDHW2NDC1HWC0"].value),
+        TloadParams(np.float16, 1, 4, 6, 10, 10, 1, 96, 6, 100, 10, 1, 1, DataFormat["NCDHW2NDC1HWC0"].value),
+        TloadParams(np.float16, 10, 2, 8, 16, 2, 256, 128, 2, 100, 2, 1, 1, DataFormat["NCDHW2NDC1HWC0"].value),
+        TloadParams(np.float32, 1, 5, 1, 25, 31, 2, 25, 7, 112, 31, 1, 1, DataFormat["NCDHW2NDC1HWC0"].value),
+        TloadParams(np.float32, 2, 2, 1, 43, 43, 3, 19, 2, 155, 43, 1, 1, DataFormat["NCDHW2NDC1HWC0"].value),
+                         ## srcN srcC srcD, srcH srcW N C D H W C1DHW N/16
+        TloadParams(np.int8, 48, 95, 2, 5, 5, 50, 111, 4, 5, 5, 150, 3, DataFormat["NCDHW2FZ3D"].value),
+        TloadParams(np.int8, 32, 58, 2, 7, 7, 63, 127, 2, 7, 7, 196, 2, DataFormat["NCDHW2FZ3D"].value),
+        TloadParams(np.float16, 48, 111, 2, 3, 3, 110, 112, 2, 3, 3, 126, 3, DataFormat["NCDHW2FZ3D"].value),
+        TloadParams(np.float16, 32, 48, 3, 3, 3, 70, 50, 4, 3, 3, 81, 2, DataFormat["NCDHW2FZ3D"].value),
+        TloadParams(np.float32, 48, 14, 5, 2, 2, 224, 224, 7, 2, 2, 40, 3, DataFormat["NCDHW2FZ3D"].value),
+        TloadParams(np.float32, 32, 24, 2, 3, 3, 333, 188, 2, 3, 3, 54, 2, DataFormat["NCDHW2FZ3D"].value),
     ]
 
     for i, case_name in enumerate(case_name_list):

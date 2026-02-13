@@ -1092,6 +1092,95 @@ __tf__ PTO_INTERNAL void TLoadNCHW2FractalZ(typename TileData::TileDType __out__
 }
 
 template <typename TileData, typename GlobalData>
+__tf__ PTO_INTERNAL void TLoadNCDHW2NDC1HWC0(typename TileData::TileDType __out__ dst,
+                                             typename GlobalData::DType __in__ *src, int srcShape0, int srcShape1,
+                                             int srcShape2, int srcShape3, int srcShape4, int gStride0, int gStride1,
+                                             int gStride2, int gStride3, int gStride4, int dstShape0, int dstShape1,
+                                             int dstShape2, int dstShape3, int dstShape4)
+{
+#if defined(__DAV_CUBE__)
+    __cbuf__ typename TileData::DType *dstAddr = (__cbuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
+    typename GlobalData::DType *srcAddr = src;
+
+    constexpr uint32_t c0ElemCount = C0_SIZE_BYTE / sizeof(typename TileData::DType);
+    typename GlobalData::DType *srcAddrP = srcAddr;
+    __cbuf__ typename TileData::DType *dstAddrP = dstAddr;
+
+    // ConvTile layout is [N,D,C1,H,W,C0] = [dstShape0, dstShape1, dstShape2, dstShape3, dstShape4, C0]
+    // GlobalTensor layout is [N,C,D,H,W] = [srcShape0, srcShape1, srcShape2, srcShape3, srcShape4]
+    PTO_ASSERT(srcShape0 == dstShape0 && srcShape3 == dstShape3 && srcShape4 == dstShape4,
+               "Fix: src layout is [N,C,D,H,W],dst layout [N,D,C1,H,W,C0], srcShape dstShape should be same!");
+    // W all load
+    constexpr uint16_t dnNum = 1;
+    uint16_t nValue = srcShape3 * srcShape4; // srcH*srcW is nValue
+    uint32_t dValue = srcShape1;             // srcC is dValue
+
+    uint64_t loop1SrcStride = GetByteSize<typename TileData::DType>(gStride1); // unit Byte
+    constexpr uint16_t loop2DstStride = 1;
+    uint16_t loop3DstStride = dstShape3 * dstShape4;                   // unit is 32B
+    uint16_t loop4DstStride = dstShape4;                               // dstW
+    uint64_t mte2NzPara = static_cast<uint64_t>(loop4DstStride) << 48; // MTE2_NZ_PARA[63:48]
+    mte2NzPara |= static_cast<uint64_t>(loop3DstStride) << 32;         // MTE2_NZ_PARA[47:32]
+    mte2NzPara |= static_cast<uint64_t>(loop2DstStride) << 16;         // MTE2_NZ_PARA[31:16]
+    mte2NzPara |= static_cast<uint64_t>(dnNum);                        // MTE2_NZ_PARA[15:0]
+    set_mte2_nz_para(mte2NzPara);                                      // only set once
+
+    for (uint32_t i = 0; i < dstShape0; i++) {
+        srcAddr = src + i * gStride0;
+        dstAddr = dst + i * dstShape1 * dstShape2 * dstShape3 * dstShape4 * c0ElemCount;
+        for (uint32_t j = 0; j < srcShape2; j++) { // use dn2nz, inner iterations : srcD
+            srcAddrP = srcAddr + j * gStride2;
+            dstAddrP = dstAddr + j * dstShape2 * dstShape3 * dstShape4 * c0ElemCount;
+            TLoadCubeInstr<TileData, GlobalData, pto::Layout::DN>(dstAddrP, srcAddrP, loop1SrcStride, nValue, dValue,
+                                                                  0);
+        }
+    }
+#endif
+}
+
+template <typename TileData, typename GlobalData>
+__tf__ PTO_INTERNAL void TLoadNCDHW2FractalZ3D(typename TileData::TileDType __out__ dst,
+                                               typename GlobalData::DType __in__ *src, int srcShape0, int srcShape1,
+                                               int srcShape2, int srcShape3, int srcShape4, int gStride0, int gStride1,
+                                               int gStride2, int gStride3, int gStride4, int dstShape0, int dstShape1,
+                                               int dstShape2, int dstShape3)
+{
+#if defined(__DAV_CUBE__)
+    __cbuf__ typename TileData::DType *dstAddr = (__cbuf__ typename TileData::DType *)__cce_get_tile_ptr(dst);
+    typename GlobalData::DType *srcAddr = src;
+
+    typename GlobalData::DType *srcAddrP = srcAddr;
+    __cbuf__ typename TileData::DType *dstAddrP = dstAddr;
+    constexpr uint32_t c0ElemCount = C0_SIZE_BYTE / sizeof(typename TileData::DType);
+    // ConvTile layout is [C1DHW,N/16,16,C0] = [dstShape0, dstShape1, dstShape2, dstShape3]
+    // GlobalTensor layout is [N,C,D,H,W] = [srcShape0, srcShape1, srcShape2, srcShape3, srcShape4]
+    PTO_ASSERT(gStride2 == srcShape3 * srcShape4,
+               "Fix: src layout is [N,C,D,H,W],dst layout [N,C1,H,W,C0], H*W should be all load");
+
+    uint16_t dnNum = srcShape0;
+    uint16_t nValue = gStride2 * srcShape2;
+    uint32_t dValue = srcShape1; // srcC is dValue
+
+    uint32_t c1Size = CeilDivision(srcShape1, c0ElemCount);
+    uint32_t dstDHW = dstShape0 / c1Size;
+
+    constexpr uint16_t loop4DstStride = 1; // each c0 of contiguous dNnum save continously
+    uint64_t loop1SrcStride = GetByteSize<typename TileData::DType>(gStride1); // global D*H*W, unit Byte
+    uint64_t loop4SrcStride = GetByteSize<typename TileData::DType>(gStride0); // global C*D*H*W, unit Byte
+    uint16_t loop2DstStride = dstShape1 * dstShape2;
+    uint16_t loop3DstStride = loop2DstStride * dstDHW;               // unit is 32B
+    uint64_t mte2Para = static_cast<uint64_t>(loop4DstStride) << 48; // MTE2_NZ_PARA[63:48]
+    mte2Para |= static_cast<uint64_t>(loop3DstStride) << 32;         // MTE2_NZ_PARA[47:32]
+    mte2Para |= static_cast<uint64_t>(loop2DstStride) << 16;         // MTE2_NZ_PARA[31:16]
+    mte2Para |= static_cast<uint64_t>(dnNum);                        // MTE2_NZ_PARA[15:0]
+    set_mte2_nz_para(mte2Para);                                      // only set once
+
+    TLoadCubeInstr<TileData, GlobalData, pto::Layout::DN>(dstAddrP, srcAddrP, loop1SrcStride, nValue, dValue,
+                                                          loop4SrcStride);
+#endif
+}
+
+template <typename TileData, typename GlobalData>
 PTO_INTERNAL void CheckConvTileData(TileData &dst, GlobalData &src)
 {
     static_assert(
@@ -1113,8 +1202,10 @@ PTO_INTERNAL void CheckConvTileData(TileData &dst, GlobalData &src)
         (GlobalData::layout == pto::Layout::FRACTAL_Z && TileData::layout == pto::Layout::FRACTAL_Z) ||
         (GlobalData::layout == pto::Layout::NHWC && TileData::layout == pto::Layout::NC1HWC0) ||
         (GlobalData::layout == pto::Layout::NCHW && TileData::layout == pto::Layout::NC1HWC0) ||
-        (GlobalData::layout == pto::Layout::NCHW && TileData::layout == pto::Layout::FRACTAL_Z);
-    static_assert(isSameLayout == true, "Fix: Src layout must be NC1HWC0 or FRACTAL_Z or NHWC or NCHW!");
+        (GlobalData::layout == pto::Layout::NCHW && TileData::layout == pto::Layout::FRACTAL_Z) ||
+        (GlobalData::layout == pto::Layout::NCDHW && TileData::layout == pto::Layout::FRACTAL_Z_3D) ||
+        (GlobalData::layout == pto::Layout::NCDHW && TileData::layout == pto::Layout::NDC1HWC0);
+    static_assert(isSameLayout == true, "Fix: Src layout must be NC1HWC0 or FRACTAL_Z or NHWC or NCHW or NCDHW!");
 }
 
 template <typename TileData, typename GlobalData>
@@ -1155,6 +1246,16 @@ PTO_INTERNAL void TLOAD_CONVTILE_IMPL(TileData &dst, GlobalData &src)
                                                  src.GetShape(2), src.GetShape(3), src.GetShape(4), src.GetStride(0),
                                                  src.GetStride(1), src.GetStride(2), src.GetStride(3), src.GetStride(4),
                                                  dst.GetShape(0), dst.GetShape(1), dst.GetShape(2), dst.GetShape(3));
+    } else if constexpr (GlobalData::layout == pto::Layout::NCDHW && TileData::layout == pto::Layout::NDC1HWC0) {
+        TLoadNCDHW2NDC1HWC0<TileData, GlobalData>(
+            dst.data(), src.data(), src.GetShape(0), src.GetShape(1), src.GetShape(2), src.GetShape(3), src.GetShape(4),
+            src.GetStride(0), src.GetStride(1), src.GetStride(2), src.GetStride(3), src.GetStride(4), dst.GetShape(0),
+            dst.GetShape(1), dst.GetShape(2), dst.GetShape(3), dst.GetShape(4));
+    } else if constexpr (GlobalData::layout == pto::Layout::NCDHW && TileData::layout == pto::Layout::FRACTAL_Z_3D) {
+        TLoadNCDHW2FractalZ3D<TileData, GlobalData>(
+            dst.data(), src.data(), src.GetShape(0), src.GetShape(1), src.GetShape(2), src.GetShape(3), src.GetShape(4),
+            src.GetStride(0), src.GetStride(1), src.GetStride(2), src.GetStride(3), src.GetStride(4), dst.GetShape(0),
+            dst.GetShape(1), dst.GetShape(2), dst.GetShape(3));
     }
 }
 

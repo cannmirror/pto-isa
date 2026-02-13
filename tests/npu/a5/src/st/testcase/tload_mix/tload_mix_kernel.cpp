@@ -524,6 +524,99 @@ AICORE inline void runTLOAD_MIX_NCHW2FZ4D(__gm__ T __out__ *out, __gm__ T __in__
     out = dstGlobal.data();
 }
 
+// [N,C,D,H,W]->[N,D,C1,H,W,C0]
+template <typename T, int dstShape0, int dstShape1, int dstC1, int dstShape3, int dstShape4, int gWholeShape0,
+          int gWholeShape1, int gWholeShape2, int gWholeShape3, int gWholeShape4>
+AICORE inline void runTLOAD_MIX_NCDHW(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
+    constexpr int dstC0 = BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr int gStride[5] = {gWholeShape1 * gWholeShape2 * gWholeShape3 * gWholeShape4,
+                                gWholeShape2 * gWholeShape3 * gWholeShape4, gWholeShape3 * gWholeShape4, gWholeShape4,
+                                1};
+    constexpr int blockSize = BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr int bufferSize = dstShape0 * dstShape1 * dstC1 * dstShape3 * dstShape4 * dstC0 * sizeof(T);
+    constexpr int validRow = dstShape0 * dstShape1 * dstC1 * dstShape3 * dstShape4;
+    constexpr int validCol = dstC0;
+    constexpr int Rows = dstShape0 * dstShape1 * dstC1 * dstShape3 * dstShape4;
+    constexpr int Cols = (dstC0 + blockSize - 1) / blockSize * blockSize;
+
+    // [[N,C,D,H,W]]  -> [N, D, C1, H, W, C0]
+    using ShapeDim5 = pto::Shape < dstShape0,
+          gWholeShape1<dstC1 * dstC0 ? gWholeShape2 : dstC1 * dstC0, dstShape1, dstShape3, dstShape4>;
+    using StridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+    using GlobalDataIn = GlobalTensor<T, ShapeDim5, StridDim5, Layout::NCDHW>;
+
+    using TileData = ConvTile<TileType::Mat, T, bufferSize, Layout::NDC1HWC0,
+                              pto::ConvTileShape<dstShape0, dstShape1, dstC1, dstShape3, dstShape4, dstC0>>;
+    TileData srcTile;
+
+    TASSIGN(srcTile, 0x0);
+    GlobalDataIn srcGlobal(src);
+    TLOAD(srcTile, srcGlobal);
+
+    using OutTileData = Tile<TileType::Vec, T, Rows, Cols, BLayout::RowMajor, validRow, validCol>;
+    OutTileData outTile;
+    TASSIGN(outTile, 0x0);
+
+    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, Rows, Cols>,
+                                       pto::Stride<1 * Rows * Cols, 1 * Rows * Cols, Rows * Cols, Cols, 1>, Layout::ND>;
+    GlobalDataOut dstGlobal(out);
+
+    constexpr uint8_t syncID = 0;
+    MovL1ToUbuf<OutTileData, TileData, syncID>(outTile, srcTile);
+
+#if defined(__DAV_VEC__)
+    wait_intra_block(PIPE_MTE3, syncID);
+    TSTORE(dstGlobal, outTile); // UB -> GM : AIV
+#endif
+    out = dstGlobal.data();
+}
+
+// [N,C,D,H,W]->[C1DHW,N/16,16,C0] [srcN,srcC,srcD,srcH,srcW,N,C,D,H,W,C1DHW,N/16]
+template <typename T, int srcN, int srcC, int srcD, int srcH, int srcW, int N, int C, int D, int H, int W, int dstC1DHW,
+          int dstN16>
+AICORE inline void runTLOAD_MIX_NCDHW2FZ3D(__gm__ T __out__ *out, __gm__ T __in__ *src)
+{
+    constexpr int dstC0 = BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr int gStride[5] = {C * D * H * W, D * H * W, H * W, W, 1};
+    constexpr int blockSize = BLOCK_BYTE_SIZE / sizeof(T);
+    constexpr int bufferSize = dstC1DHW * dstN16 * 16 * dstC0 * sizeof(T);
+    constexpr int validRow = dstC1DHW * dstN16 * 16;
+    constexpr int validCol = dstC0;
+    constexpr int Rows = dstC1DHW * dstN16 * 16;
+    constexpr int Cols = (dstC0 + blockSize - 1) / blockSize * blockSize;
+
+    // [[N,C,D,H,W]]
+    using ShapeDim5 = pto::Shape<srcN, srcC, srcD, srcH, srcW>;
+    using StridDim5 = pto::Stride<gStride[0], gStride[1], gStride[2], gStride[3], gStride[4]>;
+    using GlobalDataIn = GlobalTensor<T, ShapeDim5, StridDim5, Layout::NCDHW>;
+
+    using TileData =
+        ConvTile<TileType::Mat, T, bufferSize, Layout::FRACTAL_Z_3D, pto::ConvTileShape<dstC1DHW, dstN16, 16, dstC0>>;
+    TileData srcTile;
+
+    TASSIGN(srcTile, 0x0);
+    GlobalDataIn srcGlobal(src);
+    TLOAD(srcTile, srcGlobal);
+
+    using OutTileData = Tile<TileType::Vec, T, Rows, Cols, BLayout::RowMajor, validRow, validCol>;
+    OutTileData outTile;
+    TASSIGN(outTile, 0x0);
+
+    using GlobalDataOut = GlobalTensor<T, pto::Shape<1, 1, 1, Rows, Cols>,
+                                       pto::Stride<1 * Rows * Cols, 1 * Rows * Cols, Rows * Cols, Cols, 1>, Layout::ND>;
+    GlobalDataOut dstGlobal(out);
+
+    constexpr uint8_t syncID = 0;
+    MovL1ToUbuf<OutTileData, TileData, syncID>(outTile, srcTile);
+
+#if defined(__DAV_VEC__)
+    wait_intra_block(PIPE_MTE3, syncID);
+    TSTORE(dstGlobal, outTile); // UB -> GM : AIV
+#endif
+    out = dstGlobal.data();
+}
+
 template <typename T, int format, int N1, int N2, int N3, int N4, int N5, int WN1, int WN2, int WN3, int WN4, int WN5,
           int BASEM, int BASEK>
 __global__ AICORE void TLOAD_MIX_KERNEL(__gm__ uint8_t *out, __gm__ uint8_t *src0, __gm__ uint8_t *src1)
@@ -564,6 +657,14 @@ __global__ AICORE void TLOAD_MIX_KERNEL(__gm__ uint8_t *out, __gm__ uint8_t *src
     } else if constexpr (format == 11) {
         // [C1HW,N/16,16,C0,srcN,srcC,srcH,srcW,N,C,H,W]
         runTLOAD_MIX_NCHW2FZ4D<T, N1, N2, N3, N4, N5, WN1, WN2, WN3, WN4, WN5, BASEM, BASEK>(
+            reinterpret_cast<__gm__ T *>(out), reinterpret_cast<__gm__ T *>(src0));
+    } else if constexpr (format == 12) {
+        //[N, D, C1, H, W, C0, WN, WC, WD, WH, WW]
+        runTLOAD_MIX_NCDHW<T, N1, N2, N3, N4, N5, WN1, WN2, WN3, WN4, WN5>(reinterpret_cast<__gm__ T *>(out),
+                                                                           reinterpret_cast<__gm__ T *>(src0));
+    } else if constexpr (format == 13) {
+        // [srcN,srcC,srcD,srcH,srcW,N,C,D,H,W,C1DHW,N/16]
+        runTLOAD_MIX_NCDHW2FZ3D<T, N1, N2, N3, N4, N5, WN1, WN2, WN3, WN4, WN5, BASEM, BASEK>(
             reinterpret_cast<__gm__ T *>(out), reinterpret_cast<__gm__ T *>(src0));
     }
 }
@@ -719,6 +820,33 @@ template void launchTLOADMIX<float, 11, 50, 3, 16, 8, 48, 14, 5, 5, 224, 224, 5,
                                                                                     uint8_t *src1, void *stream);
 template void launchTLOADMIX<float, 11, 27, 2, 16, 8, 32, 24, 3, 3, 333, 188, 3, 3>(uint8_t *out, uint8_t *src0,
                                                                                     uint8_t *src1, void *stream);
+// 12 : NCDHW2NDC1HWC0
+template void launchTLOADMIX<int8_t, 12, 1, 2, 3, 11, 109, 3, 111, 2, 1023, 109, 1, 1>(uint8_t *out, uint8_t *src0,
+                                                                                       uint8_t *src1, void *stream);
+template void launchTLOADMIX<int8_t, 12, 3, 3, 2, 15, 9, 3, 65, 4, 30, 9, 1, 1>(uint8_t *out, uint8_t *src0,
+                                                                                uint8_t *src1, void *stream);
+template void launchTLOADMIX<uint16_t, 12, 1, 4, 6, 10, 10, 1, 96, 6, 100, 10, 1, 1>(uint8_t *out, uint8_t *src0,
+                                                                                     uint8_t *src1, void *stream);
+template void launchTLOADMIX<uint16_t, 12, 10, 2, 8, 16, 2, 256, 128, 2, 100, 2, 1, 1>(uint8_t *out, uint8_t *src0,
+                                                                                       uint8_t *src1, void *stream);
+template void launchTLOADMIX<float, 12, 1, 5, 1, 25, 31, 2, 25, 7, 112, 31, 1, 1>(uint8_t *out, uint8_t *src0,
+                                                                                  uint8_t *src1, void *stream);
+template void launchTLOADMIX<float, 12, 2, 2, 1, 43, 43, 3, 19, 2, 155, 43, 1, 1>(uint8_t *out, uint8_t *src0,
+                                                                                  uint8_t *src1, void *stream);
+
+// 13 : NCDHW2FZ3D
+template void launchTLOADMIX<int8_t, 13, 48, 95, 2, 5, 5, 50, 111, 4, 5, 5, 150, 3>(uint8_t *out, uint8_t *src0,
+                                                                                    uint8_t *src1, void *stream);
+template void launchTLOADMIX<int8_t, 13, 32, 58, 2, 7, 7, 63, 127, 2, 7, 7, 196, 2>(uint8_t *out, uint8_t *src0,
+                                                                                    uint8_t *src1, void *stream);
+template void launchTLOADMIX<uint16_t, 13, 48, 111, 2, 3, 3, 110, 112, 2, 3, 3, 126, 3>(uint8_t *out, uint8_t *src0,
+                                                                                        uint8_t *src1, void *stream);
+template void launchTLOADMIX<uint16_t, 13, 32, 48, 3, 3, 3, 70, 50, 4, 3, 3, 81, 2>(uint8_t *out, uint8_t *src0,
+                                                                                    uint8_t *src1, void *stream);
+template void launchTLOADMIX<float, 13, 48, 14, 5, 2, 2, 224, 224, 7, 2, 2, 40, 3>(uint8_t *out, uint8_t *src0,
+                                                                                   uint8_t *src1, void *stream);
+template void launchTLOADMIX<float, 13, 32, 24, 2, 3, 3, 333, 188, 2, 3, 3, 54, 2>(uint8_t *out, uint8_t *src0,
+                                                                                   uint8_t *src1, void *stream);
 
 template <typename T, int format, int dtype, int N1, int N2, int N3, int N4, int N5, int WN1, int WN2, int WN3, int WN4,
           int WN5, int BASEM, int BASEK>

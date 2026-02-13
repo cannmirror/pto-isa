@@ -1393,8 +1393,6 @@ public:
     template <typename T, typename AddrType>
     friend AICORE void TASSIGN_IMPL(T &tile, AddrType addr);
 
-#if defined(__DAV_CUBE__)
-#ifdef PTO_NPU_ARCH_A2A3
     PTO_INTERNAL bool GetKAligned() const
     {
         return isKAligned_;
@@ -1403,6 +1401,8 @@ public:
     {
         isKAligned_ = isKAligned;
     }
+#if defined(__DAV_CUBE__)
+#ifdef PTO_NPU_ARCH_A2A3
     PTO_INTERNAL void SetMadHF32Mode(RoundMode hf32TransMode = RoundMode::CAST_ROUND)
     {
         PTO_ASSERT(hf32TransMode == RoundMode::CAST_ROUND || hf32TransMode == RoundMode::CAST_RINT,
@@ -1438,9 +1438,7 @@ private:
         data_ = data;
     }
     TileDType data_;
-#ifdef PTO_NPU_ARCH_A2A3
     bool isKAligned_; // K-Alignedment for A3
-#endif
 };
 
 #ifdef PTO_NPU_ARCH_A2A3
