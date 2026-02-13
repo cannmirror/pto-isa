@@ -13,9 +13,14 @@
 import os
 import numpy as np
 
+# Try to import PyTorch for golden data generation
+try:
+    import torch
 
-print("Warning: PyTorch not available, using NumPy for saturation tests")
-HAS_TORCH = False
+    HAS_TORCH = True
+except Exception:
+    HAS_TORCH = False
+    print("Warning: PyTorch not available or initialization failed, using NumPy for saturation tests")
 
 np.random.seed(19)
 
@@ -236,13 +241,15 @@ def gen_golden(case_name, param):
             # NOTE: np.clip casts a_min/a_max to the input array dtype, so for integer->integer
             # widening (e.g. int32 -> int64), clip() must run on a widened dtype first.
             tmp = converted_golden
-            if np.issubdtype(tmp.dtype, np.integer):
-                if np.issubdtype(dsttype, np.signedinteger):
-                    tmp = tmp.astype(np.int64, copy=False)
-                else:
-                    tmp = tmp.astype(np.uint64, copy=False)
+            is_int_type = np.issubdtype(tmp.dtype, np.integer)
+            is_dst_signed = np.issubdtype(dsttype, np.signedinteger)
+
+            if is_int_type:
+                temp_dtype = np.int64 if is_dst_signed else np.uint64
             else:
-                tmp = tmp.astype(np.float64, copy=False)
+                temp_dtype = np.float64
+
+            tmp = tmp.astype(temp_dtype, copy=False)
             golden = np.clip(tmp, info.min, info.max).astype(dsttype)
     elif np.issubdtype(dsttype, np.floating):
         info = np.finfo(dsttype)
@@ -289,14 +296,17 @@ def gen_golden(case_name, param):
                     # Handle GPU vs CPU behavior for infinity
                     # For signed integers: GPU: +inf → -1, -inf → 0 | CPU: +inf → 0, -inf → 0
                     # For unsigned integers: GPU: +inf → max, -inf → 0 | CPU: +inf → 0, -inf → 0
-                    if USE_PYTORCH_GPU_BEHAVIOR and np.issubdtype(srctype, np.floating):
-                        if np.issubdtype(dsttype, np.signedinteger):
+                    use_gpu_inf_behavior = USE_PYTORCH_GPU_BEHAVIOR and np.issubdtype(srctype, np.floating)
+                    if use_gpu_inf_behavior:
+                        is_pos_inf = np.isinf(x1_gm) & (x1_gm > 0)
+                        is_signed_int = np.issubdtype(dsttype, np.signedinteger)
+                        is_unsigned_int = np.issubdtype(dsttype, np.unsignedinteger)
+
+                        if is_signed_int:
                             # Apply GPU behavior: +inf becomes -1 for signed integers
-                            is_pos_inf = np.isinf(x1_gm) & (x1_gm > 0)
                             truncated[is_pos_inf] = -1
-                        elif np.issubdtype(dsttype, np.unsignedinteger):
+                        elif is_unsigned_int:
                             # Apply GPU behavior: +inf becomes max value for unsigned integers
-                            is_pos_inf = np.isinf(x1_gm) & (x1_gm > 0)
                             info = np.iinfo(dsttype)
                             truncated[is_pos_inf] = info.max
 
@@ -314,16 +324,21 @@ def gen_golden(case_name, param):
             if not use_torch:
                 # Truncated mode: bit extraction (modulo behavior)
                 truncated_list = []
+                info = np.iinfo(dsttype)
                 for val in converted_golden.flat:
-                    if np.isnan(val) or np.isinf(val):
+                    is_special = np.isnan(val) or np.isinf(val)
+                    if is_special:
                         # Handle infinity based on GPU/CPU behavior flag
-                        if USE_PYTORCH_GPU_BEHAVIOR and np.isinf(val) and val > 0:
-                            if np.issubdtype(dsttype, np.signedinteger):
+                        is_pos_inf_with_gpu = USE_PYTORCH_GPU_BEHAVIOR and np.isinf(val) and val > 0
+                        is_signed_int = np.issubdtype(dsttype, np.signedinteger)
+                        is_unsigned_int = np.issubdtype(dsttype, np.unsignedinteger)
+
+                        if is_pos_inf_with_gpu:
+                            if is_signed_int:
                                 # GPU behavior: +inf → -1 for signed integers
                                 int_val = -1
-                            elif np.issubdtype(dsttype, np.unsignedinteger):
+                            elif is_unsigned_int:
                                 # GPU behavior: +inf → max value for unsigned integers
-                                info = np.iinfo(dsttype)
                                 int_val = info.max
                             else:
                                 int_val = 0
@@ -385,6 +400,7 @@ if __name__ == "__main__":
         ("fp16_uint8", np.float16, np.uint8),
         # INT32 Source
         ("int32_fp32", np.int32, np.float32),
+        ("int32_fp16", np.int32, np.float16),
         ("int32_int16", np.int32, np.int16),
         ("int32_int64", np.int32, np.int64),
         # INT16 Source

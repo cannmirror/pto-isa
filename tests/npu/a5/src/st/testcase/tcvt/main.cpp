@@ -15,7 +15,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-// Wrapper types for FP8 testing - use int8_t storage but distinguish types
+// FP8 wrappers for testing
 struct fp8_e4m3_wrapper {
     int8_t value;
     operator int8_t() const
@@ -54,7 +54,6 @@ template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTC
           int kValidCols_ = kTCols_>
 void launchTCVT(D *dst, S *src, void *stream);
 
-// Saturation mode test launcher
 template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void launchTCVTSaturationTest(D *dstSaturated, D *dstTruncated, D *dstDefault, S *src, void *stream);
 
@@ -129,7 +128,6 @@ void test_tcvt()
     EXPECT_TRUE(ret);
 }
 
-// Macro to generate test cases for all shapes for a given type pair
 #define GENERATE_TCVT_TESTS(dst_type, src_type, type_name)       \
     TEST_F(TCVTTest, case_##type_name##_1x128)                   \
     {                                                            \
@@ -265,20 +263,16 @@ void test_tcvt_saturation()
     aclrtMemcpy(dstTruncHost, dstFileSize, dstTruncDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
     aclrtMemcpy(dstDefaultHost, dstFileSize, dstDefaultDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-    // Write output files IMMEDIATELY after getting results - ensures fresh data every run
     WriteFile(GetGoldenDir() + "/output_saturated.bin", dstSatHost, dstFileSize);
     WriteFile(GetGoldenDir() + "/output_truncated.bin", dstTruncHost, dstFileSize);
     WriteFile(GetGoldenDir() + "/output_default.bin", dstDefaultHost, dstFileSize);
 
-    // Compare truncated output (PyTorch only provides TRUNC mode golden data)
     std::vector<D> goldenTrunc(dstFileSize);
     std::vector<D> devTrunc(dstFileSize);
     ReadFile(GetGoldenDir() + "/golden_truncated.bin", dstFileSize, goldenTrunc.data(), dstFileSize);
     ReadFile(GetGoldenDir() + "/output_truncated.bin", dstFileSize, devTrunc.data(), dstFileSize);
     bool truncOk = ResultCmp<D>(goldenTrunc, devTrunc, 0.001f);
 
-    // Compare default output
-    // PyTorch only provides truncated mode golden data, so we compare against that
     std::string goldenDefaultFile = GetGoldenDir() + "/golden_truncated.bin";
 
     std::vector<D> goldenDefault(dstFileSize);
