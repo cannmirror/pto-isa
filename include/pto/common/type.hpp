@@ -218,6 +218,15 @@ enum class TileLayoutCustom : uint8_t
     ZZ,
     NONE,
 };
+namespace GlobalTensorDim {
+constexpr int DIM_0 = 0;
+constexpr int DIM_1 = 1;
+constexpr int DIM_2 = 2;
+constexpr int DIM_3 = 3;
+constexpr int DIM_4 = 4;
+constexpr int TOTAL_DIM = 5;
+} // namespace GlobalTensorDim
+
 } // namespace pto
 
 #if defined(__CPU_SIM)

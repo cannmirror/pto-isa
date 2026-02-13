@@ -43,7 +43,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include <string>
 #include <type_traits>
 #include "pto/cpu/tile_offsets.hpp"
-#include "pto_tile.hpp"
+#include "pto/common/type.hpp"
 
 template <typename GT>
 void printRawGT(GT &tensor, const std::string name = "", int elementWidth = 5, int maxR = INT32_MAX,

@@ -38,7 +38,7 @@ std::string GetGoldenDir()
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void LaunchTPrefetch(T *out, T *src, void *stream);
 
-template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols0_>
+template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_>
 void test_tprefetch()
 {
     size_t fileSize = kGRows_ * kGCols_ * sizeof(T);

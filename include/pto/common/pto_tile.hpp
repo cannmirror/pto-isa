@@ -43,14 +43,6 @@ enum class Layout
     FRACTAL_Z_3D,
     MAX,
 };
-namespace GlobalTensorDim {
-constexpr int DIM_0 = 0;
-constexpr int DIM_1 = 1;
-constexpr int DIM_2 = 2;
-constexpr int DIM_3 = 3;
-constexpr int DIM_4 = 4;
-constexpr int TOTAL_DIM = 5;
-} // namespace GlobalTensorDim
 
 constexpr int DYNAMIC = -1;
 

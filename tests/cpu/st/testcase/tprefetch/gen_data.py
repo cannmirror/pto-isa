@@ -48,7 +48,7 @@ def generate_case_name(param):
         np.int32: 'int32',
         np.int16: 'int16'
     }[param.dtype]
-    return f"TPREFETCHTest.case_{dtype_str}_{param.global_row}x{param.global_col}" + \ 
+    return f"TPREFETCHTest.case_{dtype_str}_{param.global_row}x{param.global_col}" + \
            f"_{param.tile_row}x{param.tile_col}_" + \
            f"{param.valid_row}x{param.valid_col}"
 
