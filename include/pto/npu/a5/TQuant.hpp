@@ -160,10 +160,15 @@ PTO_INTERNAL void ExtractB8ExponentAndScaling(__ubuf__ float *maxPtr, __ubuf__ u
         vsel(vb32_shared_exp, vb32_shared_exp, vb32_subnorm, preg_inf);
 
         vsts((vector_s32 &)vb32_shared_exp, ((__ubuf__ int32_t *)expPtr), i * elementsPerRepeat / 4, PK4_B32, preg_b32);
-        if constexpr (unroll)
-            vsts((vector_s32 &)vb32_scaling, (vector_s32 &)vb32_scaling, ((__ubuf__ int32_t *)scalingPtr),
-                 2 * i * elementsPerRepeat, INTLV_B32, preg_b32);
-        else
+        if constexpr (unroll) {
+            vector_s32 vb32_scaling_0, vb32_scaling_1;
+            vintlv(vb32_scaling_0, vb32_scaling_1, vb32_scaling, vb32_scaling);
+            vsts((vector_s32 &)vb32_scaling_0, ((__ubuf__ int32_t *)scalingPtr), 2 * i * elementsPerRepeat, NORM_B32,
+                 preg_b32);
+            vsts((vector_s32 &)vb32_scaling_1, ((__ubuf__ int32_t *)scalingPtr + 64), 2 * i * elementsPerRepeat,
+                 NORM_B32, preg_b32);
+
+        } else
             vsts((vector_s32 &)vb32_scaling, ((__ubuf__ int32_t *)scalingPtr), i * elementsPerRepeat, distValue,
                  preg_b32);
     }
@@ -304,38 +309,37 @@ __tf__ PTO_INTERNAL void TQuant_Int8Sym(typename TileDataOut::TileDType __out__ 
 }
 
 // TQuant: fp32 -> u8 conversion, Int8Asym
-template <typename TileDataOut, typename TileDataSrc, typename TileDataPara, typename TileDataOffset>
+template <typename TileDataOut, typename TileDataSrc, typename TileDataPara>
 __tf__ PTO_INTERNAL void TQuant_Int8Asym(typename TileDataOut::TileDType __out__ dst,
                                          typename TileDataSrc::TileDType __in__ src,
                                          typename TileDataPara::TileDType __in__ scale,
-                                         typename TileDataOffset::TileDType __in__ offset, unsigned validRows,
+                                         typename TileDataPara::TileDType __in__ offset, unsigned validRows,
                                          unsigned validCols)
 {
-    using T = typename TileDataSrc::DType;    // fp32
-    using U = typename TileDataOut::DType;    // uint8
-    using S = typename TileDataPara::DType;   // fp32
-    using O = typename TileDataOffset::DType; // uint8
+    using T = typename TileDataSrc::DType;  // fp32
+    using U = typename TileDataOut::DType;  // uint8
+    using S = typename TileDataPara::DType; // fp32
     __ubuf__ T *srcPtr = (__ubuf__ T *)__cce_get_tile_ptr(src);
     __ubuf__ U *dstPtr = (__ubuf__ U *)__cce_get_tile_ptr(dst);
     __ubuf__ S *scalePtr = (__ubuf__ S *)__cce_get_tile_ptr(scale);
-    __ubuf__ O *offsetPtr = (__ubuf__ O *)__cce_get_tile_ptr(offset);
+    __ubuf__ S *offsetPtr = (__ubuf__ S *)__cce_get_tile_ptr(offset);
     uint16_t repeatTimes = CeilDivision(validCols, ELE_CNT_B32);
     __VEC_SCOPE__
     {
-        RegTensor<float> vb32_scale, vb32_input;
+        RegTensor<float> vb32_scale, vb32_input, vb32_offset;
         RegTensor<half> vb16_output;
-        RegTensor<uint8_t> vb8_output, vb8_offset;
+        RegTensor<uint8_t> vb8_output;
         for (uint16_t row = 0; row < (uint16_t)validRows; ++row) {
             uint32_t sreg = validCols;
             for (uint16_t idx = 0; idx < repeatTimes; ++idx) {
                 MaskReg preg_b32 = CreatePredicate<float>(sreg);
-                vlds(vb32_scale, scalePtr, row, BRC_B32); // broadcast row scaling
-                vlds(vb8_offset, offsetPtr, row, BRC_B8); // broadcast row offset
+                vlds(vb32_scale, scalePtr, row, BRC_B32);   // broadcast row scaling
+                vlds(vb32_offset, offsetPtr, row, BRC_B32); // broadcast row offset
                 vlds(vb32_input, srcPtr, ELE_CNT_B32 * idx + row * TileDataSrc::Cols, NORM);
                 vmul(vb32_input, vb32_input, vb32_scale, preg_b32, MODE_ZEROING);
+                vadd(vb32_input, vb32_input, vb32_offset, preg_b32, MODE_ZEROING);
                 vcvt(vb16_output, vb32_input, preg_b32, ROUND_R, RS_ENABLE, PART_EVEN);
                 vcvt(vb8_output, vb16_output, preg_b32, ROUND_R, RS_ENABLE, PART_EVEN);
-                vadd(vb8_output, vb8_output, vb8_offset, preg_b32, MODE_ZEROING);
                 vsts(vb8_output, dstPtr, ELE_CNT_B32 * idx + row * TileDataOut::Cols, PK4_B32, preg_b32);
             }
         }
@@ -343,9 +347,8 @@ __tf__ PTO_INTERNAL void TQuant_Int8Asym(typename TileDataOut::TileDType __out__
 }
 
 // TQuant Interface for FP32/FP16/BF16->INT4/8/16
-template <QuantType quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataPara,
-          typename TileDataOffset = TileDataPara>
-PTO_INTERNAL void TQUANT_IMPL(TileDataOut &dst, TileDataSrc &src, TileDataPara &scale, TileDataOffset *offset = nullptr)
+template <QuantType quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataPara>
+PTO_INTERNAL void TQUANT_IMPL(TileDataOut &dst, TileDataSrc &src, TileDataPara &scale, TileDataPara *offset = nullptr)
 {
     using T = typename TileDataSrc::DType;
     static_assert(std::is_same<T, float32_t>::value, "Fix: Input has to be float 32");
@@ -358,8 +361,8 @@ PTO_INTERNAL void TQUANT_IMPL(TileDataOut &dst, TileDataSrc &src, TileDataPara &
     } else if constexpr (quant_type == QuantType::INT8_ASYM) {
         using U = typename TileDataOut::DType;
         static_assert(std::is_same<U, uint8_t>::value, "Fix: Quant INT8 asym: Out data type has to be uint8");
-        TQuant_Int8Asym<TileDataOut, TileDataSrc, TileDataPara, TileDataOffset>(
-            dst.data(), src.data(), scale.data(), offset->data(), src.GetValidRow(), src.GetValidCol());
+        TQuant_Int8Asym<TileDataOut, TileDataSrc, TileDataPara>(dst.data(), src.data(), scale.data(), offset->data(),
+                                                                src.GetValidRow(), src.GetValidCol());
     }
 }
 

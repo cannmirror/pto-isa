@@ -1399,7 +1399,7 @@ PTO_INST RecordEvent TFMOD(TileDataDst &dst, TileDataSrc0 &src0, TileDataSrc1 &s
 }
 
 #ifdef PTO_NPU_ARCH_A5
-template <QuantType quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataExp, typename TileDataMax,
+template <auto quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataExp, typename TileDataMax,
           typename... WaitEvents>
 PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataExp *exp, TileDataMax *max,
                             TileDataSrc *scaling, WaitEvents &... events)
@@ -1408,17 +1408,16 @@ PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataExp *exp
     TQUANT_IMPL<quant_type, TileDataOut, TileDataSrc, TileDataExp, TileDataMax>(dst, src, exp, max, scaling);
     return {};
 }
+#endif
 
-template <QuantType quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataPara,
-          typename TileDataOffset = TileDataPara, typename... WaitEvents>
-PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataPara &scale, TileDataOffset *offset = nullptr,
+template <auto quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataPara, typename... WaitEvents>
+PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataPara &scale, TileDataPara *offset = nullptr,
                             WaitEvents &... events)
 {
     TSYNC(events...);
-    TQUANT_IMPL<quant_type, TileDataOut, TileDataSrc, TileDataPara, TileDataOffset>(dst, src, scale, offset);
+    TQUANT_IMPL<quant_type, TileDataOut, TileDataSrc, TileDataPara>(dst, src, scale, offset);
     return {};
 }
-#endif
 
 template <typename GlobalSignalData, typename... WaitEvents>
 PTO_INST bool TTEST(GlobalSignalData &signalData, int32_t cmpValue, CmpMode cmp, WaitEvents &... events)
