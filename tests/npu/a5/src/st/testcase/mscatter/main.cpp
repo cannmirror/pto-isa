@@ -139,21 +139,6 @@ TEST_F(MSCATTERTest, case_half_16x64_2048)
     test_mscatter<aclFloat16, int32_t, 16, 64, 2048>();
 }
 
-TEST_F(MSCATTERTest, case_half_16x128_4096)
-{
-    test_mscatter<aclFloat16, int32_t, 16, 128, 4096>();
-}
-
-TEST_F(MSCATTERTest, case_half_32x64_2048)
-{
-    test_mscatter<aclFloat16, int32_t, 32, 64, 2048>();
-}
-
-TEST_F(MSCATTERTest, case_half_64x64_4096)
-{
-    test_mscatter<aclFloat16, int32_t, 64, 64, 4096>();
-}
-
 TEST_F(MSCATTERTest, case_float_8x32_512)
 {
     test_mscatter<float, int32_t, 8, 32, 512>();

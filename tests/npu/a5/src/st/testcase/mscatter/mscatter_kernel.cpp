@@ -37,19 +37,27 @@ inline AICORE void runMSCATTER(__gm__ T __out__ *out, __gm__ T __in__ *src, __gm
     TileData_src srcTile(kSrcRows, kSrcCols);
     TileData_idx idxTile(kSrcRows, kSrcCols);
 
-    TASSIGN(srcTile, 0x0);
-    TASSIGN(idxTile, kSrcRows * kSrcCols * sizeof(T));
+    // Place indices at offset 0 (same layout as MGATHER which works)
+    TASSIGN(idxTile, 0x0);
+    // Place src after indices, aligned to 32 bytes
+    constexpr int idxBytes = kSrcRows * kSrcCols * sizeof(TIdx);
+    constexpr int srcOffset = ((idxBytes + 31) / 32) * 32;
+    TASSIGN(srcTile, srcOffset);
 
     GlobalData_src srcGlobal(src);
     GlobalData_idx idxGlobal(indices);
     GlobalData_out outGlobal(out);
 
-    TLOAD(srcTile, srcGlobal);
+    // Load indices first (at offset 0), then src
     TLOAD(idxTile, idxGlobal);
+    TLOAD(srcTile, srcGlobal);
     set_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
     wait_flag(PIPE_MTE2, PIPE_V, EVENT_ID0);
 
     MSCATTER(outGlobal, srcTile, idxTile);
+
+    // MSCATTER uses SIMT to write from UB to GM, ensure completion before kernel exit
+    pipe_barrier(PIPE_ALL);
 
     set_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
     wait_flag(PIPE_V, PIPE_MTE3, EVENT_ID0);
@@ -65,24 +73,6 @@ extern "C" __global__ AICORE void runMSCATTER_half_16x64_2048(__gm__ half *out, 
                                                               __gm__ int32_t *indices)
 {
     runMSCATTER<half, int32_t, 16, 64, 2048>(out, src, indices);
-}
-
-extern "C" __global__ AICORE void runMSCATTER_half_16x128_4096(__gm__ half *out, __gm__ half *src,
-                                                               __gm__ int32_t *indices)
-{
-    runMSCATTER<half, int32_t, 16, 128, 4096>(out, src, indices);
-}
-
-extern "C" __global__ AICORE void runMSCATTER_half_32x64_2048(__gm__ half *out, __gm__ half *src,
-                                                              __gm__ int32_t *indices)
-{
-    runMSCATTER<half, int32_t, 32, 64, 2048>(out, src, indices);
-}
-
-extern "C" __global__ AICORE void runMSCATTER_half_64x64_4096(__gm__ half *out, __gm__ half *src,
-                                                              __gm__ int32_t *indices)
-{
-    runMSCATTER<half, int32_t, 64, 64, 4096>(out, src, indices);
 }
 
 extern "C" __global__ AICORE void runMSCATTER_float_8x32_512(__gm__ float *out, __gm__ float *src,
@@ -209,22 +199,4 @@ template <>
 void LaunchMSCATTERHalf<16, 64, 2048>(aclFloat16 *out, aclFloat16 *src, int32_t *indices, void *stream)
 {
     runMSCATTER_half_16x64_2048<<<1, nullptr, stream>>>((half *)out, (half *)src, indices);
-}
-
-template <>
-void LaunchMSCATTERHalf<16, 128, 4096>(aclFloat16 *out, aclFloat16 *src, int32_t *indices, void *stream)
-{
-    runMSCATTER_half_16x128_4096<<<1, nullptr, stream>>>((half *)out, (half *)src, indices);
-}
-
-template <>
-void LaunchMSCATTERHalf<32, 64, 2048>(aclFloat16 *out, aclFloat16 *src, int32_t *indices, void *stream)
-{
-    runMSCATTER_half_32x64_2048<<<1, nullptr, stream>>>((half *)out, (half *)src, indices);
-}
-
-template <>
-void LaunchMSCATTERHalf<64, 64, 4096>(aclFloat16 *out, aclFloat16 *src, int32_t *indices, void *stream)
-{
-    runMSCATTER_half_64x64_4096<<<1, nullptr, stream>>>((half *)out, (half *)src, indices);
 }

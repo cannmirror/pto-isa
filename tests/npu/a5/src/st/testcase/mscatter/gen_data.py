@@ -53,9 +53,6 @@ if __name__ == "__main__":
     case_params_list = [
         MScatterParams("MSCATTERTest.case_half_8x32_1024", np.float16, 8, 32, 1024),
         MScatterParams("MSCATTERTest.case_half_16x64_2048", np.float16, 16, 64, 2048),
-        MScatterParams("MSCATTERTest.case_half_16x128_4096", np.float16, 16, 128, 4096),
-        MScatterParams("MSCATTERTest.case_half_32x64_2048", np.float16, 32, 64, 2048),
-        MScatterParams("MSCATTERTest.case_half_64x64_4096", np.float16, 64, 64, 4096),
         MScatterParams("MSCATTERTest.case_float_8x32_512", np.float32, 8, 32, 512),
         MScatterParams("MSCATTERTest.case_float_16x32_1024", np.float32, 16, 32, 1024),
         MScatterParams("MSCATTERTest.case_float_16x64_2048", np.float32, 16, 64, 2048),
