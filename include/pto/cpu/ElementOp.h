@@ -86,11 +86,21 @@ struct ElementOpCal<DType, ElementOp::OP_ADD> {
     {
         dst = src0 + src1;
     }
+
+    static void apply(DType &dst, const DType &src0, const DType &src1)
+    {
+        dst = src0 + src1;
+    }
 };
 
 template <typename DType>
 struct ElementOpCal<DType, ElementOp::OP_SUB> {
     static void apply(DType &dst, DType &src0, DType &src1, size_t)
+    {
+        dst = src0 - src1;
+    }
+
+    static void apply(DType &dst, const DType &src0, const DType &src1)
     {
         dst = src0 - src1;
     }
@@ -102,11 +112,25 @@ struct ElementOpCal<DType, ElementOp::OP_MUL> {
     {
         dst = src0 * src1;
     }
+
+    static void apply(DType &dst, const DType &src0, const DType &src1)
+    {
+        dst = src0 * src1;
+    }
 };
 
 template <typename DType>
 struct ElementOpCal<DType, ElementOp::OP_DIV> {
     static void apply(DType &dst, DType &src0, DType &src1, size_t)
+    {
+        if (src1 != static_cast<DType>(0)) {
+            dst = src0 / src1;
+        } else {
+            PTO_ASSERT(false, "illegal src is zero");
+        }
+    }
+
+    static void apply(DType &dst, const DType &src0, const DType &src1)
     {
         if (src1 != static_cast<DType>(0)) {
             dst = src0 / src1;
