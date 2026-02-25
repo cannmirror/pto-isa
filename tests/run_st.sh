@@ -304,6 +304,7 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mgather -g MGATHERTest.case_half_16x128_8x64
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mscatter -g MSCATTERTest.case_uint8_16x64_2048
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tquant -g TQUANTTest.case_mxfp8_fp32_128x128_nd
+    python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tquant -g TQUANTTest.case_mxfp8_fp32_128x128_nz
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tquant -g TQUANTTest.case_int8_sym_fp32_128x128_nd
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tquant -g TQUANTTest.case_int8_asym_fp32_128x128_nd
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t ttri -g TTRITest.case_float_128x128_lower_diag_n3

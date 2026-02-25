@@ -1418,6 +1418,17 @@ PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataExp *exp
     TQUANT_IMPL<quant_type, TileDataOut, TileDataSrc, TileDataExp, TileDataMax>(dst, src, exp, max, scaling);
     return {};
 }
+
+template <auto quant_type, auto store_mode, typename TileDataOut, typename TileDataSrc, typename TileDataExp,
+          typename TileDataMax, typename TileDataIdx, typename... WaitEvents>
+PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataExp *exp, TileDataMax *max,
+                            TileDataSrc *scaling, TileDataExp *exp_zz, TileDataIdx *vgather_idx, WaitEvents &... events)
+{
+    TSYNC(events...);
+    TQUANT_IMPL<quant_type, store_mode, TileDataOut, TileDataSrc, TileDataExp, TileDataMax, TileDataIdx>(
+        dst, src, exp, max, scaling, exp_zz, vgather_idx);
+    return {};
+}
 #endif
 
 template <auto quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataPara, typename... WaitEvents>
