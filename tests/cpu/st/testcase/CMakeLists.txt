@@ -101,6 +101,7 @@ tmins
 trowmin
 tcolmin
 tcolexpand
+tcolexpandop
 tscatter
 tbroadcast
 mgather
