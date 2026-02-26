@@ -264,6 +264,8 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/cpu/TGet.hpp"
 #include "pto/cpu/TWait.hpp"
 #include "pto/cpu/TReduce.hpp"
+#include "pto/cpu/TPush.hpp"
+#include "pto/cpu/TPop.hpp"
 #endif
 
 #endif

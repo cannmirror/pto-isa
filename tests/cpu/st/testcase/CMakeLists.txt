@@ -116,6 +116,7 @@ tnotify
 twait
 tloadconv
 treduce
+tpushpop
 )
 
 foreach(TESTCASE ${ALL_TESTCASES})
