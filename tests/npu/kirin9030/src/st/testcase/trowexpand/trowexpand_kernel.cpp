@@ -8,17 +8,19 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
 namespace TRowExpandTest {
 
+#ifdef __CCE_AICORE__
 template <int rows, int cols>
 using StrideDim2 = pto::Stride<rows * cols, rows * cols, rows * cols, cols, 1>;
+#endif
 template <typename T, uint32_t rows, uint32_t srcCols, uint32_t dstValidCols, uint32_t dstCols>
-__global__ AICORE void runROWEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src)
+__global__ AICORE void runROWEXPAND(__gm__ T *out, __gm__ T *src)
 {
     using SrcShapeDim5 = Shape<1, 1, 1, rows, 1>;
     using DstShapeDim5 = Shape<1, 1, 1, rows, dstValidCols>;

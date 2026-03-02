@@ -8,8 +8,8 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#ifndef LAYOUT_HPP
-#define LAYOUT_HPP
+#ifndef PTO_MEMORY_HPP
+#define PTO_MEMORY_HPP
 
 #include <stdint.h>
 #include <type_traits>

@@ -67,16 +67,14 @@ void tsort32_test()
     ReadFile(GetGoldenDir() + "/input_arr.bin", srcByteSize, srcHost, srcByteSize);
     ReadFile(GetGoldenDir() + "/input_idx.bin", idxByteSize, idxHost, idxByteSize);
     ReadFile(GetGoldenDir() + "/input_tmp.bin", tmpByteSize, tmpHost, tmpByteSize);
+    aclrtMemset(dstHost, dstByteSize, 0, dstByteSize);
 
+    aclrtMemcpy(dstDevice, dstByteSize, dstHost, dstByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(srcDevice, srcByteSize, srcHost, srcByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(idxDevice, idxByteSize, idxHost, idxByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(tmpDevice, tmpByteSize, tmpHost, tmpByteSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-    if constexpr (isHalf) {
-        launchTSORT32Half<tRows, tCols, vRows, vCols, colsAlign>(dstDevice, srcDevice, idxDevice, tmpDevice, stream);
-    } else {
-        launchTSORT32<T, tRows, tCols, vRows, vCols, colsAlign>(dstDevice, srcDevice, idxDevice, tmpDevice, stream);
-    }
+    launchTSORT32Half<tRows, tCols, vRows, vCols, colsAlign>(dstDevice, srcDevice, idxDevice, tmpDevice, stream);
 
     aclrtSynchronizeStream(stream);
     aclrtMemcpy(dstHost, dstByteSize, dstDevice, dstByteSize, ACL_MEMCPY_DEVICE_TO_HOST);

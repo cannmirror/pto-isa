@@ -8,6 +8,7 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include "test_common.h"
 #include "acl/acl.h"
 #include <gtest/gtest.h>
@@ -82,7 +83,9 @@ void test_ttrans()
     aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     ReadFile(GetGoldenDir() + "/input.bin", srcFileSize, srcHost, srcFileSize);
+    aclrtMemset(dstHost, dstFileSize, 0, dstFileSize);
 
+    aclrtMemcpy(dstDevice, dstFileSize, dstHost, dstFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     if constexpr (isHalf) {
         LaunchTTRANSHalf<dstTRows, dstTCols, srcTRows, srcTCols, vRows, vCols>(dstDevice, srcDevice, stream);

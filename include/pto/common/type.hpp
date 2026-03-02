@@ -105,6 +105,29 @@ enum class MaskPattern : uint8_t
     P1111 = 7, // 7: 11111111...1111 # 每个repeat内取全部元素
 };
 
+enum class Layout
+{
+    ND, // ND RowMajor
+    DN, // DN ColMajor
+    NZ, // NZ for cube
+    SCALE,
+    MX_A_ND,
+    MX_A_DN,
+    MX_A_ZZ,
+    MX_B_ND,
+    MX_B_DN,
+    MX_B_NN,
+    NC1HWC0,
+    NCHW,
+    NHWC,
+    NDC1HWC0,
+    NCDHW,
+    FRACTAL_Z,
+    FRACTAL_Z_S16S8,
+    FRACTAL_Z_3D,
+    MAX,
+};
+
 enum class CmpMode : uint8_t
 {
     EQ = 0,

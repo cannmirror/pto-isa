@@ -57,7 +57,9 @@ void test_tstore()
     aclrtMalloc((void **)&srcDevice, dataSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     ReadFile(GetGoldenDir() + "/input.bin", dataSize, srcHost, dataSize);
+    aclrtMemset(dstHost, dataSize, 0, dataSize);
 
+    aclrtMemcpy(dstDevice, dataSize, dstHost, dataSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(srcDevice, dataSize, srcHost, dataSize, ACL_MEMCPY_HOST_TO_DEVICE);
     LaunchTStore<format, DataType, gShape0, gShape1, gShape2, gShape3, gShape4, gWholeShape0, gWholeShape1,
                  gWholeShape2, gWholeShape3, gWholeShape4>(dstDevice, srcDevice, stream);

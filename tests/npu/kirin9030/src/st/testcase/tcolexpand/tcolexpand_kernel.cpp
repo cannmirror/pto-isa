@@ -8,15 +8,15 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
 namespace TColExpandTest {
 
 template <typename T, uint32_t srcRows, uint32_t dstRows, uint32_t cols, uint32_t validCols>
-__global__ AICORE void runCOLEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src)
+__global__ AICORE void runCOLEXPAND(__gm__ T *out, __gm__ T *src)
 {
     using DynShapeDim5 = Shape<1, 1, 1, srcRows, cols>;
     using DynStridDim5 = pto::Stride<1, 1, 1, cols, 1>;

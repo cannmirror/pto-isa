@@ -76,7 +76,9 @@ void MultiSort(size_t outputFileSize, size_t inputFileSize, std::vector<DataType
 
     ReadFile(GetGoldenDir() + "/input0.bin", inputFileSize, src0Host, inputFileSize);
     ReadFile(GetGoldenDir() + "/input1.bin", inputFileSize, src1Host, inputFileSize);
+    aclrtMemset(dstHost, outputFileSize, 0, outputFileSize);
 
+    aclrtMemcpy(dstDevice, outputFileSize, dstHost, outputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src0Device, inputFileSize, src0Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, inputFileSize, src1Host, inputFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
 

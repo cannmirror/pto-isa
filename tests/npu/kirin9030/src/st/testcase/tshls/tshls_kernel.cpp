@@ -9,13 +9,12 @@ See LICENSE in the root of the software repository for the full text of the Lice
 */
 
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
 
 template <typename T, int dstTileH, int dstTileW, int srcTileH, int srcTileW, int vRows, int vCols>
-__global__ AICORE void runTShlS(__gm__ T __out__ *out, __gm__ T __in__ *src0, T scalar)
+__global__ AICORE void runTShlS(__gm__ T *out, __gm__ T *src0, T scalar)
 {
     using DynShape = pto::Shape<-1, -1, -1, -1, -1>;
     using DynStride = pto::Stride<-1, -1, -1, -1, -1>;

@@ -8,8 +8,8 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
@@ -18,8 +18,7 @@ using namespace pto;
 #define PTO_CEIL(x, y) ((((x) + (y)-1) / (y)) * (y))
 
 template <typename T, int Rows, int Cols, int ValidRows, int ValidCols>
-__global__ AICORE void runTSel(__gm__ T __out__ *out, __gm__ uint8_t __in__ *mask, __gm__ T __in__ *src0,
-                               __gm__ T __in__ *src1)
+__global__ AICORE void runTSel(__gm__ T *out, __gm__ uint8_t *mask, __gm__ T *src0, __gm__ T *src1)
 {
     constexpr unsigned maskRow = Rows;
     constexpr unsigned maskCol = ((((Cols + 7) / 8) + 31) / 32) * 32;

@@ -8,15 +8,15 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
 namespace TRowExpandTest {
 
 template <typename T, uint32_t dstRows, uint32_t dstCols>
-__global__ AICORE void runROWEXPAND(__gm__ T __out__ *out, __gm__ T __in__ *src)
+__global__ AICORE void runROWEXPAND(__gm__ T *out, __gm__ T *src)
 {
     using SrcDynShapeDim5 = Shape<1, 1, 1, dstRows, 1>;
     using SrcDynStridDim5 = pto::Stride<1, 1, dstRows, 1, 1>;

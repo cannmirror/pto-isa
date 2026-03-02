@@ -94,7 +94,7 @@ def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description="执行st脚本")
     parser.add_argument("-r", "--run-mode", required=True, help="运行模式（如 sim or npu)")
-    parser.add_argument("-v", "--soc-version", required=True, help="SOC版本 只支持 a3 or a5")
+    parser.add_argument("-v", "--soc-version", required=True, help="SOC版本 只支持 a3 / a5 / kirinX90 / kirin9030")
     parser.add_argument("-t", "--testcase", required=True, help="需要执行的用例")
     parser.add_argument("-g", "--gtest_filter", required=False, help="可选 需要执行的具体case名")
 
@@ -102,6 +102,10 @@ def main():
     default_soc_version = "Ascend910B1"
     if args.soc_version == "a5":
         default_soc_version = "Ascend910_9599"
+    elif args.soc_version == "kirinX90":
+        default_soc_version = "KirinX90"
+    elif args.soc_version == "kirin9030":
+        default_soc_version = "Kirin9030"
     default_cases = "all"
     if args.gtest_filter != None:
         default_cases = args.gtest_filter
@@ -110,12 +114,13 @@ def main():
     try:
         # 获取当前脚本（run_st.py）的绝对路径
         script_path = os.path.abspath(__file__)
+        target_dir = os.path.dirname(os.path.dirname(script_path))
 
         if args.soc_version == "a3":
-            target_dir = os.path.dirname(os.path.dirname(script_path))
             target_dir = target_dir + "/npu/a2a3/src/st"
+        elif args.soc_version == "kirinX90" or args.soc_version == "kirin9030": # kirin9030 与 kirinX90 共享代码
+            target_dir = target_dir + "/npu/kirin9030/src/st"
         else : # a5
-            target_dir = os.path.dirname(os.path.dirname(script_path))
             target_dir = target_dir + "/npu/a5/src/st"
 
         print(f"target_dir: {target_dir}")

@@ -21,29 +21,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 namespace pto {
 
-enum class Layout
-{
-    ND, // ND RowMajor
-    DN, // DN ColMajor
-    NZ, // NZ for cube
-    SCALE,
-    MX_A_ND,
-    MX_A_DN,
-    MX_A_ZZ,
-    MX_B_ND,
-    MX_B_DN,
-    MX_B_NN,
-    NC1HWC0,
-    NCHW,
-    NHWC,
-    NDC1HWC0,
-    NCDHW,
-    FRACTAL_Z,
-    FRACTAL_Z_S16S8,
-    FRACTAL_Z_3D,
-    MAX,
-};
-
 constexpr int DYNAMIC = -1;
 
 template <int64_t N1 = DYNAMIC, int64_t N2 = DYNAMIC, int64_t N3 = DYNAMIC, int64_t N4 = DYNAMIC, int64_t N5 = DYNAMIC>

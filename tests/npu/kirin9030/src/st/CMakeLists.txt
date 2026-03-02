@@ -69,8 +69,12 @@ add_link_options(
     -Wl,-z,relro
     -Wl,-z,now
 )
+if (SOC_VERSION STREQUAL "Kirin9030")
+    set(CCE_AICORE_ARCH dav-l311)
+elseif(SOC_VERSION STREQUAL "KirinX90")
+    set(CCE_AICORE_ARCH dav-l300)
+endif()
 
-set(CCE_AICORE_ARCH dav-l311)
 if(RUN_MODE STREQUAL "npu")
     if(NOT DEFINED ENV{NATIVE})
         message(FATAL_ERROR "Cannot find NATIVE, please set the Environment Variable.")
@@ -85,7 +89,6 @@ if(RUN_MODE STREQUAL "npu")
     endif()
     set(CMAKE_CCE_COMPILE_OPTIONS
         -xcce
-        -DPTO_NPU_ARCH_KIRIN9030
         -cce-kernel-launch=aclrtLaunch
         --target=aarch64-linux-ohos
         --sysroot=${NATIVE}/sysroot
@@ -103,7 +106,6 @@ if(RUN_MODE STREQUAL "npu")
 else()
     set(CMAKE_CCE_COMPILE_OPTIONS
     -xcce
-    -DPTO_NPU_ARCH_KIRIN9030
     "SHELL:-mllvm -cce-aicore-function-stack-size=0x4000"
     "SHELL:-mllvm -cce-aicore-addr-transform"
     )

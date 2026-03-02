@@ -15,6 +15,13 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #pragma once
 
 namespace pto {
+template <typename T>
+struct LoadTypeBySize {
+    using type = std::conditional_t<sizeof(T) == 1, uint8_t, std::conditional_t<sizeof(T) == 2, uint16_t, uint32_t>>;
+};
+template <typename T>
+using LoadTypeBySize_t = typename LoadTypeBySize<T>::type;
+
 PTO_INTERNAL void SetContinuousMask(unsigned n)
 {
     set_vector_mask(

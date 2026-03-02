@@ -12,6 +12,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #define PTO_INST_HPP
 
 #include <pto/common/type.hpp>
+#include <pto/common/memory.hpp>
 #ifdef __CPU_SIM
 #include "pto/common/cpu_stub.hpp"
 #endif

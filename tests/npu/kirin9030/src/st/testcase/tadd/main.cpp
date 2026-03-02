@@ -8,9 +8,10 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
+#include <gtest/gtest.h>
 #include "test_common.h"
 #include "acl/acl.h"
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace PtoTestCommon;
@@ -65,7 +66,9 @@ void test_tadd()
 
     ReadFile(GetGoldenDir() + "/input1.bin", fileSizeSrc0, src0Host, fileSizeSrc0);
     ReadFile(GetGoldenDir() + "/input2.bin", fileSizeSrc1, src1Host, fileSizeSrc1);
+    aclrtMemset(dstHost, fileSizeDst, 0, fileSizeDst);
 
+    aclrtMemcpy(dstDevice, fileSizeDst, dstHost, fileSizeDst, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src0Device, fileSizeSrc0, src0Host, fileSizeSrc0, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, fileSizeSrc1, src1Host, fileSizeSrc1, ACL_MEMCPY_HOST_TO_DEVICE);
     if constexpr (std::is_same<T, aclFloat16>::value) {

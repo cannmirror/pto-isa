@@ -15,41 +15,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 using namespace std;
 using namespace PtoTestCommon;
 
-// Wrapper types for FP8 testing - use int8_t storage but distinguish types
-struct fp8_e4m3_wrapper {
-    int8_t value;
-    operator int8_t() const
-    {
-        return value;
-    }
-    operator float() const
-    {
-        return static_cast<float>(value);
-    }
-};
-struct fp8_e5m2_wrapper {
-    int8_t value;
-    operator int8_t() const
-    {
-        return value;
-    }
-    operator float() const
-    {
-        return static_cast<float>(value);
-    }
-};
-struct hifloat8_wrapper {
-    int8_t value;
-    operator int8_t() const
-    {
-        return value;
-    }
-    operator float() const
-    {
-        return static_cast<float>(value);
-    }
-};
-
 template <typename D, typename S, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int kValidRows_ = kTRows_,
           int kValidCols_ = kTCols_>
 void launchTCVT(D *dst, S *src, void *stream);
@@ -96,7 +61,9 @@ void test_tcvt()
     aclrtMalloc((void **)&srcDevice, srcFileSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
     ReadFile(GetGoldenDir() + "/x1_gm.bin", srcFileSize, srcHost, srcFileSize);
+    aclrtMemset(dstHost, dstFileSize, 0, dstFileSize);
 
+    aclrtMemcpy(dstDevice, dstFileSize, dstHost, dstFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(srcDevice, srcFileSize, srcHost, srcFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     launchTCVT<D, S, kGRows_, kGCols_, kTRows_, kTCols_, kValidRows_, kValidCols_>(dstDevice, srcDevice, stream);
 

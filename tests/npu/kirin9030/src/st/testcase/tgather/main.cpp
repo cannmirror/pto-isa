@@ -70,7 +70,9 @@ TEST_F(TGATHERTest, case1_float)
 
     ReadFile(GetGoldenDir() + "/src0.bin", src0FileSize, src0Host, src0FileSize);
     ReadFile(GetGoldenDir() + "/src1.bin", src1FileSize, src1Host, src1FileSize);
+    aclrtMemset(dstHost, dstFileSize, 0, dstFileSize);
 
+    aclrtMemcpy(dstDevice, dstFileSize, dstHost, dstFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src0Device, src0FileSize, src0Host, src0FileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, src1FileSize, src1Host, src1FileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     launchTGATHER_demo_float(dstDevice, src0Device, src1Device, stream);

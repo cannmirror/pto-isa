@@ -8,8 +8,8 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
+#include <type_traits>
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 #include "acl/acl.h"
 
 using namespace pto;
@@ -17,7 +17,7 @@ using namespace pto;
 #define PTO_DIV_ROUNDUP(x, y) (((x) + (y)-1) / (y))
 
 template <typename T, int validRows, int validCols, int upperOrLower, int diagonal>
-__global__ AICORE void runTTri(__gm__ T __out__ *out)
+__global__ AICORE void runTTri(__gm__ T *out)
 {
     constexpr uint16_t alignedCol = PTO_DIV_ROUNDUP(validCols, BLOCK_BYTE_SIZE) * BLOCK_BYTE_SIZE;
 

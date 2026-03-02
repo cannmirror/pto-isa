@@ -8,10 +8,9 @@ INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A
 See LICENSE in the root of the software repository for the full text of the License.
 */
 
-#include "test_common.h"
-#include "acl/acl.h"
+#include <type_traits>
 #include <gtest/gtest.h>
-
+#include "test_common.h"
 #include "acl/acl.h"
 
 using namespace std;

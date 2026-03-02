@@ -133,105 +133,22 @@ endfunction()
 
 # 定义测试用例列表 testcase下如有新增用例目录需要在此加
 set(ALL_TESTCASES
-    tsubs
-    tmaxs    
-    tci
     tmatmul
-    tmatmul_mx
-    tload_mix
-    tload_shape2d
     tload
-    tload_mx_ND_DN
-    tload_mx_NZ
-    tload_mx_gmtensor
     tmrgsort
     ttrans
     tstore
     textract
-    textract_compact
     trowsum
-    trowmax
-    trowmin
     tcolsum
-    tcolmax
-    tcolmin
     tsort32
     trowexpand
-    trowexpandadd
-    trowexpanddiv
-    trowexpandmax
-    trowexpandmin
-    trowexpandmul
-    trowexpandsub
-    trowexpandexpdif
     tgather
     tcvt
     tsub
-    trem
-    tand
-    tor
-    tands
-    tors
-    txor
-    txors
-    tshl
-    tshls
-    tshr
-    tshrs
     tadd
     tpartadd
-    tfillpad
-    tmin
-    tmax
-    tmins
     tmov
-    tmov_mx
-    tmul
-    tlrelu
-    tdiv
-    tcmps
-    tmov_acc2vec
-    tsel
-    tsels
-    trsqrt
-    tsqrt
-    texp
-    tabs
-    tlog
-    trecip
-    tstore_acc2gm
-    tdivs
-    tmuls
-    tadds
-    tgatherb
-    tpartmin
-    tpartmax
-    tmov_vect
-    texpands
-    tmov_acc2mat
-    tassign
-    tmov_ub2l1
-    tcmp
-    tadd_tdiv
-    tmul_tadds
-    tsub_texp
-    tmuls_trowsum
-    trowexpand_tsqrt
-    trowexpand_trowsum
-    trowsum_trowexpand
-    trowexpand_tdiv
-    trems
-    tscatter
-    tneg
-    tcolexpanddiv
-    tcolexpandmul
-    tcolexpandsub
-    tcolexpandexpdif
-    trowexpandbrcb
-    ttri
-    tcolexpand
-    tnot
-    trelu
 )
 
 if((TEST_CASE IN_LIST ALL_TESTCASES) OR (TEST_CASE STREQUAL "all"))

@@ -13,6 +13,8 @@ set -e
 
 ENABLE_A3=false
 ENABLE_A5=false
+ENABLE_KIRIN9030=false
+ENABLE_KIRINX90=false
 ENABLE_SIM=false
 ENABLE_NPU=false
 RUN_TYPE=sim
@@ -25,6 +27,10 @@ elif [ "$1" = "a5" ]; then
 elif [ "$1" = "a3_a5" ]; then
   ENABLE_A3=true
   ENABLE_A5=true
+elif [ "$1" = "kirin9030" ]; then
+  ENABLE_KIRIN9030=true
+elif [ "$1" = "kirinX90" ]; then
+  ENABLE_KIRINX90=true
 fi
 
 if [ "$2" = "sim" ]; then
@@ -412,4 +418,24 @@ if [ "$ENABLE_A5" = "true" ]; then
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t mscatter
     python3 tests/script/$RUN_MODE -r $RUN_TYPE -v a5 -t tquant
   fi
+fi
+
+if [ "$ENABLE_KIRIN9030" = "true" ]; then
+  python3 tests/script/build_st.py -r $RUN_TYPE -v kirin9030 -t all
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t textract
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tmov
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tadd
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tcolsum
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tpartadd
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t trowsum
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tsort32
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tcvt
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tmrgsort
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tgather
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tsub
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tmatmul
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tload
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t ttrans
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t tstore
+  python3 tests/script/$RUN_MODE -r $RUN_TYPE -v kirin9030 -t trowexpand
 fi

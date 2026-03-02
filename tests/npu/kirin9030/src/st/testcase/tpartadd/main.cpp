@@ -60,7 +60,9 @@ void test_tpartadd()
 
     ReadFile(GetGoldenDir() + "/input1.bin", src0FileSize, src0Host, src0FileSize);
     ReadFile(GetGoldenDir() + "/input2.bin", src1FileSize, src1Host, src1FileSize);
+    aclrtMemset(dstHost, dstFileSize, 0, dstFileSize);
 
+    aclrtMemcpy(dstDevice, dstFileSize, dstHost, dstFileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src0Device, src0FileSize, src0Host, src0FileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     aclrtMemcpy(src1Device, src1FileSize, src1Host, src1FileSize, ACL_MEMCPY_HOST_TO_DEVICE);
     LaunchTPartAdd<T, dstVR, dstVC, src0VR, src0VC, src1VR, src1VC>(dstDevice, src0Device, src1Device, stream);

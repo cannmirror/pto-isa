@@ -9,12 +9,11 @@ See LICENSE in the root of the software repository for the full text of the Lice
 */
 
 #include <pto/pto-inst.hpp>
-#include <pto/common/constants.hpp>
 
 using namespace pto;
 
 template <typename T, int kGRows_, int kGCols_, int kTRows_, int kTCols_, int reverse>
-__global__ AICORE void runTci(__gm__ T __out__ *out, T S)
+__global__ AICORE void runTci(__gm__ T *out, T S)
 {
     // 1. 定义两个类型
     using DynShapeDim5 = Shape<1, 1, 1, kGRows_, kGCols_>;
