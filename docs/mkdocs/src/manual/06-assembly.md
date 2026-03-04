@@ -5,8 +5,8 @@
 This chapter defines the Virtual ISA contract of PTO-AS as the textual form of PTO programs.
 The normative grammar remains:
 
-- `docs/grammar/PTO-AS.md`
-- `docs/grammar/PTO-AS.bnf`
+- `docs/assembly/PTO-AS.md`
+- `docs/assembly/PTO-AS.bnf`
 
 ## 6.2 Core form
 

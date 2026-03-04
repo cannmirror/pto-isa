@@ -40,7 +40,7 @@ Recommended levels:
 - **Level 0 (parse/shape)**: structural toolchain correctness only.
 - **Level 1 (family legality)**: documented family-level legality and diagnostics.
 - **Level 2 (instruction semantic)**: per-op semantics validated on representative suites.
-- **Level 3 (cross-layer stability)**: semantic, ordering, and diagnostics stability across IR/bytecode/backend transitions.
+- **Level 3 (cross-layer stability)**: semantic, ordering, and diagnostics stability across AS/bytecode/backend transitions.
 
 A backend SHOULD publish the highest validated level and known gaps.
 
@@ -51,7 +51,7 @@ A profile conformance suite SHOULD include:
 - legal/illegal tuple tests by instruction family
 - synchronization and memory-ordering scenarios
 - precision/mode interaction tests (including mixed precision paths)
-- round-trip toolchain tests (text/IR/bytecode)
+- round-trip toolchain tests (text/AS/bytecode)
 - deterministic diagnostics snapshots
 
 ## 12.7 Change management

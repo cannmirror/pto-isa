@@ -1,4 +1,4 @@
-# TSHR
+﻿# TSHR
 
 
 ## Tile Operation Diagram
@@ -17,7 +17,7 @@ $$ \mathrm{dst}_{i,j} = \mathrm{src0}_{i,j} \gg \mathrm{src1}_{i,j} $$
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

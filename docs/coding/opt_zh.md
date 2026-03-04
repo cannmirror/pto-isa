@@ -10,7 +10,7 @@
 需要端到端、示例驱动的深度讲解可参考（中文）：
 
 - GEMM：[`kernels/manual/a2a3/gemm_performance/README_zh.md`](../../kernels/manual/a2a3/gemm_performance/README_zh.md)
-- Flash Attention：[`kernels/manual/a2a3/flash_atten/README_zh.md`](../../kernels/manual/a2a3/flash_atten/README_zh.md)
+- Flash Attention：[`kernels/manual/common/flash_atten/README_zh.md`](../../kernels/manual/common/flash_atten/README_zh.md)
 
 ## 1. 性能模型：按阶段思考
 
@@ -125,8 +125,8 @@ Tiling 是一阶调优旋钮：
   - [`kernels/manual/a2a3/gemm_performance/README_zh.md`](../../kernels/manual/a2a3/gemm_performance/README_zh.md)
   - Kernel code：`kernels/manual/a2a3/gemm_performance/gemm_performance_kernel.cpp`
 - Flash Attention（分阶段 softmax、tiled QK/PV、逐阶段调优）：
-  - [`kernels/manual/a2a3/flash_atten/README_zh.md`](../../kernels/manual/a2a3/flash_atten/README_zh.md)
-  - Kernel code：`kernels/manual/a2a3/flash_atten/fa_performance_kernel.cpp`
+  - [`kernels/manual/common/flash_atten/README_zh.md`](../../kernels/manual/common/flash_atten/README_zh.md)
+  - Kernel code：`kernels/manual/common/flash_atten/fa_performance_kernel.cpp`
 
 ## 8. 常见故障模式（以及处理方式）
 

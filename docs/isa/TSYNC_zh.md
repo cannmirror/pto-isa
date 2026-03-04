@@ -1,4 +1,4 @@
-# TSYNC
+﻿# TSYNC
 
 ## 指令示意图
 
@@ -21,7 +21,7 @@ Not applicable.
 
 ## 汇编语法
 
-PTO-AS 形式：参见 [docs/grammar/PTO-AS_zh.md](../grammar/PTO-AS_zh.md)。
+PTO-AS 形式：参见 [PTO-AS 规范](../assembly/PTO-AS_zh.md)。
 
 Event operand form:
 
@@ -35,13 +35,13 @@ Single-op barrier form:
 tsync.op #pto.op<TADD>
 ```
 
-### IR Level 1（SSA）
+### AS Level 1（SSA）
 
 ```text
 // Level 1 (SSA) does not support explicit synchronization primitives.
 ```
 
-### IR Level 2（DPS）
+### AS Level 2（DPS）
 
 ```text
 pto.record_event[src_op, dst_op, eventID]

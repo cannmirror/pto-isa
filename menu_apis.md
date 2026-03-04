@@ -1,7 +1,10 @@
-# PTO算子开发接口
+# PTO虚拟指令集接口
 
+- [PTO ISA 概述](docs/PTOISA_zh.md)
 - [通用约定](docs/isa/conventions_zh.md)
 - [产品支持情况](include/README_zh.md)
+
+## 指令分类
 
 - 同步操作
     - [TSYNC](docs/isa/TSYNC_zh.md)
@@ -109,7 +112,7 @@
     - [TGEMV_ACC](docs/isa/TGEMV_ACC_zh.md)
     - [TGEMV_BIAS](docs/isa/TGEMV_BIAS_zh.md)
 
--数据搬运/布局
+- 数据搬运/布局
     - [TEXTRACT](docs/isa/TEXTRACT_zh.md)
     - [TEXTRACT_FP](docs/isa/TEXTRACT_FP_zh.md)
     - [TIMG2COL](docs/isa/TIMG2COL_zh.md)

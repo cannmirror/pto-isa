@@ -70,7 +70,7 @@
             // 常见的 README 目录：docs, kernels, tests, demos, include, scripts 等
             const readmeDirs = [
                 'docs', 'kernels', 'tests', 'demos', 'include', 'scripts', 
-                'machine', 'isa', 'ir', 'coding', 'grammar', 'cmake',
+                'machine', 'isa', 'ir', 'coding', 'grammar', 'cmake', 'assembly',
                 'manual/a2a3', 'manual/a5', 'baseline', 'torch_jit',
                 'custom', 'package', 'npu', 'a2a3', 'a5', 'kirin9030',
                 'pto', 'flash_atten', 'gemm_performance', 'topk',
@@ -196,14 +196,8 @@
                     // 直接跳转，不检查页面是否存在
                     console.log('Switching to:', targetUrl);
                     window.location.href = targetUrl;
-                } else {
-                    // 已经在目标语言页面，只需要更新横幅
-                    if (lang.code === 'zh') {
-                        showChineseBanner();
-                    } else {
-                        removeChineseBanner();
-                    }
                 }
+                // 不再显示横幅提示
             });
             
             link.addEventListener('mouseenter', function() {
@@ -296,21 +290,8 @@
             if (typeof window.translateNavigation === 'function') {
                 window.translateNavigation('zh');
             }
-            
-            // 如果当前是中文页面，显示中文横幅
-            if (currentLang === 'zh') {
-                showChineseBanner();
-            } else {
-                // 当前是英文页面，但用户偏好中文，显示提示
-                showNoChineseVersionBanner();
-            }
-        } else {
-            // 用户偏好英文
-            if (currentLang === 'zh') {
-                // 当前在中文页面，但用户偏好英文，可能是直接访问的中文链接
-                showChineseBanner();
-            }
         }
+        // 不再显示任何横幅提示
     }
     
     // 页面加载完成后初始化

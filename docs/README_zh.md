@@ -18,10 +18,10 @@
 - [虚拟 ISA 手册入口](PTO-Virtual-ISA-Manual_zh.md)
 - [ISA 总览](PTOISA_zh.md)
 - [指令索引](isa/README_zh.md)
-- [PTO IR 索引](ir/README_zh.md)
+- [PTO AS 索引](assembly/README_zh.md)
 - [通用约定](isa/conventions_zh.md)
-- [PTO 汇编语法（PTO-AS）](grammar/PTO-AS_zh.md)
-- [虚拟 ISA / IR 指南](../manual/09-virtual-isa-and-ir_zh.md)
+- [PTO 汇编语法（PTO-AS）](assembly/PTO-AS_zh.md)
+- [虚拟 ISA / AS 指南](../manual/09-virtual-isa-and-ir_zh.md)
 - [字节码 / 工具链指南](../manual/10-bytecode-and-toolchain_zh.md)
 - [内存顺序 / 一致性指南](../manual/11-memory-ordering-and-consistency_zh.md)
 - [后端画像 / 一致性指南](../manual/12-backend-profiles-and-conformance_zh.md)
@@ -33,5 +33,5 @@
 ## 文档组织
 
 - `docs/isa/`：指令参考（每条指令一页，以及分类索引）
-- `docs/grammar/`：PTO 汇编语法与规范（PTO-AS）
+- `docs/assembly/`：PTO 汇编语法与规范（PTO-AS）
 - `docs/coding/`：扩展 PTO Tile Lib 的开发者说明

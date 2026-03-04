@@ -10,7 +10,7 @@ This document is a practical guide for optimizing PTO kernels, with an emphasis 
 For end-to-end, example-driven deep dives, see:
 
 - GEMM: [`kernels/manual/a2a3/gemm_performance/README.md`](../../kernels/manual/a2a3/gemm_performance/README.md)
-- Flash Attention: [`kernels/manual/a2a3/flash_atten/README.md`](../../kernels/manual/a2a3/flash_atten/README.md)
+- Flash Attention: [`kernels/manual/common/flash_atten/README.md`](../../kernels/manual/common/flash_atten/README.md)
 
 ## 1. The performance model: think in stages
 
@@ -125,8 +125,8 @@ These kernel folders contain the most complete “how to tune” notes, tied to 
   - [`kernels/manual/a2a3/gemm_performance/README.md`](../../kernels/manual/a2a3/gemm_performance/README.md)
   - Kernel code: `kernels/manual/a2a3/gemm_performance/gemm_performance_kernel.cpp`
 - Flash Attention (staged softmax, tiled QK/PV, per-stage tuning):
-  - [`kernels/manual/a2a3/flash_atten/README.md`](../../kernels/manual/a2a3/flash_atten/README.md)
-  - Kernel code: `kernels/manual/a2a3/flash_atten/fa_performance_kernel.cpp`
+  - [`kernels/manual/common/flash_atten/README.md`](../../kernels/manual/common/flash_atten/README.md)
+  - Kernel code: `kernels/manual/common/flash_atten/fa_performance_kernel.cpp`
 
 ## 8. Common failure modes (and what to do)
 

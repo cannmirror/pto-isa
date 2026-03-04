@@ -5,7 +5,7 @@
 ## 示例
 
 - GEMM 性能 kernel：[gemm_performance/README.md](gemm_performance/README.md)
-- Flash-Attention kernel：[flash_atten/README.md](flash_atten/README.md)
+- Flash-Attention kernel：[../common/flash_atten/README.md](../common/flash_atten/README.md)
 - TOPK 性能 kernel：[topk/README.md](topk/README.md)
 
 ## 通用环境准备

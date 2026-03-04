@@ -5,8 +5,8 @@
 本章定义 PTO-AS 作为 PTO 程序文本形态的虚拟 ISA 契约。
 规范文法仍以以下文档为准：
 
-- `docs/grammar/PTO-AS_zh.md`
-- `docs/grammar/PTO-AS.bnf`
+- `docs/assembly/PTO-AS_zh.md`
+- `docs/assembly/PTO-AS.bnf`
 
 ## 6.2 核心形式
 

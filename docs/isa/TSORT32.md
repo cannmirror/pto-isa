@@ -1,4 +1,4 @@
-# TSORT32
+﻿# TSORT32
 
 
 ## Tile Operation Diagram
@@ -19,7 +19,7 @@ where $\pi_i$ is a permutation of the indices in the row. Sort order and stabili
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

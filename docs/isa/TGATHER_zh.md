@@ -1,4 +1,4 @@
-# TGATHER
+﻿# TGATHER
 
 ## 指令示意图
 
@@ -22,7 +22,7 @@ Mask-pattern gather is an implementation-defined selection/reduction controlled 
 
 ## 汇编语法
 
-PTO-AS 形式：参见 [docs/grammar/PTO-AS_zh.md](../grammar/PTO-AS_zh.md)。
+PTO-AS 形式：参见 [PTO-AS 规范](../assembly/PTO-AS_zh.md)。
 
 Index-based gather:
 
@@ -36,14 +36,14 @@ Index-based gather:
 %dst = tgather %src {maskPattern = #pto.mask_pattern<P0101>} : !pto.tile<...> -> !pto.tile<...>
 ```
 
-### IR Level 1（SSA）
+### AS Level 1（SSA）
 
 ```text
 %dst = pto.tgather %src, %indices : (!pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
 %dst = pto.tgather %src {maskPattern = #pto.mask_pattern<P0101>}: !pto.tile<...> -> !pto.tile<...>
 ```
 
-### IR Level 2（DPS）
+### AS Level 2（DPS）
 
 ```text
 pto.tgather ins(%src, %indices : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)

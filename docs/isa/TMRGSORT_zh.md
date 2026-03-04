@@ -1,4 +1,4 @@
-# TMRGSORT
+﻿# TMRGSORT
 
 ## 指令示意图
 
@@ -16,7 +16,7 @@ $$ \mathrm{dst} = \mathrm{merge}(\mathrm{src}_0, \mathrm{src}_1, \ldots) $$
 
 ## 汇编语法
 
-PTO-AS 形式：参见 [docs/grammar/PTO-AS_zh.md](../grammar/PTO-AS_zh.md)。
+PTO-AS 形式：参见 [PTO-AS 规范](../assembly/PTO-AS_zh.md)。
 
 Synchronous form (conceptual):
 
@@ -25,7 +25,7 @@ Synchronous form (conceptual):
     : !pto.tile<...>, !pto.tile<...> -> (!pto.tile<...>, vector<4xi16>)
 ```
 
-### IR Level 1（SSA）
+### AS Level 1（SSA）
 
 ```text
 %dst = pto.tmrgsort %src, %blockLen : (!pto.tile<...>, dtype) -> !pto.tile<...>
@@ -33,7 +33,7 @@ Synchronous form (conceptual):
  : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> (!pto.tile<...>, vector<4xi16>)
 ```
 
-### IR Level 2（DPS）
+### AS Level 2（DPS）
 
 ```text
 pto.tmrgsort ins(%src, %blockLen : !pto.tile_buf<...>, dtype)  outs(%dst : !pto.tile_buf<...>)

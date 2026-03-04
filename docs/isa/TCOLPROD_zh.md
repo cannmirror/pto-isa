@@ -1,4 +1,4 @@
-# TCOLPROD
+﻿# TCOLPROD
 
 ## 指令示意图
 
@@ -16,7 +16,7 @@ $$ \mathrm{dst}_{0,j} = \prod_{i=0}^{R-1} \mathrm{src}_{i,j} $$
 
 ## 汇编语法
 
-PTO-AS 形式：参见 `docs/grammar/PTO-AS.md`。
+PTO-AS 形式：参见 [PTO-AS 规范](../assembly/PTO-AS_zh.md)。
 
 同步形式：
 
@@ -24,13 +24,13 @@ PTO-AS 形式：参见 `docs/grammar/PTO-AS.md`。
 %dst = tcolprod %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
-### IR Level 1（SSA）
+### AS Level 1（SSA）
 
 ```text
 %dst = pto.tcolprod %src : !pto.tile<...> -> !pto.tile<...>
 ```
 
-### IR Level 2（DPS）
+### AS Level 2（DPS）
 
 ```text
 pto.tcolprod ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)

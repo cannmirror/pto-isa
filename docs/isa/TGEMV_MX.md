@@ -1,4 +1,4 @@
-# TGEMV_MX
+﻿# TGEMV_MX
 
 
 ## Tile Operation Diagram
@@ -23,7 +23,7 @@ For `TGEMV_MX`, scale tiles participate in implementation-defined mixed-precisio
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Schematic form:
 

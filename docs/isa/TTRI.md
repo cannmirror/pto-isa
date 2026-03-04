@@ -1,4 +1,4 @@
-# TTRI
+﻿# TTRI
 
 
 ## Tile Operation Diagram
@@ -16,13 +16,13 @@ Let `R = dst.GetValidRow()` and `C = dst.GetValidCol()`. Let `d = diagonal`.
 Lower-triangular (`isUpperOrLower=0`) conceptually produces:
 
 $$
-\mathrm{dst}_{i,j} = egin{cases}1 & j \le i + d \ 0 & 	ext{otherwise}\end{cases}
+\mathrm{dst}_{i,j} = \begin{cases}1 & j \le i + d \\\\ 0 & \text{otherwise}\end{cases}
 $$
 
 Upper-triangular (`isUpperOrLower=1`) conceptually produces:
 
 $$
-\mathrm{dst}_{i,j} = egin{cases}0 & j < i + d \ 1 & 	ext{otherwise}\end{cases}
+\mathrm{dst}_{i,j} = \begin{cases}0 & j < i + d \\\\ 1 & \text{otherwise}\end{cases}
 $$
 
 ## C++ Intrinsic
@@ -41,7 +41,7 @@ PTO_INST RecordEvent TTRI(TileData &dst, int diagonal, WaitEvents&... events);
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 ### IR Level 1 (SSA)
 
@@ -84,4 +84,3 @@ See related examples in `docs/isa/` and `docs/coding/tutorials/`.
 # IR Level 2 (DPS)
 pto.ttri ins(%src0, %src1 : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
-

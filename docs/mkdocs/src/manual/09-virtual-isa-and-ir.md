@@ -1,8 +1,8 @@
-# 9. Virtual ISA and IR
+# 9. Virtual ISA and AS
 
 ## 9.1 Scope and normative terms
 
-This chapter defines the contract between PTO Virtual ISA semantics and PTO IR/lowering pipelines.
+This chapter defines the contract between PTO Virtual ISA semantics and PTO AS/lowering pipelines.
 The terms `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 
 ## 9.2 Layering model
@@ -10,14 +10,14 @@ The terms `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 PTO uses a three-layer contract:
 
 1. **Virtual ISA layer**: architecture-visible semantics.
-2. **IR layer**: structured typed representation for verification and transformation.
+2. **AS layer**: structured typed representation for verification and transformation.
 3. **Backend lowering layer**: target-specific legalization and code generation.
 
 Backend specialization MUST preserve Virtual ISA-observable behavior.
 
-## 9.3 IR object model
+## 9.3 AS object model
 
-A conforming PTO IR model SHOULD define:
+A conforming PTO AS model SHOULD define:
 
 - module and symbol contracts
 - function/block structure and ordering
@@ -29,7 +29,7 @@ A conforming PTO IR model SHOULD define:
 
 Verification is split into two levels:
 
-1. **Structural verifier (IR level)**
+1. **Structural verifier (AS level)**
 - MUST validate operation schema, arity, type classes, and required attributes.
 - MUST be target-independent.
 
@@ -49,22 +49,22 @@ Lowering MUST NOT silently reinterpret implementation-defined behavior as archit
 
 ## 9.6 Source alignment rules
 
-IR contracts MUST stay synchronized with:
+AS contracts MUST stay synchronized with:
 
 - `docs/isa/*.md` for semantic intent
 - `include/pto/common/pto_instr.hpp` for API-level shape
-- `docs/grammar/PTO-AS.md` for textual assembly-facing forms
+- `docs/assembly/PTO-AS.md` for textual assembly-facing forms
 
 ## 9.7 Compatibility policy
 
-- Additive IR changes SHOULD be preferred.
-- Breaking IR contract changes MUST include versioning and migration notes.
+- Additive AS changes SHOULD be preferred.
+- Breaking AS contract changes MUST include versioning and migration notes.
 - Unknown required fields MUST fail verification.
 - Deprecated constructs SHOULD remain parseable for at least one compatibility window.
 
 ## 9.8 Diagnostics requirements
 
-IR/verifier diagnostics MUST include:
+AS/verifier diagnostics MUST include:
 
 - operation identifier and location context
 - expected vs actual contract dimensions

@@ -55,9 +55,9 @@ PTO Tile Lib 并不面向入门级用户，主要面向：
 
 ### Flash Attention（A2/A3 参考）
 
-- Kernel：`kernels/manual/a2a3/flash_atten/`
+- Kernel：`kernels/manual/common/flash_atten/`
 
-详细分析与调参说明：[Flash Attention 算子实现](kernels/manual/a2a3/flash_atten/README_zh.md)。
+详细分析与调参说明：[Flash Attention 算子实现](kernels/manual/common/flash_atten/README_zh.md)。
 
 ![Flash Attention 归一化 TFLOPS（A2/A3）](docs/figures/performance/fa_normalized_tflops_a2a3.svg)
 

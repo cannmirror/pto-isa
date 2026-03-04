@@ -1,4 +1,4 @@
-# MGATHER
+﻿# MGATHER
 
 
 ## Tile Operation Diagram
@@ -17,7 +17,7 @@ $$ \mathrm{dst}_{i,j} = \mathrm{mem}[\mathrm{idx}_{i,j}] $$
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

@@ -1,8 +1,8 @@
-# 9. 虚拟 ISA 与 IR
+# 9. 虚拟 ISA 与 AS
 
 ## 9.1 范围与规范术语
 
-本章定义 PTO 虚拟 ISA 语义与 PTO IR/降层链路之间的契约。
+本章定义 PTO 虚拟 ISA 语义与 PTO AS/降层链路之间的契约。
 `MUST`、`MUST NOT`、`SHOULD`、`MAY` 为规范术语。
 
 ## 9.2 分层模型
@@ -10,14 +10,14 @@
 PTO 采用三层契约：
 
 1. **虚拟 ISA 层**：架构可见语义。
-2. **IR 层**：用于验证与变换的结构化强类型表示。
+2. **AS 层**：用于验证与变换的结构化强类型表示。
 3. **后端降层层**：目标相关合法化与代码生成。
 
 后端特化 MUST 保持虚拟 ISA 可观察行为。
 
-## 9.3 IR 对象模型
+## 9.3 AS 对象模型
 
-一致性 PTO IR 模型 SHOULD 定义：
+一致性 PTO AS 模型 SHOULD 定义：
 
 - 模块与符号契约
 - 函数/基本块结构及顺序
@@ -49,22 +49,22 @@ PTO 采用三层契约：
 
 ## 9.6 源同步规则
 
-IR 契约 MUST 与以下来源同步：
+AS 契约 MUST 与以下来源同步：
 
 - `docs/isa/*_zh.md`（语义意图）
 - `include/pto/common/pto_instr.hpp`（API 形态）
-- `docs/grammar/PTO-AS_zh.md`（文本汇编形态）
+- `docs/assembly/PTO-AS_zh.md`（文本汇编形态）
 
 ## 9.7 兼容策略
 
-- SHOULD 优先采用增量 IR 演进。
-- 破坏性 IR 契约变更 MUST 包含版本与迁移说明。
+- SHOULD 优先采用增量 AS 演进。
+- 破坏性 AS 契约变更 MUST 包含版本与迁移说明。
 - 未知必需字段 MUST 验证失败。
 - 已弃用结构 SHOULD 至少在一个兼容窗口内可解析。
 
 ## 9.8 诊断要求
 
-IR/验证诊断 MUST 包含：
+AS/验证诊断 MUST 包含：
 
 - 操作标识与定位上下文
 - 期望与实际契约维度差异

@@ -7,6 +7,7 @@ build
 build_tests
 demos/**/build/
 site/
+site_zh/
 .venv-mkdocs/
 *.o
 output/
@@ -15,3 +16,19 @@ __pycache__/
 tests/npu/a2a3/src/st/build
 tests/npu/a5/src/st/build
 .arts
+docs/mkdocs/src/CONTRIBUTING.md
+docs/mkdocs/src/README.md
+docs/mkdocs/src/README_zh.md
+docs/mkdocs/src/ReleaseNote.md
+docs/mkdocs/src/SECURITY.md
+docs/mkdocs/src/SECURITY_zh.md
+docs/mkdocs/src/all-pages.md
+docs/mkdocs/src/cmake/
+docs/mkdocs/src/demos/
+docs/mkdocs/src/docs/
+docs/mkdocs/src/include/
+docs/mkdocs/src/kernels/
+docs/mkdocs/src/manual/isa-reference.md
+docs/mkdocs/src/manual/isa-reference_zh.md
+docs/mkdocs/src/scripts/
+docs/mkdocs/src/tests/

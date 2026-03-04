@@ -12,11 +12,13 @@
 const NAV_TRANSLATIONS = {
     // 顶级导航
     'Home': '首页',
+    'Getting Started': '快速开始',
     'PTO Virtual ISA Manual': 'PTO 虚拟 ISA 手册',
     'Programming Model': '编程模型',
     'ISA Reference': 'ISA 参考',
     'Machine Model': '机器模型',
     'Examples': '示例',
+    'Examples & Kernels': '示例与算子',
     'Documentation': '文档',
     'Full Index': '完整索引',
     
@@ -46,6 +48,9 @@ const NAV_TRANSLATIONS = {
     'Event': 'Event',
     'Tutorial': '教程',
     'Tutorials': '教程集',
+    'Vec Add': '向量加法',
+    'Row Softmax': '行 Softmax',
+    'GEMM': 'GEMM',
     'Example: Vec Add': '示例：向量加法',
     'Example: Row Softmax': '示例：行 Softmax',
     'Example: GEMM': '示例：GEMM',
@@ -53,6 +58,33 @@ const NAV_TRANSLATIONS = {
     'Debugging': '调试',
     
     // ISA Reference 子项
+    'ISA Conventions': 'ISA 约定',
+    'PTO AS Reference': 'PTO AS 参考',
+    'PTO-AS Specification': 'PTO-AS 规范',
+    'Conventions': '约定',
+    'Non-ISA Operations': '非 ISA 操作',
+    'Elementwise Operations': '逐元素操作',
+    'Tile-Scalar Operations': 'Tile-标量操作',
+    'Axis Operations': '轴操作',
+    'Memory Operations': '内存操作',
+    'Matrix Operations': '矩阵操作',
+    'Data Movement Operations': '数据搬运操作',
+    'Complex Operations': '复杂操作',
+    'Manual Binding Operations': '手动绑定操作',
+    'Scalar Arithmetic Operations': '标量算术操作',
+    'Control Flow Operations': '控制流操作',
+    'PTO ISA Table': 'PTO ISA 表',
+    'Manual / Resource Binding': '手动/资源绑定',
+    'Elementwise (Tile-Tile)': '逐元素（Tile-Tile）',
+    'Tile-Scalar / Tile-Immediate': 'Tile-标量/Tile-立即数',
+    'Axis Reduce / Expand': '轴归约/扩展',
+    'Memory (GM <-> Tile)': '内存（GM <-> Tile）',
+    'Matrix Multiply': '矩阵乘',
+    'Data Movement / Layout': '数据搬运/布局',
+    'Complex Instructions': '复杂指令',
+    'Reference': '参考',
+    'Intrinsics Header': '内建函数头文件',
+    'All Instructions Index': '全部指令索引',
     'ISA index': 'ISA 索引',
     'PTO IR ops index': 'PTO IR 操作索引',
     'ISA conventions': 'ISA 约定',
@@ -63,10 +95,21 @@ const NAV_TRANSLATIONS = {
     'Grammar index': '语法索引',
     
     // Machine Model 子项
+    'Abstract Machine': '抽象机器',
+    'Machine Index': '机器索引',
     'Abstract machine': '抽象机器',
     'Machine index': '机器索引',
     
-    // Examples 子项
+    // Examples & Kernels 子项
+    'High-Performance Kernels': '高性能算子',
+    'GEMM Performance': 'GEMM 性能',
+    'Flash Attention': 'Flash Attention',
+    'Baseline Demos': '基础示例',
+    'Add Demo': '加法示例',
+    'GEMM Demo': 'GEMM 示例',
+    'Tests': '测试',
+    'Tests Overview': '测试概览',
+    'Test Scripts': '测试脚本',
     'Kernels index': '算子索引',
     'GEMM performance kernel': 'GEMM 性能算子',
     'Flash Attention kernel': 'Flash Attention 算子',
@@ -76,6 +119,8 @@ const NAV_TRANSLATIONS = {
     'Test scripts': '测试脚本',
     
     // Documentation 子项
+    'Docs Index': '文档索引',
+    'Build Documentation': '构建文档',
     'Docs index': '文档索引',
     'Build this site': '构建本站点',
     'Root README': '根目录 README'
@@ -113,34 +158,36 @@ function translateNavigationInternal(targetLang) {
         // 获取当前 href
         const currentHref = link.getAttribute('href');
         
-        // 总是重新计算并保存原始英文 href
-        // 这样可以处理 MkDocs 动态修改链接的情况
-        if (currentHref && (currentHref.includes('_zh/') || currentHref.includes('_zh.html'))) {
-            // 当前是中文链接，转换回英文
-            let enHref = currentHref;
-            
-            if (enHref.includes('/index_zh/')) {
-                enHref = enHref.replace('/index_zh/', '/');
-            } else if (enHref.includes('manual/index_zh/')) {
-                enHref = enHref.replace(/manual\/index_zh\//, 'manual/');
-            } else if (enHref.includes('/README_zh/')) {
-                enHref = enHref.replace('/README_zh/', '/');
-            } else if (enHref.includes('README_zh/')) {
-                // 处理相对路径：./README_zh/ -> ./
-                enHref = enHref.replace(/README_zh\//, '');
-            } else if (enHref.includes('index_zh/')) {
-                // 处理相对路径：./index_zh/ -> ./
-                enHref = enHref.replace(/index_zh\//, '');
-            } else {
-                enHref = enHref.replace(/_zh\//g, '/');
+        // 只在第一次翻译时保存原始英文 href
+        // 避免重复翻译时错误地将中文链接转换回英文
+        if (!link.hasAttribute('data-original-href')) {
+            if (currentHref && (currentHref.includes('_zh/') || currentHref.includes('_zh.html'))) {
+                // 当前是中文链接，转换回英文
+                let enHref = currentHref;
+                
+                if (enHref.includes('/index_zh/')) {
+                    enHref = enHref.replace('/index_zh/', '/');
+                } else if (enHref.includes('manual/index_zh/')) {
+                    enHref = enHref.replace(/manual\/index_zh\//, 'manual/');
+                } else if (enHref.includes('/README_zh/')) {
+                    enHref = enHref.replace('/README_zh/', '/');
+                } else if (enHref.includes('README_zh/')) {
+                    // 处理相对路径：./README_zh/ -> ./
+                    enHref = enHref.replace(/README_zh\//, '');
+                } else if (enHref.includes('index_zh/')) {
+                    // 处理相对路径：./index_zh/ -> ./
+                    enHref = enHref.replace(/index_zh\//, '');
+                } else {
+                    enHref = enHref.replace(/_zh\//g, '/');
+                }
+                
+                console.log('Converting Chinese link to English:', currentHref, '->', enHref);
+                link.setAttribute('data-original-href', enHref);
+            } else if (currentHref) {
+                // 当前是英文链接，直接保存
+                console.log('Saving English link:', currentHref);
+                link.setAttribute('data-original-href', currentHref);
             }
-            
-            console.log('Converting Chinese link to English:', currentHref, '->', enHref);
-            link.setAttribute('data-original-href', enHref);
-        } else if (currentHref && !link.hasAttribute('data-original-href')) {
-            // 当前是英文链接，且还没保存，直接保存
-            console.log('Saving English link:', currentHref);
-            link.setAttribute('data-original-href', currentHref);
         }
         
         // 使用原始 href 进行转换
@@ -170,24 +217,36 @@ function translateNavigationInternal(targetLang) {
             }
             // 父目录：../ 的处理需要根据上下文判断
             // 如果链接文本和当前页面标题相同，说明是指向当前目录的自引用
-            // 例如在 /docs/isa/README_zh/ 页面，"ISA index" 链接指向 ../（即 /docs/isa/）
+            // 例如在 /docs/isa/README_zh/ 页面，"Overview" 链接指向 ../（即 /docs/isa/）
             else if (newHref === '../' || newHref === '..') {
                 // 获取当前页面路径
                 const currentPath = window.location.pathname;
                 
+                // 提取当前目录路径（去掉 README_zh/ 或 index_zh/）
+                let currentDir = currentPath;
+                if (currentPath.endsWith('/README_zh/')) {
+                    currentDir = currentPath.replace(/\/README_zh\/$/, '/');
+                } else if (currentPath.endsWith('/index_zh/')) {
+                    currentDir = currentPath.replace(/\/index_zh\/$/, '/');
+                }
+                
                 // 如果当前在 README_zh 或 index_zh 页面，且链接指向父目录
-                // 检查是否是自引用（链接文本包含当前页面的关键词）
-                if ((currentPath.includes('/README_zh/') || currentPath.includes('/index_zh/')) && 
+                // 检查是否是自引用（链接文本是 Overview/概述 或包含 index/索引）
+                // 自引用的条件：../ 指向的目录就是当前目录（去掉 README_zh 后）
+                const isCurrentDirSelfReference = (currentPath.includes('/README_zh/') || currentPath.includes('/index_zh/')) && 
                     origText && (
-                        currentPath.toLowerCase().includes(origText.toLowerCase().replace(/\s+/g, '')) ||
+                        origText.toLowerCase() === 'overview' ||
+                        origText.toLowerCase() === '概述' ||
                         origText.toLowerCase().includes('index') ||
                         origText.toLowerCase().includes('索引')
-                    )) {
+                    );
+                
+                if (isCurrentDirSelfReference) {
                     // 这是自引用，使用当前页面的绝对路径
                     newHref = currentPath;
                 } else {
                     // 真正的父目录引用
-                    newHref = '../index_zh/';
+                    newHref = '../README_zh/';
                 }
             }
             // manual 目录的 index：../../manual/ -> ../../manual/index_zh/
@@ -217,7 +276,7 @@ function translateNavigationInternal(targetLang) {
                 // 判断是否是 README
                 const isReadme = (
                     // 顶级目录
-                    ['coding', 'isa', 'ir', 'grammar', 'machine', 'kernels', 'tests', 'docs', 'scripts', 'demos', 'include', 'cmake'].includes(lastPart) ||
+                    ['coding', 'isa', 'ir', 'grammar', 'machine', 'kernels', 'tests', 'docs', 'scripts', 'demos', 'include', 'cmake', 'assembly'].includes(lastPart) ||
                     // tutorials 子目录
                     lastPart === 'tutorials' ||
                     // 其他已知的 README 目录
@@ -422,17 +481,29 @@ function calculateChineseHref(originalHref, linkElement) {
         const currentPath = window.location.pathname;
         const origText = linkElement ? linkElement.getAttribute('data-original-text') : '';
         
-        if ((currentPath.includes('/README_zh/') || currentPath.includes('/index_zh/')) && 
+        // 提取当前目录路径（去掉 README_zh/ 或 index_zh/）
+        let currentDir = currentPath;
+        if (currentPath.endsWith('/README_zh/')) {
+            currentDir = currentPath.replace(/\/README_zh\/$/, '/');
+        } else if (currentPath.endsWith('/index_zh/')) {
+            currentDir = currentPath.replace(/\/index_zh\/$/, '/');
+        }
+        
+        // 自引用的条件：../ 指向的目录就是当前目录（去掉 README_zh 后）
+        const isCurrentDirSelfReference = (currentPath.includes('/README_zh/') || currentPath.includes('/index_zh/')) && 
             origText && (
-                currentPath.toLowerCase().includes(origText.toLowerCase().replace(/\s+/g, '')) ||
+                origText.toLowerCase() === 'overview' ||
+                origText.toLowerCase() === '概述' ||
                 origText.toLowerCase().includes('index') ||
                 origText.toLowerCase().includes('索引')
-            )) {
+            );
+        
+        if (isCurrentDirSelfReference) {
             // 自引用，使用当前页面的绝对路径
             expectedHref = currentPath;
         } else {
             // 真正的父目录引用
-            expectedHref = '../index_zh/';
+            expectedHref = '../README_zh/';
         }
     } else if (expectedHref.endsWith('/manual/') || expectedHref === 'manual/') {
         expectedHref = expectedHref.replace(/manual\/$/, 'manual/index_zh/');
@@ -441,7 +512,7 @@ function calculateChineseHref(originalHref, linkElement) {
         const lastPart = pathParts[pathParts.length - 1];
         
         const isReadme = (
-            ['coding', 'isa', 'ir', 'grammar', 'machine', 'kernels', 'tests', 'docs', 'scripts', 'demos', 'include', 'cmake'].includes(lastPart) ||
+            ['coding', 'isa', 'ir', 'grammar', 'machine', 'kernels', 'tests', 'docs', 'scripts', 'demos', 'include', 'cmake', 'assembly'].includes(lastPart) ||
             lastPart === 'tutorials' ||
             lastPart === 'script' || lastPart === 'package' || lastPart === 'custom' ||
             lastPart === 'baseline' || lastPart === 'add' || lastPart === 'gemm_basic' ||

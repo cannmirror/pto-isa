@@ -1,4 +1,4 @@
-# TMOV
+﻿# TMOV
 
 ## 指令示意图
 
@@ -26,9 +26,9 @@ $$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,j} $$
 
 ## 汇编语法
 
-PTO-AS 形式：参见 [docs/grammar/PTO-AS_zh.md](../grammar/PTO-AS_zh.md)。
+PTO-AS 形式：参见 [PTO-AS 规范](../assembly/PTO-AS_zh.md)。
 
-The PTO IR design recommends splitting `TMOV` into a family of ops:
+The PTO AS design recommends splitting `TMOV` into a family of ops:
 
 ```text
 %left  = tmov.m2l %mat  : !pto.tile<...> -> !pto.tile<...>
@@ -39,13 +39,13 @@ The PTO IR design recommends splitting `TMOV` into a family of ops:
 %v1    = tmov.v2v %v0   : !pto.tile<...> -> !pto.tile<...>
 ```
 
-### IR Level 1（SSA）
+### AS Level 1（SSA）
 
 ```text
 %dst = pto.tmov.s2d %src  : !pto.tile<...> -> !pto.tile<...>
 ```
 
-### IR Level 2（DPS）
+### AS Level 2（DPS）
 
 ```text
 pto.tmov ins(%src : !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)

@@ -13,13 +13,13 @@ This document describes memory operations between global memory and tiles.
 For detailed instruction documentation, see [isa/TLOAD](../isa/TLOAD.md)
 
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 %dst = pto.tload %mem : !pto.partition_tensor_view<MxNxdtype> ->
 !pto.tile<loc, dtype, rows, cols, blayout, slayout, fractal, pad>
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tload ins(%mem : !pto.partition_tensor_view<MxNxdtype>) outs(%dst : !pto.tile_buf<...>)
 ```
@@ -31,12 +31,12 @@ pto.tload ins(%mem : !pto.partition_tensor_view<MxNxdtype>) outs(%dst : !pto.til
 For detailed instruction documentation, see [isa/TPREFETCH](../isa/TPREFETCH.md)
 
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 %dst = pto.tprefetch %src : !pto.global<...> -> !pto.tile<...>
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tprefetch ins(%src : !pto.global<...>) outs(%dst : !pto.tile_buf<...>)
 ```
@@ -48,12 +48,12 @@ pto.tprefetch ins(%src : !pto.global<...>) outs(%dst : !pto.tile_buf<...>)
 For detailed instruction documentation, see [isa/TSTORE](../isa/TSTORE.md)
 
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.tstore %src, %mem : (!pto.tile<...>, !pto.partition_tensor_view<MxNxdtype>) -> ()
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tstore ins(%src : !pto.tile_buf<...>) outs(%mem : !pto.partition_tensor_view<MxNxdtype>)
 ```
@@ -65,12 +65,12 @@ pto.tstore ins(%src : !pto.tile_buf<...>) outs(%mem : !pto.partition_tensor_view
 For detailed instruction documentation, see [isa/TSTORE_FP](../isa/TSTORE_FP.md)
 
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.tstore.fp %src, %fp, %mem : (!pto.tile<...>, !pto.tile<...>, !pto.partition_tensor_view<MxNxdtype>) -> ()
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tstore.fp ins(%src, %fp : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%mem : !pto.partition_tensor_view<MxNxdtype>)
 ```
@@ -82,13 +82,13 @@ pto.tstore.fp ins(%src, %fp : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%mem 
 For detailed instruction documentation, see [isa/MGATHER](../isa/MGATHER.md)
 
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 %dst = pto.mgather %mem, %idx : (!pto.partition_tensor_view<MxNxdtype>, pto.tile<...>)
 -> !pto.tile<loc, dtype, rows, cols, blayout, slayout, fractal, pad>
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.mgather ins(%mem, %idx : !pto.partition_tensor_view<MxNxdtype>, !pto.tile_buf<...>) outs(%dst : !pto.tile_buf<...>)
 ```
@@ -100,12 +100,12 @@ pto.mgather ins(%mem, %idx : !pto.partition_tensor_view<MxNxdtype>, !pto.tile_bu
 For detailed instruction documentation, see [isa/MSCATTER](../isa/MSCATTER.md)
 
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.mscatter %src, %idx, %mem : (!pto.tile<...>, !pto.tile<...>, !pto.partition_tensor_view<MxNxdtype>) -> ()
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.mscatter ins(%src, %idx : !pto.tile_buf<...>, !pto.tile_buf<...>) outs(%mem : !pto.partition_tensor_view<MxNxdtype>)
 ```

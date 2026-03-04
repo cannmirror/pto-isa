@@ -1,4 +1,4 @@
-# TTRANS
+﻿# TTRANS
 
 
 ## Tile Operation Diagram
@@ -19,7 +19,7 @@ Exact shape/layout and the transpose domain depend on the target (see Constraint
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

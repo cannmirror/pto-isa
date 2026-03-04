@@ -1,4 +1,4 @@
-# TMOV
+﻿# TMOV
 
 
 ## Tile Operation Diagram
@@ -25,9 +25,9 @@ $$ \mathrm{dst}_{i,j} = \mathrm{src}_{i,j} $$
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
-The PTO IR design recommends splitting `TMOV` into a family of ops:
+The PTO AS design recommends splitting `TMOV` into a family of ops:
 
 ```text
 %left  = tmov.m2l %mat  : !pto.tile<...> -> !pto.tile<...>

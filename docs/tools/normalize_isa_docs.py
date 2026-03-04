@@ -319,7 +319,7 @@ For `TGEMV_MX`, scale tiles participate in implementation-defined mixed-precisio
 
 ## Assembly Syntax
 
-PTO-AS form: see `docs/grammar/PTO-AS.md`.
+PTO-AS form: see `docs/assembly/PTO-AS.md`.
 
 Schematic form:
 
@@ -374,7 +374,7 @@ $$
 
 ## Assembly Syntax
 
-PTO-AS form: see `docs/grammar/PTO-AS.md`.
+PTO-AS form: see `docs/assembly/PTO-AS.md`.
 
 Synchronous form:
 
@@ -444,7 +444,7 @@ No direct tensor arithmetic is produced by this instruction. It updates target m
 
 ## Assembly Syntax
 
-PTO-AS form: see `docs/grammar/PTO-AS.md`.
+PTO-AS form: see `docs/assembly/PTO-AS.md`.
 
 Schematic form:
 
@@ -494,7 +494,7 @@ No direct tensor arithmetic is produced by this instruction. It updates target m
 
 ## Assembly Syntax
 
-PTO-AS form: see `docs/grammar/PTO-AS.md`.
+PTO-AS form: see `docs/assembly/PTO-AS.md`.
 
 Schematic form:
 
@@ -541,7 +541,7 @@ Semantics are instruction-specific. Unless stated otherwise, behavior is defined
 
 ## Assembly Syntax
 
-PTO-AS form: see `docs/grammar/PTO-AS.md`.
+PTO-AS form: see `docs/assembly/PTO-AS.md`.
 
 ## C++ Intrinsic
 
@@ -590,7 +590,7 @@ def ensure_required_sections(instr: str, text: str) -> str:
         ),
         (
             "Assembly Syntax",
-            "## Assembly Syntax\n\nPTO-AS form: see `docs/grammar/PTO-AS.md`.\n",
+            "## Assembly Syntax\n\nPTO-AS form: see `docs/assembly/PTO-AS.md`.\n",
         ),
         (
             "C++ Intrinsic",
@@ -640,8 +640,8 @@ def _extract_sections(md: str) -> Dict[str, str]:
 def _translate_zh_line_segment(seg: str) -> str:
     # Best-effort phrase mapping for common boilerplate and headings.
     table = [
-        ("### IR Level 1 (SSA)", "### IR Level 1（SSA）"),
-        ("### IR Level 2 (DPS)", "### IR Level 2（DPS）"),
+        ("### IR Level 1 (SSA)", "### AS Level 1（SSA）"),
+        ("### IR Level 2 (DPS)", "### AS Level 2（DPS）"),
         ("PTO-AS form: see ", "PTO-AS 形式：参见 "),
         ("Declared in ", "声明于 "),
         ("Level 1 (SSA) does not support explicit synchronization primitives.", "Level 1（SSA）不支持显式同步原语。"),
@@ -743,7 +743,7 @@ def build_zh_page(instr: str, summary_zh: str, en_text: str) -> str:
     if asm_en:
         lines.append(_translate_md_to_zh(asm_en))
     else:
-        lines.append("PTO-AS 形式：参见 `docs/grammar/PTO-AS.md`。")
+        lines.append("PTO-AS 形式：参见 `docs/assembly/PTO-AS.md`。")
     lines.append("")
     lines.append("## C++ 内建接口")
     lines.append("")

@@ -1,4 +1,4 @@
-# TMATMUL_MX
+﻿# TMATMUL_MX
 
 ## 指令示意图
 
@@ -24,7 +24,7 @@ The exact role of `aScaleMatrix` / `bScaleMatrix` (and any dequant/quant semanti
 
 ## 汇编语法
 
-PTO-AS 形式：参见 [docs/grammar/PTO-AS_zh.md](../grammar/PTO-AS_zh.md)。
+PTO-AS 形式：参见 [PTO-AS 规范](../assembly/PTO-AS_zh.md)。
 
 Synchronous forms (conceptual):
 
@@ -34,7 +34,7 @@ Synchronous forms (conceptual):
 %c = tmatmul.mx.bias %a, %a_scale, %b, %b_scale, %bias : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>, !pto.tile<...>, !pto.tile<...>) -> !pto.tile<...>
 ```
 
-### IR Level 1（SSA）
+### AS Level 1（SSA）
 
 ```text
 %c = pto.tmatmul.mx %a, %a_scale, %b, %b_scale : (!pto.tile<...>, !pto.tile<...>, !pto.tile<...>, !pto.tile<...>)
@@ -45,7 +45,7 @@ Synchronous forms (conceptual):
 !pto.tile<...>, !pto.tile<...>, !pto.tile<...>)  -> !pto.tile<...>
 ```
 
-### IR Level 2（DPS）
+### AS Level 2（DPS）
 
 ```text
 pto.tmatmul.mx ins(%a, %a_scale, %b, %b_scale : !pto.tile_buf<...>, !pto.tile_buf<...>, !pto.tile_buf<...>, !pto.tile_buf<...>)

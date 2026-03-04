@@ -1,4 +1,4 @@
-# TCI
+﻿# TCI
 
 ## 指令示意图
 
@@ -24,7 +24,7 @@ The linearization order depends on the tile layout (implementation-defined).
 
 ## 汇编语法
 
-PTO-AS 形式：参见 [docs/grammar/PTO-AS_zh.md](../grammar/PTO-AS_zh.md)。
+PTO-AS 形式：参见 [PTO-AS 规范](../assembly/PTO-AS_zh.md)。
 
 同步形式：
 
@@ -32,13 +32,13 @@ PTO-AS 形式：参见 [docs/grammar/PTO-AS_zh.md](../grammar/PTO-AS_zh.md)。
 %dst = tci %S {descending = false} : !pto.tile<...>
 ```
 
-### IR Level 1（SSA）
+### AS Level 1（SSA）
 
 ```text
 %dst = pto.tci %scalar {descending = false} : dtype -> !pto.tile<...>
 ```
 
-### IR Level 2（DPS）
+### AS Level 2（DPS）
 
 ```text
 pto.tci ins(%scalar {descending = false} : dtype) outs(%dst : !pto.tile_buf<...>)

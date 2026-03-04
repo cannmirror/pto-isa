@@ -1,4 +1,4 @@
-# TSYNC
+﻿# TSYNC
 
 
 ## Tile Operation Diagram
@@ -20,7 +20,7 @@ Not applicable.
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Event operand form:
 
@@ -44,9 +44,9 @@ tsync.op #pto.op<TADD>
 
 ```text
 pto.record_event[src_op, dst_op, eventID]
-// 支持的op：TLOAD， TSTORE_ACC，TSTORE_VEC，TMOV_M2L，TMOV_M2S，TMOV_M2B，TMOV_M2V，TMOV_V2M，TMATMUL，TVEC
+// 支持的op：TLOAD�?TSTORE_ACC，TSTORE_VEC，TMOV_M2L，TMOV_M2S，TMOV_M2B，TMOV_M2V，TMOV_V2M，TMATMUL，TVEC
 pto.wait_event[src_op, dst_op, eventID]
-// 支持的op：TLOAD， TSTORE_ACC，TSTORE_VEC，TMOV_M2L，TMOV_M2S，TMOV_M2B，TMOV_M2V，TMOV_V2M，TMATMUL，TVEC
+// 支持的op：TLOAD�?TSTORE_ACC，TSTORE_VEC，TMOV_M2L，TMOV_M2S，TMOV_M2B，TMOV_M2V，TMOV_V2M，TMATMUL，TVEC
 pto.barrier(op)
 // 支持的op：TVEC,TMATMUL
 ```

@@ -1,4 +1,4 @@
-# TFILLPAD_INPLACE
+﻿# TFILLPAD_INPLACE
 
 
 ## Tile Operation Diagram
@@ -29,7 +29,7 @@ Unless otherwise specified, semantics are defined over the valid region and targ
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 ### IR Level 1 (SSA)
 

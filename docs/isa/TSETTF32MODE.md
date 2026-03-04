@@ -1,4 +1,4 @@
-# TSETTF32MODE
+﻿# TSETTF32MODE
 
 
 ## Tile Operation Diagram
@@ -17,7 +17,7 @@ No direct tensor arithmetic is produced by this instruction. It updates target m
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Schematic form:
 

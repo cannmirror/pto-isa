@@ -1,4 +1,4 @@
-# TMATMUL_BIAS
+﻿# TMATMUL_BIAS
 
 
 ## Tile Operation Diagram
@@ -25,7 +25,7 @@ Bias broadcasting behavior is implementation-defined.
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

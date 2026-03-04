@@ -55,9 +55,9 @@ Detailed analysis and tuning notes: [High-Performance GEMM Operator Example](ker
 
 ### Flash Attention (A2/A3 reference)
 
-- Kernel: `kernels/manual/a2a3/flash_atten/`
+- Kernel: `kernels/manual/common/flash_atten/`
 
-Detailed analysis and tuning notes: [Flash Attention Kernel Implementation](kernels/manual/a2a3/flash_atten/README.md).
+Detailed analysis and tuning notes: [Flash Attention Kernel Implementation](kernels/manual/common/flash_atten/README.md).
 
 ![Flash Attention normalized TFLOPS (A2/A3)](docs/figures/performance/fa_normalized_tflops_a2a3.svg)
 

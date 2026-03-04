@@ -24,12 +24,17 @@ markdown_extensions:
 extra_javascript:
   - assets/javascripts/mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - assets/javascripts/nav-collapse.js
   - assets/javascripts/nav-translator.js
   - assets/javascripts/language-switcher.js
   - assets/javascripts/chinese-navigation.js
 
+extra_css:
+  - assets/stylesheets/custom.css
+
 nav:
   - Home: index.md
+  - Getting Started: docs/getting-started.md
   - PTO Virtual ISA Manual:
       - Preface: manual/index.md
       - Overview: manual/01-overview.md
@@ -56,33 +61,176 @@ nav:
       - Scalar: docs/coding/Scalar.md
       - Event: docs/coding/Event.md
       - Tutorial: docs/coding/tutorial.md
-      - Tutorials: docs/coding/tutorials/README.md
-      - "Example: Vec Add": docs/coding/tutorials/vec-add.md
-      - "Example: Row Softmax": docs/coding/tutorials/row-softmax.md
-      - "Example: GEMM": docs/coding/tutorials/gemm.md
+      - Tutorials:
+          - Overview: docs/coding/tutorials/README.md
+          - "Vec Add": docs/coding/tutorials/vec-add.md
+          - "Row Softmax": docs/coding/tutorials/row-softmax.md
+          - "GEMM": docs/coding/tutorials/gemm.md
       - Optimization: docs/coding/opt.md
       - Debugging: docs/coding/debug.md
-  - ISA Reference:
-      - ISA index: docs/isa/README.md
-      - PTO IR ops index: docs/ir/README.md
-      - ISA conventions: docs/isa/conventions.md
-      - PTO ISA table: docs/PTOISA.md
-      - Intrinsics header: docs/reference/pto-intrinsics-header.md
-      - PTO-AS spec: docs/grammar/PTO-AS.md
-      - Grammar conventions: docs/grammar/conventions.md
-      - Grammar index: docs/grammar/README.md
   - Machine Model:
-      - Abstract machine: docs/machine/abstract-machine.md
-      - Machine index: docs/machine/README.md
-  - Examples:
-      - Kernels index: kernels/README.md
-      - GEMM performance kernel: kernels/manual/a2a3/gemm_performance/README.md
-      - Flash Attention kernel: kernels/manual/a2a3/flash_atten/README.md
-      - Baseline add demo: demos/baseline/add/README.md
-      - Baseline GEMM demo: demos/baseline/gemm_basic/README.md
-      - Tests index: tests/README.md
-      - Test scripts: tests/script/README.md
+      - Abstract Machine: docs/machine/abstract-machine.md
+      - Machine Index: docs/machine/README.md
+  - ISA Reference:
+      - Overview: docs/isa/README.md
+      - ISA Conventions: docs/isa/conventions.md
+      - PTO AS Reference:
+          - Overview: docs/assembly/README.md
+          - PTO-AS Specification: docs/assembly/PTO-AS.md
+          - Conventions: docs/assembly/conventions.md
+          - Non-ISA Operations: docs/assembly/nonisa-ops.md
+          - Elementwise Operations: docs/assembly/elementwise-ops.md
+          - Tile-Scalar Operations: docs/assembly/tile-scalar-ops.md
+          - Axis Operations: docs/assembly/axis-ops.md
+          - Memory Operations: docs/assembly/memory-ops.md
+          - Matrix Operations: docs/assembly/matrix-ops.md
+          - Data Movement Operations: docs/assembly/data-movement-ops.md
+          - Complex Operations: docs/assembly/complex-ops.md
+          - Manual Binding Operations: docs/assembly/manual-binding-ops.md
+          - Scalar Arithmetic Operations: docs/assembly/scalar-arith-ops.md
+          - Control Flow Operations: docs/assembly/control-flow-ops.md
+      - PTO ISA Table: docs/PTOISA.md
+      - Synchronization:
+          - TSYNC: docs/isa/TSYNC.md
+      - Manual / Resource Binding:
+          - TASSIGN: docs/isa/TASSIGN.md
+          - TSETHF32MODE: docs/isa/TSETHF32MODE.md
+          - TSETTF32MODE: docs/isa/TSETTF32MODE.md
+          - TSETFMATRIX: docs/isa/TSETFMATRIX.md
+          - TSET_IMG2COL_RPT: docs/isa/TSET_IMG2COL_RPT.md
+          - TSET_IMG2COL_PADDING: docs/isa/TSET_IMG2COL_PADDING.md
+      - Elementwise (Tile-Tile):
+          - TADD: docs/isa/TADD.md
+          - TABS: docs/isa/TABS.md
+          - TAND: docs/isa/TAND.md
+          - TOR: docs/isa/TOR.md
+          - TSUB: docs/isa/TSUB.md
+          - TMUL: docs/isa/TMUL.md
+          - TMIN: docs/isa/TMIN.md
+          - TMAX: docs/isa/TMAX.md
+          - TCMP: docs/isa/TCMP.md
+          - TDIV: docs/isa/TDIV.md
+          - TSHL: docs/isa/TSHL.md
+          - TSHR: docs/isa/TSHR.md
+          - TXOR: docs/isa/TXOR.md
+          - TLOG: docs/isa/TLOG.md
+          - TRECIP: docs/isa/TRECIP.md
+          - TPRELU: docs/isa/TPRELU.md
+          - TADDC: docs/isa/TADDC.md
+          - TSUBC: docs/isa/TSUBC.md
+          - TCVT: docs/isa/TCVT.md
+          - TSEL: docs/isa/TSEL.md
+          - TRSQRT: docs/isa/TRSQRT.md
+          - TSQRT: docs/isa/TSQRT.md
+          - TEXP: docs/isa/TEXP.md
+          - TNOT: docs/isa/TNOT.md
+          - TRELU: docs/isa/TRELU.md
+          - TNEG: docs/isa/TNEG.md
+          - TREM: docs/isa/TREM.md
+          - TFMOD: docs/isa/TFMOD.md
+      - Tile-Scalar / Tile-Immediate:
+          - TEXPANDS: docs/isa/TEXPANDS.md
+          - TCMPS: docs/isa/TCMPS.md
+          - TSELS: docs/isa/TSELS.md
+          - TMINS: docs/isa/TMINS.md
+          - TADDS: docs/isa/TADDS.md
+          - TSUBS: docs/isa/TSUBS.md
+          - TDIVS: docs/isa/TDIVS.md
+          - TMULS: docs/isa/TMULS.md
+          - TFMODS: docs/isa/TFMODS.md
+          - TREMS: docs/isa/TREMS.md
+          - TMAXS: docs/isa/TMAXS.md
+          - TANDS: docs/isa/TANDS.md
+          - TORS: docs/isa/TORS.md
+          - TSHLS: docs/isa/TSHLS.md
+          - TSHRS: docs/isa/TSHRS.md
+          - TXORS: docs/isa/TXORS.md
+          - TLRELU: docs/isa/TLRELU.md
+          - TADDSC: docs/isa/TADDSC.md
+          - TSUBSC: docs/isa/TSUBSC.md
+      - Axis Reduce / Expand:
+          - TROWSUM: docs/isa/TROWSUM.md
+          - TROWPROD: docs/isa/TROWPROD.md
+          - TCOLSUM: docs/isa/TCOLSUM.md
+          - TCOLPROD: docs/isa/TCOLPROD.md
+          - TCOLMAX: docs/isa/TCOLMAX.md
+          - TROWMAX: docs/isa/TROWMAX.md
+          - TROWMIN: docs/isa/TROWMIN.md
+          - TCOLMIN: docs/isa/TCOLMIN.md
+          - TROWEXPAND: docs/isa/TROWEXPAND.md
+          - TROWEXPANDDIV: docs/isa/TROWEXPANDDIV.md
+          - TROWEXPANDMUL: docs/isa/TROWEXPANDMUL.md
+          - TROWEXPANDSUB: docs/isa/TROWEXPANDSUB.md
+          - TROWEXPANDADD: docs/isa/TROWEXPANDADD.md
+          - TROWEXPANDMAX: docs/isa/TROWEXPANDMAX.md
+          - TROWEXPANDMIN: docs/isa/TROWEXPANDMIN.md
+          - TROWEXPANDEXPDIF: docs/isa/TROWEXPANDEXPDIF.md
+          - TCOLEXPAND: docs/isa/TCOLEXPAND.md
+          - TCOLEXPANDDIV: docs/isa/TCOLEXPANDDIV.md
+          - TCOLEXPANDMUL: docs/isa/TCOLEXPANDMUL.md
+          - TCOLEXPANDADD: docs/isa/TCOLEXPANDADD.md
+          - TCOLEXPANDMAX: docs/isa/TCOLEXPANDMAX.md
+          - TCOLEXPANDMIN: docs/isa/TCOLEXPANDMIN.md
+          - TCOLEXPANDSUB: docs/isa/TCOLEXPANDSUB.md
+          - TCOLEXPANDEXPDIF: docs/isa/TCOLEXPANDEXPDIF.md
+      - Memory (GM <-> Tile):
+          - TLOAD: docs/isa/TLOAD.md
+          - TPREFETCH: docs/isa/TPREFETCH.md
+          - TSTORE: docs/isa/TSTORE.md
+          - TSTORE_FP: docs/isa/TSTORE_FP.md
+          - MGATHER: docs/isa/MGATHER.md
+          - MSCATTER: docs/isa/MSCATTER.md
+      - Matrix Multiply:
+          - TMATMUL: docs/isa/TMATMUL.md
+          - TMATMUL_ACC: docs/isa/TMATMUL_ACC.md
+          - TMATMUL_BIAS: docs/isa/TMATMUL_BIAS.md
+          - TMATMUL_MX: docs/isa/TMATMUL_MX.md
+          - TGEMV: docs/isa/TGEMV.md
+          - TGEMV_ACC: docs/isa/TGEMV_ACC.md
+          - TGEMV_BIAS: docs/isa/TGEMV_BIAS.md
+          - TGEMV_MX: docs/isa/TGEMV_MX.md
+      - Data Movement / Layout:
+          - TMOV: docs/isa/TMOV.md
+          - TMOV_FP: docs/isa/TMOV_FP.md
+          - TEXTRACT: docs/isa/TEXTRACT.md
+          - TEXTRACT_FP: docs/isa/TEXTRACT_FP.md
+          - TINSERT: docs/isa/TINSERT.md
+          - TINSERT_FP: docs/isa/TINSERT_FP.md
+          - TFILLPAD: docs/isa/TFILLPAD.md
+          - TFILLPAD_INPLACE: docs/isa/TFILLPAD_INPLACE.md
+          - TFILLPAD_EXPAND: docs/isa/TFILLPAD_EXPAND.md
+          - TRESHAPE: docs/isa/TRESHAPE.md
+          - TTRANS: docs/isa/TTRANS.md
+          - TIMG2COL: docs/isa/TIMG2COL.md
+      - Complex Instructions:
+          - TGATHER: docs/isa/TGATHER.md
+          - TGATHERB: docs/isa/TGATHERB.md
+          - TSCATTER: docs/isa/TSCATTER.md
+          - TCI: docs/isa/TCI.md
+          - TTRI: docs/isa/TTRI.md
+          - TPARTADD: docs/isa/TPARTADD.md
+          - TPARTMUL: docs/isa/TPARTMUL.md
+          - TPARTMAX: docs/isa/TPARTMAX.md
+          - TPARTMIN: docs/isa/TPARTMIN.md
+          - TSORT32: docs/isa/TSORT32.md
+          - TMRGSORT: docs/isa/TMRGSORT.md
+          - TQUANT: docs/isa/TQUANT.md
+          - TPRINT: docs/isa/TPRINT.md
+      - Reference:
+          - Intrinsics Header: docs/reference/pto-intrinsics-header.md
+          - All Instructions Index: manual/isa-reference.md
+  - Examples & Kernels:
+      - Overview: kernels/README.md
+      - High-Performance Kernels:
+          - GEMM Performance: kernels/manual/a2a3/gemm_performance/README.md
+          - Flash Attention: kernels/manual/common/flash_atten/README.md
+      - Baseline Demos:
+          - Add Demo: demos/baseline/add/README.md
+          - GEMM Demo: demos/baseline/gemm_basic/README.md
+      - Tests:
+          - Tests Overview: tests/README.md
+          - Test Scripts: tests/script/README.md
   - Documentation:
-      - Docs index: docs/README.md
-      - Build this site: docs/website.md
+      - Docs Index: docs/README.md
+      - Build Documentation: docs/website.md
   - Full Index: all-pages.md

@@ -39,9 +39,9 @@ Backend-specific details MUST be documented as implementation-defined constraint
 
 Authoritative PTO sources:
 
-- per-op semantics: `docs/isa/*.md`
+- per-op semantics: [PTO ISA Reference](../docs/isa/README.md)
 - public API signatures: `include/pto/common/pto_instr.hpp`
-- assembly grammar: `docs/grammar/PTO-AS.md` and `docs/grammar/PTO-AS.bnf`
+- assembly grammar: [PTO-AS Specification](../docs/assembly/PTO-AS.md) and `docs/assembly/PTO-AS.bnf`
 
 This chaptered manual composes those sources into a complete Virtual ISA contract.
 
@@ -57,8 +57,8 @@ PTO instruction families are organized as:
 - layout/data-movement transforms
 - irregular and complex operations
 
-Family-level contracts are defined in `manual/07-instructions.md`.
-Per-op semantics remain in `docs/isa/*.md`.
+[Family-level contracts](07-instructions.md) are defined in `manual/07-instructions.md`.
+[Per-op semantics](../docs/isa/README.md) remain in `docs/isa/*.md`.
 
 ## 1.6 Compatibility principles
 

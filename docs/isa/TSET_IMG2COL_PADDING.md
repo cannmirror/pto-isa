@@ -1,4 +1,4 @@
-# TSET_IMG2COL_PADDING
+﻿# TSET_IMG2COL_PADDING
 
 ## Tile Operation Diagram
 
@@ -14,7 +14,7 @@ No direct tensor arithmetic is produced by this instruction. It updates IMG2COL 
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Schematic form:
 

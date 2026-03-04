@@ -10,7 +10,7 @@
 | 概述 | [`docs/PTOISA_zh.md`](PTOISA_zh.md) | 本页（概述 + 全量指令索引）。 |
 | ISA 参考 | [`docs/isa/README_zh.md`](isa/README_zh.md) | 每条指令参考目录。 |
 | ISA 参考 | [`docs/isa/conventions_zh.md`](isa/conventions_zh.md) | 通用符号、操作数、事件与修饰符。 |
-| 汇编 (PTO-AS) | [`docs/grammar/PTO-AS_zh.md`](grammar/PTO-AS_zh.md) | PTO-AS 语法参考。 |
+| 汇编 (PTO-AS) | [`docs/assembly/PTO-AS_zh.md`](assembly/PTO-AS_zh.md) | PTO-AS 语法参考。 |
 | 权威源 | [`include/pto/common/pto_instr.hpp`](reference/pto-intrinsics-header_zh.md) | C++ intrinsic API（权威来源）。 |
 
 ## 指令索引（全部 PTO 指令）

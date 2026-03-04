@@ -13,12 +13,12 @@
 该指令的详细介绍请见[isa/TASSIGN](../isa/TASSIGN_zh.md)
 
 
-**IR Level 1 (SSA)：**
+**AS Level 1 (SSA)：**
 ```text
 pto.tassign %tile, %addr : !pto.tile<...>, dtype
 ```
 
-**IR Level 2 (DPS)：**
+**AS Level 2 (DPS)：**
 ```text
 pto.tassign ins(%tile, %addr : !pto.tile_buf<...>, dtype)
 ```
@@ -29,12 +29,12 @@ pto.tassign ins(%tile, %addr : !pto.tile_buf<...>, dtype)
 
 该指令的详细介绍请见[isa/TSETHF32MODE](../isa/TSETHF32MODE_zh.md)
 
-**IR Level 1 (SSA)：**
+**AS Level 1 (SSA)：**
 ```text
 pto.tsethf32mode {enable = true, mode = ...}
 ```
 
-**IR Level 2 (DPS)：**
+**AS Level 2 (DPS)：**
 ```text
 pto.tsethf32mode ins({enable = true, mode = ...}) outs()
 ```
@@ -45,12 +45,12 @@ pto.tsethf32mode ins({enable = true, mode = ...}) outs()
 
 该指令的详细介绍请见[isa/TSETTF32MODE](../isa/TSETTF32MODE_zh.md)
 
-**IR Level 1 (SSA)：**
+**AS Level 1 (SSA)：**
 ```text
 pto.tsettf32mode {enable = true, mode = ...}
 ```
 
-**IR Level 2 (DPS)：**
+**AS Level 2 (DPS)：**
 ```text
 pto.tsettf32mode ins({enable = true, mode = ...}) outs()
 ```
@@ -62,12 +62,12 @@ pto.tsettf32mode ins({enable = true, mode = ...}) outs()
 该指令的详细介绍请见[isa/TSETFMATRIX](../isa/TSETFMATRIX_zh.md)
 
 
-**IR Level 1 (SSA)：**
+**AS Level 1 (SSA)：**
 ```text
 pto.tsetfmatrix %cfg : !pto.fmatrix_config -> ()
 ```
 
-**IR Level 2 (DPS)：**
+**AS Level 2 (DPS)：**
 ```text
 pto.tsetfmatrix ins(%cfg : !pto.fmatrix_config) outs()
 ```
@@ -78,12 +78,12 @@ pto.tsetfmatrix ins(%cfg : !pto.fmatrix_config) outs()
 
 该指令的详细介绍请见[isa/TSET_IMG2COL_RPT](../isa/TSET_IMG2COL_RPT_zh.md)
 
-**IR Level 1 (SSA)：**
+**AS Level 1 (SSA)：**
 ```text
 pto.tset_img2col_rpt %cfg : !pto.fmatrix_config -> ()
 ```
 
-**IR Level 2 (DPS)：**
+**AS Level 2 (DPS)：**
 ```text
 pto.tset_img2col_rpt ins(%cfg : !pto.fmatrix_config) outs()
 ```
@@ -94,12 +94,12 @@ pto.tset_img2col_rpt ins(%cfg : !pto.fmatrix_config) outs()
 
 该指令的详细介绍请见[isa/TSET_IMG2COL_PADDING](../isa/TSET_IMG2COL_PADDING_zh.md)
 
-**IR Level 1 (SSA)：**
+**AS Level 1 (SSA)：**
 ```text
 pto.tset_img2col_padding %cfg : !pto.fmatrix_config -> ()
 ```
 
-**IR Level 2 (DPS)：**
+**AS Level 2 (DPS)：**
 ```text
 pto.tset_img2col_padding ins(%cfg : !pto.fmatrix_config) outs()
 ```

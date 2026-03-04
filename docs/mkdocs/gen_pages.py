@@ -37,6 +37,7 @@ SKIP_PREFIXES = (
     ".venv/",
     ".venv-mkdocs/",
     "site/",
+    "site_zh/",
     "build/",
     "build_tests/",
     ".idea/",
@@ -85,7 +86,8 @@ def main() -> None:
         rel = src.relative_to(REPO_ROOT).as_posix()
         if _should_skip(rel):
             continue
-        text = src.read_text(encoding="utf-8", errors="replace")
+        # Use utf-8-sig to automatically remove BOM if present
+        text = src.read_text(encoding="utf-8-sig", errors="replace")
         with mkdocs_gen_files.open(rel, "w") as f:
             f.write(f"<!-- Generated from `{rel}` -->\n\n")
             f.write(text)
@@ -98,7 +100,8 @@ def main() -> None:
 
     def extract_first_heading(md_path: Path) -> str:
         try:
-            text = md_path.read_text(encoding="utf-8", errors="replace")
+            # Use utf-8-sig to automatically remove BOM if present
+            text = md_path.read_text(encoding="utf-8-sig", errors="replace")
         except OSError:
             return md_path.stem
         for line in text.splitlines():

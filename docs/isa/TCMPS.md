@@ -1,4 +1,4 @@
-# TCMPS
+﻿# TCMPS
 
 
 ## Tile Operation Diagram
@@ -19,7 +19,7 @@ The encoding/type of `dst` is implementation-defined (often a mask-like tile).
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

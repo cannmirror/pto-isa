@@ -13,12 +13,12 @@ This document describes manual resource binding and configuration operations.
 For detailed instruction documentation, see [isa/TASSIGN](../isa/TASSIGN.md)
 
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.tassign %tile, %addr : !pto.tile<...>, dtype
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tassign ins(%tile, %addr : !pto.tile_buf<...>, dtype)
 ```
@@ -29,12 +29,12 @@ pto.tassign ins(%tile, %addr : !pto.tile_buf<...>, dtype)
 
 For detailed instruction documentation, see [isa/TSETHF32MODE](../isa/TSETHF32MODE.md)
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.tsethf32mode {enable = true, mode = ...}
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tsethf32mode ins({enable = true, mode = ...}) outs()
 ```
@@ -45,12 +45,12 @@ pto.tsethf32mode ins({enable = true, mode = ...}) outs()
 
 For detailed instruction documentation, see [isa/TSETTF32MODE](../isa/TSETTF32MODE.md)
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.tsettf32mode {enable = true, mode = ...}
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tsettf32mode ins({enable = true, mode = ...}) outs()
 ```
@@ -62,12 +62,12 @@ pto.tsettf32mode ins({enable = true, mode = ...}) outs()
 For detailed instruction documentation, see [isa/TSETFMATRIX](../isa/TSETFMATRIX.md)
 
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.tsetfmatrix %cfg : !pto.fmatrix_config -> ()
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tsetfmatrix ins(%cfg : !pto.fmatrix_config) outs()
 ```
@@ -78,12 +78,12 @@ pto.tsetfmatrix ins(%cfg : !pto.fmatrix_config) outs()
 
 For detailed instruction documentation, see [isa/TSET_IMG2COL_RPT](../isa/TSET_IMG2COL_RPT.md)
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.tset_img2col_rpt %cfg : !pto.fmatrix_config -> ()
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tset_img2col_rpt ins(%cfg : !pto.fmatrix_config) outs()
 ```
@@ -94,12 +94,12 @@ pto.tset_img2col_rpt ins(%cfg : !pto.fmatrix_config) outs()
 
 For detailed instruction documentation, see [isa/TSET_IMG2COL_PADDING](../isa/TSET_IMG2COL_PADDING.md)
 
-**IR Level 1 (SSA):**
+**AS Level 1 (SSA):**
 ```text
 pto.tset_img2col_padding %cfg : !pto.fmatrix_config -> ()
 ```
 
-**IR Level 2 (DPS):**
+**AS Level 2 (DPS):**
 ```text
 pto.tset_img2col_padding ins(%cfg : !pto.fmatrix_config) outs()
 ```

@@ -1,4 +1,4 @@
-# TINSERT
+﻿# TINSERT
 
 
 ## Tile Operation Diagram
@@ -19,7 +19,7 @@ $$
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

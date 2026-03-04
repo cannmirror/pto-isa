@@ -1,8 +1,8 @@
-# PTO IR 非 ISA 运算（Level-1 / Level-2）
+# 非 ISA 运算
 
 ## 1. 范围
 
-本页给出 `~/pto-isa.txt` 中非 ISA 指令条目的 PTO IR 运算规范。
+本页给出 `~/pto-isa.txt` 中非 ISA 指令条目的 PTO AS 运算规范。
 
 - Level-1：SSA 形态，由编译器管理分配与同步。
 - Level-2：DPS 形态，支持显式缓冲复用与同步原语。
@@ -120,6 +120,6 @@ pto.barrier(op)
 
 ## 7. 一致性说明
 
-- 这些非 ISA PTO IR 运算统一收敛到本节文档，不进入 `docs/isa/` 的 manifest 驱动指令索引。
+- 这些非 ISA PTO AS 运算统一收敛到本节文档，不进入 `docs/isa/` 的 manifest 驱动指令索引。
 - `docs/isa/TSYNC.md` / `docs/isa/TSYNC_zh.md` 仍是 ISA 层同步语义权威来源。
 - 当 `~/pto-isa.txt` 变更时，本页应在同一变更集中同步更新。

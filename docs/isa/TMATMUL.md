@@ -1,4 +1,4 @@
-# TMATMUL
+﻿# TMATMUL
 
 
 ## Tile Operation Diagram
@@ -25,7 +25,7 @@ Exact accumulator behavior and datatype promotion are target/implementation-defi
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

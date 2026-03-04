@@ -1,4 +1,4 @@
-# TSTORE_FP
+﻿# TSTORE_FP
 
 
 ## Tile Operation Diagram
@@ -19,7 +19,7 @@ $$ \mathrm{dst}_{r_0 + i,\; c_0 + j} = \mathrm{Convert}\!\left(\mathrm{src}_{i,j
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

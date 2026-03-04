@@ -1,4 +1,4 @@
-# TMATMUL_ACC
+﻿# TMATMUL_ACC
 
 
 ## Tile Operation Diagram
@@ -23,7 +23,7 @@ $$ \mathrm{C1}_{i,j} = \mathrm{C0}_{i,j} + \sum_{k=0}^{K-1} \mathrm{A}_{i,k} \cd
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 Synchronous form:
 

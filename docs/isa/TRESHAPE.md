@@ -1,4 +1,4 @@
-# TRESHAPE
+﻿# TRESHAPE
 
 
 ## Tile Operation Diagram
@@ -13,7 +13,7 @@ This is a *bitwise* reshape: it does not change values, it only changes how the 
 
 ## Assembly Syntax
 
-PTO-AS form: see [docs/grammar/PTO-AS.md](../grammar/PTO-AS.md).
+PTO-AS form: see [PTO-AS Specification](../assembly/PTO-AS.md).
 
 ```text
 %dst = treshape %src : !pto.tile<...>

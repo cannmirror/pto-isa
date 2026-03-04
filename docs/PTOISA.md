@@ -10,7 +10,7 @@ This page is the source-synchronized ISA index generated from `docs/isa/manifest
 | Overview | [`docs/PTOISA.md`](PTOISA.md) | This page (overview + full instruction index). |
 | ISA reference | [`docs/isa/README.md`](isa/README.md) | Per-instruction reference directory index. |
 | ISA reference | [`docs/isa/conventions.md`](isa/conventions.md) | Shared notation, operands, events, and modifiers. |
-| Assembly (PTO-AS) | [`docs/grammar/PTO-AS.md`](grammar/PTO-AS.md) | PTO-AS syntax reference. |
+| Assembly (PTO-AS) | [`docs/assembly/PTO-AS.md`](assembly/PTO-AS.md) | PTO-AS syntax reference. |
 | Source of truth | [`include/pto/common/pto_instr.hpp`](reference/pto-intrinsics-header.md) | C++ intrinsic API (authoritative). |
 
 ## Instruction Index (All PTO Instructions)
