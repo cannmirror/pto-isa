@@ -57,18 +57,20 @@ AICORE inline void InitGMOffsets(__gm__ U *&currentSrc0, __gm__ S *&currentSrc1,
     currentDst = out + gmOffsetC;
 }
 
-template <typename T, typename U, typename S, int m, int k, int n, uint32_t baseM, uint32_t baseK, uint32_t baseN,
-          uint32_t stepKa, uint32_t stepKb, uint32_t singleCoreK>
-AICORE inline void ProcessKIteration(
-    uint32_t kIter, uint32_t i, uint32_t j, __gm__ U *currentSrc0, __gm__ S *currentSrc1,
-    Tile<TileType::Mat, U, baseM, baseK * stepKa, BLayout::ColMajor, baseM, baseK * stepKa, SLayout::RowMajor>
-        aMatTile[BUFFER_NUM],
-    Tile<TileType::Mat, S, baseK * stepKb, baseN, BLayout::RowMajor, baseK * stepKb, baseN, SLayout::ColMajor>
-        bMatTile[BUFFER_NUM],
-    TileLeft<U, baseM, baseK, baseM, baseK> aTile[BUFFER_NUM],
-    TileRight<S, baseK, baseN, baseK, baseN> bTile[BUFFER_NUM], TileAcc<T, baseM, baseN, baseM, baseN> &cTile,
-    uint8_t &mte2DBFlag, uint8_t &mte1DBFlag)
+template <typename TileMatA, typename TileMatB, typename LeftTile, typename RightTile, typename ResTile, int m, int k,
+          int n, uint32_t stepKa, uint32_t stepKb, uint32_t singleCoreK>
+AICORE inline void ProcessKIteration(uint32_t kIter, uint32_t i, uint32_t j,
+                                     __gm__ typename TileMatA::DType *currentSrc0,
+                                     __gm__ typename TileMatB::DType *currentSrc1, TileMatA aMatTile[BUFFER_NUM],
+                                     TileMatB bMatTile[BUFFER_NUM], LeftTile aTile[BUFFER_NUM],
+                                     RightTile bTile[BUFFER_NUM], ResTile &cTile, uint8_t &mte2DBFlag,
+                                     uint8_t &mte1DBFlag)
 {
+    using U = typename TileMatA::DType;
+    using S = typename TileMatB::DType;
+    constexpr uint32_t baseM = LeftTile::Rows;
+    constexpr uint32_t baseK = LeftTile::Cols;
+    constexpr uint32_t baseN = RightTile::Cols;
     // A panel staged by each TLOAD (GM->L1) when kModstepKa == 0: [baseM, baseK * stepKa]
     using NDValidShapeA = TileShape2D<U, baseM, baseK * stepKa, Layout::ND>;
     using NDsingleCoreShapeA = BaseShape2D<U, m, k, Layout::ND>;
@@ -124,10 +126,12 @@ AICORE inline void ProcessKIteration(
     mte1DBFlag = (mte1DBFlag == 0) ? 1 : 0;
 }
 
-template <typename T, typename U, typename S, int m, int n, uint32_t baseM, uint32_t baseN, uint32_t singleCoreK>
-AICORE inline void StoreResult(TileAcc<T, baseM, baseN, baseM, baseN> &cTile, __gm__ T *currentDst, uint32_t i,
-                               uint32_t j)
+template <typename ResTile, int m, int n, uint32_t singleCoreK>
+AICORE inline void StoreResult(ResTile &cTile, __gm__ typename ResTile::DType *currentDst, uint32_t i, uint32_t j)
 {
+    using T = typename ResTile::DType;
+    constexpr uint32_t baseM = ResTile::Rows;
+    constexpr uint32_t baseN = ResTile::Cols;
     // TSTORE stage: write the finished C tile [baseM, baseN] back to GM.
     SetFlag<PIPE_M, PIPE_FIX>(0);
     WaitFlag<PIPE_M, PIPE_FIX>(0);
@@ -214,11 +218,11 @@ AICORE inline void RunGemmE2E(__gm__ T *out, __gm__ U *src0, __gm__ S *src1)
     for (uint32_t i = 0; i < mLoop; i++) {
         for (uint32_t j = 0; j < nLoop; j++) {
             for (uint32_t kIter = 0; kIter < kLoop; kIter++) {
-                ProcessKIteration<T, U, S, m, k, n, baseM, baseK, baseN, stepKa, stepKb, singleCoreK>(
-                    kIter, i, j, currentSrc0, currentSrc1, aMatTile, bMatTile, aTile, bTile, cTile, mte2DBFlag,
-                    mte1DBFlag);
+                ProcessKIteration<TileMatA, TileMatB, LeftTile, RightTile, ResTile, m, k, n, stepKa, stepKb,
+                                  singleCoreK>(kIter, i, j, currentSrc0, currentSrc1, aMatTile, bMatTile, aTile, bTile,
+                                               cTile, mte2DBFlag, mte1DBFlag);
             }
-            StoreResult<T, U, S, m, n, baseM, baseN, singleCoreK>(cTile, currentDst, i, j);
+            StoreResult<ResTile, m, n, singleCoreK>(cTile, currentDst, i, j);
         }
     }
 
