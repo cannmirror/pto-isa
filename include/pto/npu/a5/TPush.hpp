@@ -73,7 +73,7 @@ struct TSyncTraits {
  * @tparam ProdRole     Logic role of Producer (CUBE/VECTOR) -> Deduce signal pipe
  * @tparam ConsRole     Logic role of Consumer (CUBE/VECTOR) -> Deduce signal pipe
  */
-template <uint16_t FlagID, FIFOType fifoType, uint8_t FiFoDepth, uint8_t FiFoSyncT, typename TileDataProd,
+template <uint8_t FlagID, FIFOType FiFoType, uint8_t FiFoDepth, uint8_t FiFoSyncT, typename TileDataProd,
           typename TileDataCons, TSyncOpType ProducerOp, TSyncOpType ConsumerOp,
           VecCubeRatio VCRatio = VecCubeRatio::V2C1_VECS>
 struct TPipe {
@@ -86,9 +86,9 @@ struct TPipe {
     static constexpr bool is_v2c_ub = Traits::is_vec_to_cube_ub;
     static constexpr int VEC_CORE_ID_OFFSET = 16;
 
-    using DataFiFo = std::conditional_t<(fifoType == FIFOType::GM_FIFO),
-                                        DataFIFO<typename TileDataCons::DType, fifoType, FiFoDepth, FiFoSyncT>,
-                                        DataFIFO<TileDataCons, fifoType, FiFoDepth, FiFoSyncT>>;
+    using DataFiFo = std::conditional_t<(FiFoType == FIFOType::GM_FIFO),
+                                        DataFIFO<typename TileDataCons::DType, FiFoType, FiFoDepth, FiFoSyncT>,
+                                        DataFIFO<TileDataCons, FiFoType, FiFoDepth, FiFoSyncT>>;
 
     // -------------------------------------------------------------------------
     // Producer Interface
@@ -108,12 +108,12 @@ struct TPipe {
             sub_tile_id = sub_t_id;
         }
 
-        PTO_INTERNAL int getTileId()
+        PTO_INTERNAL int getTileId() const
         {
             return tile_id;
         }
 
-        PTO_INTERNAL int getSubTileId()
+        PTO_INTERNAL int getSubTileId() const
         {
             return sub_tile_id;
         }
@@ -123,7 +123,7 @@ struct TPipe {
             isAllocate = allocate;
         }
 
-        PTO_INTERNAL bool getAllocateStatus()
+        PTO_INTERNAL bool getAllocateStatus() const
         {
             return isAllocate;
         }
@@ -133,7 +133,7 @@ struct TPipe {
             isRecord = record;
         }
 
-        PTO_INTERNAL bool getRecordStatus()
+        PTO_INTERNAL bool getRecordStatus() const
         {
             return isRecord;
         }
@@ -150,7 +150,7 @@ struct TPipe {
          * 2. (iter % Period == 0): Sparse sync. Only check flag periodically.
          */
         template <bool IsStart = false>
-        PTO_INTERNAL void allocate()
+        PTO_INTERNAL void allocate() const
         {
             if constexpr (is_c2v) {
                 // Cube producer waits for Vec consumer to free buffer
@@ -182,7 +182,7 @@ struct TPipe {
          * record - Producer signals that data is ready
          * Called by the producer after completing the operation (TSTORE_C2GM or TSTORE_V2GM)
          */
-        PTO_INTERNAL void record()
+        PTO_INTERNAL void record() const
         {
             if constexpr (is_c2v) {
                 // Cube -> Vec: Cube sets BOTH flags on PIPE_FIX
@@ -201,14 +201,10 @@ struct TPipe {
             // calculate base address in GM FIFO for this tile
             constexpr int kTileFactor = ConsN / ProdN;
             uint32_t buf_idx = static_cast<uint32_t>(tile_id % DataFiFo::fifoDepth);
-            // entryBase is the base address for the entire tile in the FIFO;
-            // entryOffset is the offset for this sub-tile, which is specified by the caller based on the sub-tile's
-            // position within the full tile
             size_t entryBase = buf_idx * kTileFactor * ProdM * ProdN * sizeof(T);
             using GlobalData = GlobalTensor<T, pto::Shape<1, 1, 1, ProdM, ProdN>, pto::Stride<1, 1, 1, ProdN, 1>>;
-            GlobalData globalTensor(fifo.fifoBase + entryBase + entryOffset);
-            // TODO: store tile to GM FIFO, enable unit-flag one
-
+            GlobalData globalTensor((__gm__ T *)((uint64_t)fifo.fifoBase + entryBase + entryOffset));
+            // store tile to GM FIFO, enable unit-flag one
             if constexpr (ProducerOp == TSyncOpType::TSTORE_C2GM_UFON) {
                 TSTORE_IMPL<TileDataProd, GlobalData, AtomicType::AtomicNone, STPhase::Final>(globalTensor, tile);
             } else { // disable unit flag
@@ -259,8 +255,7 @@ struct TPipe {
         template <typename T, int ProdM, int ProdN, int ConsM, int ConsN>
         PTO_INTERNAL void pushVec2GMFiFo(DataFiFo &fifo, TileDataProd &tile)
         {
-            static_assert((TileDataProd::Loc == TileType::Vec) && (DataFiFo::fifoType == FIFOType::GM_FIFO),
-                          "Fix: TPUSH has unsupported fifo type!");
+            static_assert(DataFiFo::fifoType == FIFOType::GM_FIFO, "Fix: TPUSH: unsupported fifoType!");
             // calculate base address in GM FIFO for this tile
             constexpr int kTileFactor = ProdN / ConsN;
             uint32_t buf_idx = static_cast<uint32_t>(tile_id % DataFiFo::fifoDepth);
@@ -268,7 +263,7 @@ struct TPipe {
             using GlobalDataSub = GlobalTensor<T, pto::Shape<1, 1, 1, ProdM, ConsN>, pto::Stride<1, 1, 1, ConsN, 1>>;
             using TileDataSub = Tile<TileType::Vec, T, ProdM, ProdN, BLayout::RowMajor, ProdM, ConsN>;
             TileDataSub subTile;
-            __gm__ T *addr = fifo.fifoBase + entryBase + entryOffset;
+            __gm__ T *addr = (__gm__ T *)((uint64_t)fifo.fifoBase + entryBase + entryOffset);
             // store tile to GM FIFO in sub-tiles if needed (when Tile_S1 > Cube_S1)
             for (int sub_col = 0; sub_col < kTileFactor; ++sub_col) {
                 __gm__ T *addrSub = addr + sub_col * ConsM * ConsN;
@@ -381,12 +376,12 @@ struct TPipe {
             sub_tile_id = sub_tid;
         }
 
-        PTO_INTERNAL int getTileId()
+        PTO_INTERNAL int getTileId() const
         {
             return tile_id;
         }
 
-        PTO_INTERNAL int getSubTileId()
+        PTO_INTERNAL int getSubTileId() const
         {
             return sub_tile_id;
         }
@@ -396,7 +391,7 @@ struct TPipe {
             isWait = wait;
         }
 
-        PTO_INTERNAL bool getWaitStatus()
+        PTO_INTERNAL bool getWaitStatus() const
         {
             return isWait;
         }
@@ -406,7 +401,7 @@ struct TPipe {
             isFree = free;
         }
 
-        PTO_INTERNAL bool getFreeStatus()
+        PTO_INTERNAL bool getFreeStatus() const
         {
             return isFree;
         }
@@ -420,7 +415,7 @@ struct TPipe {
          * wait: Block until data is ready
          * Consumers strictly wait for data (no sparse optimization for safety).
          */
-        PTO_INTERNAL void wait()
+        PTO_INTERNAL void wait() const
         {
             if constexpr (is_c2v_gm) {
                 // Cube -> Vec (GM path): Vec waits on PIPE_MTE2 (data loaded from GM)
@@ -448,7 +443,7 @@ struct TPipe {
          * 2. (is_sync_step): Accumulate free slots and signal in batches.
          */
         template <bool IsRelease = false>
-        PTO_INTERNAL void free()
+        PTO_INTERNAL void free() const
         {
             if constexpr (is_c2v_gm) {
                 // Vec consumer frees buffer for Cube - signals on PIPE_MTE2, flag_id+1 only
@@ -488,7 +483,7 @@ struct TPipe {
             constexpr int kTileFactor = ConsN / ProdN;
             size_t entryBase = static_cast<size_t>(buf_idx) * kTileFactor * ProdM * ProdN * sizeof(T);
 
-            __gm__ T *addr = fifo.fifoBase + entryBase + entryOffset;
+            __gm__ T *addr = (__gm__ T *)((uint64_t)fifo.fifoBase + entryBase + entryOffset);
             using GlobalDataSub = GlobalTensor<T, pto::Shape<1, 1, 1, ConsM, ProdN>, pto::Stride<1, 1, 1, ProdN, 1>>;
             using TileDataSub = Tile<TileType::Vec, T, ConsM, ConsN, BLayout::RowMajor, ConsM, ProdN>;
             TileDataSub tileSub;
@@ -507,7 +502,7 @@ struct TPipe {
             uint32_t buf_idx = static_cast<uint32_t>(tile_id % fifo.fifoDepth);
             size_t entryBase = buf_idx * ConsM * ProdN * sizeof(T);
             using GlobaData = GlobalTensor<T, pto::Shape<1, 1, 1, ConsM, ConsN>, pto::Stride<1, 1, 1, ConsN, 1>>;
-            GlobaData globalTensor(fifo.fifoBase + entryBase + entryOffset);
+            GlobaData globalTensor((__gm__ T *)((uint64_t)fifo.fifoBase + entryBase + entryOffset));
             TLOAD_IMPL(tile, globalTensor);
         }
 

@@ -1459,10 +1459,10 @@ PTO_INST RecordEvent TPOP(PipeCon &cons, TileData &tile, DataFifo &fifo, WaitEve
 }
 
 template <typename PipeCon, typename... WaitEvents>
-PTO_INST RecordEvent TPOPRELEASE(PipeCon &cons, WaitEvents &... events)
+PTO_INST RecordEvent TPOPDONE(PipeCon &cons, WaitEvents &... events)
 {
     TSYNC(events...);
-    MAP_INSTR_IMPL(TPOPRELEASE, cons);
+    MAP_INSTR_IMPL(TPOPDONE, cons);
     return {};
 }
 

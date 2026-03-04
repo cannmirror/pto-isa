@@ -43,7 +43,7 @@ PTO_INTERNAL void TPOP_IMPL(PipeCons &cons, TileDataSrc &tile, DataFiFo &fifo)
 }
 
 template <typename PipeCons>
-PTO_INTERNAL void TPOPRELEASE_IMPL(PipeCons &cons)
+PTO_INTERNAL void TPOPDONE_IMPL(PipeCons &cons)
 {
     bool isFree = cons.getFreeStatus();
     if (isFree) {
