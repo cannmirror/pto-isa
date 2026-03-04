@@ -1467,6 +1467,14 @@ PTO_INST RecordEvent TPOPRELEASE(PipeCon &cons, WaitEvents &... events)
 }
 
 #ifdef PTO_NPU_ARCH_A5
+template <typename TileDataDst, typename TileDataSrc, typename... WaitEvents>
+PTO_INST RecordEvent TPACK(TileDataDst &dst, TileDataSrc &src, WaitEvents &... events)
+{
+    TSYNC(events...);
+    MAP_INSTR_IMPL(TPACK, dst, src);
+    return {};
+}
+
 template <auto quant_type, typename TileDataOut, typename TileDataSrc, typename TileDataExp, typename TileDataMax,
           typename... WaitEvents>
 PTO_INST RecordEvent TQUANT(TileDataOut &dst, TileDataSrc &src, TileDataExp *exp, TileDataMax *max,

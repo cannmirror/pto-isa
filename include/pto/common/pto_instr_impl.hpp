@@ -181,6 +181,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 #include "pto/npu/a5/TSetFmatrix.hpp"
 #include "pto/npu/a5/TSetImg2colRpt.hpp"
 #include "pto/npu/a5/TSetImg2colPadding.hpp"
+#include "pto/npu/a5/TPack.hpp"
 #ifdef _DEBUG
 #include "pto/npu/a5/TPrint.hpp"
 #endif
